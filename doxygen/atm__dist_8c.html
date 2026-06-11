@@ -120,33 +120,33 @@ Functions</h2></td></tr>
 
 <p>Print command-line help. </p>
 
-<p class="definition">Definition at line <a class="el" href="atm__dist_8c_source.html#l00433">433</a> of file <a class="el" href="atm__dist_8c_source.html">atm_dist.c</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  434</span>        {</div>
-<div class="line"><span class="lineno">  435</span> </div>
-<div class="line"><span class="lineno">  436</span>  printf(<span class="stringliteral">&quot;\nMPTRAC atm_dist tool.\n\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  437</span>  printf</div>
-<div class="line"><span class="lineno">  438</span>    (<span class="stringliteral">&quot;Calculate transport deviations between pairs of trajectory data sets.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  439</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  440</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  441</span>  printf</div>
-<div class="line"><span class="lineno">  442</span>    (<span class="stringliteral">&quot;  atm_dist &lt;ctl&gt; &lt;dist.tab&gt; &lt;param&gt; &lt;atm1a&gt; &lt;atm1b&gt; [&lt;atm2a&gt; &lt;atm2b&gt; ...]\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  443</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  444</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  445</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  446</span>  printf(<span class="stringliteral">&quot;  &lt;dist.tab&gt;  Output table.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  447</span>  printf</div>
-<div class="line"><span class="lineno">  448</span>    (<span class="stringliteral">&quot;  &lt;param&gt;     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  449</span>  printf(<span class="stringliteral">&quot;              median, or mad.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  450</span>  printf(<span class="stringliteral">&quot;  &lt;atm*a/b&gt;   Atmospheric input files to compare pairwise.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  451</span>  printf(<span class="stringliteral">&quot;\nControl parameters:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  452</span>  printf</div>
-<div class="line"><span class="lineno">  453</span>    (<span class="stringliteral">&quot;  DIST_REL_MIN[iq]  Mask qnt-specific relative differences where\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  454</span>  printf</div>
-<div class="line"><span class="lineno">  455</span>    (<span class="stringliteral">&quot;                    |q1| + |q2| is smaller than or equal to this\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  456</span>  printf(<span class="stringliteral">&quot;                    threshold in the qnt unit [default: 0].\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  457</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  458</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  459</span>}</div>
+<p class="definition">Definition at line <a class="el" href="atm__dist_8c_source.html#l00430">430</a> of file <a class="el" href="atm__dist_8c_source.html">atm_dist.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  431</span>        {</div>
+<div class="line"><span class="lineno">  432</span> </div>
+<div class="line"><span class="lineno">  433</span>  printf(<span class="stringliteral">&quot;\nMPTRAC atm_dist tool.\n\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  434</span>  printf</div>
+<div class="line"><span class="lineno">  435</span>    (<span class="stringliteral">&quot;Calculate transport deviations between pairs of trajectory data sets.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  436</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  437</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  438</span>  printf</div>
+<div class="line"><span class="lineno">  439</span>    (<span class="stringliteral">&quot;  atm_dist &lt;ctl&gt; &lt;dist.tab&gt; &lt;param&gt; &lt;atm1a&gt; &lt;atm1b&gt; [&lt;atm2a&gt; &lt;atm2b&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  440</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  441</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  442</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  443</span>  printf(<span class="stringliteral">&quot;  &lt;dist.tab&gt;  Output table.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  444</span>  printf</div>
+<div class="line"><span class="lineno">  445</span>    (<span class="stringliteral">&quot;  &lt;param&gt;     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  446</span>  printf(<span class="stringliteral">&quot;              median, or mad.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  447</span>  printf(<span class="stringliteral">&quot;  &lt;atm*a/b&gt;   Atmospheric input files to compare pairwise.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  448</span>  printf(<span class="stringliteral">&quot;\nControl parameters:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  449</span>  printf</div>
+<div class="line"><span class="lineno">  450</span>    (<span class="stringliteral">&quot;  DIST_REL_MIN[iq]  Mask qnt-specific relative differences where\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  451</span>  printf</div>
+<div class="line"><span class="lineno">  452</span>    (<span class="stringliteral">&quot;                    |q1| + |q2| is smaller than or equal to this\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  453</span>  printf(<span class="stringliteral">&quot;                    threshold in the qnt unit [default: 0].\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  454</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  455</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  456</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -190,39 +190,39 @@ Functions</h2></td></tr>
 
 <p>Calculate a statistic on finite values only. </p>
 
-<p class="definition">Definition at line <a class="el" href="atm__dist_8c_source.html#l00465">465</a> of file <a class="el" href="atm__dist_8c_source.html">atm_dist.c</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  469</span>                {</div>
-<div class="line"><span class="lineno">  470</span> </div>
-<div class="line"><span class="lineno">  471</span>  <span class="keywordtype">int</span> n = 0;</div>
-<div class="line"><span class="lineno">  472</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; np; i++)</div>
-<div class="line"><span class="lineno">  473</span>    <span class="keywordflow">if</span> (isfinite(data[i]))</div>
-<div class="line"><span class="lineno">  474</span>      work[n++] = data[i];</div>
+<p class="definition">Definition at line <a class="el" href="atm__dist_8c_source.html#l00462">462</a> of file <a class="el" href="atm__dist_8c_source.html">atm_dist.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  466</span>                {</div>
+<div class="line"><span class="lineno">  467</span> </div>
+<div class="line"><span class="lineno">  468</span>  <span class="keywordtype">int</span> n = 0;</div>
+<div class="line"><span class="lineno">  469</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; np; i++)</div>
+<div class="line"><span class="lineno">  470</span>    <span class="keywordflow">if</span> (isfinite(data[i]))</div>
+<div class="line"><span class="lineno">  471</span>      work[n++] = data[i];</div>
+<div class="line"><span class="lineno">  472</span> </div>
+<div class="line"><span class="lineno">  473</span>  <span class="keywordflow">if</span> (n &lt;= 0)</div>
+<div class="line"><span class="lineno">  474</span>    <span class="keywordflow">return</span> GSL_NAN;</div>
 <div class="line"><span class="lineno">  475</span> </div>
-<div class="line"><span class="lineno">  476</span>  <span class="keywordflow">if</span> (n &lt;= 0)</div>
-<div class="line"><span class="lineno">  477</span>    <span class="keywordflow">return</span> GSL_NAN;</div>
-<div class="line"><span class="lineno">  478</span> </div>
-<div class="line"><span class="lineno">  479</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;mean&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  480</span>    <span class="keywordflow">return</span> gsl_stats_mean(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  481</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;stddev&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  482</span>    <span class="keywordflow">return</span> gsl_stats_sd(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  483</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;min&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  484</span>    <span class="keywordflow">return</span> gsl_stats_min(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  485</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;max&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  486</span>    <span class="keywordflow">return</span> gsl_stats_max(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  487</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;skew&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  488</span>    <span class="keywordflow">return</span> gsl_stats_skew(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  489</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;kurt&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  490</span>    <span class="keywordflow">return</span> gsl_stats_kurtosis(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  491</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;absdev&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  492</span>    <span class="keywordflow">return</span> gsl_stats_absdev_m(work, 1, (<span class="keywordtype">size_t</span>) n, 0.0);</div>
-<div class="line"><span class="lineno">  493</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;median&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  494</span>    <span class="keywordflow">return</span> gsl_stats_median(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
-<div class="line"><span class="lineno">  495</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;mad&quot;</span>) == 0)</div>
-<div class="line"><span class="lineno">  496</span>    <span class="keywordflow">return</span> gsl_stats_mad0(work, 1, (<span class="keywordtype">size_t</span>) n, work);</div>
-<div class="line"><span class="lineno">  497</span> </div>
-<div class="line"><span class="lineno">  498</span>  <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Unknown parameter!&quot;</span>);</div>
-<div class="line"><span class="lineno">  499</span>  <span class="keywordflow">return</span> GSL_NAN;</div>
-<div class="line"><span class="lineno">  500</span>}</div>
+<div class="line"><span class="lineno">  476</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;mean&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  477</span>    <span class="keywordflow">return</span> gsl_stats_mean(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  478</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;stddev&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  479</span>    <span class="keywordflow">return</span> gsl_stats_sd(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  480</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;min&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  481</span>    <span class="keywordflow">return</span> gsl_stats_min(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  482</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;max&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  483</span>    <span class="keywordflow">return</span> gsl_stats_max(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  484</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;skew&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  485</span>    <span class="keywordflow">return</span> gsl_stats_skew(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  486</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;kurt&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  487</span>    <span class="keywordflow">return</span> gsl_stats_kurtosis(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  488</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;absdev&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  489</span>    <span class="keywordflow">return</span> gsl_stats_absdev_m(work, 1, (<span class="keywordtype">size_t</span>) n, 0.0);</div>
+<div class="line"><span class="lineno">  490</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;median&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  491</span>    <span class="keywordflow">return</span> gsl_stats_median(work, 1, (<span class="keywordtype">size_t</span>) n);</div>
+<div class="line"><span class="lineno">  492</span>  <span class="keywordflow">if</span> (strcasecmp(param, <span class="stringliteral">&quot;mad&quot;</span>) == 0)</div>
+<div class="line"><span class="lineno">  493</span>    <span class="keywordflow">return</span> gsl_stats_mad0(work, 1, (<span class="keywordtype">size_t</span>) n, work);</div>
+<div class="line"><span class="lineno">  494</span> </div>
+<div class="line"><span class="lineno">  495</span>  <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Unknown parameter!&quot;</span>);</div>
+<div class="line"><span class="lineno">  496</span>  <span class="keywordflow">return</span> GSL_NAN;</div>
+<div class="line"><span class="lineno">  497</span>}</div>
 <div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02157">mptrac.h:2157</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -269,52 +269,52 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   60</span> </div>
 <div class="line"><span class="lineno">   61</span>  <span class="keywordtype">int</span> init = 0, np;</div>
 <div class="line"><span class="lineno">   62</span> </div>
-<div class="line"><span class="lineno">   63</span>  <span class="comment">/* Allocate... */</span></div>
-<div class="line"><span class="lineno">   64</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(atm1, <a class="code hl_struct" href="structatm__t.html">atm_t</a>, 1);</div>
-<div class="line"><span class="lineno">   65</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(atm2, <a class="code hl_struct" href="structatm__t.html">atm_t</a>, 1);</div>
-<div class="line"><span class="lineno">   66</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lon1_old, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   67</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   68</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lat1_old, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   69</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   70</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(z1_old, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   71</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   72</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lh1, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   73</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   74</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lv1, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   75</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   76</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lon2_old, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   77</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   78</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lat2_old, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   79</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   80</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(z2_old, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   81</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   82</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lh2, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   83</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   84</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lv2, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   85</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   86</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(ahtd, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   87</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   88</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(avtd, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   89</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   90</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(aqtd, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   91</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> * <a class="code hl_define" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>);</div>
-<div class="line"><span class="lineno">   92</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(rhtd, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   93</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   94</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(rvtd, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   95</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">   96</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(rqtd, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   97</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> * <a class="code hl_define" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>);</div>
-<div class="line"><span class="lineno">   98</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(work, <span class="keywordtype">double</span>,</div>
-<div class="line"><span class="lineno">   99</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
-<div class="line"><span class="lineno">  100</span> </div>
-<div class="line"><span class="lineno">  101</span>  <span class="comment">/* Print usage information... */</span></div>
-<div class="line"><span class="lineno">  102</span>  <a class="code hl_define" href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a>;</div>
-<div class="line"><span class="lineno">  103</span> </div>
-<div class="line"><span class="lineno">  104</span>  <span class="comment">/* Check arguments... */</span></div>
-<div class="line"><span class="lineno">  105</span>  <span class="keywordflow">if</span> (argc &lt; 6)</div>
-<div class="line"><span class="lineno">  106</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">  107</span>           <span class="stringliteral">&quot;Usage: atm_dist &lt;ctl&gt; &lt;dist.tab&gt; &lt;param&gt; &lt;atm1a&gt; &lt;atm1b&gt; [&lt;atm2a&gt; &lt;atm2b&gt; ...]\n\n&quot;</span></div>
-<div class="line"><span class="lineno">  108</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
+<div class="line"><span class="lineno">   63</span>  <span class="comment">/* Print usage information... */</span></div>
+<div class="line"><span class="lineno">   64</span>  <a class="code hl_define" href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a>;</div>
+<div class="line"><span class="lineno">   65</span> </div>
+<div class="line"><span class="lineno">   66</span>  <span class="comment">/* Check arguments... */</span></div>
+<div class="line"><span class="lineno">   67</span>  <span class="keywordflow">if</span> (argc &lt; 6)</div>
+<div class="line"><span class="lineno">   68</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   69</span>           <span class="stringliteral">&quot;Usage: atm_dist &lt;ctl&gt; &lt;dist.tab&gt; &lt;param&gt; &lt;atm1a&gt; &lt;atm1b&gt; [&lt;atm2a&gt; &lt;atm2b&gt; ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   70</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
+<div class="line"><span class="lineno">   71</span> </div>
+<div class="line"><span class="lineno">   72</span>  <span class="comment">/* Allocate... */</span></div>
+<div class="line"><span class="lineno">   73</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(atm1, <a class="code hl_struct" href="structatm__t.html">atm_t</a>, 1);</div>
+<div class="line"><span class="lineno">   74</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(atm2, <a class="code hl_struct" href="structatm__t.html">atm_t</a>, 1);</div>
+<div class="line"><span class="lineno">   75</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lon1_old, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   76</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   77</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lat1_old, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   78</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   79</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(z1_old, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   80</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   81</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lh1, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   82</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   83</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lv1, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   84</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   85</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lon2_old, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   86</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   87</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lat2_old, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   88</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   89</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(z2_old, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   90</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   91</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lh2, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   92</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   93</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(lv2, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   94</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   95</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(ahtd, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   96</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   97</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(avtd, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">   98</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">   99</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(aqtd, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">  100</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> * <a class="code hl_define" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>);</div>
+<div class="line"><span class="lineno">  101</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(rhtd, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">  102</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">  103</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(rvtd, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">  104</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><span class="lineno">  105</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(rqtd, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">  106</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> * <a class="code hl_define" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>);</div>
+<div class="line"><span class="lineno">  107</span>  <a class="code hl_define" href="mptrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(work, <span class="keywordtype">double</span>,</div>
+<div class="line"><span class="lineno">  108</span>        <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
 <div class="line"><span class="lineno">  109</span> </div>
 <div class="line"><span class="lineno">  110</span>  <span class="comment">/* Read control parameters... */</span></div>
 <div class="line"><span class="lineno">  111</span>  <a class="code hl_function" href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6">mptrac_read_ctl</a>(argv[1], argc, argv, &amp;ctl);</div>
@@ -338,304 +338,301 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  129</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> zscore =</div>
 <div class="line"><span class="lineno">  130</span>    <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;DIST_ZSCORE&quot;</span>, -1, <span class="stringliteral">&quot;-999&quot;</span>, NULL);</div>
 <div class="line"><span class="lineno">  131</span> </div>
-<div class="line"><span class="lineno">  132</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; <a class="code hl_define" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>; iq++)</div>
-<div class="line"><span class="lineno">  133</span>    rel_min[iq] = 0;</div>
+<div class="line"><span class="lineno">  132</span>  <span class="comment">/* Write info... */</span></div>
+<div class="line"><span class="lineno">  133</span>  <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;Write transport deviations: %s&quot;</span>, argv[2]);</div>
 <div class="line"><span class="lineno">  134</span> </div>
-<div class="line"><span class="lineno">  135</span>  <span class="comment">/* Write info... */</span></div>
-<div class="line"><span class="lineno">  136</span>  <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;Write transport deviations: %s&quot;</span>, argv[2]);</div>
-<div class="line"><span class="lineno">  137</span> </div>
-<div class="line"><span class="lineno">  138</span>  <span class="comment">/* Create output file... */</span></div>
-<div class="line"><span class="lineno">  139</span>  <span class="keywordflow">if</span> (!(out = fopen(argv[2], <span class="stringliteral">&quot;w&quot;</span>)))</div>
-<div class="line"><span class="lineno">  140</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
-<div class="line"><span class="lineno">  141</span> </div>
-<div class="line"><span class="lineno">  142</span>  <span class="comment">/* Write header... */</span></div>
-<div class="line"><span class="lineno">  143</span>  fprintf(out,</div>
-<div class="line"><span class="lineno">  144</span>          <span class="stringliteral">&quot;# $1 = time [s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  145</span>          <span class="stringliteral">&quot;# $2 = time difference [s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  146</span>          <span class="stringliteral">&quot;# $3 = absolute horizontal distance (%s) [km]\n&quot;</span></div>
-<div class="line"><span class="lineno">  147</span>          <span class="stringliteral">&quot;# $4 = relative horizontal distance (%s) [%%]\n&quot;</span></div>
-<div class="line"><span class="lineno">  148</span>          <span class="stringliteral">&quot;# $5 = absolute vertical distance (%s) [km]\n&quot;</span></div>
-<div class="line"><span class="lineno">  149</span>          <span class="stringliteral">&quot;# $6 = relative vertical distance (%s) [%%]\n&quot;</span>,</div>
-<div class="line"><span class="lineno">  150</span>          argv[3], argv[3], argv[3], argv[3]);</div>
-<div class="line"><span class="lineno">  151</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  152</span>    rel_min[iq] =</div>
-<div class="line"><span class="lineno">  153</span>      <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;DIST_REL_MIN&quot;</span>, iq, <span class="stringliteral">&quot;0&quot;</span>, NULL);</div>
-<div class="line"><span class="lineno">  154</span>    <span class="keywordflow">if</span> (rel_min[iq] &gt; 0)</div>
-<div class="line"><span class="lineno">  155</span>      fprintf(out,</div>
-<div class="line"><span class="lineno">  156</span>              <span class="stringliteral">&quot;# Relative %s differences are masked where |q1| + |q2| &lt;= %g %s.\n&quot;</span>,</div>
-<div class="line"><span class="lineno">  157</span>              ctl.<a class="code hl_variable" href="structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690">qnt_name</a>[iq], rel_min[iq], ctl.<a class="code hl_variable" href="structctl__t.html#a7dadf2efadc0802bd2c77aa8c39908dc">qnt_unit</a>[iq]);</div>
-<div class="line"><span class="lineno">  158</span>    fprintf(out,</div>
-<div class="line"><span class="lineno">  159</span>            <span class="stringliteral">&quot;# $%d = %s absolute difference (%s) [%s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  160</span>            <span class="stringliteral">&quot;# $%d = %s relative difference (%s) [%%]\n&quot;</span>,</div>
-<div class="line"><span class="lineno">  161</span>            7 + 2 * iq, ctl.<a class="code hl_variable" href="structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690">qnt_name</a>[iq], argv[3], ctl.<a class="code hl_variable" href="structctl__t.html#a7dadf2efadc0802bd2c77aa8c39908dc">qnt_unit</a>[iq],</div>
-<div class="line"><span class="lineno">  162</span>            8 + 2 * iq, ctl.<a class="code hl_variable" href="structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690">qnt_name</a>[iq], argv[3]);</div>
-<div class="line"><span class="lineno">  163</span>  }</div>
-<div class="line"><span class="lineno">  164</span>  fprintf(out, <span class="stringliteral">&quot;# $%d = number of particles\n\n&quot;</span>, 7 + 2 * ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>);</div>
+<div class="line"><span class="lineno">  135</span>  <span class="comment">/* Create output file... */</span></div>
+<div class="line"><span class="lineno">  136</span>  <span class="keywordflow">if</span> (!(out = fopen(argv[2], <span class="stringliteral">&quot;w&quot;</span>)))</div>
+<div class="line"><span class="lineno">  137</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
+<div class="line"><span class="lineno">  138</span> </div>
+<div class="line"><span class="lineno">  139</span>  <span class="comment">/* Write header... */</span></div>
+<div class="line"><span class="lineno">  140</span>  fprintf(out,</div>
+<div class="line"><span class="lineno">  141</span>          <span class="stringliteral">&quot;# $1 = time [s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  142</span>          <span class="stringliteral">&quot;# $2 = time difference [s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  143</span>          <span class="stringliteral">&quot;# $3 = absolute horizontal distance (%s) [km]\n&quot;</span></div>
+<div class="line"><span class="lineno">  144</span>          <span class="stringliteral">&quot;# $4 = relative horizontal distance (%s) [%%]\n&quot;</span></div>
+<div class="line"><span class="lineno">  145</span>          <span class="stringliteral">&quot;# $5 = absolute vertical distance (%s) [km]\n&quot;</span></div>
+<div class="line"><span class="lineno">  146</span>          <span class="stringliteral">&quot;# $6 = relative vertical distance (%s) [%%]\n&quot;</span>,</div>
+<div class="line"><span class="lineno">  147</span>          argv[3], argv[3], argv[3], argv[3]);</div>
+<div class="line"><span class="lineno">  148</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  149</span>    rel_min[iq] =</div>
+<div class="line"><span class="lineno">  150</span>      <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;DIST_REL_MIN&quot;</span>, iq, <span class="stringliteral">&quot;0&quot;</span>, NULL);</div>
+<div class="line"><span class="lineno">  151</span>    <span class="keywordflow">if</span> (rel_min[iq] &gt; 0)</div>
+<div class="line"><span class="lineno">  152</span>      fprintf(out,</div>
+<div class="line"><span class="lineno">  153</span>              <span class="stringliteral">&quot;# Relative %s differences are masked where |q1| + |q2| &lt;= %g %s.\n&quot;</span>,</div>
+<div class="line"><span class="lineno">  154</span>              ctl.<a class="code hl_variable" href="structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690">qnt_name</a>[iq], rel_min[iq], ctl.<a class="code hl_variable" href="structctl__t.html#a7dadf2efadc0802bd2c77aa8c39908dc">qnt_unit</a>[iq]);</div>
+<div class="line"><span class="lineno">  155</span>    fprintf(out,</div>
+<div class="line"><span class="lineno">  156</span>            <span class="stringliteral">&quot;# $%d = %s absolute difference (%s) [%s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  157</span>            <span class="stringliteral">&quot;# $%d = %s relative difference (%s) [%%]\n&quot;</span>,</div>
+<div class="line"><span class="lineno">  158</span>            7 + 2 * iq, ctl.<a class="code hl_variable" href="structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690">qnt_name</a>[iq], argv[3], ctl.<a class="code hl_variable" href="structctl__t.html#a7dadf2efadc0802bd2c77aa8c39908dc">qnt_unit</a>[iq],</div>
+<div class="line"><span class="lineno">  159</span>            8 + 2 * iq, ctl.<a class="code hl_variable" href="structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690">qnt_name</a>[iq], argv[3]);</div>
+<div class="line"><span class="lineno">  160</span>  }</div>
+<div class="line"><span class="lineno">  161</span>  fprintf(out, <span class="stringliteral">&quot;# $%d = number of particles\n\n&quot;</span>, 7 + 2 * ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>);</div>
+<div class="line"><span class="lineno">  162</span> </div>
+<div class="line"><span class="lineno">  163</span>  <span class="comment">/* Loop over file pairs... */</span></div>
+<div class="line"><span class="lineno">  164</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> f = 4; f &lt; argc; f += 2) {</div>
 <div class="line"><span class="lineno">  165</span> </div>
-<div class="line"><span class="lineno">  166</span>  <span class="comment">/* Loop over file pairs... */</span></div>
-<div class="line"><span class="lineno">  167</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> f = 4; f &lt; argc; f += 2) {</div>
-<div class="line"><span class="lineno">  168</span> </div>
-<div class="line"><span class="lineno">  169</span>    <span class="comment">/* Read atmopheric data... */</span></div>
-<div class="line"><span class="lineno">  170</span>    <span class="keywordflow">if</span> (!<a class="code hl_function" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a>(argv[f], &amp;ctl, atm1)</div>
-<div class="line"><span class="lineno">  171</span>        || !<a class="code hl_function" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a>(argv[f + 1], &amp;ctl, atm2))</div>
-<div class="line"><span class="lineno">  172</span>      <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  173</span> </div>
-<div class="line"><span class="lineno">  174</span>    <span class="comment">/* Check if structs match... */</span></div>
-<div class="line"><span class="lineno">  175</span>    <span class="keywordflow">if</span> (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a> != atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>)</div>
-<div class="line"><span class="lineno">  176</span>      <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Different numbers of particles!&quot;</span>);</div>
-<div class="line"><span class="lineno">  177</span> </div>
-<div class="line"><span class="lineno">  178</span>    <span class="comment">/* Get time from filename... */</span></div>
-<div class="line"><span class="lineno">  179</span>    <span class="keywordtype">int</span> time_offset = ctl.<a class="code hl_variable" href="structctl__t.html#a2509f56c50085b3d0f47c495da91b248">atm_type</a> &lt; 2 ? 23 : 22;</div>
-<div class="line"><span class="lineno">  180</span>    <span class="keyword">const</span> <span class="keywordtype">double</span> t = <a class="code hl_function" href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276">time_from_filename</a>(argv[f], time_offset, 1);</div>
-<div class="line"><span class="lineno">  181</span> </div>
-<div class="line"><span class="lineno">  182</span>    <span class="comment">/* Save initial time... */</span></div>
-<div class="line"><span class="lineno">  183</span>    <span class="keywordflow">if</span> (!init) {</div>
-<div class="line"><span class="lineno">  184</span>      init = 1;</div>
-<div class="line"><span class="lineno">  185</span>      t0 = t;</div>
-<div class="line"><span class="lineno">  186</span>    }</div>
-<div class="line"><span class="lineno">  187</span> </div>
-<div class="line"><span class="lineno">  188</span>    <span class="comment">/* Init... */</span></div>
-<div class="line"><span class="lineno">  189</span>    np = 0;</div>
-<div class="line"><span class="lineno">  190</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++) {</div>
-<div class="line"><span class="lineno">  191</span>      ahtd[ip] = avtd[ip] = rhtd[ip] = rvtd[ip] = 0;</div>
-<div class="line"><span class="lineno">  192</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++)</div>
-<div class="line"><span class="lineno">  193</span>        aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + ip] = rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + ip] = 0;</div>
-<div class="line"><span class="lineno">  194</span>    }</div>
+<div class="line"><span class="lineno">  166</span>    <span class="comment">/* Read atmopheric data... */</span></div>
+<div class="line"><span class="lineno">  167</span>    <span class="keywordflow">if</span> (!<a class="code hl_function" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a>(argv[f], &amp;ctl, atm1)</div>
+<div class="line"><span class="lineno">  168</span>        || !<a class="code hl_function" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a>(argv[f + 1], &amp;ctl, atm2))</div>
+<div class="line"><span class="lineno">  169</span>      <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  170</span> </div>
+<div class="line"><span class="lineno">  171</span>    <span class="comment">/* Check if structs match... */</span></div>
+<div class="line"><span class="lineno">  172</span>    <span class="keywordflow">if</span> (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a> != atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>)</div>
+<div class="line"><span class="lineno">  173</span>      <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Different numbers of particles!&quot;</span>);</div>
+<div class="line"><span class="lineno">  174</span> </div>
+<div class="line"><span class="lineno">  175</span>    <span class="comment">/* Get time from filename... */</span></div>
+<div class="line"><span class="lineno">  176</span>    <span class="keywordtype">int</span> time_offset = ctl.<a class="code hl_variable" href="structctl__t.html#a2509f56c50085b3d0f47c495da91b248">atm_type</a> &lt; 2 ? 23 : 22;</div>
+<div class="line"><span class="lineno">  177</span>    <span class="keyword">const</span> <span class="keywordtype">double</span> t = <a class="code hl_function" href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276">time_from_filename</a>(argv[f], time_offset, 1);</div>
+<div class="line"><span class="lineno">  178</span> </div>
+<div class="line"><span class="lineno">  179</span>    <span class="comment">/* Save initial time... */</span></div>
+<div class="line"><span class="lineno">  180</span>    <span class="keywordflow">if</span> (!init) {</div>
+<div class="line"><span class="lineno">  181</span>      init = 1;</div>
+<div class="line"><span class="lineno">  182</span>      t0 = t;</div>
+<div class="line"><span class="lineno">  183</span>    }</div>
+<div class="line"><span class="lineno">  184</span> </div>
+<div class="line"><span class="lineno">  185</span>    <span class="comment">/* Init... */</span></div>
+<div class="line"><span class="lineno">  186</span>    np = 0;</div>
+<div class="line"><span class="lineno">  187</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++) {</div>
+<div class="line"><span class="lineno">  188</span>      ahtd[ip] = avtd[ip] = rhtd[ip] = rvtd[ip] = 0;</div>
+<div class="line"><span class="lineno">  189</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++)</div>
+<div class="line"><span class="lineno">  190</span>        aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + ip] = rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + ip] = 0;</div>
+<div class="line"><span class="lineno">  191</span>    }</div>
+<div class="line"><span class="lineno">  192</span> </div>
+<div class="line"><span class="lineno">  193</span>    <span class="comment">/* Loop over air parcels... */</span></div>
+<div class="line"><span class="lineno">  194</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++) {</div>
 <div class="line"><span class="lineno">  195</span> </div>
-<div class="line"><span class="lineno">  196</span>    <span class="comment">/* Loop over air parcels... */</span></div>
-<div class="line"><span class="lineno">  197</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++) {</div>
-<div class="line"><span class="lineno">  198</span> </div>
-<div class="line"><span class="lineno">  199</span>      <span class="comment">/* Check air parcel index... */</span></div>
-<div class="line"><span class="lineno">  200</span>      <span class="keywordflow">if</span> (ctl.<a class="code hl_variable" href="structctl__t.html#aeac7515d696805592f6ae25bf38b7ada">qnt_idx</a> &gt; 0</div>
-<div class="line"><span class="lineno">  201</span>          &amp;&amp; (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#aeac7515d696805592f6ae25bf38b7ada">qnt_idx</a>][ip] != atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#aeac7515d696805592f6ae25bf38b7ada">qnt_idx</a>][ip]))</div>
-<div class="line"><span class="lineno">  202</span>        <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Air parcel index does not match!&quot;</span>);</div>
-<div class="line"><span class="lineno">  203</span> </div>
-<div class="line"><span class="lineno">  204</span>      <span class="comment">/* Check ensemble index... */</span></div>
-<div class="line"><span class="lineno">  205</span>      <span class="keywordflow">if</span> (ctl.<a class="code hl_variable" href="structctl__t.html#ace61e592378505a9011133dc02d249a7">qnt_ens</a> &gt; 0</div>
-<div class="line"><span class="lineno">  206</span>          &amp;&amp; (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#ace61e592378505a9011133dc02d249a7">qnt_ens</a>][ip] != ens</div>
-<div class="line"><span class="lineno">  207</span>              || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#ace61e592378505a9011133dc02d249a7">qnt_ens</a>][ip] != ens))</div>
-<div class="line"><span class="lineno">  208</span>        <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  209</span> </div>
-<div class="line"><span class="lineno">  210</span>      <span class="comment">/* Check time... */</span></div>
-<div class="line"><span class="lineno">  211</span>      <span class="keywordflow">if</span> (!isfinite(atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip]) || !isfinite(atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip]))</div>
-<div class="line"><span class="lineno">  212</span>        <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  213</span> </div>
-<div class="line"><span class="lineno">  214</span>      <span class="comment">/* Check spatial range... */</span></div>
-<div class="line"><span class="lineno">  215</span>      <span class="keywordflow">if</span> (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; p0 || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt; p1</div>
-<div class="line"><span class="lineno">  216</span>          || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &lt; lon0 || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &gt; lon1</div>
-<div class="line"><span class="lineno">  217</span>          || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; lat0 || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; lat1)</div>
-<div class="line"><span class="lineno">  218</span>        <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  219</span>      <span class="keywordflow">if</span> (atm2-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; p0 || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt; p1</div>
-<div class="line"><span class="lineno">  220</span>          || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &lt; lon0 || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &gt; lon1</div>
-<div class="line"><span class="lineno">  221</span>          || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; lat0 || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; lat1)</div>
-<div class="line"><span class="lineno">  222</span>        <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  223</span> </div>
-<div class="line"><span class="lineno">  224</span>      <span class="comment">/* Convert coordinates... */</span></div>
-<div class="line"><span class="lineno">  225</span>      <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], x1);</div>
-<div class="line"><span class="lineno">  226</span>      <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], x2);</div>
-<div class="line"><span class="lineno">  227</span>      z1 = <a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm1-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
-<div class="line"><span class="lineno">  228</span>      z2 = <a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm2-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
-<div class="line"><span class="lineno">  229</span> </div>
-<div class="line"><span class="lineno">  230</span>      <span class="comment">/* Calculate absolute transport deviations... */</span></div>
-<div class="line"><span class="lineno">  231</span>      ahtd[np] = <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x1, x2);</div>
-<div class="line"><span class="lineno">  232</span>      avtd[np] = z1 - z2;</div>
-<div class="line"><span class="lineno">  233</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++)</div>
-<div class="line"><span class="lineno">  234</span>        aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip] - atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip];</div>
+<div class="line"><span class="lineno">  196</span>      <span class="comment">/* Check air parcel index... */</span></div>
+<div class="line"><span class="lineno">  197</span>      <span class="keywordflow">if</span> (ctl.<a class="code hl_variable" href="structctl__t.html#aeac7515d696805592f6ae25bf38b7ada">qnt_idx</a> &gt; 0</div>
+<div class="line"><span class="lineno">  198</span>          &amp;&amp; (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#aeac7515d696805592f6ae25bf38b7ada">qnt_idx</a>][ip] != atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#aeac7515d696805592f6ae25bf38b7ada">qnt_idx</a>][ip]))</div>
+<div class="line"><span class="lineno">  199</span>        <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Air parcel index does not match!&quot;</span>);</div>
+<div class="line"><span class="lineno">  200</span> </div>
+<div class="line"><span class="lineno">  201</span>      <span class="comment">/* Check ensemble index... */</span></div>
+<div class="line"><span class="lineno">  202</span>      <span class="keywordflow">if</span> (ctl.<a class="code hl_variable" href="structctl__t.html#ace61e592378505a9011133dc02d249a7">qnt_ens</a> &gt; 0</div>
+<div class="line"><span class="lineno">  203</span>          &amp;&amp; (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#ace61e592378505a9011133dc02d249a7">qnt_ens</a>][ip] != ens</div>
+<div class="line"><span class="lineno">  204</span>              || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl.<a class="code hl_variable" href="structctl__t.html#ace61e592378505a9011133dc02d249a7">qnt_ens</a>][ip] != ens))</div>
+<div class="line"><span class="lineno">  205</span>        <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  206</span> </div>
+<div class="line"><span class="lineno">  207</span>      <span class="comment">/* Check time... */</span></div>
+<div class="line"><span class="lineno">  208</span>      <span class="keywordflow">if</span> (!isfinite(atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip]) || !isfinite(atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip]))</div>
+<div class="line"><span class="lineno">  209</span>        <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  210</span> </div>
+<div class="line"><span class="lineno">  211</span>      <span class="comment">/* Check spatial range... */</span></div>
+<div class="line"><span class="lineno">  212</span>      <span class="keywordflow">if</span> (atm1-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; p0 || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt; p1</div>
+<div class="line"><span class="lineno">  213</span>          || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &lt; lon0 || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &gt; lon1</div>
+<div class="line"><span class="lineno">  214</span>          || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; lat0 || atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; lat1)</div>
+<div class="line"><span class="lineno">  215</span>        <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  216</span>      <span class="keywordflow">if</span> (atm2-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; p0 || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt; p1</div>
+<div class="line"><span class="lineno">  217</span>          || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &lt; lon0 || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &gt; lon1</div>
+<div class="line"><span class="lineno">  218</span>          || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; lat0 || atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; lat1)</div>
+<div class="line"><span class="lineno">  219</span>        <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  220</span> </div>
+<div class="line"><span class="lineno">  221</span>      <span class="comment">/* Convert coordinates... */</span></div>
+<div class="line"><span class="lineno">  222</span>      <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], x1);</div>
+<div class="line"><span class="lineno">  223</span>      <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], x2);</div>
+<div class="line"><span class="lineno">  224</span>      z1 = <a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm1-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
+<div class="line"><span class="lineno">  225</span>      z2 = <a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm2-&gt;<a class="code hl_variable" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
+<div class="line"><span class="lineno">  226</span> </div>
+<div class="line"><span class="lineno">  227</span>      <span class="comment">/* Calculate absolute transport deviations... */</span></div>
+<div class="line"><span class="lineno">  228</span>      ahtd[np] = <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x1, x2);</div>
+<div class="line"><span class="lineno">  229</span>      avtd[np] = z1 - z2;</div>
+<div class="line"><span class="lineno">  230</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++)</div>
+<div class="line"><span class="lineno">  231</span>        aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip] - atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip];</div>
+<div class="line"><span class="lineno">  232</span> </div>
+<div class="line"><span class="lineno">  233</span>      <span class="comment">/* Calculate relative transport deviations... */</span></div>
+<div class="line"><span class="lineno">  234</span>      if (f &gt; 4) {</div>
 <div class="line"><span class="lineno">  235</span> </div>
-<div class="line"><span class="lineno">  236</span>      <span class="comment">/* Calculate relative transport deviations... */</span></div>
-<div class="line"><span class="lineno">  237</span>      if (f &gt; 4) {</div>
-<div class="line"><span class="lineno">  238</span> </div>
-<div class="line"><span class="lineno">  239</span>        <span class="comment">/* Get trajectory lengths... */</span></div>
-<div class="line"><span class="lineno">  240</span>        <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, lon1_old[ip], lat1_old[ip], x0);</div>
-<div class="line"><span class="lineno">  241</span>        lh1[ip] += <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x0, x1);</div>
-<div class="line"><span class="lineno">  242</span>        lv1[ip] += fabs(z1_old[ip] - z1);</div>
-<div class="line"><span class="lineno">  243</span> </div>
-<div class="line"><span class="lineno">  244</span>        <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, lon2_old[ip], lat2_old[ip], x0);</div>
-<div class="line"><span class="lineno">  245</span>        lh2[ip] += <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x0, x2);</div>
-<div class="line"><span class="lineno">  246</span>        lv2[ip] += fabs(z2_old[ip] - z2);</div>
-<div class="line"><span class="lineno">  247</span> </div>
-<div class="line"><span class="lineno">  248</span>        <span class="comment">/* Get relative transport deviations... */</span></div>
-<div class="line"><span class="lineno">  249</span>        <span class="keywordflow">if</span> (lh1[ip] + lh2[ip] &gt; 0)</div>
-<div class="line"><span class="lineno">  250</span>          rhtd[np] = 200. * <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x1, x2) / (lh1[ip] + lh2[ip]);</div>
-<div class="line"><span class="lineno">  251</span>        <span class="keywordflow">if</span> (lv1[ip] + lv2[ip] &gt; 0)</div>
-<div class="line"><span class="lineno">  252</span>          rvtd[np] = 200. * (z1 - z2) / (lv1[ip] + lv2[ip]);</div>
-<div class="line"><span class="lineno">  253</span>      }</div>
-<div class="line"><span class="lineno">  254</span> </div>
-<div class="line"><span class="lineno">  255</span>      <span class="comment">/* Get relative transport deviations... */</span></div>
-<div class="line"><span class="lineno">  256</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  257</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> q1 = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip];</div>
-<div class="line"><span class="lineno">  258</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> q2 = atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip];</div>
-<div class="line"><span class="lineno">  259</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> denom = fabs(q1) + fabs(q2);</div>
-<div class="line"><span class="lineno">  260</span>        <span class="keywordflow">if</span> (denom &lt;= rel_min[iq])</div>
-<div class="line"><span class="lineno">  261</span>          rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = GSL_NAN;</div>
-<div class="line"><span class="lineno">  262</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  263</span>          rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = 200. * (q1 - q2) / denom;</div>
-<div class="line"><span class="lineno">  264</span>      }</div>
-<div class="line"><span class="lineno">  265</span> </div>
-<div class="line"><span class="lineno">  266</span>      <span class="comment">/* Save positions of air parcels... */</span></div>
-<div class="line"><span class="lineno">  267</span>      lon1_old[ip] = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip];</div>
-<div class="line"><span class="lineno">  268</span>      lat1_old[ip] = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
-<div class="line"><span class="lineno">  269</span>      z1_old[ip] = z1;</div>
-<div class="line"><span class="lineno">  270</span> </div>
-<div class="line"><span class="lineno">  271</span>      lon2_old[ip] = atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip];</div>
-<div class="line"><span class="lineno">  272</span>      lat2_old[ip] = atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
-<div class="line"><span class="lineno">  273</span>      z2_old[ip] = z2;</div>
-<div class="line"><span class="lineno">  274</span> </div>
-<div class="line"><span class="lineno">  275</span>      <span class="comment">/* Increment air parcel counter... */</span></div>
-<div class="line"><span class="lineno">  276</span>      np++;</div>
-<div class="line"><span class="lineno">  277</span>    }</div>
+<div class="line"><span class="lineno">  236</span>        <span class="comment">/* Get trajectory lengths... */</span></div>
+<div class="line"><span class="lineno">  237</span>        <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, lon1_old[ip], lat1_old[ip], x0);</div>
+<div class="line"><span class="lineno">  238</span>        lh1[ip] += <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x0, x1);</div>
+<div class="line"><span class="lineno">  239</span>        lv1[ip] += fabs(z1_old[ip] - z1);</div>
+<div class="line"><span class="lineno">  240</span> </div>
+<div class="line"><span class="lineno">  241</span>        <a class="code hl_function" href="mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d">geo2cart</a>(0, lon2_old[ip], lat2_old[ip], x0);</div>
+<div class="line"><span class="lineno">  242</span>        lh2[ip] += <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x0, x2);</div>
+<div class="line"><span class="lineno">  243</span>        lv2[ip] += fabs(z2_old[ip] - z2);</div>
+<div class="line"><span class="lineno">  244</span> </div>
+<div class="line"><span class="lineno">  245</span>        <span class="comment">/* Get relative transport deviations... */</span></div>
+<div class="line"><span class="lineno">  246</span>        <span class="keywordflow">if</span> (lh1[ip] + lh2[ip] &gt; 0)</div>
+<div class="line"><span class="lineno">  247</span>          rhtd[np] = 200. * <a class="code hl_define" href="mptrac_8h.html#ae733a5a3a9e9a85474da2105655a0dc4">DIST</a>(x1, x2) / (lh1[ip] + lh2[ip]);</div>
+<div class="line"><span class="lineno">  248</span>        <span class="keywordflow">if</span> (lv1[ip] + lv2[ip] &gt; 0)</div>
+<div class="line"><span class="lineno">  249</span>          rvtd[np] = 200. * (z1 - z2) / (lv1[ip] + lv2[ip]);</div>
+<div class="line"><span class="lineno">  250</span>      }</div>
+<div class="line"><span class="lineno">  251</span> </div>
+<div class="line"><span class="lineno">  252</span>      <span class="comment">/* Get relative transport deviations... */</span></div>
+<div class="line"><span class="lineno">  253</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  254</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> q1 = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip];</div>
+<div class="line"><span class="lineno">  255</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> q2 = atm2-&gt;<a class="code hl_variable" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq][ip];</div>
+<div class="line"><span class="lineno">  256</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> denom = fabs(q1) + fabs(q2);</div>
+<div class="line"><span class="lineno">  257</span>        <span class="keywordflow">if</span> (denom &lt;= rel_min[iq])</div>
+<div class="line"><span class="lineno">  258</span>          rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = GSL_NAN;</div>
+<div class="line"><span class="lineno">  259</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  260</span>          rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = 200. * (q1 - q2) / denom;</div>
+<div class="line"><span class="lineno">  261</span>      }</div>
+<div class="line"><span class="lineno">  262</span> </div>
+<div class="line"><span class="lineno">  263</span>      <span class="comment">/* Save positions of air parcels... */</span></div>
+<div class="line"><span class="lineno">  264</span>      lon1_old[ip] = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip];</div>
+<div class="line"><span class="lineno">  265</span>      lat1_old[ip] = atm1-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
+<div class="line"><span class="lineno">  266</span>      z1_old[ip] = z1;</div>
+<div class="line"><span class="lineno">  267</span> </div>
+<div class="line"><span class="lineno">  268</span>      lon2_old[ip] = atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip];</div>
+<div class="line"><span class="lineno">  269</span>      lat2_old[ip] = atm2-&gt;<a class="code hl_variable" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
+<div class="line"><span class="lineno">  270</span>      z2_old[ip] = z2;</div>
+<div class="line"><span class="lineno">  271</span> </div>
+<div class="line"><span class="lineno">  272</span>      <span class="comment">/* Increment air parcel counter... */</span></div>
+<div class="line"><span class="lineno">  273</span>      np++;</div>
+<div class="line"><span class="lineno">  274</span>    }</div>
+<div class="line"><span class="lineno">  275</span> </div>
+<div class="line"><span class="lineno">  276</span>    <span class="comment">/* Filter data... */</span></div>
+<div class="line"><span class="lineno">  277</span>    <span class="keywordflow">if</span> (zscore &gt; 0 &amp;&amp; np &gt; 1) {</div>
 <div class="line"><span class="lineno">  278</span> </div>
-<div class="line"><span class="lineno">  279</span>    <span class="comment">/* Filter data... */</span></div>
-<div class="line"><span class="lineno">  280</span>    <span class="keywordflow">if</span> (zscore &gt; 0 &amp;&amp; np &gt; 1) {</div>
-<div class="line"><span class="lineno">  281</span> </div>
-<div class="line"><span class="lineno">  282</span>      <span class="comment">/* Get means and standard deviations of transport deviations... */</span></div>
-<div class="line"><span class="lineno">  283</span>      <span class="keyword">const</span> <span class="keywordtype">size_t</span> n = (size_t) np;</div>
-<div class="line"><span class="lineno">  284</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> muh = gsl_stats_mean(ahtd, 1, n);</div>
-<div class="line"><span class="lineno">  285</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> muv = gsl_stats_mean(avtd, 1, n);</div>
-<div class="line"><span class="lineno">  286</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> sigh = gsl_stats_sd(ahtd, 1, n);</div>
-<div class="line"><span class="lineno">  287</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> sigv = gsl_stats_sd(avtd, 1, n);</div>
-<div class="line"><span class="lineno">  288</span> </div>
-<div class="line"><span class="lineno">  289</span>      <span class="comment">/* Filter data... */</span></div>
-<div class="line"><span class="lineno">  290</span>      np = 0;</div>
-<div class="line"><span class="lineno">  291</span>      <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; n; i++)</div>
-<div class="line"><span class="lineno">  292</span>        <span class="keywordflow">if</span> (fabs((ahtd[i] - muh) / sigh) &lt; zscore</div>
-<div class="line"><span class="lineno">  293</span>            &amp;&amp; fabs((avtd[i] - muv) / sigv) &lt; zscore) {</div>
-<div class="line"><span class="lineno">  294</span>          ahtd[np] = ahtd[i];</div>
-<div class="line"><span class="lineno">  295</span>          rhtd[np] = rhtd[i];</div>
-<div class="line"><span class="lineno">  296</span>          avtd[np] = avtd[i];</div>
-<div class="line"><span class="lineno">  297</span>          rvtd[np] = rvtd[i];</div>
-<div class="line"><span class="lineno">  298</span>          <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  299</span>            aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + (int) i];</div>
-<div class="line"><span class="lineno">  300</span>            rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + (int) i];</div>
-<div class="line"><span class="lineno">  301</span>          }</div>
-<div class="line"><span class="lineno">  302</span>          np++;</div>
-<div class="line"><span class="lineno">  303</span>        }</div>
-<div class="line"><span class="lineno">  304</span>    }</div>
-<div class="line"><span class="lineno">  305</span> </div>
-<div class="line"><span class="lineno">  306</span>    <span class="comment">/* Get statistics... */</span></div>
-<div class="line"><span class="lineno">  307</span>    <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;mean&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  308</span>      ahtdm = gsl_stats_mean(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  309</span>      rhtdm = gsl_stats_mean(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  310</span>      avtdm = gsl_stats_mean(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  311</span>      rvtdm = gsl_stats_mean(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  312</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  313</span>        aqtdm[iq] = gsl_stats_mean(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  314</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  315</span>      }</div>
-<div class="line"><span class="lineno">  316</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;stddev&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  317</span>      ahtdm = gsl_stats_sd(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  318</span>      rhtdm = gsl_stats_sd(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  319</span>      avtdm = gsl_stats_sd(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  320</span>      rvtdm = gsl_stats_sd(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  321</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  322</span>        aqtdm[iq] = gsl_stats_sd(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  323</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  324</span>      }</div>
-<div class="line"><span class="lineno">  325</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;min&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  326</span>      ahtdm = gsl_stats_min(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  327</span>      rhtdm = gsl_stats_min(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  328</span>      avtdm = gsl_stats_min(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  329</span>      rvtdm = gsl_stats_min(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  330</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  331</span>        aqtdm[iq] = gsl_stats_min(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  332</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  333</span>      }</div>
-<div class="line"><span class="lineno">  334</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;max&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  335</span>      ahtdm = gsl_stats_max(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  336</span>      rhtdm = gsl_stats_max(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  337</span>      avtdm = gsl_stats_max(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  338</span>      rvtdm = gsl_stats_max(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  339</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  340</span>        aqtdm[iq] = gsl_stats_max(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  341</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  342</span>      }</div>
-<div class="line"><span class="lineno">  343</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;skew&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  344</span>      ahtdm = gsl_stats_skew(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  345</span>      rhtdm = gsl_stats_skew(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  346</span>      avtdm = gsl_stats_skew(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  347</span>      rvtdm = gsl_stats_skew(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  348</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  349</span>        aqtdm[iq] = gsl_stats_skew(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  350</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  351</span>      }</div>
-<div class="line"><span class="lineno">  352</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;kurt&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  353</span>      ahtdm = gsl_stats_kurtosis(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  354</span>      rhtdm = gsl_stats_kurtosis(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  355</span>      avtdm = gsl_stats_kurtosis(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  356</span>      rvtdm = gsl_stats_kurtosis(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  357</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  358</span>        aqtdm[iq] = gsl_stats_kurtosis(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  359</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  360</span>      }</div>
-<div class="line"><span class="lineno">  361</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;absdev&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  362</span>      ahtdm = gsl_stats_absdev_m(ahtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
-<div class="line"><span class="lineno">  363</span>      rhtdm = gsl_stats_absdev_m(rhtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
-<div class="line"><span class="lineno">  364</span>      avtdm = gsl_stats_absdev_m(avtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
-<div class="line"><span class="lineno">  365</span>      rvtdm = gsl_stats_absdev_m(rvtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
-<div class="line"><span class="lineno">  366</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  367</span>        aqtdm[iq] = gsl_stats_absdev_m(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
-<div class="line"><span class="lineno">  368</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  369</span>      }</div>
-<div class="line"><span class="lineno">  370</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;median&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  371</span>      ahtdm = gsl_stats_median(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  372</span>      rhtdm = gsl_stats_median(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  373</span>      avtdm = gsl_stats_median(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  374</span>      rvtdm = gsl_stats_median(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  375</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  376</span>        aqtdm[iq] = gsl_stats_median(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><span class="lineno">  377</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  378</span>      }</div>
-<div class="line"><span class="lineno">  379</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;mad&quot;</span>) == 0) {</div>
-<div class="line"><span class="lineno">  380</span>      ahtdm = gsl_stats_mad0(ahtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
-<div class="line"><span class="lineno">  381</span>      rhtdm = gsl_stats_mad0(rhtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
-<div class="line"><span class="lineno">  382</span>      avtdm = gsl_stats_mad0(avtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
-<div class="line"><span class="lineno">  383</span>      rvtdm = gsl_stats_mad0(rvtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
-<div class="line"><span class="lineno">  384</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  385</span>        aqtdm[iq] = gsl_stats_mad0(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np, work);</div>
-<div class="line"><span class="lineno">  386</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
-<div class="line"><span class="lineno">  387</span>      }</div>
-<div class="line"><span class="lineno">  388</span>    } <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  389</span>      <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Unknown parameter!&quot;</span>);</div>
-<div class="line"><span class="lineno">  390</span> </div>
-<div class="line"><span class="lineno">  391</span>    <span class="comment">/* Write output... */</span></div>
-<div class="line"><span class="lineno">  392</span>    fprintf(out, <span class="stringliteral">&quot;%.2f %.2f %g %g %g %g&quot;</span>, t, t - t0,</div>
-<div class="line"><span class="lineno">  393</span>            ahtdm, rhtdm, avtdm, rvtdm);</div>
-<div class="line"><span class="lineno">  394</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><span class="lineno">  395</span>      fprintf(out, <span class="stringliteral">&quot; &quot;</span>);</div>
-<div class="line"><span class="lineno">  396</span>      fprintf(out, ctl.<a class="code hl_variable" href="structctl__t.html#a0811163b931ce18a07fbad57ea280a85">qnt_format</a>[iq], aqtdm[iq]);</div>
-<div class="line"><span class="lineno">  397</span>      fprintf(out, <span class="stringliteral">&quot; &quot;</span>);</div>
-<div class="line"><span class="lineno">  398</span>      fprintf(out, ctl.<a class="code hl_variable" href="structctl__t.html#a0811163b931ce18a07fbad57ea280a85">qnt_format</a>[iq], rqtdm[iq]);</div>
-<div class="line"><span class="lineno">  399</span>    }</div>
-<div class="line"><span class="lineno">  400</span>    fprintf(out, <span class="stringliteral">&quot; %d\n&quot;</span>, np);</div>
-<div class="line"><span class="lineno">  401</span>  }</div>
+<div class="line"><span class="lineno">  279</span>      <span class="comment">/* Get means and standard deviations of transport deviations... */</span></div>
+<div class="line"><span class="lineno">  280</span>      <span class="keyword">const</span> <span class="keywordtype">size_t</span> n = (size_t) np;</div>
+<div class="line"><span class="lineno">  281</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> muh = gsl_stats_mean(ahtd, 1, n);</div>
+<div class="line"><span class="lineno">  282</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> muv = gsl_stats_mean(avtd, 1, n);</div>
+<div class="line"><span class="lineno">  283</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> sigh = gsl_stats_sd(ahtd, 1, n);</div>
+<div class="line"><span class="lineno">  284</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> sigv = gsl_stats_sd(avtd, 1, n);</div>
+<div class="line"><span class="lineno">  285</span> </div>
+<div class="line"><span class="lineno">  286</span>      <span class="comment">/* Filter data... */</span></div>
+<div class="line"><span class="lineno">  287</span>      np = 0;</div>
+<div class="line"><span class="lineno">  288</span>      <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; n; i++)</div>
+<div class="line"><span class="lineno">  289</span>        <span class="keywordflow">if</span> (fabs((ahtd[i] - muh) / sigh) &lt; zscore</div>
+<div class="line"><span class="lineno">  290</span>            &amp;&amp; fabs((avtd[i] - muv) / sigv) &lt; zscore) {</div>
+<div class="line"><span class="lineno">  291</span>          ahtd[np] = ahtd[i];</div>
+<div class="line"><span class="lineno">  292</span>          rhtd[np] = rhtd[i];</div>
+<div class="line"><span class="lineno">  293</span>          avtd[np] = avtd[i];</div>
+<div class="line"><span class="lineno">  294</span>          rvtd[np] = rvtd[i];</div>
+<div class="line"><span class="lineno">  295</span>          <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  296</span>            aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + (int) i];</div>
+<div class="line"><span class="lineno">  297</span>            rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + np] = rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a> + (int) i];</div>
+<div class="line"><span class="lineno">  298</span>          }</div>
+<div class="line"><span class="lineno">  299</span>          np++;</div>
+<div class="line"><span class="lineno">  300</span>        }</div>
+<div class="line"><span class="lineno">  301</span>    }</div>
+<div class="line"><span class="lineno">  302</span> </div>
+<div class="line"><span class="lineno">  303</span>    <span class="comment">/* Get statistics... */</span></div>
+<div class="line"><span class="lineno">  304</span>    <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;mean&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  305</span>      ahtdm = gsl_stats_mean(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  306</span>      rhtdm = gsl_stats_mean(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  307</span>      avtdm = gsl_stats_mean(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  308</span>      rvtdm = gsl_stats_mean(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  309</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  310</span>        aqtdm[iq] = gsl_stats_mean(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  311</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  312</span>      }</div>
+<div class="line"><span class="lineno">  313</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;stddev&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  314</span>      ahtdm = gsl_stats_sd(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  315</span>      rhtdm = gsl_stats_sd(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  316</span>      avtdm = gsl_stats_sd(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  317</span>      rvtdm = gsl_stats_sd(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  318</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  319</span>        aqtdm[iq] = gsl_stats_sd(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  320</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  321</span>      }</div>
+<div class="line"><span class="lineno">  322</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;min&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  323</span>      ahtdm = gsl_stats_min(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  324</span>      rhtdm = gsl_stats_min(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  325</span>      avtdm = gsl_stats_min(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  326</span>      rvtdm = gsl_stats_min(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  327</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  328</span>        aqtdm[iq] = gsl_stats_min(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  329</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  330</span>      }</div>
+<div class="line"><span class="lineno">  331</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;max&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  332</span>      ahtdm = gsl_stats_max(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  333</span>      rhtdm = gsl_stats_max(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  334</span>      avtdm = gsl_stats_max(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  335</span>      rvtdm = gsl_stats_max(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  336</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  337</span>        aqtdm[iq] = gsl_stats_max(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  338</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  339</span>      }</div>
+<div class="line"><span class="lineno">  340</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;skew&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  341</span>      ahtdm = gsl_stats_skew(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  342</span>      rhtdm = gsl_stats_skew(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  343</span>      avtdm = gsl_stats_skew(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  344</span>      rvtdm = gsl_stats_skew(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  345</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  346</span>        aqtdm[iq] = gsl_stats_skew(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  347</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  348</span>      }</div>
+<div class="line"><span class="lineno">  349</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;kurt&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  350</span>      ahtdm = gsl_stats_kurtosis(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  351</span>      rhtdm = gsl_stats_kurtosis(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  352</span>      avtdm = gsl_stats_kurtosis(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  353</span>      rvtdm = gsl_stats_kurtosis(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  354</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  355</span>        aqtdm[iq] = gsl_stats_kurtosis(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  356</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  357</span>      }</div>
+<div class="line"><span class="lineno">  358</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;absdev&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  359</span>      ahtdm = gsl_stats_absdev_m(ahtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><span class="lineno">  360</span>      rhtdm = gsl_stats_absdev_m(rhtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><span class="lineno">  361</span>      avtdm = gsl_stats_absdev_m(avtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><span class="lineno">  362</span>      rvtdm = gsl_stats_absdev_m(rvtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><span class="lineno">  363</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  364</span>        aqtdm[iq] = gsl_stats_absdev_m(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><span class="lineno">  365</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  366</span>      }</div>
+<div class="line"><span class="lineno">  367</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;median&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  368</span>      ahtdm = gsl_stats_median(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  369</span>      rhtdm = gsl_stats_median(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  370</span>      avtdm = gsl_stats_median(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  371</span>      rvtdm = gsl_stats_median(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  372</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  373</span>        aqtdm[iq] = gsl_stats_median(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><span class="lineno">  374</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  375</span>      }</div>
+<div class="line"><span class="lineno">  376</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;mad&quot;</span>) == 0) {</div>
+<div class="line"><span class="lineno">  377</span>      ahtdm = gsl_stats_mad0(ahtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
+<div class="line"><span class="lineno">  378</span>      rhtdm = gsl_stats_mad0(rhtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
+<div class="line"><span class="lineno">  379</span>      avtdm = gsl_stats_mad0(avtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
+<div class="line"><span class="lineno">  380</span>      rvtdm = gsl_stats_mad0(rvtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
+<div class="line"><span class="lineno">  381</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  382</span>        aqtdm[iq] = gsl_stats_mad0(&amp;aqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np, work);</div>
+<div class="line"><span class="lineno">  383</span>        rqtdm[iq] = <a class="code hl_function" href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a>(&amp;rqtd[iq * <a class="code hl_define" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], np, argv[3], work);</div>
+<div class="line"><span class="lineno">  384</span>      }</div>
+<div class="line"><span class="lineno">  385</span>    } <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  386</span>      <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Unknown parameter!&quot;</span>);</div>
+<div class="line"><span class="lineno">  387</span> </div>
+<div class="line"><span class="lineno">  388</span>    <span class="comment">/* Write output... */</span></div>
+<div class="line"><span class="lineno">  389</span>    fprintf(out, <span class="stringliteral">&quot;%.2f %.2f %g %g %g %g&quot;</span>, t, t - t0,</div>
+<div class="line"><span class="lineno">  390</span>            ahtdm, rhtdm, avtdm, rvtdm);</div>
+<div class="line"><span class="lineno">  391</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iq = 0; iq &lt; ctl.<a class="code hl_variable" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
+<div class="line"><span class="lineno">  392</span>      fprintf(out, <span class="stringliteral">&quot; &quot;</span>);</div>
+<div class="line"><span class="lineno">  393</span>      fprintf(out, ctl.<a class="code hl_variable" href="structctl__t.html#a0811163b931ce18a07fbad57ea280a85">qnt_format</a>[iq], aqtdm[iq]);</div>
+<div class="line"><span class="lineno">  394</span>      fprintf(out, <span class="stringliteral">&quot; &quot;</span>);</div>
+<div class="line"><span class="lineno">  395</span>      fprintf(out, ctl.<a class="code hl_variable" href="structctl__t.html#a0811163b931ce18a07fbad57ea280a85">qnt_format</a>[iq], rqtdm[iq]);</div>
+<div class="line"><span class="lineno">  396</span>    }</div>
+<div class="line"><span class="lineno">  397</span>    fprintf(out, <span class="stringliteral">&quot; %d\n&quot;</span>, np);</div>
+<div class="line"><span class="lineno">  398</span>  }</div>
+<div class="line"><span class="lineno">  399</span> </div>
+<div class="line"><span class="lineno">  400</span>  <span class="comment">/* Close file... */</span></div>
+<div class="line"><span class="lineno">  401</span>  fclose(out);</div>
 <div class="line"><span class="lineno">  402</span> </div>
-<div class="line"><span class="lineno">  403</span>  <span class="comment">/* Close file... */</span></div>
-<div class="line"><span class="lineno">  404</span>  fclose(out);</div>
-<div class="line"><span class="lineno">  405</span> </div>
-<div class="line"><span class="lineno">  406</span>  <span class="comment">/* Free... */</span></div>
-<div class="line"><span class="lineno">  407</span>  free(atm1);</div>
-<div class="line"><span class="lineno">  408</span>  free(atm2);</div>
-<div class="line"><span class="lineno">  409</span>  free(lon1_old);</div>
-<div class="line"><span class="lineno">  410</span>  free(lat1_old);</div>
-<div class="line"><span class="lineno">  411</span>  free(z1_old);</div>
-<div class="line"><span class="lineno">  412</span>  free(lh1);</div>
-<div class="line"><span class="lineno">  413</span>  free(lv1);</div>
-<div class="line"><span class="lineno">  414</span>  free(lon2_old);</div>
-<div class="line"><span class="lineno">  415</span>  free(lat2_old);</div>
-<div class="line"><span class="lineno">  416</span>  free(z2_old);</div>
-<div class="line"><span class="lineno">  417</span>  free(lh2);</div>
-<div class="line"><span class="lineno">  418</span>  free(lv2);</div>
-<div class="line"><span class="lineno">  419</span>  free(ahtd);</div>
-<div class="line"><span class="lineno">  420</span>  free(avtd);</div>
-<div class="line"><span class="lineno">  421</span>  free(aqtd);</div>
-<div class="line"><span class="lineno">  422</span>  free(rhtd);</div>
-<div class="line"><span class="lineno">  423</span>  free(rvtd);</div>
-<div class="line"><span class="lineno">  424</span>  free(rqtd);</div>
-<div class="line"><span class="lineno">  425</span>  free(work);</div>
-<div class="line"><span class="lineno">  426</span> </div>
-<div class="line"><span class="lineno">  427</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
-<div class="line"><span class="lineno">  428</span>}</div>
-<div class="ttc" id="aatm__dist_8c_html_a86e96db14ef146843d4b4cab17015cb8"><div class="ttname"><a href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a></div><div class="ttdeci">double finite_stat(const double *data, int np, const char *param, double *work)</div><div class="ttdoc">Calculate a statistic on finite values only.</div><div class="ttdef"><b>Definition:</b> <a href="atm__dist_8c_source.html#l00465">atm_dist.c:465</a></div></div>
+<div class="line"><span class="lineno">  403</span>  <span class="comment">/* Free... */</span></div>
+<div class="line"><span class="lineno">  404</span>  free(atm1);</div>
+<div class="line"><span class="lineno">  405</span>  free(atm2);</div>
+<div class="line"><span class="lineno">  406</span>  free(lon1_old);</div>
+<div class="line"><span class="lineno">  407</span>  free(lat1_old);</div>
+<div class="line"><span class="lineno">  408</span>  free(z1_old);</div>
+<div class="line"><span class="lineno">  409</span>  free(lh1);</div>
+<div class="line"><span class="lineno">  410</span>  free(lv1);</div>
+<div class="line"><span class="lineno">  411</span>  free(lon2_old);</div>
+<div class="line"><span class="lineno">  412</span>  free(lat2_old);</div>
+<div class="line"><span class="lineno">  413</span>  free(z2_old);</div>
+<div class="line"><span class="lineno">  414</span>  free(lh2);</div>
+<div class="line"><span class="lineno">  415</span>  free(lv2);</div>
+<div class="line"><span class="lineno">  416</span>  free(ahtd);</div>
+<div class="line"><span class="lineno">  417</span>  free(avtd);</div>
+<div class="line"><span class="lineno">  418</span>  free(aqtd);</div>
+<div class="line"><span class="lineno">  419</span>  free(rhtd);</div>
+<div class="line"><span class="lineno">  420</span>  free(rvtd);</div>
+<div class="line"><span class="lineno">  421</span>  free(rqtd);</div>
+<div class="line"><span class="lineno">  422</span>  free(work);</div>
+<div class="line"><span class="lineno">  423</span> </div>
+<div class="line"><span class="lineno">  424</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
+<div class="line"><span class="lineno">  425</span>}</div>
+<div class="ttc" id="aatm__dist_8c_html_a86e96db14ef146843d4b4cab17015cb8"><div class="ttname"><a href="atm__dist_8c.html#a86e96db14ef146843d4b4cab17015cb8">finite_stat</a></div><div class="ttdeci">double finite_stat(const double *data, int np, const char *param, double *work)</div><div class="ttdoc">Calculate a statistic on finite values only.</div><div class="ttdef"><b>Definition:</b> <a href="atm__dist_8c_source.html#l00462">atm_dist.c:462</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a7d07c7baed461e240ff50585ddeed80a"><div class="ttname"><a href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, const int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Scans a control file or command-line arguments for a specified variable.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l11879">mptrac.c:11879</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a96e5b8b7db1bad827222e732ac6d1633"><div class="ttname"><a href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a></div><div class="ttdeci">int mptrac_read_atm(const char *filename, const ctl_t *ctl, atm_t *atm)</div><div class="ttdoc">Reads air parcel data from a specified file into the given atmospheric structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l06146">mptrac.c:6146</a></div></div>
 <div class="ttc" id="amptrac_8c_html_aaffa77ce2887c652b401f992f4886276"><div class="ttname"><a href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276">time_from_filename</a></div><div class="ttdeci">double time_from_filename(const char *filename, const int offset, const int with_seconds)</div><div class="ttdoc">Extracts and converts a timestamp from a filename to Julian seconds.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l12151">mptrac.c:12151</a></div></div>
