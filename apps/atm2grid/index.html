@@ -900,9 +900,11 @@ on the command line as <code>KEY VALUE</code> pairs.</p>
 <p>The control parameter <code>GRID_BASENAME</code> must be set. The output filename
 is derived from <code>GRID_BASENAME</code> and the time stamp read from <code>atm_in</code>.
 For tabular grid output, the file suffix is <code>.tab</code>; for netCDF grid
-output, the file suffix is <code>.nc</code>.</p>
+output, the file suffix is <code>.nc</code>. The expected timestamp format in
+<code>atm_in</code> is <code>YYYY_MM_DD_HH_MM_SS</code>, and the generated grid output file
+uses the same timestamp convention.</p>
 <p>Example:</p>
-<pre><code class="language-bash">./atm2grid trac.ctl atm_2011_06_05_00_00.tab GRID_BASENAME grid
+<pre><code class="language-bash">./atm2grid trac.ctl atm_2011_06_05_00_00_00.tab GRID_BASENAME grid
 </code></pre>
 
 

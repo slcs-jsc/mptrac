@@ -889,6 +889,10 @@
 <pre><code># calling atm_stat
 $ atm_stat  &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]
 </code></pre>
+<p>The simulation time is inferred from each input atmospheric filename.
+For time-stamped particle files, the expected filename pattern is
+<code>..._YYYY_MM_DD_HH_MM_SS.tab</code> or the corresponding binary/netCDF
+variant.</p>
 <p>Statistical parameters that can be calculated are:</p>
 <ul>
 <li>mean</li>

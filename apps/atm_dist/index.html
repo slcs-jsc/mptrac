@@ -895,6 +895,10 @@ $ ./atm_dist  &lt;ctl&gt; &lt;dist.tab&gt; &lt;param&gt; &lt;atm1a&gt; &lt;atm1b
 <em> dist.tab: the output file where the deviations should be written into<br />
 </em> param: the deviation parameters to be calculated, for example <code>absdev</code>.
 * atm1a and atm1b: the trajectory files that should be compared</p>
+<p>The simulation time is inferred from the input atmospheric filenames.
+For time-stamped particle files, the expected filename pattern is
+<code>..._YYYY_MM_DD_HH_MM_SS.tab</code> or the corresponding binary/netCDF
+variant.</p>
 <p>Statistical parameters that can be calculated are:</p>
 <ul>
 <li>mean</li>
@@ -909,7 +913,7 @@ $ ./atm_dist  &lt;ctl&gt; &lt;dist.tab&gt; &lt;param&gt; &lt;atm1a&gt; &lt;atm1b
 </ul>
 <p>The statistics are calculated with the GNU Scientific Library. More information on the <a href="https://www.gnu.org/software/gsl/doc/html/statistics.html">GNU Scientific Library statistics functions</a> can be found on their webpage.</p>
 <p>An example command line for running atm_dist looks like as follows:</p>
-<pre><code>./atm_dist trac.ctl dist_absdev.tab absdev traj_sim1_2017_01_01_00.tab traj_sim2_2017_01_01_00.tab
+<pre><code>./atm_dist trac.ctl dist_absdev.tab absdev traj_sim1_2017_01_01_00_00_00.tab traj_sim2_2017_01_01_00_00_00.tab
 </code></pre>
 <p>Note: The command line needs to be adjusted to the respective directories were the files (or executables in case of atm_dist) are located. </p>
 <p>Additional parameters that can be used when running atm_dist are:</p>

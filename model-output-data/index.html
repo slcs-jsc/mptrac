@@ -1153,7 +1153,10 @@ parameters. The air parcel output file is set with the parameters
 <code>ATM_TYPE</code> and <code>ATM_TYPE_OUT</code>, where <code>ATM_TYPE</code> defines the file
 format for reading and <code>ATM_TYPE_OUT</code> defines the writing file
 format. However, if <code>ATM_TYPE_OUT</code> is not explicitly set in the
-control file, <code>ATM_TYPE</code> sets the file format for reading and writing.</p>
+control file, <code>ATM_TYPE</code> sets the file format for reading and writing.
+The default MPTRAC output filename pattern for time-resolved particle
+output is <code>&lt;ATM_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>, i.e. output file
+names include seconds explicitly.</p>
 <table>
 <thead>
 <tr>
@@ -1200,7 +1203,8 @@ vertical layer to obtain total column values, or to a specific
 longitude band to compute zonal means. The grid output is configured
 using the <code>GRID_*</code> control parameters.  Gridded data can be written in
 either ASCII or netCDF format, depending on the setting of the
-<code>GRID_TYPE</code> parameter.</p>
+<code>GRID_TYPE</code> parameter. Time-resolved grid output files follow the
+pattern <code>&lt;GRID_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>.</p>
 <table>
 <thead>
 <tr>
@@ -1246,7 +1250,9 @@ deviations of the quantities selected for output for each set of air
 parcels having the same ensemble index. The ensemble output if of
 interest, if tracer dispersion from multiple point sources needs to be
 quantified by means of a single model run, for instance. The ensemble
-output is configured using the <code>ENS_*</code> control parameters.</p>
+output is configured using the <code>ENS_*</code> control parameters. Time-resolved
+ensemble output files follow the pattern
+<code>&lt;ENS_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.tab</code>.</p>
 <h2 id="profile-data">Profile data</h2>
 <p>The profile output of MPTRAC is similar to the grid output as it
 creates vertical profiles from the model data on a regular
