@@ -18,6 +18,10 @@ authors:
     email: j.clemens@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0000-0002-2422-9454'
+  - given-names: Robin
+    family-names: Brase
+    email: robin.brase@tum.de
+    affiliation: Technische Universität München
   - given-names: Sabine
     family-names: Griessbach
     email: s.griessbach@fz-juelich.de
@@ -63,6 +67,11 @@ authors:
     email: n.nobre.wittwer@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0009-0001-3175-0889'
+  - given-names: Moritz
+    family-names: Oliveira Makowski
+    email: moritz.makowski@tum.de
+    affiliation: Technische Universität München
+    orcid: 'https://orcid.org/0000-0002-2948-2993'
   - given-names: Jonas
     family-names: Sonnabend
     email: j.sonnabend@fz-juelich.de
