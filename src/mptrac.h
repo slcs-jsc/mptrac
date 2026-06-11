@@ -4631,7 +4631,8 @@ void dd_atm2particles(
   cache_t * cache,
   atm_t * atm,
   particle_t * particles,
-  const int npart);
+  const int npart,
+  const int ip0);
 
 /*!
  * @brief Determine MPI subdomain from particle coordinates.
@@ -6035,7 +6036,8 @@ void module_dd(
   cache_t * cache,
   dd_t * dd,
   atm_t * atm,
-  met_t ** met);
+  met_t ** met,
+  const double t);
 
 /**
  * @brief Simulate exponential decay processes for atmospheric particles.
