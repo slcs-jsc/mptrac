@@ -109,6 +109,9 @@ int main(
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
+
+  if (ctl.met_coord_type != 0)
+    ERRMSG("atm_dist currently supports only lat/lon grids");
   const int ens =
     (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
   const double p0 =

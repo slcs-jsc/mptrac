@@ -7,6 +7,11 @@ Calculate air parcel statistics.
 $ atm_stat  <ctl> <stat.tab> <param> <atm1> [<atm2> ...]
 ```
 
+The simulation time is inferred from each input atmospheric filename.
+For time-stamped particle files, the expected filename pattern is
+`..._YYYY_MM_DD_HH_MM_SS.tab` or the corresponding binary/netCDF
+variant.
+
 Statistical parameters that can be calculated are:
 
 * mean

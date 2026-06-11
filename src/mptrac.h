@@ -4855,11 +4855,11 @@ void dd_particles2atm(
   const particle_t * particles,
   const int npart,
   atm_t * atm);
-  
+
 void dd_push(
-  const ctl_t *ctl, 
-  atm_t *atm, 
-  cache_t *cache, 
+  const ctl_t * ctl,
+  atm_t * atm,
+  cache_t * cache,
   int *npart);
 
 /**

@@ -102,6 +102,11 @@ int main(
   const int idx_offset =
     (int) scan_ctl(argv[1], argc, argv, "INIT_IDX_OFFSET", -1, "0", NULL);
 
+  if (ctl.met_coord_type != 0 && even)
+    ERRMSG("INIT_EVENLY is only supported for lat/lon grids");
+  if (ctl.met_coord_type != 0 && bellrad > 0)
+    ERRMSG("INIT_BELLRAD is only supported for lat/lon grids");
+
   /* Initialize random number generator... */
   gsl_rng_env_setup();
   gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
@@ -123,7 +128,8 @@ int main(
 	    atm->p[atm->np] = P(z + rg + ru);
 
 	    rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
-	    const double sx_coord = ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
+	    const double sx_coord =
+	      ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
 	    double rx = gsl_ran_gaussian_ziggurat(rng, sx_coord / 2.3548);
 	    ru = ulon * (gsl_rng_uniform(rng) - 0.5);
 	    atm->lon[atm->np] = (lon + rg + rx + ru);
@@ -133,7 +139,8 @@ int main(
 
 	    do {
 	      rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
-	      const double sy_coord = ctl.met_coord_type == 0 ? DY2DEG(sx) : sx;
+	      const double sy_coord =
+		ctl.met_coord_type == 0 ? DY2DEG(sx) : sx;
 	      rx = gsl_ran_gaussian_ziggurat(rng, sy_coord / 2.3548);
 	      ru = ulat * (gsl_rng_uniform(rng) - 0.5);
 	      atm->lat[atm->np] = (lat + rg + rx + ru);

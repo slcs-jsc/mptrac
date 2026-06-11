@@ -13,6 +13,11 @@ The required arguments to run atm_dist are as follows:
 * param: the deviation parameters to be calculated, for example `absdev`.
 * atm1a and atm1b: the trajectory files that should be compared
 
+The simulation time is inferred from the input atmospheric filenames.
+For time-stamped particle files, the expected filename pattern is
+`..._YYYY_MM_DD_HH_MM_SS.tab` or the corresponding binary/netCDF
+variant.
+
 Statistical parameters that can be calculated are:
 
 * mean
@@ -30,7 +35,7 @@ The statistics are calculated with the GNU Scientific Library. More information 
 An example command line for running atm_dist looks like as follows:
 
 ```
-./atm_dist trac.ctl dist_absdev.tab absdev traj_sim1_2017_01_01_00.tab traj_sim2_2017_01_01_00.tab
+./atm_dist trac.ctl dist_absdev.tab absdev traj_sim1_2017_01_01_00_00_00.tab traj_sim2_2017_01_01_00_00_00.tab
 ```
 
 Note: The command line needs to be adjusted to the respective directories were the files (or executables in case of atm_dist) are located. 

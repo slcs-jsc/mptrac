@@ -59,6 +59,9 @@ int main(
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
+
+  if (ctl.met_coord_type != 0)
+    ERRMSG("atm_select currently supports only lat/lon grids");
   const int stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
   const int idx0 =

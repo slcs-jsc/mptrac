@@ -113,7 +113,8 @@ double clim_oh(
 void clim_oh_diurnal_correction(
   const ctl_t *ctl,
   clim_t *clim) {
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   /* Set SZA threshold... */
   const double sza_thresh = DEG2RAD(85.), csza_thresh = cos(sza_thresh);
@@ -2353,64 +2354,64 @@ void dd_particles2atm(
 
 #ifdef DD
 void dd_push(
-  const ctl_t *ctl, 
-  atm_t *atm, 
-  cache_t *cache, 
+  const ctl_t *ctl,
+  atm_t *atm,
+  cache_t *cache,
   int *npart) {
-  
-    SELECT_TIMER("DD_PUSH", "DD");
-  
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    /* Create a counter on the device... */
-    int device_counter = 0;
-    int* device_counter_ptr = (int*)acc_malloc(sizeof(int));
-    if (device_counter_ptr == NULL) {
-        ERRMSG("Failed to allocate device counter memory!");
-    }
-    acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
+  SELECT_TIMER("DD_PUSH", "DD");
 
-    /* Push non local particles behind the end of the atm... */
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  /* Create a counter on the device... */
+  int device_counter = 0;
+  int *device_counter_ptr = (int *) acc_malloc(sizeof(int));
+  if (device_counter_ptr == NULL) {
+    ERRMSG("Failed to allocate device counter memory!");
+  }
+  acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
+
+  /* Push non local particles behind the end of the atm... */
 #pragma acc parallel loop present(atm, cache) deviceptr(device_counter_ptr)
-    for (int ip = 0; ip < atm->np; ip++) {
-      if ((int)atm->q[ctl->qnt_subdomain][ip] != -1 &&
-         (int)atm->q[ctl->qnt_destination][ip] != rank) {
+  for (int ip = 0; ip < atm->np; ip++) {
+    if ((int) atm->q[ctl->qnt_subdomain][ip] != -1 &&
+	(int) atm->q[ctl->qnt_destination][ip] != rank) {
 
-        int local_idx;
+      int local_idx;
 
 #pragma acc atomic capture
-        {
-          local_idx = *device_counter_ptr;
-          (*device_counter_ptr)++;
-        }
-
-        int global_index = atm->np + local_idx;
-
-        /* Copy time, pressure, longitude, and latitude...*/
-        atm->time[global_index] = atm->time[ip];
-        atm->p[global_index] = atm->p[ip];
-        atm->lon[global_index] = atm->lon[ip];
-        atm->lat[global_index] = atm->lat[ip];
-
-        /* Copy all quantity data (q array)... */
-        for (int iq = 0; iq < NQ; iq++) {
-          atm->q[iq][global_index] = atm->q[iq][ip];
-        }
-
-        /* Mark the original parcel as processed...*/
-        atm->q[ctl->qnt_destination][ip] = -1;
-        atm->q[ctl->qnt_subdomain][ip] = -1;
-
-        /* Reset cache->dt for the shifted particle... */
-        cache->dt[global_index] = cache->dt[ip];
-        cache->dt[ip] = 0;
+      {
+	local_idx = *device_counter_ptr;
+	(*device_counter_ptr)++;
       }
-    }
 
-    /* Update host and free... */
-    acc_memcpy_from_device(npart, device_counter_ptr, sizeof(int));
-    acc_free(device_counter_ptr);
+      int global_index = atm->np + local_idx;
+
+      /* Copy time, pressure, longitude, and latitude... */
+      atm->time[global_index] = atm->time[ip];
+      atm->p[global_index] = atm->p[ip];
+      atm->lon[global_index] = atm->lon[ip];
+      atm->lat[global_index] = atm->lat[ip];
+
+      /* Copy all quantity data (q array)... */
+      for (int iq = 0; iq < NQ; iq++) {
+	atm->q[iq][global_index] = atm->q[iq][ip];
+      }
+
+      /* Mark the original parcel as processed... */
+      atm->q[ctl->qnt_destination][ip] = -1;
+      atm->q[ctl->qnt_subdomain][ip] = -1;
+
+      /* Reset cache->dt for the shifted particle... */
+      cache->dt[global_index] = cache->dt[ip];
+      cache->dt[ip] = 0;
+    }
+  }
+
+  /* Update host and free... */
+  acc_memcpy_from_device(npart, device_counter_ptr, sizeof(int));
+  acc_free(device_counter_ptr);
 }
 #endif
 
@@ -2863,11 +2864,11 @@ void intpol_met_4d_zeta(
     double lon2, lat2;
 
     if (met0->coord_type == 0)
-        intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
-			 &lon2, &lat2);
+      intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
+			   &lon2, &lat2);
     else
-      intpol_check_cartesian(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
-       &lon2, &lat2);
+      intpol_check_cartesian(met0->lon, met0->nx, met0->lat, met0->ny, lon,
+			     lat, &lon2, &lat2);
 
     /* Get horizontal indizes... */
     ci[0] = locate_reg(met0->lon, met0->nx, lon2);
@@ -3036,11 +3037,11 @@ void intpol_met_space_3d(
     double lon2, lat2;
 
     if (met->coord_type == 0)
-    intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat,
-			 &lon2, &lat2);
+      intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat,
+			   &lon2, &lat2);
     else
       intpol_check_cartesian(met->lon, met->nx, met->lat, met->ny, lon, lat,
-       &lon2, &lat2);
+			     &lon2, &lat2);
 
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
@@ -3098,11 +3099,11 @@ void intpol_met_space_2d(
     double lon2, lat2;
 
     if (met->coord_type == 0)
-    intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat,
-			 &lon2, &lat2);
+      intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat,
+			   &lon2, &lat2);
     else
       intpol_check_cartesian(met->lon, met->nx, met->lat, met->ny, lon, lat,
-       &lon2, &lat2);
+			     &lon2, &lat2);
 
 
     /* Get interpolation indices... */
@@ -3706,7 +3707,7 @@ void module_advect(
       /* Set new position... */
       atm->time[ip] += cache->dt[ip];
       atm->lon[ip] += DX2COORD(met0, cache->dt[ip] * um,
-			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+			       (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2COORD(met0, cache->dt[ip] * vm);
       atm->p[ip] += cache->dt[ip] * wm;
     }
@@ -3778,7 +3779,7 @@ void module_advect(
       /* Update particle position... */
       atm->time[ip] += cache->dt[ip];
       atm->lon[ip] += DX2COORD(met0, cache->dt[ip] * um,
-			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+			       (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2COORD(met0, cache->dt[ip] * vm);
       atm->q[qnt][ip] += cache->dt[ip] * wdotm;
 
@@ -3924,7 +3925,8 @@ void module_chem_grid(
   atm_t *atm,
   const double tt) {
 
-  if (met0->coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (met0->coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   /* Check quantities... */
   if (ctl->qnt_m < 0 || ctl->qnt_Cx < 0)
@@ -4211,11 +4213,11 @@ void module_dd(
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
 
-  /* Sort particles according to location and target rank... */ 
+  /* Sort particles according to location and target rank... */
   if (fmod(t, ctl->dd_sort_dt) == 0)
     dd_sort(ctl, *met, atm, dd, &npart);
   else
-    dd_push( ctl, atm, cache, &npart);
+    dd_push(ctl, atm, cache, &npart);
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   if (npart > capacity) {
@@ -4230,10 +4232,10 @@ void module_dd(
 
   /* Transform from struct of array to array of struct... */
   dd_atm2particles(ctl, cache, atm, particles, npart);
-  
+
   SELECT_TIMER("SYNC", "DD");
   MPI_Barrier(MPI_COMM_WORLD);
-  
+
   /* Perform the communication... */
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
@@ -4611,7 +4613,8 @@ void module_h2o2_chem(
   met_t *met1,
   atm_t *atm) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2_CHEM", "PHYSICS");
@@ -5251,23 +5254,25 @@ void module_position(
 
       /* Check latitude... */
       while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
-        if (atm->lat[ip] > 90) {
-          atm->lat[ip] = 180 - atm->lat[ip];
-          atm->lon[ip] += 180;
-        }
-        if (atm->lat[ip] < -90) {
-          atm->lat[ip] = -180 - atm->lat[ip];
-          atm->lon[ip] += 180;
-        }
+	if (atm->lat[ip] > 90) {
+	  atm->lat[ip] = 180 - atm->lat[ip];
+	  atm->lon[ip] += 180;
+	}
+	if (atm->lat[ip] < -90) {
+	  atm->lat[ip] = -180 - atm->lat[ip];
+	  atm->lon[ip] += 180;
+	}
       }
 
       /* Check longitude... */
       while (atm->lon[ip] < -180)
-        atm->lon[ip] += 360;
+	atm->lon[ip] += 360;
       while (atm->lon[ip] >= 180)
-        atm->lon[ip] -= 360;
+	atm->lon[ip] -= 360;
     } else {
-      intpol_check_cartesian(met0->lon, met0->nx, met0->lat, met0->ny, atm->lon[ip], atm->lat[ip], &atm->lon[ip], &atm->lat[ip]);
+      intpol_check_cartesian(met0->lon, met0->nx, met0->lat, met0->ny,
+			     atm->lon[ip], atm->lat[ip], &atm->lon[ip],
+			     &atm->lat[ip]);
     }
 
 
@@ -5487,9 +5492,8 @@ void module_sedi(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS")
-
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+    /* Loop over particles... */
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Get temperature... */
     double t;
@@ -5705,7 +5709,8 @@ void module_tracer_chem(
   met_t *met1,
   atm_t *atm) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TRACER_CHEM", "PHYSICS");
@@ -6518,10 +6523,11 @@ void mptrac_read_ctl(
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
-  ctl->met_coord_type = (int) scan_ctl(filename, argc, argv, "MET_COORD_TYPE", -1, "0", NULL);
+  ctl->met_coord_type =
+    (int) scan_ctl(filename, argc, argv, "MET_COORD_TYPE", -1, "0", NULL);
   if (ctl->met_coord_type < 0 || ctl->met_coord_type > 1)
     ERRMSG("MET_COORD_TYPE must be 0 or 1!");
-  
+
   /* Vertical coordinate and velocity... */
   ctl->advect_vert_coord =
     (int) scan_ctl(filename, argc, argv, "ADVECT_VERT_COORD", -1, "0", NULL);
@@ -7727,17 +7733,10 @@ void mptrac_write_output(
       sprintf(ext, "tab");
     else if (ctl->atm_type_out == 1)
       sprintf(ext, "bin");
-    else if (ctl->atm_type_out == 2)
+    else if (ctl->atm_type_out >= 2)
       sprintf(ext, "nc");
-
-    if (ctl->atm_type_out == 5) {
-      sprintf(filename, "%s/%s.%s", dirname, ctl->atm_basename, ext);
-    } else {
-      sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
-	      dirname, ctl->atm_basename, year, mon, day, hour, min, sec,
-	      ext);
-    }
-
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->atm_basename, year, mon, day, hour, min, sec, ext);
     mptrac_write_atm(filename, ctl, atm, t);
   }
 
@@ -7940,6 +7939,9 @@ int read_atm_clams(
   const char *filename,
   const ctl_t *ctl,
   atm_t *atm) {
+
+  if (ctl->met_coord_type != 0)
+    ERRMSG("CLaMS atmospheric files support only lat/lon grids");
 
   int ncid, varid;
 
@@ -8395,14 +8397,16 @@ int read_met_bin(
   FREAD(&met->nx, int,
 	1,
 	in);
-  LOG(2, "Number of %s: %d", (met->coord_type == 0)? "longitudes" : "x coordinates", met->nx);
+  LOG(2, "Number of %s: %d",
+      (met->coord_type == 0) ? "longitudes" : "x coordinates", met->nx);
   if (met->nx < 2 || met->nx > EX)
     ERRMSG("Number of longitudes out of range!");
 
   FREAD(&met->ny, int,
 	1,
 	in);
-  LOG(2, "Number of %s: %d", (met->coord_type == 0)? "latitudes" : "y coordinates", met->ny);
+  LOG(2, "Number of %s: %d",
+      (met->coord_type == 0) ? "latitudes" : "y coordinates", met->ny);
   if (met->ny < 2 || met->ny > EY)
     ERRMSG("Number of latitudes out of range!");
 
@@ -8652,7 +8656,8 @@ void read_met_cape(
   if (ctl->met_cape != 1)
     return;
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC");
@@ -8827,7 +8832,8 @@ void read_met_detrend(
   if (ctl->met_detrend <= 0)
     return;
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_DETREND", "METPROC");
@@ -9197,7 +9203,7 @@ void read_met_nc_grid(
       LOG(2, "Latitudes: %g, %g ... %g deg",
 	  met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
-      } else {
+    } else {
       /* UTM grid... */
       NC_INQ_DIM("x", &met->nx, 2, EX, 1);
       LOG(2, "Number of x coordinates: %d", met->nx);
@@ -11218,7 +11224,8 @@ void read_met_polar_winds(
   SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC");
   LOG(2, "Apply fix for polar winds...");
 
-  if (met->coord_type != 0) return;
+  if (met->coord_type != 0)
+    return;
 
   /* Check latitudes... */
   if (fabs(met->lat[0]) < 89.999 || fabs(met->lat[met->ny - 1]) < 89.999)
@@ -11306,22 +11313,22 @@ void read_met_pv(
       double dx, dy, c0, c1, cr, vort;
 
       // Calculate potential vorticity..
-      if (met->coord_type == 0) { // coords are lat/lon
-        dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
-        dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
-        c0 = cos(DEG2RAD(met->lat[iy0]));
-        c1 = cos(DEG2RAD(met->lat[iy1]));
-        cr = cos(DEG2RAD(latr));
-        vort = 2 * 7.2921e-5 * sin(DEG2RAD(latr));
-      } else { // coords are in meters
-        dx = met->lon[ix1] - met->lon[ix0];
-        dy = met->lat[iy1] - met->lat[iy0];
+      if (met->coord_type == 0) {	// coords are lat/lon
+	dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
+	dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
+	c0 = cos(DEG2RAD(met->lat[iy0]));
+	c1 = cos(DEG2RAD(met->lat[iy1]));
+	cr = cos(DEG2RAD(latr));
+	vort = 2 * 7.2921e-5 * sin(DEG2RAD(latr));
+      } else {			// coords are in meters
+	dx = met->lon[ix1] - met->lon[ix0];
+	dy = met->lat[iy1] - met->lat[iy0];
 
-        c0 = 1.0;
-        c1 = 1.0;
-        cr = 1.0;
+	c0 = 1.0;
+	c1 = 1.0;
+	cr = 1.0;
 
-        vort = 2 * 7.2921e-5 * sin(latr / (RE * 1000));
+	vort = 2 * 7.2921e-5 * sin(latr / (RE * 1000));
       }
 
       /* Loop over grid points... */
@@ -11625,7 +11632,8 @@ void read_met_tropo(
 
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1) {
-    if (met->coord_type != 0) ERRMSG("Only lat/lon grid supported");
+    if (met->coord_type != 0)
+      ERRMSG("Only lat/lon grid supported");
 #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
@@ -12255,14 +12263,13 @@ void write_atm_asc(
 
   if (ctl->met_coord_type == 0) {
     fprintf(out,
-    "# $1 = time [s]\n"
-    "# $2 = altitude [km]\n"
-    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
   } else {
     fprintf(out,
-      "# $1 = time [s]\n"
-    "# $2 = altitude [km]\n"
-    "# $3 = x [m]\n" "# $4 = y [m]\n");
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n" "# $3 = x [m]\n" "# $4 = y [m]\n");
   }
 
   for (int iq = 0; iq < ctl->nq; iq++)
@@ -12279,15 +12286,13 @@ void write_atm_asc(
 
     /* Write output... */
     if (ctl->met_coord_type == 0) {
-      fprintf(
-        out, "%.2f %g %g %g", 
-        atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]
-      );
+      fprintf(out, "%.2f %g %g %g",
+	      atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]
+	);
     } else {
-      fprintf(
-        out, "%.2f %g %.2f %.2f",
-        atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]
-      );
+      fprintf(out, "%.2f %g %.2f %.2f",
+	      atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]
+	);
     }
 
     for (int iq = 0; iq < ctl->nq; iq++) {
@@ -12361,6 +12366,9 @@ void write_atm_clams(
   const ctl_t *ctl,
   const atm_t *atm) {
 
+  if (ctl->met_coord_type != 0)
+    ERRMSG("CLaMS atmospheric files support only lat/lon grids");
+
   int tid, pid, ncid, varid;
   size_t start[2], count[2];
 
@@ -12414,6 +12422,9 @@ void write_atm_clams_traj(
   const ctl_t *ctl,
   const atm_t *atm,
   const double t) {
+
+  if (ctl->met_coord_type != 0)
+    ERRMSG("CLaMS atmospheric files support only lat/lon grids");
 
   /* Global Counter... */
   static size_t out_cnt = 0;
@@ -12622,7 +12633,8 @@ void write_csi(
   const atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   static FILE *out;
 
@@ -12899,7 +12911,8 @@ void write_ens(
   const atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   static FILE *out;
 
@@ -13000,7 +13013,8 @@ void write_grid(
   const atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   static double kz[EP], kw[EP];
 
@@ -13681,8 +13695,10 @@ void write_met_nc(
   if (met->coord_type == 0) {
     NC(nc_def_dim(ncid, "lon", (size_t) met->nx, &lonid));
     NC(nc_def_dim(ncid, "lat", (size_t) met->ny, &latid));
-    NC_DEF_VAR("lon", NC_DOUBLE, 1, &lonid, "longitude", "degrees_east", 0, 0);
-    NC_DEF_VAR("lat", NC_DOUBLE, 1, &latid, "latitude", "degrees_north", 0, 0);
+    NC_DEF_VAR("lon", NC_DOUBLE, 1, &lonid, "longitude", "degrees_east", 0,
+	       0);
+    NC_DEF_VAR("lat", NC_DOUBLE, 1, &latid, "latitude", "degrees_north", 0,
+	       0);
   } else {
     NC(nc_def_dim(ncid, "x", (size_t) met->nx, &lonid));
     NC(nc_def_dim(ncid, "y", (size_t) met->ny, &latid));
@@ -13913,7 +13929,8 @@ void write_prof(
   const atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   static FILE *out;
 
@@ -14142,7 +14159,8 @@ void write_sample(
   const atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   static FILE *out;
 
@@ -14304,7 +14322,8 @@ void write_station(
   atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   static FILE *out;
 
@@ -14392,7 +14411,8 @@ void write_vtk(
   const atm_t *atm,
   const double t) {
 
-  if (ctl->met_coord_type != 0) ERRMSG("Only lat/lon grid supported");
+  if (ctl->met_coord_type != 0)
+    ERRMSG("Only lat/lon grid supported");
 
   FILE *out;
 

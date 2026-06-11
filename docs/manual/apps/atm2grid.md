@@ -19,11 +19,13 @@ on the command line as `KEY VALUE` pairs.
 The control parameter `GRID_BASENAME` must be set. The output filename
 is derived from `GRID_BASENAME` and the time stamp read from `atm_in`.
 For tabular grid output, the file suffix is `.tab`; for netCDF grid
-output, the file suffix is `.nc`.
+output, the file suffix is `.nc`. The expected timestamp format in
+`atm_in` is `YYYY_MM_DD_HH_MM_SS`, and the generated grid output file
+uses the same timestamp convention.
 
 Example:
 
 ```bash
-./atm2grid trac.ctl atm_2011_06_05_00_00.tab GRID_BASENAME grid
+./atm2grid trac.ctl atm_2011_06_05_00_00_00.tab GRID_BASENAME grid
 ```
 
