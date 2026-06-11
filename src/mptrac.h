@@ -4292,6 +4292,7 @@ void compress_pck(
  *                   used only for per-level compression diagnostics.
  * @param precision  Relative precision in bits (used if > 0; tolerance must be 0).
  * @param tolerance  Absolute error bound (used if > 0; precision must be 0).
+ * @param lossy_scale Scaling mode selector for lossy compression.
  * @param decompress Non-zero to decompress data from @p inout into @p array;
  *                   zero to compress @p array into @p inout.
  * @param level_log  Optional file stream for per-level compression diagnostics,
@@ -4342,6 +4343,7 @@ void compress_sz3(
  * used only for per-level compression diagnostics.
  * @param precision The precision parameter for ZFP compression. If greater than 0, it sets the fixed precision mode.
  * @param tolerance The tolerance parameter for ZFP compression. If greater than 0 and precision is 0, it sets the fixed accuracy mode.
+ * @param lossy_scale Scaling mode selector for lossy compression.
  * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
  * @param level_log Optional file stream for per-level compression diagnostics,
  * or @c NULL to disable logging.
