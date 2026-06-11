@@ -10,7 +10,9 @@ var searchData=
   ['dlapse_7',['DLAPSE',['../met__lapse_8c.html#a634cf0f62ec764b71d39792e77c864aa',1,'met_lapse.c']]],
   ['dotp_8',['DOTP',['../mptrac_8h.html#a2f872a4cdfaa577c03b9dea8201028e8',1,'mptrac.h']]],
   ['dp2dz_9',['DP2DZ',['../mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a',1,'mptrac.h']]],
-  ['dx2deg_10',['DX2DEG',['../mptrac_8h.html#a6b22b78dc1239748a44cbd2db4862ef4',1,'mptrac.h']]],
-  ['dy2deg_11',['DY2DEG',['../mptrac_8h.html#af7f0e2b08c22c7da133b53aaad9861ff',1,'mptrac.h']]],
-  ['dz2dp_12',['DZ2DP',['../mptrac_8h.html#a8d7cc5a9d3263cea4b432e83ab58c286',1,'mptrac.h']]]
+  ['dx2coord_10',['DX2COORD',['../mptrac_8h.html#a768f9ca2ef73e001a4cf3971011e8765',1,'mptrac.h']]],
+  ['dx2deg_11',['DX2DEG',['../mptrac_8h.html#a6b22b78dc1239748a44cbd2db4862ef4',1,'mptrac.h']]],
+  ['dy2coord_12',['DY2COORD',['../mptrac_8h.html#af38801a578b97af2a35d5f4417251edd',1,'mptrac.h']]],
+  ['dy2deg_13',['DY2DEG',['../mptrac_8h.html#af7f0e2b08c22c7da133b53aaad9861ff',1,'mptrac.h']]],
+  ['dz2dp_14',['DZ2DP',['../mptrac_8h.html#a8d7cc5a9d3263cea4b432e83ab58c286',1,'mptrac.h']]]
 ];

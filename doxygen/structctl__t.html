@@ -425,6 +425,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a6d866e961e374a254d7dc52ea52cb3db"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a6d866e961e374a254d7dc52ea52cb3db">met_convention</a></td></tr>
 <tr class="memdesc:a6d866e961e374a254d7dc52ea52cb3db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Meteo data layout (0=[lev, lat, lon], 1=[lon, lat, lev]).  <a href="structctl__t.html#a6d866e961e374a254d7dc52ea52cb3db">More...</a><br /></td></tr>
 <tr class="separator:a6d866e961e374a254d7dc52ea52cb3db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2b121b96ddbf1374615e4b984e709e3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#ae2b121b96ddbf1374615e4b984e709e3">met_coord_type</a></td></tr>
+<tr class="memdesc:ae2b121b96ddbf1374615e4b984e709e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of coordinates for meteo data (-1=detect, 0=lat/lon [deg], 1=UTM [m]).  <a href="structctl__t.html#ae2b121b96ddbf1374615e4b984e709e3">More...</a><br /></td></tr>
+<tr class="separator:ae2b121b96ddbf1374615e4b984e709e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97ad8d93c5cc5fd25e9528eb5cc0144a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a97ad8d93c5cc5fd25e9528eb5cc0144a">met_vert_coord</a></td></tr>
 <tr class="memdesc:a97ad8d93c5cc5fd25e9528eb5cc0144a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vertical coordinate of input meteo data (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half).  <a href="structctl__t.html#a97ad8d93c5cc5fd25e9528eb5cc0144a">More...</a><br /></td></tr>
 <tr class="separator:a97ad8d93c5cc5fd25e9528eb5cc0144a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1084,7 +1087,7 @@ Data Fields</h2></td></tr>
 <div class="textblock"><p >Control parameters. </p>
 <p >This structure contains all control parameters used by the MPTRAC model. The struct is used to collect and to easily pass the control parameters on to the various functions. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02198">2198</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02245">2245</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="af189b70e15b3ed95191357717b80a2cc" name="af189b70e15b3ed95191357717b80a2cc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af189b70e15b3ed95191357717b80a2cc">&#9670;&nbsp;</a></span>nq</h2>
@@ -1100,7 +1103,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of quantities. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02205">2205</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02252">2252</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1118,7 +1121,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity names. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02208">2208</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02255">2255</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1136,7 +1139,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity long names. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02211">2211</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02258">2258</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1154,7 +1157,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity units. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02214">2214</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02261">2261</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1172,7 +1175,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity output format. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02217">2217</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02264">2264</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1190,7 +1193,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for air parcel IDs. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02220">2220</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02267">2267</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1208,7 +1211,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for ensemble IDs. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02223">2223</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02270">2270</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1226,7 +1229,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for station flag. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02226">2226</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02273">2273</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1244,7 +1247,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for mass. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02229">2229</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02276">2276</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1262,7 +1265,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for volume mixing ratio. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02232">2232</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02279">2279</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1280,7 +1283,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for particle radius. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02235">2235</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02282">2282</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1298,7 +1301,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for particle density. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02238">2238</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02285">2285</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1316,7 +1319,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02241">2241</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02288">2288</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1334,7 +1337,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02244">2244</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02291">2291</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1352,7 +1355,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface geopotential height. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02247">2247</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02294">2294</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1370,7 +1373,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface zonal wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02250">2250</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02297">2297</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1388,7 +1391,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface meridional wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02253">2253</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02300">2300</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1406,7 +1409,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for eastward turbulent surface stress. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02256">2256</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02303">2303</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1424,7 +1427,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for northward turbulent surface stress. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02259">2259</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02306">2306</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1442,7 +1445,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface sensible heat flux. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02262">2262</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02309">2309</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1460,7 +1463,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for land-sea mask. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02265">2265</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02312">2312</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1478,7 +1481,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for sea surface temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02268">2268</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02315">2315</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1496,7 +1499,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for boundary layer pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02271">2271</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02318">2318</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1514,7 +1517,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02274">2274</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02321">2321</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1532,7 +1535,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02277">2277</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02324">2324</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1550,7 +1553,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause geopotential height. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02280">2280</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02327">2327</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1568,7 +1571,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause water vapor volume mixing ratio. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02283">2283</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02330">2330</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1586,7 +1589,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for geopotential height. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02286">2286</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02333">2333</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1604,7 +1607,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02289">2289</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02336">2336</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1622,7 +1625,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02292">2292</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02339">2339</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1640,7 +1643,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for density of air. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02295">2295</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02342">2342</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1658,7 +1661,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for zonal wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02298">2298</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02345">2345</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1676,7 +1679,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for meridional wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02301">2301</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02348">2348</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1694,7 +1697,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for vertical velocity. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02304">2304</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02351">2351</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1712,7 +1715,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for water vapor volume mixing ratio. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02307">2307</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02354">2354</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1730,7 +1733,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for ozone volume mixing ratio. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02310">2310</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02357">2357</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1748,7 +1751,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud liquid water content. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02313">2313</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02360">2360</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1766,7 +1769,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud rain water content. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02316">2316</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02363">2363</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1784,7 +1787,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud ice water content. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02319">2319</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02366">2366</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1802,7 +1805,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud snow water content. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02322">2322</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02369">2369</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1820,7 +1823,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud cover. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02325">2325</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02372">2372</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1838,7 +1841,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud top pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02328">2328</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02375">2375</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1856,7 +1859,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud bottom pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02331">2331</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02378">2378</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1874,7 +1877,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total column cloud water. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02334">2334</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02381">2381</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1892,7 +1895,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure at lifted condensation level (LCL). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02337">2337</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02384">2384</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1910,7 +1913,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure at level of free convection (LCF). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02340">2340</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02387">2387</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1928,7 +1931,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure at equilibrium level (EL). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02343">2343</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02390">2390</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1946,7 +1949,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for convective available potential energy (CAPE). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02346">2346</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02393">2393</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1964,7 +1967,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for convective inhibition (CIN). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02349">2349</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02396">2396</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -1982,7 +1985,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total column ozone. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02352">2352</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02399">2399</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2000,7 +2003,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for HNO3 volume mixing ratio (climatology). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02355">2355</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02402">2402</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2018,7 +2021,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for OH volume mixing ratio (climatology). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02358">2358</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02405">2405</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2036,7 +2039,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for H2O2 volume mixing ratio (climatology). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02361">2361</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02408">2408</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2054,7 +2057,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for HO2 volume mixing ratio (climatology). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02364">2364</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02411">2411</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2072,7 +2075,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for O(1D) volume mixing ratio (climatology). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02367">2367</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02414">2414</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2090,7 +2093,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total mass loss due to OH chemistry. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02370">2370</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02417">2417</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2108,7 +2111,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total mass loss due to H2O2 chemistry. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02373">2373</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02420">2420</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2126,7 +2129,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total mass loss due to KPP chemistry. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02376">2376</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02423">2423</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2144,7 +2147,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total mass loss due to wet deposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02379">2379</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02426">2426</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2162,7 +2165,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total mass loss due to dry deposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02382">2382</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02429">2429</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2180,7 +2183,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total mass loss due to exponential decay. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02385">2385</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02432">2432</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2198,7 +2201,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total loss rate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02388">2388</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02435">2435</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2216,7 +2219,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for saturation pressure over water. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02391">2391</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02438">2438</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2234,7 +2237,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for saturation pressure over ice. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02394">2394</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02441">2441</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2252,7 +2255,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for partial water vapor pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02397">2397</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02444">2444</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2270,7 +2273,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for specific humidity. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02400">2400</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02447">2447</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2288,7 +2291,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for relative humidity over water. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02403">2403</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02450">2450</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2306,7 +2309,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for relative humidity over ice. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02406">2406</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02453">2453</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2324,7 +2327,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for potential temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02409">2409</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02456">2456</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2342,7 +2345,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for zeta vertical coordinate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02412">2412</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02459">2459</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2360,7 +2363,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for diagnosed zeta vertical coordinate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02415">2415</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02462">2462</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2378,7 +2381,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for velocity of zeta vertical coordinate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02418">2418</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02465">2465</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2396,7 +2399,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for eta vertical coordinate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02421">2421</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02468">2468</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2414,7 +2417,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for velocity of eta vertical coordinate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02424">2424</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02471">2471</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2432,7 +2435,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for virtual temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02427">2427</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02474">2474</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2450,7 +2453,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for lapse rate. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02430">2430</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02477">2477</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2468,7 +2471,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for horizontal wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02433">2433</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02480">2480</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2486,7 +2489,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for vertical velocity. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02436">2436</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02483">2483</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2504,7 +2507,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for potential vorticity. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02439">2439</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02486">2486</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2522,7 +2525,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for dew point temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02442">2442</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02489">2489</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2540,7 +2543,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for T_ice. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02445">2445</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02492">2492</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2558,7 +2561,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for T_STS. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02448">2448</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02495">2495</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2576,7 +2579,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for T_NAT. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02451">2451</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02498">2498</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2594,7 +2597,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for trace species x volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02454">2454</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02501">2501</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2612,7 +2615,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for H2O volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02457">2457</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02504">2504</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2630,7 +2633,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for O3 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02460">2460</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02507">2507</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2648,7 +2651,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for CO volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02463">2463</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02510">2510</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2666,7 +2669,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for OH volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02466">2466</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02513">2513</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2684,7 +2687,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for H volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02469">2469</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02516">2516</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2702,7 +2705,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for HO2 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02472">2472</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02519">2519</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2720,7 +2723,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for H2O2 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02475">2475</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02522">2522</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2738,7 +2741,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for O(1D) volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02478">2478</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02525">2525</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2756,7 +2759,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for O(3P) volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02481">2481</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02528">2528</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2774,7 +2777,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for CFC-10 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02484">2484</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02531">2531</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2792,7 +2795,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for CFC-11 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02487">2487</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02534">2534</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2810,7 +2813,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for CFC-12 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02490">2490</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02537">2537</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2828,7 +2831,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for N2O volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02493">2493</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02540">2540</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2846,7 +2849,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for SF6 volume mixing ratio (chemistry code). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02496">2496</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02543">2543</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2864,7 +2867,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for age of air. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02499">2499</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02546">2546</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2882,7 +2885,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for radioactive activity of Rn-222. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02502">2502</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02549">2549</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2900,7 +2903,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for radioactive activity of Pb-210. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02505">2505</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02552">2552</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2918,7 +2921,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for radioactive activity of Be-7. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02508">2508</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02555">2555</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2936,7 +2939,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for radioactive activity of Cs-137. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02511">2511</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02558">2558</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2954,7 +2957,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for radioactive activity of I-131. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02514">2514</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02561">2561</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2972,7 +2975,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for radioactive activity of Xe-133. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02517">2517</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02564">2564</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -2990,7 +2993,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for current subdomain in domain decomposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02520">2520</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02567">2567</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3008,7 +3011,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for destination subdomain in domain decomposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02523">2523</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02570">2570</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3026,7 +3029,7 @@ Data Fields</h2></td></tr>
 
 <p>Direction flag (1=forward calculation, -1=backward calculation). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02526">2526</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02573">2573</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3044,7 +3047,7 @@ Data Fields</h2></td></tr>
 
 <p>Start time of simulation [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02529">2529</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02576">2576</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3062,7 +3065,7 @@ Data Fields</h2></td></tr>
 
 <p>Stop time of simulation [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02532">2532</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02579">2579</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3080,7 +3083,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step of simulation [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02535">2535</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02582">2582</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3098,7 +3101,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename for meteo data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02542">2542</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02589">2589</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3116,7 +3119,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step of meteo data [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02545">2545</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02592">2592</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3134,7 +3137,25 @@ Data Fields</h2></td></tr>
 
 <p>Meteo data layout (0=[lev, lat, lon], 1=[lon, lat, lev]). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02548">2548</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02595">2595</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="ae2b121b96ddbf1374615e4b984e709e3" name="ae2b121b96ddbf1374615e4b984e709e3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2b121b96ddbf1374615e4b984e709e3">&#9670;&nbsp;</a></span>met_coord_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ctl_t::met_coord_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Type of coordinates for meteo data (-1=detect, 0=lat/lon [deg], 1=UTM [m]). </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02598">2598</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3152,7 +3173,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical coordinate of input meteo data (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02552">2552</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02602">2602</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3170,7 +3191,7 @@ Data Fields</h2></td></tr>
 
 <p>Type of meteo data files (0=netCDF, 1=binary, 2=pck, 3=ZFP, 4=ZSTD, 5=cms, 6=grib, 7=SZ3, 8=LZ4). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02556">2556</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02606">2606</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3188,7 +3209,7 @@ Data Fields</h2></td></tr>
 
 <p>Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02559">2559</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02609">2609</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3206,7 +3227,7 @@ Data Fields</h2></td></tr>
 
 <p>Check netCDF scaling factors (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02562">2562</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02612">2612</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3224,7 +3245,7 @@ Data Fields</h2></td></tr>
 
 <p>zlib compression level of netCDF meteo files (0=off). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02565">2565</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02615">2615</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3242,7 +3263,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of digits for quantization of netCDF meteo files (0=off). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02568">2568</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02618">2618</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3260,7 +3281,7 @@ Data Fields</h2></td></tr>
 
 <p>ZSTD compression level (from -5 to 22, default=-3). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02571">2571</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02621">2621</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3278,7 +3299,7 @@ Data Fields</h2></td></tr>
 
 <p>ZSTD number of worker threads (0=single-threaded, default=4). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02574">2574</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02624">2624</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3296,7 +3317,7 @@ Data Fields</h2></td></tr>
 
 <p>LZ4 acceleration factor (&gt;=1, default=8). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02577">2577</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02627">2627</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3314,7 +3335,7 @@ Data Fields</h2></td></tr>
 
 <p>Apply an additional ZSTD compression step to PCK payloads (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02580">2580</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02630">2630</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3332,7 +3353,7 @@ Data Fields</h2></td></tr>
 
 <p>ZFP compression precision. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02583">2583</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02633">2633</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3350,7 +3371,7 @@ Data Fields</h2></td></tr>
 
 <p>ZFP compression tolerance. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02586">2586</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02636">2636</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3368,7 +3389,7 @@ Data Fields</h2></td></tr>
 
 <p>SZ3 compression precision. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02589">2589</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02639">2639</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3386,7 +3407,7 @@ Data Fields</h2></td></tr>
 
 <p>SZ3 compression tolerance. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02592">2592</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02642">2642</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3404,7 +3425,7 @@ Data Fields</h2></td></tr>
 
 <p>Apply levelwise [0,1] scaling before lossy compression (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02595">2595</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02645">2645</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3422,7 +3443,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename for per-level compression diagnostics ("-" disables output). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02598">2598</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02648">2648</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3440,7 +3461,7 @@ Data Fields</h2></td></tr>
 
 <p>cmultiscale batch size. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02601">2601</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02651">2651</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3458,7 +3479,7 @@ Data Fields</h2></td></tr>
 
 <p>cmultiscale ZSTD compression (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02604">2604</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02654">2654</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3476,7 +3497,7 @@ Data Fields</h2></td></tr>
 
 <p>cmultiscale number of cells of coarsest grid in x-direction. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02607">2607</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02657">2657</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3494,7 +3515,7 @@ Data Fields</h2></td></tr>
 
 <p>cmultiscale number of cells of coarsest grid in y-direction. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02610">2610</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02660">2660</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3512,7 +3533,7 @@ Data Fields</h2></td></tr>
 
 <p>cmultiscale maximum refinement level. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02613">2613</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02663">2663</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3530,7 +3551,7 @@ Data Fields</h2></td></tr>
 
 <p>cmultiscale compression epsilon. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02616">2616</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02666">2666</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3548,7 +3569,7 @@ Data Fields</h2></td></tr>
 
 <p>Stride for longitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02619">2619</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02669">2669</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3566,7 +3587,7 @@ Data Fields</h2></td></tr>
 
 <p>Stride for latitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02622">2622</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02672">2672</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3584,7 +3605,7 @@ Data Fields</h2></td></tr>
 
 <p>Stride for pressure levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02625">2625</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02675">2675</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3602,7 +3623,7 @@ Data Fields</h2></td></tr>
 
 <p>Smoothing for longitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02628">2628</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02678">2678</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3620,7 +3641,7 @@ Data Fields</h2></td></tr>
 
 <p>Smoothing for latitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02631">2631</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02681">2681</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3638,7 +3659,7 @@ Data Fields</h2></td></tr>
 
 <p>Smoothing for pressure levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02634">2634</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02684">2684</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3656,7 +3677,7 @@ Data Fields</h2></td></tr>
 
 <p>FWHM of horizontal Gaussian used for detrending [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02637">2637</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02687">2687</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3674,7 +3695,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of target pressure levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02640">2640</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02690">2690</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3692,7 +3713,7 @@ Data Fields</h2></td></tr>
 
 <p>Target pressure levels [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02643">2643</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02693">2693</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3710,7 +3731,7 @@ Data Fields</h2></td></tr>
 
 <p>Use predefined pressure levels or not. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02646">2646</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02696">2696</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3728,7 +3749,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of meteo data model levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02649">2649</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02699">2699</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3746,7 +3767,7 @@ Data Fields</h2></td></tr>
 
 <p>Meteo data model level a coefficients. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02652">2652</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02702">2702</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3764,7 +3785,7 @@ Data Fields</h2></td></tr>
 
 <p>Meteo data model level b coefficients. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02655">2655</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02705">2705</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3782,7 +3803,7 @@ Data Fields</h2></td></tr>
 
 <p>Longitudinal smoothing of geopotential heights. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02658">2658</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02708">2708</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3800,7 +3821,7 @@ Data Fields</h2></td></tr>
 
 <p>Latitudinal smoothing of geopotential heights. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02661">2661</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02711">2711</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3818,7 +3839,7 @@ Data Fields</h2></td></tr>
 
 <p>Try to read relative humidity (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02664">2664</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02714">2714</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3836,7 +3857,7 @@ Data Fields</h2></td></tr>
 
 <p>Convective available potential energy data (0=file, 1=calculate). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02667">2667</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02717">2717</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3854,7 +3875,7 @@ Data Fields</h2></td></tr>
 
 <p>Planetary boundary layer data (0=file, 1=z2p, 2=Richardson, 3=theta). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02670">2670</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02720">2720</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3872,7 +3893,7 @@ Data Fields</h2></td></tr>
 
 <p>Minimum depth of planetary boundary layer [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02673">2673</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02723">2723</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3890,7 +3911,7 @@ Data Fields</h2></td></tr>
 
 <p>Maximum depth of planetary boundary layer [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02676">2676</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02726">2726</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3908,7 +3929,7 @@ Data Fields</h2></td></tr>
 
 <p>Tropopause definition (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02680">2680</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02730">2730</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3926,7 +3947,7 @@ Data Fields</h2></td></tr>
 
 <p>Dynamical tropopause potential vorticity threshold [PVU]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02683">2683</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02733">2733</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3944,7 +3965,7 @@ Data Fields</h2></td></tr>
 
 <p>Dynamical tropopause potential temperature threshold [K]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02686">2686</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02736">2736</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3962,7 +3983,7 @@ Data Fields</h2></td></tr>
 
 <p>Tropopause interpolation method (0=linear, 1=spline). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02689">2689</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02739">2739</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3980,7 +4001,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for sampling of meteo data along trajectories [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02692">2692</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02742">2742</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -3998,7 +4019,7 @@ Data Fields</h2></td></tr>
 
 <p>Preload meteo data into disk cache (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02695">2695</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02745">2745</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4016,7 +4037,7 @@ Data Fields</h2></td></tr>
 
 <p>Use MPI to share meteo (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02698">2698</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02748">2748</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4034,7 +4055,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for sorting of particle data [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02705">2705</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02755">2755</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4052,7 +4073,7 @@ Data Fields</h2></td></tr>
 
 <p>Isosurface parameter (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02709">2709</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02759">2759</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4070,7 +4091,7 @@ Data Fields</h2></td></tr>
 
 <p>Balloon position filename. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02712">2712</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02762">2762</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4088,7 +4109,7 @@ Data Fields</h2></td></tr>
 
 <p>Advection scheme (0=off, 1=Euler, 2=midpoint, 4=Runge-Kutta). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02715">2715</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02765">2765</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4106,7 +4127,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical velocity of air parcels (0=omega_on_plev, 1=zetadot_on_mlev, 2=omega_on_mlev, 3=etadot_on_mlev). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02719">2719</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02769">2769</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4124,7 +4145,7 @@ Data Fields</h2></td></tr>
 
 <p>Random number generator (0=GSL, 1=Squares, 2=cuRAND). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02722">2722</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02772">2772</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4142,7 +4163,7 @@ Data Fields</h2></td></tr>
 
 <p>Diffusion scheme (0=off, 1=fixed-K, 2=PBL). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02725">2725</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02775">2775</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4160,7 +4181,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02728">2728</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02778">2778</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4178,7 +4199,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02731">2731</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02781">2781</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4196,7 +4217,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal turbulent diffusion coefficient (stratosphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02734">2734</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02784">2784</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4214,7 +4235,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical turbulent diffusion coefficient (PBL) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02737">2737</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02787">2787</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4232,7 +4253,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical turbulent diffusion coefficient (troposphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02740">2740</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02790">2790</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4250,7 +4271,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical turbulent diffusion coefficient (stratosphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02743">2743</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02793">2793</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4268,7 +4289,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal scaling factor for mesoscale wind fluctuations. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02746">2746</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02796">2796</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4286,7 +4307,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical scaling factor for mesoscale wind fluctuations. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02749">2749</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02799">2799</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4304,7 +4325,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical mixing in the PBL (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02752">2752</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02802">2802</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4322,7 +4343,7 @@ Data Fields</h2></td></tr>
 
 <p>Depth of PBL transition layer (fraction of PBL depth). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02755">2755</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02805">2805</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4340,7 +4361,7 @@ Data Fields</h2></td></tr>
 
 <p>CAPE threshold for convection module [J/kg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02758">2758</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02808">2808</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4358,7 +4379,7 @@ Data Fields</h2></td></tr>
 
 <p>CIN threshold for convection module [J/kg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02761">2761</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02811">2811</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4376,7 +4397,7 @@ Data Fields</h2></td></tr>
 
 <p>Time interval for convection module [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02764">2764</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02814">2814</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4394,7 +4415,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions mass per particle [kg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02767">2767</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02817">2817</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4412,7 +4433,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions mass per particle trend [kg/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02770">2770</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02820">2820</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4430,7 +4451,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions volume mixing ratio [ppv]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02773">2773</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02823">2823</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4448,7 +4469,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions volume mixing ratio trend [ppv/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02776">2776</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02826">2826</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4466,7 +4487,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions minimum longitude [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02779">2779</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02829">2829</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4484,7 +4505,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions maximum longitude [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02782">2782</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02832">2832</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4502,7 +4523,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions bottom pressure [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02785">2785</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02835">2835</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4520,7 +4541,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions top pressure [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02788">2788</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02838">2838</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4538,7 +4559,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions surface layer depth [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02791">2791</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02841">2841</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4556,7 +4577,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions surface layer depth [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02794">2794</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02844">2844</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4574,7 +4595,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions surface layer zeta [K]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02797">2797</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02847">2847</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4592,7 +4613,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions planetary boundary layer (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02800">2800</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02850">2850</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4610,7 +4631,7 @@ Data Fields</h2></td></tr>
 
 <p>Species. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02803">2803</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02853">2853</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4628,7 +4649,7 @@ Data Fields</h2></td></tr>
 
 <p>Molar mass [g/mol]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02806">2806</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02856">2856</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4646,7 +4667,7 @@ Data Fields</h2></td></tr>
 
 <p>Life time of particles in the troposphere [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02809">2809</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02859">2859</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4664,7 +4685,7 @@ Data Fields</h2></td></tr>
 
 <p>Life time of particles in the stratosphere [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02812">2812</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02862">2862</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4682,7 +4703,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of photolysis rates climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02815">2815</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02865">2865</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4700,7 +4721,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of HNO3 climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02818">2818</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02868">2868</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4718,7 +4739,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of OH climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02821">2821</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02871">2871</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4736,7 +4757,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of H2O2 climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02824">2824</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02874">2874</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4754,7 +4775,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of HO2 climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02827">2827</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02877">2877</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4772,7 +4793,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of O(1D) climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02830">2830</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02880">2880</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4790,7 +4811,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of O3 climatology. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02833">2833</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02883">2883</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4808,7 +4829,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of CFC-10 time series. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02836">2836</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02886">2886</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4826,7 +4847,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of CFC-11 time series. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02839">2839</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02889">2889</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4844,7 +4865,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of CFC-12 time series. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02842">2842</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02892">2892</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4862,7 +4883,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of N2O time series. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02845">2845</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02895">2895</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4880,7 +4901,7 @@ Data Fields</h2></td></tr>
 
 <p>Filename of SF6 time series. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02848">2848</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02898">2898</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4898,7 +4919,7 @@ Data Fields</h2></td></tr>
 
 <p>Time interval for mixing [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02851">2851</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02901">2901</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4916,7 +4937,7 @@ Data Fields</h2></td></tr>
 
 <p>Interparcel exchange parameter for mixing in the troposphere. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02854">2854</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02904">2904</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4934,7 +4955,7 @@ Data Fields</h2></td></tr>
 
 <p>Interparcel exchange parameter for mixing in the stratosphere. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02857">2857</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02907">2907</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4952,7 +4973,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of mixing grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02860">2860</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02910">2910</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4970,7 +4991,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of mixing grid [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02863">2863</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02913">2913</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -4988,7 +5009,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of mixing grid [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02866">2866</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02916">2916</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5006,7 +5027,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of mixing grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02869">2869</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02919">2919</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5024,7 +5045,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of mixing grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02872">2872</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02922">2922</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5042,7 +5063,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of mixing grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02875">2875</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02925">2925</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5060,7 +5081,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of mixing grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02878">2878</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02928">2928</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5078,7 +5099,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of mixing grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02881">2881</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02931">2931</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5096,7 +5117,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of mixing grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02884">2884</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02934">2934</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5114,7 +5135,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of chemistry grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02887">2887</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02937">2937</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5132,7 +5153,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of chemistry grid [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02890">2890</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02940">2940</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5150,7 +5171,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of chemistry grid [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02893">2893</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02943">2943</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5168,7 +5189,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of chemistry grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02896">2896</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02946">2946</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5186,7 +5207,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of chemistry grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02899">2899</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02949">2949</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5204,7 +5225,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of chemistry grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02902">2902</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02952">2952</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5222,7 +5243,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of chemistry grid. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02905">2905</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02955">2955</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5240,7 +5261,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of chemistry grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02908">2908</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02958">2958</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5258,7 +5279,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of chemistry grid [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02911">2911</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02961">2961</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5276,7 +5297,7 @@ Data Fields</h2></td></tr>
 
 <p>Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02914">2914</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02964">2964</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5294,7 +5315,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for OH reaction rate (A, E/R or k0, n, kinf, m). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02917">2917</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02967">2967</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5312,7 +5333,7 @@ Data Fields</h2></td></tr>
 
 <p>Beta parameter for diurnal variablity of OH. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02920">2920</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02970">2970</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5330,7 +5351,7 @@ Data Fields</h2></td></tr>
 
 <p>Reaction type for H2O2 chemistry (0=none, 1=SO2). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02923">2923</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02973">2973</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5348,7 +5369,7 @@ Data Fields</h2></td></tr>
 
 <p>Switch for KPP chemistry module (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02926">2926</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02976">2976</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5366,7 +5387,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for KPP chemistry [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02929">2929</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02979">2979</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5384,7 +5405,7 @@ Data Fields</h2></td></tr>
 
 <p>Switch for first order tracer chemistry module (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02932">2932</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02982">2982</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5402,7 +5423,7 @@ Data Fields</h2></td></tr>
 
 <p>Switch for radioactive decay module (0=off, 1=on). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02935">2935</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02985">2985</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5420,7 +5441,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for precipitation calculation. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02938">2938</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02988">2988</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5438,7 +5459,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficient A for wet deposition below cloud (exponential form). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02941">2941</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02991">2991</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5456,7 +5477,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficient B for wet deposition below cloud (exponential form). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02944">2944</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02994">2994</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5474,7 +5495,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficient A for wet deposition in cloud (exponential form). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02947">2947</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02997">2997</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5492,7 +5513,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficient B for wet deposition in cloud (exponential form). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02950">2950</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03000">3000</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5510,7 +5531,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for wet deposition in cloud (Henry's law: Hb, Cb). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02953">2953</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03003">3003</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5528,7 +5549,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for wet deposition below cloud (Henry's law: Hb, Cb). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02956">2956</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03006">3006</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5546,7 +5567,7 @@ Data Fields</h2></td></tr>
 
 <p>pH value used to calculate effective Henry constant of SO2. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02959">2959</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03009">3009</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5564,7 +5585,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for wet deposition in cloud: retention ratio. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02962">2962</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03012">3012</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5582,7 +5603,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for wet deposition below cloud: retention ratio. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02965">2965</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03015">3015</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5600,7 +5621,7 @@ Data Fields</h2></td></tr>
 
 <p>Dry deposition surface layer [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02968">2968</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03018">3018</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5618,7 +5639,7 @@ Data Fields</h2></td></tr>
 
 <p>Dry deposition velocity [m/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02971">2971</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03021">3021</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5636,7 +5657,7 @@ Data Fields</h2></td></tr>
 
 <p>H2O volume mixing ratio for PSC analysis. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02974">2974</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03024">3024</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5654,7 +5675,7 @@ Data Fields</h2></td></tr>
 
 <p>HNO3 volume mixing ratio for PSC analysis. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02977">2977</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03027">3027</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5672,7 +5693,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of atmospheric data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02984">2984</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03034">3034</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5690,7 +5711,7 @@ Data Fields</h2></td></tr>
 
 <p>Gnuplot file for atmospheric data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02987">2987</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03037">3037</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5708,7 +5729,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for atmospheric data output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02990">2990</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03040">3040</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5726,7 +5747,7 @@ Data Fields</h2></td></tr>
 
 <p>Time filter for atmospheric data output (0=none, 1=missval, 2=remove). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02993">2993</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03043">3043</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5744,7 +5765,7 @@ Data Fields</h2></td></tr>
 
 <p>Particle index stride for atmospheric data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l02996">2996</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03046">3046</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5762,7 +5783,7 @@ Data Fields</h2></td></tr>
 
 <p>Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS_traj, 4=CLaMS_pos). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03000">3000</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03050">3050</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5780,7 +5801,7 @@ Data Fields</h2></td></tr>
 
 <p>Type of atmospheric data files for output (-1=same as ATM_TYPE, 0=ASCII, 1=binary, 2=netCDF, 3=CLaMS_traj, 4=CLaMS_pos). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03005">3005</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03055">3055</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5798,7 +5819,7 @@ Data Fields</h2></td></tr>
 
 <p>zlib compression level of netCDF atmospheric data files (0=off). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03008">3008</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03058">3058</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5816,7 +5837,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of digits for quantization of netCDF atmospheric data files (0=off). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03011">3011</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03061">3061</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5834,7 +5855,7 @@ Data Fields</h2></td></tr>
 
 <p>Type of observation data files (0=ASCII, 1=netCDF). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03014">3014</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03064">3064</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5852,7 +5873,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of CSI data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03017">3017</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03067">3067</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5870,7 +5891,7 @@ Data Fields</h2></td></tr>
 
 <p>Kernel data file for CSI output. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03020">3020</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03070">3070</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5888,7 +5909,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for CSI output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03023">3023</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03073">3073</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5906,7 +5927,7 @@ Data Fields</h2></td></tr>
 
 <p>Observation data file for CSI analysis. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03026">3026</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03076">3076</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5924,7 +5945,7 @@ Data Fields</h2></td></tr>
 
 <p>Minimum observation index to trigger detection. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03029">3029</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03079">3079</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5942,7 +5963,7 @@ Data Fields</h2></td></tr>
 
 <p>Minimum column density to trigger detection [kg/m^2]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03032">3032</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03082">3082</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5960,7 +5981,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of gridded CSI data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03035">3035</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03085">3085</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5978,7 +5999,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of gridded CSI data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03038">3038</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03088">3088</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -5996,7 +6017,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of gridded CSI data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03041">3041</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03091">3091</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6014,7 +6035,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of gridded CSI data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03044">3044</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03094">3094</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6032,7 +6053,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03047">3047</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03097">3097</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6050,7 +6071,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03050">3050</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03100">3100</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6068,7 +6089,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of gridded CSI data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03053">3053</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03103">3103</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6086,7 +6107,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03056">3056</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03106">3106</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6104,7 +6125,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03059">3059</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03109">3109</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6122,7 +6143,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of ensembles. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03062">3062</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03112">3112</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6140,7 +6161,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of ensemble data file. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03065">3065</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03115">3115</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6158,7 +6179,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for ensemble output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03068">3068</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03118">3118</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6176,7 +6197,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of grid data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03071">3071</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03121">3121</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6194,7 +6215,7 @@ Data Fields</h2></td></tr>
 
 <p>Kernel data file for grid output. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03074">3074</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03124">3124</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6212,7 +6233,7 @@ Data Fields</h2></td></tr>
 
 <p>Gnuplot file for gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03077">3077</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03127">3127</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6230,7 +6251,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for gridded data output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03080">3080</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03130">3130</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6248,7 +6269,7 @@ Data Fields</h2></td></tr>
 
 <p>Sparse output in grid data files (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03083">3083</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03133">3133</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6266,7 +6287,7 @@ Data Fields</h2></td></tr>
 
 <p>zlib compression level of netCDF grid data files (0=off). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03086">3086</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03136">3136</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6284,7 +6305,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of digits for quantization of netCDF grid data files (0=off). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03089">3089</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03139">3139</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6302,7 +6323,7 @@ Data Fields</h2></td></tr>
 
 <p>Include standard deviations in grid output (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03092">3092</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03142">3142</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6320,7 +6341,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03095">3095</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03145">3145</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6338,7 +6359,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of gridded data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03098">3098</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03148">3148</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6356,7 +6377,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of gridded data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03101">3101</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03151">3151</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6374,7 +6395,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03104">3104</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03154">3154</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6392,7 +6413,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03107">3107</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03157">3157</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6410,7 +6431,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03110">3110</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03160">3160</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6428,7 +6449,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03113">3113</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03163">3163</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6446,7 +6467,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03116">3116</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03166">3166</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6464,7 +6485,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03119">3119</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03169">3169</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6482,7 +6503,7 @@ Data Fields</h2></td></tr>
 
 <p>Type of grid data files (0=ASCII, 1=netCDF). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03122">3122</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03172">3172</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6500,7 +6521,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename for profile output file. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03125">3125</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03175">3175</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6518,7 +6539,7 @@ Data Fields</h2></td></tr>
 
 <p>Observation data file for profile output. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03128">3128</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03178">3178</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6536,7 +6557,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of gridded profile data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03131">3131</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03181">3181</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6554,7 +6575,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of gridded profile data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03134">3134</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03184">3184</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6572,7 +6593,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of gridded profile data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03137">3137</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03187">3187</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6590,7 +6611,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of gridded profile data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03140">3140</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03190">3190</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6608,7 +6629,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03143">3143</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03193">3193</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6626,7 +6647,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03146">3146</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03196">3196</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6644,7 +6665,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of gridded profile data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03149">3149</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03199">3199</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6662,7 +6683,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03152">3152</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03202">3202</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6680,7 +6701,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03155">3155</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03205">3205</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6698,7 +6719,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of sample data file. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03158">3158</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03208">3208</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6716,7 +6737,7 @@ Data Fields</h2></td></tr>
 
 <p>Kernel data file for sample output. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03161">3161</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03211">3211</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6734,7 +6755,7 @@ Data Fields</h2></td></tr>
 
 <p>Observation data file for sample output. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03164">3164</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03214">3214</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6752,7 +6773,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal radius for sample output [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03167">3167</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03217">3217</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6770,7 +6791,7 @@ Data Fields</h2></td></tr>
 
 <p>Layer depth for sample output [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03170">3170</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03220">3220</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6788,7 +6809,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of station data file. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03173">3173</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03223">3223</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6806,7 +6827,7 @@ Data Fields</h2></td></tr>
 
 <p>Longitude of station [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03176">3176</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03226">3226</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6824,7 +6845,7 @@ Data Fields</h2></td></tr>
 
 <p>Latitude of station [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03179">3179</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03229">3229</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6842,7 +6863,7 @@ Data Fields</h2></td></tr>
 
 <p>Search radius around station [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03182">3182</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03232">3232</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6860,7 +6881,7 @@ Data Fields</h2></td></tr>
 
 <p>Start time for station output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03185">3185</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03235">3235</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6878,7 +6899,7 @@ Data Fields</h2></td></tr>
 
 <p>Stop time for station output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03188">3188</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03238">3238</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6896,7 +6917,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of VTK data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03191">3191</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03241">3241</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6914,7 +6935,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for VTK data output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03194">3194</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03244">3244</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6932,7 +6953,7 @@ Data Fields</h2></td></tr>
 
 <p>Particle index stride for VTK data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03197">3197</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03247">3247</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6950,7 +6971,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical scaling factor for VTK data. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03200">3200</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03250">3250</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6968,7 +6989,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical offset for VTK data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03203">3203</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03253">3253</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -6986,7 +7007,7 @@ Data Fields</h2></td></tr>
 
 <p>Spherical projection for VTK data (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03206">3206</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03256">3256</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7004,7 +7025,7 @@ Data Fields</h2></td></tr>
 
 <p>Domain decomposition (0=no, 1=yes, with 2x2 if not specified). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03213">3213</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03263">3263</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7022,7 +7043,7 @@ Data Fields</h2></td></tr>
 
 <p>Domain decomposition zonal subdomain number. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03216">3216</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03266">3266</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7040,7 +7061,7 @@ Data Fields</h2></td></tr>
 
 <p>Domain decomposition meridional subdomain number. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03219">3219</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03269">3269</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7058,7 +7079,7 @@ Data Fields</h2></td></tr>
 
 <p>Domain decomposition size of halos given in grid-points. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03222">3222</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03272">3272</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>

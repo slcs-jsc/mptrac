@@ -479,6 +479,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#utm-grid-input-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UTM-grid input data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-ecmwf-reanalyses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1042,6 +1053,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#utm-grid-input-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UTM-grid input data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-ecmwf-reanalyses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1192,6 +1214,17 @@ that require native model-level, zeta, or diabatic-advection fields should
 therefore keep the original netCDF meteorological input files.</p>
 <p>See the <code>tests/data/</code> directory in the MPTRAC repository for examples
 of meteo data netCDF files used for MPTRAC.</p>
+<h2 id="utm-grid-input-data">UTM-grid input data</h2>
+<p>For special-purpose local applications, MPTRAC can also read meteo data on
+a regular UTM grid. This mode is enabled with <code>MET_COORD_TYPE = 1</code>. In this
+case, the horizontal coordinate variables in the netCDF files are expected
+to be <code>x</code> and <code>y</code>, given as UTM easting and northing in metres, instead of
+<code>lon</code> and <code>lat</code> in degrees. Air parcel input and output files then use the
+same UTM coordinates in columns 3 and 4.</p>
+<p>The UTM-grid mode is intended for particle dispersion on high-resolution CFD
+model grids. The longitude/latitude grid remains the default recommendation,
+and many diagnostics, chemistry options, climatological corrections, etc.
+assume geographic longitude and latitude.</p>
 <h2 id="the-ecmwf-reanalyses">The ECMWF reanalyses</h2>
 <h3 id="overview">Overview</h3>
 <p>As an example, we discuss the use of

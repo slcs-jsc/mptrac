@@ -961,6 +961,13 @@ $ ./atm_init  &lt;ctl&gt; &lt;atm_out&gt;
 </tr>
 </tbody>
 </table>
+<p>For the standard longitude/latitude grid these horizontal coordinates
+are given in degrees. For the special-purpose UTM-grid mode
+(<code>MET_COORD_TYPE = 1</code>), the same parameters refer to UTM easting and
+northing in metres. The horizontal spread parameters (<code>INIT_SLON</code>,
+<code>INIT_SLAT</code>, <code>INIT_ULON</code>, <code>INIT_ULAT</code>, and <code>INIT_SX</code>) use the same
+horizontal coordinate units as the respective met grid: degrees for longitude/latitude grids and
+metres for UTM grids.</p>
 <p>The following optional parameters can be used for controlling the release of air parcels:</p>
 <ul>
 <li>INIT_REP: This parameter controls the number of air parcels in each release position. The default value is 1.</li>
