@@ -6196,9 +6196,13 @@ int mptrac_read_atm(
   LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
   LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
   gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
-  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  LOG(2, "%s range: %g ... %g %s",
+      ctl->met_coord_type == 0 ? "Longitude" : "X coordinate", mini, maxi,
+      ctl->met_coord_type == 0 ? "deg" : "m");
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
-  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  LOG(2, "%s range: %g ... %g %s",
+      ctl->met_coord_type == 0 ? "Latitude" : "Y coordinate", mini, maxi,
+      ctl->met_coord_type == 0 ? "deg" : "m");
   for (int iq = 0; iq < ctl->nq; iq++) {
     char msg[5 * LEN];
     sprintf(msg, "Quantity %s range: %s ... %s %s",
@@ -7636,9 +7640,13 @@ void mptrac_write_atm(
   LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
   LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
   gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
-  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  LOG(2, "%s range: %g ... %g %s",
+      ctl->met_coord_type == 0 ? "Longitude" : "X coordinate", mini, maxi,
+      ctl->met_coord_type == 0 ? "deg" : "m");
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
-  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  LOG(2, "%s range: %g ... %g %s",
+      ctl->met_coord_type == 0 ? "Latitude" : "Y coordinate", mini, maxi,
+      ctl->met_coord_type == 0 ? "deg" : "m");
   for (int iq = 0; iq < ctl->nq; iq++) {
     char msg[5 * LEN];
     sprintf(msg, "Quantity %s range: %s ... %s %s",
@@ -8400,7 +8408,9 @@ int read_met_bin(
   LOG(2, "Number of %s: %d",
       (met->coord_type == 0) ? "longitudes" : "x coordinates", met->nx);
   if (met->nx < 2 || met->nx > EX)
-    ERRMSG("Number of longitudes out of range!");
+    ERRMSG(met->coord_type == 0
+	   ? "Number of longitudes out of range!"
+	   : "Number of x coordinates out of range!");
 
   FREAD(&met->ny, int,
 	1,
@@ -8408,7 +8418,9 @@ int read_met_bin(
   LOG(2, "Number of %s: %d",
       (met->coord_type == 0) ? "latitudes" : "y coordinates", met->ny);
   if (met->ny < 2 || met->ny > EY)
-    ERRMSG("Number of latitudes out of range!");
+    ERRMSG(met->coord_type == 0
+	   ? "Number of latitudes out of range!"
+	   : "Number of y coordinates out of range!");
 
   FREAD(&met->np, int,
 	1,
@@ -8421,14 +8433,18 @@ int read_met_bin(
   FREAD(met->lon, double,
 	  (size_t) met->nx,
 	in);
-  LOG(2, "Longitudes: %g, %g ... %g deg",
-      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+  LOG(2, "%s: %g, %g ... %g %s",
+      met->coord_type == 0 ? "Longitudes" : "X coordinates",
+      met->lon[0], met->lon[1], met->lon[met->nx - 1],
+      met->coord_type == 0 ? "deg" : "m");
 
   FREAD(met->lat, double,
 	  (size_t) met->ny,
 	in);
-  LOG(2, "Latitudes: %g, %g ... %g deg",
-      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+  LOG(2, "%s: %g, %g ... %g %s",
+      met->coord_type == 0 ? "Latitudes" : "Y coordinates",
+      met->lat[0], met->lat[1], met->lat[met->ny - 1],
+      met->coord_type == 0 ? "deg" : "m");
 
   FREAD(met->p, double,
 	  (size_t) met->np,
