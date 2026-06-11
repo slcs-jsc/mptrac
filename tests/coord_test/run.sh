@@ -43,7 +43,8 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-    ATM_BASENAME atm MET_CAPE 0 DT_MOD 600 ATM_DT_OUT 600 MET_COORD_TYPE 1
+    ATM_BASENAME atm MET_CAPE 0 DT_MOD 600 ATM_DT_OUT 600 MET_COORD_TYPE 1 \
+    MET_UTM_REF_LON 11.5692782 MET_UTM_REF_LAT 48.1507476
 
 # Compare files...
 echo -e "\nCompare results..."

@@ -95,15 +95,24 @@ double clim_oh(
   /* Set SZA threshold... */
   const double sza_thresh = DEG2RAD(85.), csza_thresh = cos(sza_thresh);
 
+  /* Set reference coordinates... */
+  const double lat_ref =
+    ctl->met_coord_type == 0 ? lat : ctl->met_utm_ref_lat;
+  double lon_ref = ctl->met_coord_type == 0 ? lon : ctl->met_utm_ref_lon;
+  while (lon_ref < -180.0)
+    lon_ref += 360.0;
+  while (lon_ref >= 180.0)
+    lon_ref -= 360.0;
+
   /* Get OH data from climatology... */
-  const double oh = clim_zm(&clim->oh, t, lat, p);
+  const double oh = clim_zm(&clim->oh, t, lat_ref, p);
 
   /* Check beta... */
   if (ctl->oh_chem_beta <= 0)
     return oh;
 
   /* Apply diurnal correction... */
-  const double csza = cos_sza(t, lon, lat);
+  const double csza = cos_sza(t, lon_ref, lat_ref);
   const double denom = (csza >= csza_thresh) ? csza : csza_thresh;
   return oh * exp(-ctl->oh_chem_beta / denom);
 }
@@ -4112,14 +4121,16 @@ void module_chem_init(
     }
 
     /* Set radical species... */
+    const double lat_ref =
+      ctl->met_coord_type == 0 ? atm->lat[ip] : ctl->met_utm_ref_lat;
     SET_ATM(qnt_Coh, clim_oh(ctl, clim, atm->time[ip],
 			     atm->lon[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
-			      atm->lat[ip], atm->p[ip]));
+			      lat_ref, atm->p[ip]));
     SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
-			       atm->lat[ip], atm->p[ip]));
+			       lat_ref, atm->p[ip]));
     SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
-			      atm->lat[ip], atm->p[ip]));
+			      lat_ref, atm->p[ip]));
   }
 }
 
@@ -4266,7 +4277,7 @@ void module_decay(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,clim,atm)") {
 
     /* Get weighting factor... */
-    const double w = tropo_weight(clim, atm, ip);
+    const double w = tropo_weight(ctl, clim, atm, ip);
 
     /* Set lifetime... */
     const double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -4516,7 +4527,7 @@ void module_diff_turb(
 
     /* Get weighting factors... */
     const double wpbl = pbl_weight(ctl, atm, ip, pbl, ps);
-    const double wtrop = tropo_weight(clim, atm, ip) * (1.0 - wpbl);
+    const double wtrop = tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl);
     const double wstrat = 1.0 - wpbl - wtrop;
 
     /* Set diffusivity... */
@@ -4933,16 +4944,16 @@ void module_meteo(
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
     SET_ATM(qnt_o3c, o3c);
+    const double lat_ref =
+      ctl->met_coord_type == 0 ? atm->lat[ip] : ctl->met_utm_ref_lat;
     SET_ATM(qnt_hno3,
-	    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_zm(&clim->hno3, atm->time[ip], lat_ref, atm->p[ip]));
     SET_ATM(qnt_oh, clim_oh(ctl, clim, atm->time[ip],
 			    atm->lon[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_h2o2, clim_zm(&clim->h2o2, atm->time[ip],
-			      atm->lat[ip], atm->p[ip]));
-    SET_ATM(qnt_ho2, clim_zm(&clim->ho2, atm->time[ip],
-			     atm->lat[ip], atm->p[ip]));
-    SET_ATM(qnt_o1d, clim_zm(&clim->o1d, atm->time[ip],
-			     atm->lat[ip], atm->p[ip]));
+			      lat_ref, atm->p[ip]));
+    SET_ATM(qnt_ho2, clim_zm(&clim->ho2, atm->time[ip], lat_ref, atm->p[ip]));
+    SET_ATM(qnt_o1d, clim_zm(&clim->o1d, atm->time[ip], lat_ref, atm->p[ip]));
     SET_ATM(qnt_vh, sqrt(u * u + v * v));
     SET_ATM(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     SET_ATM(qnt_psat, PSAT(t));
@@ -5126,7 +5137,7 @@ void module_mixing_help(
 
       double mixparam = 1.0;
       if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
-	const double w = tropo_weight(clim, atm, ip);
+	const double w = tropo_weight(ctl, clim, atm, ip);
 	mixparam = w * ctl->mixing_trop + (1.0 - w) * ctl->mixing_strat;
       }
 
@@ -6531,6 +6542,14 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_COORD_TYPE", -1, "0", NULL);
   if (ctl->met_coord_type < 0 || ctl->met_coord_type > 1)
     ERRMSG("MET_COORD_TYPE must be 0 or 1!");
+  ctl->met_utm_ref_lat = 0.0;
+  ctl->met_utm_ref_lon = 0.0;
+  if (ctl->met_coord_type == 1) {
+    ctl->met_utm_ref_lat =
+      scan_ctl(filename, argc, argv, "MET_UTM_REF_LAT", -1, "", NULL);
+    ctl->met_utm_ref_lon =
+      scan_ctl(filename, argc, argv, "MET_UTM_REF_LON", -1, "", NULL);
+  }
 
   /* Vertical coordinate and velocity... */
   ctl->advect_vert_coord =
@@ -8749,7 +8768,9 @@ void read_met_cape(
       dcape = 0;
       p = met->plcl[ix][iy];
       t = theta / pow(1000. / p, 0.286);
-      ptop = 0.75 * clim_tropo(clim, met->time, met->lat[iy]);
+      ptop = 0.75 * clim_tropo(clim, met->time,
+			       ctl->met_coord_type ==
+			       0 ? met->lat[iy] : ctl->met_utm_ref_lat);
       do {
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
@@ -12207,12 +12228,15 @@ double time_from_filename(
 /*****************************************************************************/
 
 double tropo_weight(
+  const ctl_t *ctl,
   const clim_t *clim,
   const atm_t *atm,
   const int ip) {
 
   /* Get tropopause pressure... */
-  const double pt = clim_tropo(clim, atm->time[ip], atm->lat[ip]);
+  const double pt = clim_tropo(clim, atm->time[ip],
+			       ctl->met_coord_type ==
+			       0 ? atm->lat[ip] : ctl->met_utm_ref_lat);
 
   /* Get pressure range... */
   const double p1 = pt * 0.866877899;

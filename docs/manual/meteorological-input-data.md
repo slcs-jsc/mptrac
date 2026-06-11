@@ -57,7 +57,10 @@ same UTM coordinates in columns 3 and 4.
 The UTM-grid mode is intended for particle dispersion on high-resolution CFD
 model grids. The longitude/latitude grid remains the default recommendation,
 and many diagnostics, chemistry options, climatological corrections, etc.
-assume geographic longitude and latitude.
+assume geographic longitude and latitude. For UTM runs that use such
+parameterizations, `MET_UTM_REF_LAT` and `MET_UTM_REF_LON` must be set in the control
+file to provide representative geographic reference coordinates in degrees for
+climatological and solar-geometry calculations.
 
 ## The ECMWF reanalyses
 

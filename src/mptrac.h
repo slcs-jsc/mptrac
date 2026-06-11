@@ -2597,6 +2597,12 @@ typedef struct {
   /*! Type of coordinates for meteo data (-1=detect, 0=lat/lon [deg], 1=UTM [m]). */
   int met_coord_type;
 
+  /*! Reference latitude [deg] for UTM grid. */
+  double met_utm_ref_lat;
+
+  /*! Reference longitude [deg] for UTM grid. */
+  double met_utm_ref_lon;
+
   /*! Vertical coordinate of input meteo data
      (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). */
   int met_vert_coord;
@@ -9003,6 +9009,7 @@ double time_from_filename(
  * - Returns 0 if the pressure is less than a calculated lower limit.
  * - Linearly interpolates between 1 and 0 within the range defined by the upper and lower limits.
  *
+ * @param[in] ctl Pointer to the control data structure.
  * @param[in] clim Pointer to the climatology data structure.
  * @param[in] atm Pointer to the atmospheric data structure.
  * @param[in] ip Index of the pressure value to evaluate within the atmospheric data.
@@ -9012,6 +9019,7 @@ double time_from_filename(
  * @author Lars Hoffmann
  */
 double tropo_weight(
+  const ctl_t * ctl,
   const clim_t * clim,
   const atm_t * atm,
   const int ip);
