@@ -693,6 +693,53 @@
   (-(dz) * (p) / H0)
 
 /**
+ * @brief Convert a distance in meters to a coordinate value based on grid type.
+ *
+ * This macro converts a distance in meters to either degrees longitude
+ * (for latitude/longitude grids) or keeps it as metres (for UTM grids),
+ * depending on the coordinate system type specified in the met_t structure.
+ *
+ * For coord_type = 0 (latitude/longitude grid):
+ *   - Converts meters to kilometers
+ *   - Call DX2DEG() to convert to degrees
+ *
+ * For coord_type = 1 (UTM grid):
+ *   - Keeps input distance unchanged (in meters)
+ *
+ * @param met Pointer to met_t structure containing coordinate system information.
+ * @param dx Distance in meters to be converted.
+ * @param lat Latitude in degrees (used for degree conversion in lat/lon grids).
+ * @return Coordinate value in either degrees longitude (for coord_type=0)
+ *         or meters (for coord_type=1).
+ *
+ * @author Robin Brase
+ */
+#define DX2COORD(met, dx, lat) (((met)->coord_type == 0)? DX2DEG((dx) / 1000.0, (lat)) : ((dx) ))
+
+/**
+ * @brief Convert a distance to coordinate value based on grid type.
+ *
+ * This macro converts a distance in meters to either degrees latitude
+ * (for latitude/longitude grids) or keeps it as metres (for UTM grids),
+ * depending on the coordinate system type specified in the met_t structure.
+ *
+ * For coord_type = 0 (latitude/longitude grid):
+ *   - Converts meters to kilometers
+ *   - Call DY2DEG() to convert to degrees
+ *
+ * For coord_type = 1 (UTM grid):
+ *   - Keeps input distance unchanged (in meters)
+ *
+ * @param met Pointer to met_t structure containing coordinate system information.
+ * @param dy Distance in meters to be converted.
+ * @return Coordinate value in either degrees latitude (for coord_type=0)
+ *         or meters (for coord_type=1).
+ *
+ * @author Robin Brase
+ */
+#define DY2COORD(met, dy)  (((met)->coord_type == 0)? DY2DEG((dy) / 1000.0) : ((dy) ))
+
+/**
  * @brief Calculate the distance between two points in Cartesian coordinates.
  *
  * This macro calculates the Euclidean distance between two points in
@@ -2547,6 +2594,9 @@ typedef struct {
   /*! Meteo data layout (0=[lev, lat, lon], 1=[lon, lat, lev]). */
   int met_convention;
 
+  /*! Type of coordinates for meteo data (-1=detect, 0=lat/lon [deg], 1=UTM [m]). */
+  int met_coord_type;
+
   /*! Vertical coordinate of input meteo data
      (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). */
   int met_vert_coord;
@@ -3489,6 +3539,9 @@ typedef struct {
 
   /*! Time [s]. */
   double time;
+
+  /* Grid type: 0=lat/lon [deg], 1=UTM [m]. */
+  int coord_type;
 
   /*! Number of longitudes. */
   int nx;
@@ -5130,6 +5183,34 @@ void get_tropo(
  * @author Lars Hoffmann
  */
 void intpol_check_lon_lat(
+  const double *lons,
+  const int nlon,
+  const double *lats,
+  const int nlat,
+  const double lon,
+  const double lat,
+  double *lon2,
+  double *lat2);
+
+/**
+ * @brief Clamps UTM coordinates to the valid bounds.
+ *
+ * This function constrains the given UTM easting and northing values
+ * so they remain within the limits defined by the provided x and y
+ * coordinate arrays.
+ *
+ * @param[in] lons Pointer to an array of valid x/easting values.
+ * @param[in] nlon Number of elements in the x/easting array.
+ * @param[in] lats Pointer to an array of valid y/northing values.
+ * @param[in] nlat Number of elements in the y/northing array.
+ * @param[in] lon Input x/easting coordinate to be checked and adjusted.
+ * @param[in] lat Input y/northing coordinate to be checked and adjusted.
+ * @param[out] lon2 Pointer to the adjusted x/easting coordinate.
+ * @param[out] lat2 Pointer to the adjusted y/northing coordinate.
+ *
+ * @author Robin Brase
+ */
+void intpol_check_cartesian(
   const double *lons,
   const int nlon,
   const double *lats,
@@ -8887,16 +8968,20 @@ void timer(
  *
  * @param filename A string representing the filename containing the timestamp.
  * @param offset An integer indicating the position from the end of the filename where the timestamp starts.
- * 
+ * @param with_seconds An integer indicating if the filename contains seconds or not.
+ *
  * @return The time in Julian seconds as a double.
  *
  * The function performs the following steps:
- * - Extracts the year, month, day, hour, and minute components of the timestamp from the filename using the given offset.
+ * - Extracts the year, month, day, hour, minute and (optionally) second components of the timestamp
+ *   from the filename using the given offset.
  * - Validates the extracted components to ensure they represent a valid date and time.
  * - Converts the validated date and time components to Julian seconds using the `time2jsec` function.
  * - Returns the computed time in Julian seconds.
  *
- * @note The expected format of the timestamp in the filename is `YYYY-MM-DD_HH-MM` (e.g., "2023-05-27_14-45").
+ * @note The expected formats of the timestamp in the filename are:
+ *  - if with_seconds=0: `YYYY-MM-DD_HH-MM` (e.g., "2023-05-27_14-45")
+ *  - if with_seconds=1: `YYYY-MM-DD_HH-MM-SS` (e.g., "2023-05-27_14-45-12")
  *
  * @warning If the extracted components do not represent a valid date and time, the function will trigger an error message.
  * 
@@ -8904,7 +8989,8 @@ void timer(
  */
 double time_from_filename(
   const char *filename,
-  const int offset);
+  const int offset,
+  const int with_seconds);
 
 /**
  * @brief Computes a weighting factor based on tropopause pressure.

@@ -111,7 +111,8 @@ int main(
       continue;
 
     /* Get time from filename... */
-    t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
+    int time_offset = ctl.atm_type < 2 ? 23 : 22;
+    t = time_from_filename(argv[f], time_offset, 1);
 
     /* Save initial time... */
     if (!init) {

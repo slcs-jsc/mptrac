@@ -313,6 +313,7 @@ MODULE mptrac_struct
      CHARACTER(c_char), DIMENSION(length) :: metbase
      REAL(c_double) :: dt_met
      INTEGER(c_int) :: met_convention
+     INTEGER(c_int) :: met_coord_type
      INTEGER(c_int) :: met_vert_coord
      INTEGER(c_int) :: met_type
      INTEGER(c_int) :: met_clams
@@ -536,6 +537,7 @@ MODULE mptrac_struct
   ! Meteorological data...
   TYPE, bind(c) :: met_t
      REAL(c_double) :: time
+     INTEGER(c_int) :: coord_type
      INTEGER(c_int) :: nx
      INTEGER(c_int) :: ny
      INTEGER(c_int) :: np

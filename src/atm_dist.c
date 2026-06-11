@@ -173,7 +173,8 @@ int main(
       ERRMSG("Different numbers of particles!");
 
     /* Get time from filename... */
-    const double t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
+    int time_offset = ctl.atm_type < 2 ? 23 : 22;
+    const double t = time_from_filename(argv[f], time_offset, 1);
 
     /* Save initial time... */
     if (!init) {

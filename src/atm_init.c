@@ -123,8 +123,8 @@ int main(
 	    atm->p[atm->np] = P(z + rg + ru);
 
 	    rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
-	    double rx =
-	      gsl_ran_gaussian_ziggurat(rng, DX2DEG(sx, lat) / 2.3548);
+	    const double sx_coord = ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
+	    double rx = gsl_ran_gaussian_ziggurat(rng, sx_coord / 2.3548);
 	    ru = ulon * (gsl_rng_uniform(rng) - 0.5);
 	    atm->lon[atm->np] = (lon + rg + rx + ru);
 
@@ -133,7 +133,8 @@ int main(
 
 	    do {
 	      rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
-	      rx = gsl_ran_gaussian_ziggurat(rng, DY2DEG(sx) / 2.3548);
+	      const double sy_coord = ctl.met_coord_type == 0 ? DY2DEG(sx) : sx;
+	      rx = gsl_ran_gaussian_ziggurat(rng, sy_coord / 2.3548);
 	      ru = ulat * (gsl_rng_uniform(rng) - 0.5);
 	      atm->lat[atm->np] = (lat + rg + rx + ru);
 	    } while (even && gsl_rng_uniform(rng) >

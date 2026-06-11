@@ -45,6 +45,20 @@ therefore keep the original netCDF meteorological input files.
 See the `tests/data/` directory in the MPTRAC repository for examples
 of meteo data netCDF files used for MPTRAC.
 
+## UTM-grid input data
+
+For special-purpose local applications, MPTRAC can also read meteo data on
+a regular UTM grid. This mode is enabled with `MET_COORD_TYPE = 1`. In this
+case, the horizontal coordinate variables in the netCDF files are expected
+to be `x` and `y`, given as UTM easting and northing in metres, instead of
+`lon` and `lat` in degrees. Air parcel input and output files then use the
+same UTM coordinates in columns 3 and 4.
+
+The UTM-grid mode is intended for particle dispersion on high-resolution CFD
+model grids. The longitude/latitude grid remains the default recommendation,
+and many diagnostics, chemistry options, climatological corrections, etc.
+assume geographic longitude and latitude.
+
 ## The ECMWF reanalyses
 
 ### Overview

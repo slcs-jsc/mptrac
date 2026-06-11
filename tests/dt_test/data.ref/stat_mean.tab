@@ -1,0 +1,12 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = altitude (mean) [km]
+# $4 = longitude (mean) [deg]
+# $5 = latitude (mean) [deg]
+# $6 = t (mean) [K]
+# $7 = u (mean) [m/s]
+# $8 = v (mean) [m/s]
+# $9 = w (mean) [hPa/s]
+# $10 = number of particles
+
+360547200.00 0.00 10.3403 -72.1191 -40.5889 221.152 22.8743 -18.2454 -0.000985542 10000
