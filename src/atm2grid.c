@@ -75,9 +75,6 @@ int main(
   double r, t = time_from_filename(argv[2], time_offset, 1);
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
-  if (sec != 0)
-    WARN("Seconds will be truncated in the filename of the grid data");
-
   /* Set output filename... */
   char filename[3 * LEN];
   sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",

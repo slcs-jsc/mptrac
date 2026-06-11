@@ -50,14 +50,6 @@ int main(
 
   int init = 0;
 
-  /* Allocate... */
-  ALLOC(atm, atm_t, 1);
-  ALLOC(atm_filt, atm_t, 1);
-  ALLOC(work, double,
-	NP);
-  ALLOC(zs, double,
-	NP);
-
   /* Print usage information... */
   USAGE;
 
@@ -66,6 +58,14 @@ int main(
     ERRMSG("Missing or invalid command-line arguments.\n\n"
 	   "Usage: atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...]\n\n"
 	   "Use -h for full help.");
+
+  /* Allocate... */
+  ALLOC(atm, atm_t, 1);
+  ALLOC(atm_filt, atm_t, 1);
+  ALLOC(work, double,
+	NP);
+  ALLOC(zs, double,
+	NP);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);

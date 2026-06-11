@@ -44,9 +44,6 @@ int main(
 
   ctl_t ctl;
 
-  /* Allocate... */
-  ALLOC(atm, atm_t, 1);
-
   /* Print usage information... */
   USAGE;
 
@@ -55,6 +52,9 @@ int main(
     ERRMSG("Missing or invalid command-line arguments.\n\n"
 	   "Usage: atm_init <ctl> <atm_out> [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
+
+  /* Allocate... */
+  ALLOC(atm, atm_t, 1);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -102,6 +102,7 @@ int main(
   const int idx_offset =
     (int) scan_ctl(argv[1], argc, argv, "INIT_IDX_OFFSET", -1, "0", NULL);
 
+  /* Check arguments... */
   if (ctl.met_coord_type != 0 && even)
     ERRMSG("INIT_EVENLY is only supported for lat/lon grids");
   if (ctl.met_coord_type != 0 && bellrad > 0)

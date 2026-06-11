@@ -60,6 +60,15 @@ int main(
 
   int init = 0, np;
 
+  /* Print usage information... */
+  USAGE;
+
+  /* Check arguments... */
+  if (argc < 6)
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...]\n\n"
+	   "Use -h for full help.");
+
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
   ALLOC(atm2, atm_t, 1);
@@ -98,15 +107,6 @@ int main(
   ALLOC(work, double,
 	NP);
 
-  /* Print usage information... */
-  USAGE;
-
-  /* Check arguments... */
-  if (argc < 6)
-    ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...]\n\n"
-	   "Use -h for full help.");
-
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
 
@@ -128,9 +128,6 @@ int main(
     scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
   const double zscore =
     scan_ctl(argv[1], argc, argv, "DIST_ZSCORE", -1, "-999", NULL);
-
-  for (int iq = 0; iq < NQ; iq++)
-    rel_min[iq] = 0;
 
   /* Write info... */
   LOG(1, "Write transport deviations: %s", argv[2]);

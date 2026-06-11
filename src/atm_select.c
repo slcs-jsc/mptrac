@@ -44,10 +44,6 @@ int main(
 
   atm_t *atm, *atm2;
 
-  /* Allocate... */
-  ALLOC(atm, atm_t, 1);
-  ALLOC(atm2, atm_t, 1);
-
   /* Print usage information... */
   USAGE;
 
@@ -57,11 +53,12 @@ int main(
 	   "Usage: atm_select <ctl> <atm_select> <atm1> [<atm2> ...]\n\n"
 	   "Use -h for full help.");
 
+  /* Allocate... */
+  ALLOC(atm, atm_t, 1);
+  ALLOC(atm2, atm_t, 1);
+
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
-
-  if (ctl.met_coord_type != 0)
-    ERRMSG("atm_select currently supports only lat/lon grids");
   const int stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
   const int idx0 =
@@ -96,6 +93,10 @@ int main(
     scan_ctl(argv[1], argc, argv, "SELECT_RLON", -1, "0", NULL);
   const double rlat =
     scan_ctl(argv[1], argc, argv, "SELECT_RLAT", -1, "0", NULL);
+
+  /* Check arguments... */
+  if (ctl.met_coord_type != 0)
+    ERRMSG("atm_select currently supports only lat/lon grids");
 
   /* Get Cartesian coordinates... */
   double x0[3], x1[3];

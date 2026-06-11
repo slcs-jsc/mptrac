@@ -55,11 +55,6 @@ int main(
 
   static size_t count[10], start[10];
 
-  /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(met, met_t, 1);
-  ALLOC(dd, dd_t, 1);
-
   /* Print usage information... */
   USAGE;
 
@@ -68,6 +63,11 @@ int main(
     ERRMSG("Missing or invalid command-line arguments.\n\n"
 	   "Usage: tropo <ctl> <tropo.nc> <met0> [<met1> ...]\n\n"
 	   "Use -h for full help.");
+
+  /* Allocate... */
+  ALLOC(clim, clim_t, 1);
+  ALLOC(met, met_t, 1);
+  ALLOC(dd, dd_t, 1);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);

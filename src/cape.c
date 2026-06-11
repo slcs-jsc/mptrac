@@ -56,11 +56,6 @@ int main(
 
   size_t start[10], count[10];
 
-  /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(met, met_t, 1);
-  ALLOC(dd, dd_t, 1);
-
   /* Print usage information... */
   USAGE;
 
@@ -68,6 +63,11 @@ int main(
   if (argc < 2)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
 	   "Usage: cape <ctl> <met.nc>\n\n" "Use -h for full help.");
+
+  /* Allocate... */
+  ALLOC(clim, clim_t, 1);
+  ALLOC(met, met_t, 1);
+  ALLOC(dd, dd_t, 1);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);

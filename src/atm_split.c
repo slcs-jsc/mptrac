@@ -50,10 +50,6 @@ int main(
 
   int ip, nk = 0;
 
-  /* Allocate... */
-  ALLOC(atm, atm_t, 1);
-  ALLOC(atm2, atm_t, 1);
-
   /* Print usage information... */
   USAGE;
 
@@ -62,6 +58,10 @@ int main(
     ERRMSG("Missing or invalid command-line arguments.\n\n"
 	   "Usage: atm_split <ctl> <atm_in> <atm_out> [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
+
+  /* Allocate... */
+  ALLOC(atm, atm_t, 1);
+  ALLOC(atm2, atm_t, 1);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);

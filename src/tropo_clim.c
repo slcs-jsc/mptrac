@@ -63,6 +63,15 @@ int main(
 
   static size_t count[10], start[10];
 
+  /* Print usage information... */
+  USAGE;
+
+  /* Check arguments... */
+  if (argc < 5)
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: tropo_clim <ctl> <clim.tab> <var> <tropo.nc> [<tropo2.nc> ...]\n\n"
+	   "Use -h for full help.");
+
   /* Allocate... */
   ALLOC(zm, double,
 	EX * EY);
@@ -100,15 +109,6 @@ int main(
 	EX * EY);
   ALLOC(nt, int,
 	EX * EY);
-
-  /* Print usage information... */
-  USAGE;
-
-  /* Check arguments... */
-  if (argc < 5)
-    ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: tropo_clim <ctl> <clim.tab> <var> <tropo.nc> [<tropo2.nc> ...]\n\n"
-	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
