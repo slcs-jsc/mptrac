@@ -70,13 +70,9 @@ int main(
     ERRMSG("Cannot open file!");
 
   /* Get time from filename... */
-  int time_offset = ctl.atm_type < 2 ? 20 : 19;
-  if (ctl.atm_dt_out < 60)
-    time_offset += 3;
-  const int with_seconds = ctl.atm_dt_out < 60;
-
+  int time_offset = ctl.atm_type < 2 ? 23 : 22;
   int year, mon, day, hour, min, sec;
-  double r, t = time_from_filename(argv[2], time_offset, with_seconds);
+  double r, t = time_from_filename(argv[2], time_offset, 1);
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
   if (sec != 0)
@@ -84,8 +80,8 @@ int main(
 
   /* Set output filename... */
   char filename[3 * LEN];
-  sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.%s",
-	  ctl.grid_basename, year, mon, day, hour, min,
+  sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
+	  ctl.grid_basename, year, mon, day, hour, min, sec,
 	  ctl.grid_type == 0 ? "tab" : "nc");
 
   /* Write grid data... */

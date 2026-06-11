@@ -7732,13 +7732,10 @@ void mptrac_write_output(
 
     if (ctl->atm_type_out == 5) {
       sprintf(filename, "%s/%s.%s", dirname, ctl->atm_basename, ext);
-    } else if (ctl->atm_dt_out < 60) {
+    } else {
       sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
 	      dirname, ctl->atm_basename, year, mon, day, hour, min, sec,
 	      ext);
-    } else {
-      sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	      dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
     }
 
     mptrac_write_atm(filename, ctl, atm, t);
@@ -7746,8 +7743,8 @@ void mptrac_write_output(
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->grid_basename, year, mon, day, hour, min,
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->grid_basename, year, mon, day, hour, min, sec,
 	    ctl->grid_type == 0 ? "tab" : "nc");
     write_grid(filename, ctl, met0, met1, atm, t);
   }
@@ -7760,8 +7757,8 @@ void mptrac_write_output(
 
   /* Write ensemble data... */
   if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    dirname, ctl->ens_basename, year, mon, day, hour, min);
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->ens_basename, year, mon, day, hour, min, sec);
     write_ens(filename, ctl, atm, t);
   }
 
