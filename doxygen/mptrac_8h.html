@@ -7474,6 +7474,7 @@ Here is the call graph for this function:</div>
     <tr><td class="paramname">plev</td><td>Pressure levels corresponding to the third dimension of the array; used only for per-level compression diagnostics. </td></tr>
     <tr><td class="paramname">precision</td><td>Relative precision in bits (used if &gt; 0; tolerance must be 0). </td></tr>
     <tr><td class="paramname">tolerance</td><td>Absolute error bound (used if &gt; 0; precision must be 0). </td></tr>
+    <tr><td class="paramname">lossy_scale</td><td>Scaling mode selector for lossy compression. </td></tr>
     <tr><td class="paramname">decompress</td><td>Non-zero to decompress data from <code>inout</code> into <code>array</code>; zero to compress <code>array</code> into <code>inout</code>. </td></tr>
     <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging. </td></tr>
     <tr><td class="paramname">inout</td><td>File stream for reading/writing compressed data.</td></tr>
@@ -7594,6 +7595,7 @@ SZ_decompress</dd></dl>
     <tr><td class="paramname">plev</td><td>Pressure levels corresponding to the z-dimension of the array; used only for per-level compression diagnostics. </td></tr>
     <tr><td class="paramname">precision</td><td>The precision parameter for ZFP compression. If greater than 0, it sets the fixed precision mode. </td></tr>
     <tr><td class="paramname">tolerance</td><td>The tolerance parameter for ZFP compression. If greater than 0 and precision is 0, it sets the fixed accuracy mode. </td></tr>
+    <tr><td class="paramname">lossy_scale</td><td>Scaling mode selector for lossy compression. </td></tr>
     <tr><td class="paramname">decompress</td><td>If non-zero, the function will decompress the data; otherwise, it will compress the data. </td></tr>
     <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging. </td></tr>
     <tr><td class="paramname">inout</td><td>File pointer for input or output operations. It is used for reading compressed data during decompression and writing compressed data during compression.</td></tr>
