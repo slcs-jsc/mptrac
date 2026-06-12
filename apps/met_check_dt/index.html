@@ -887,7 +887,8 @@
 <h1 id="met_check_dt">met_check_dt</h1>
 <p><code>met_check_dt</code> checks model time-step constraints for a meteorological
 data file. It reports height-dependent estimates for horizontal and
-vertical advection and diffusion time steps.</p>
+vertical advection and diffusion time steps using the current MPTRAC
+control parameters.</p>
 <pre><code class="language-bash">./met_check_dt &lt;ctl&gt; &lt;dt_file&gt; &lt;met&gt; [KEY VALUE ...]
 </code></pre>
 <p>Required arguments:</p>
@@ -909,14 +910,39 @@ on the command line as <code>KEY VALUE</code> pairs.</p>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>KX</code></td>
-<td style="text-align: left;">horizontal diffusivity [m2/s]</td>
-<td style="text-align: right;">50.0</td>
+<td style="text-align: left;"><code>TURB_DX_PBL</code></td>
+<td style="text-align: left;">PBL horizontal diffusivity [m2/s] used for column <code>$4</code></td>
+<td style="text-align: right;">50</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>KZ</code></td>
-<td style="text-align: left;">vertical diffusivity [m2/s]</td>
+<td style="text-align: left;"><code>TURB_DX_TROP</code></td>
+<td style="text-align: left;">free-tropospheric horizontal diffusivity [m2/s] used for column <code>$4</code></td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>TURB_DX_STRAT</code></td>
+<td style="text-align: left;">stratospheric horizontal diffusivity [m2/s] used for column <code>$4</code></td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>TURB_DZ_PBL</code></td>
+<td style="text-align: left;">PBL vertical diffusivity [m2/s] used for column <code>$5</code></td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>TURB_DZ_TROP</code></td>
+<td style="text-align: left;">free-tropospheric vertical diffusivity [m2/s] used for column <code>$5</code></td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>TURB_DZ_STRAT</code></td>
+<td style="text-align: left;">stratospheric vertical diffusivity [m2/s] used for column <code>$5</code></td>
 <td style="text-align: right;">0.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>TURB_PBL_TRANS</code></td>
+<td style="text-align: left;">fractional depth of the PBL transition layer used for column <code>$6</code></td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>DX</code></td>
@@ -940,11 +966,18 @@ on the command line as <code>KEY VALUE</code> pairs.</p>
 <li><code>$1</code>: height [km]</li>
 <li><code>$2</code>: time step for horizontal advection [s]</li>
 <li><code>$3</code>: time step for vertical advection [s]</li>
-<li><code>$4</code>: time step for horizontal diffusion [s]</li>
-<li><code>$5</code>: time step for vertical diffusion [s]</li>
+<li><code>$4</code>: time step for horizontal diffusion [s] using layer-aware <code>TURB_DX_*</code></li>
+<li><code>$5</code>: time step for vertical diffusion [s] using layer-aware <code>TURB_DZ_*</code></li>
+<li><code>$6</code>: time step for resolving diffusion across the PBL transition layer [s]</li>
+<li><code>$7</code>: time step for PBL diffusion on the full PBL-depth scale [s]</li>
 </ul>
+<p>Columns <code>$4</code> and <code>$5</code> follow the same PBL/troposphere/stratosphere
+weighting used by the fixed-<code>K</code> diffusion module. Column <code>$6</code> is the
+stricter transition-layer criterion and is only finite within the
+configured PBL transition layer. Column <code>$7</code> is a less conservative
+PBL-scale criterion and is only finite within the PBL itself.</p>
 <p>Example:</p>
-<pre><code class="language-bash">./met_check_dt trac.ctl dt_2011_06_05.tab ei_2011_06_05_00.nc DX 50
+<pre><code class="language-bash">./met_check_dt trac.ctl dt_2011_06_05.tab ei_2011_06_05_00.nc DX 50 TURB_DZ_PBL 1.0 TURB_DZ_TROP 0.1 TURB_DZ_STRAT 0.1 TURB_PBL_TRANS 0.1
 </code></pre>
 
 
