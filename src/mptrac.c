@@ -6802,6 +6802,8 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0.16", NULL);
   ctl->turb_mesoz =
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
+  ctl->turb_pbl_trans =
+    scan_ctl(filename, argc, argv, "TURB_PBL_TRANS", -1, "0", NULL);
 
   /* Convection... */
   ctl->conv_mix_pbl
@@ -7850,7 +7852,7 @@ double pbl_weight(
   const double ps) {
 
   /* Get pressure range... */
-  const double p1 = pbl - ctl->conv_pbl_trans * (ps - pbl);
+  const double p1 = pbl - ctl->turb_pbl_trans * (ps - pbl);
   const double p0 = pbl;
 
   /* Get weighting factor... */

@@ -2804,6 +2804,9 @@ typedef struct {
   /*! Vertical scaling factor for mesoscale wind fluctuations. */
   double turb_mesoz;
 
+  /*! Depth of turbulent PBL transition layer (fraction of PBL depth). */
+  double turb_pbl_trans;
+
   /*! Vertical mixing in the PBL (0=off, 1=on). */
   int conv_mix_pbl;
 
@@ -7394,7 +7397,8 @@ double nat_temperature(
  * This function calculates a weighting factor that determines the
  * contribution of a pressure level to processes within the planetary
  * boundary layer. The factor is based on the relative position of the
- * pressure within a linear transition range defined by `pbl` and `ps`.
+ * pressure within a linear transition range defined by `pbl`, `ps`,
+ * and `TURB_PBL_TRANS`.
  *
  * @param ctl Pointer to the control structure containing configuration parameters.
  * @param atm Pointer to the atmospheric data structure containing pressure levels.

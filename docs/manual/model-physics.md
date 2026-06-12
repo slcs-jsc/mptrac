@@ -139,6 +139,7 @@ be used:
 |TURB_DX_STRAT|Stratosphere|horizontal|$0~\rm{m^2~s^{-1}}$|
 |TURB_DZ_TROP|Troposphere|vertical|$0~\rm{m^2~s^{-1}}$|
 |TURB_DZ_STRAT|Stratosphere|vertical|$0.1~\rm{m^2~s^{-1}}$|
+|TURB_PBL_TRANS|PBL transition layer|fraction of PBL depth|$0$|
 
 ## Subgrid-scale wind fluctuations
 

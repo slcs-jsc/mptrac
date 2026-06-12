@@ -380,6 +380,7 @@ MODULE mptrac_struct
      REAL(c_double) :: turb_dz_strat
      REAL(c_double) :: turb_mesox
      REAL(c_double) :: turb_mesoz
+     REAL(c_double) :: turb_pbl_trans
      INTEGER(c_int) :: conv_mix_pbl
      REAL(c_double) :: conv_pbl_trans
      REAL(c_double) :: conv_cape
