@@ -66,8 +66,8 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-           "Usage: met_check_dt <ctl> <dt_file> <met> [KEY VALUE ...]\n\n"
-           "Use -h for full help.");
+	   "Usage: met_check_dt <ctl> <dt_file> <met> [KEY VALUE ...]\n\n"
+	   "Use -h for full help.");
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -96,13 +96,13 @@ int main(
 
   /* Write header... */
   fprintf(out,
-          "# $1 = height [km]\n"
-          "# $2 = time step for horizontal advection [s]\n"
-          "# $3 = time step for vertical advection [s]\n"
-          "# $4 = time step for horizontal diffusion [s]\n"
-          "# $5 = time step for vertical diffusion [s]\n"
-          "# $6 = time step for PBL transition diffusion [s]\n"
-          "# $7 = time step for PBL depth diffusion [s]\n\n");
+	  "# $1 = height [km]\n"
+	  "# $2 = time step for horizontal advection [s]\n"
+	  "# $3 = time step for vertical advection [s]\n"
+	  "# $4 = time step for horizontal diffusion [s]\n"
+	  "# $5 = time step for vertical diffusion [s]\n"
+	  "# $6 = time step for PBL transition diffusion [s]\n"
+	  "# $7 = time step for PBL depth diffusion [s]\n\n");
 
   /* Loop over pressure levels... */
   for (int ip = 1; ip < met->np - 1; ip++) {
@@ -120,71 +120,70 @@ int main(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 1; iy < met->ny - 1; iy++) {
 
-        /* Check advection... */
-        const double vh =
-          sqrt(SQR(met->u[ix][iy][ip]) + SQR(met->v[ix][iy][ip]));
-        const double dt_x = fabs(c_max * dx / vh);
-        if (vh != 0)
-          dt_x_min = MIN(dt_x, dt_x_min);
+	/* Check advection... */
+	const double vh =
+	  sqrt(SQR(met->u[ix][iy][ip]) + SQR(met->v[ix][iy][ip]));
+	const double dt_x = fabs(c_max * dx / vh);
+	if (vh != 0)
+	  dt_x_min = MIN(dt_x, dt_x_min);
 
-        const double dp = 0.5 * fabs(met->p[ip + 1] - met->p[ip - 1]);
-        const double dt_p = fabs(c_max * dp / met->w[ix][iy][ip]);
-        if (met->w[ix][iy][ip] != 0)
-          dt_p_min = MIN(dt_p, dt_p_min);
+	const double dp = 0.5 * fabs(met->p[ip + 1] - met->p[ip - 1]);
+	const double dt_p = fabs(c_max * dp / met->w[ix][iy][ip]);
+	if (met->w[ix][iy][ip] != 0)
+	  dt_p_min = MIN(dt_p, dt_p_min);
 
-        /* Get layer weights... */
-        const double pt = clim_tropo(clim, met->time,
-                                     ctl.met_coord_type ==
-                                     0 ? met->lat[iy] : ctl.met_utm_ref_lat);
-        const double wpbl =
-          pbl_weight_dt(met->p[ip], met->pbl[ix][iy], met->ps[ix][iy],
-                        pbl_trans);
-        const double wtrop =
-          tropo_weight_dt(met->p[ip], pt) * (1.0 - wpbl);
-        const double wstrat = 1.0 - wpbl - wtrop;
+	/* Get layer weights... */
+	const double pt = clim_tropo(clim, met->time,
+				     ctl.met_coord_type ==
+				     0 ? met->lat[iy] : ctl.met_utm_ref_lat);
+	const double wpbl =
+	  pbl_weight_dt(met->p[ip], met->pbl[ix][iy], met->ps[ix][iy],
+			pbl_trans);
+	const double wtrop = tropo_weight_dt(met->p[ip], pt) * (1.0 - wpbl);
+	const double wstrat = 1.0 - wpbl - wtrop;
 
-        /* Check layer-aware diffusion... */
-        const double dx_loc = wpbl * ctl.turb_dx_pbl
-          + wtrop * ctl.turb_dx_trop + wstrat * ctl.turb_dx_strat;
-        if (dx_loc > 0) {
-          const double dt_dx = 0.5 * SQR(n_max * dx) / dx_loc;
-          dt_dx_min = MIN(dt_dx, dt_dx_min);
-        }
+	/* Check layer-aware diffusion... */
+	const double dx_loc = wpbl * ctl.turb_dx_pbl
+	  + wtrop * ctl.turb_dx_trop + wstrat * ctl.turb_dx_strat;
+	if (dx_loc > 0) {
+	  const double dt_dx = 0.5 * SQR(n_max * dx) / dx_loc;
+	  dt_dx_min = MIN(dt_dx, dt_dx_min);
+	}
 
-        const double dz_loc = wpbl * ctl.turb_dz_pbl
-          + wtrop * ctl.turb_dz_trop + wstrat * ctl.turb_dz_strat;
-        if (dz_loc > 0) {
-          const double dt_dp =
-            0.5 * SQR(n_max * dp)
-            / (SQR(met->p[ip] / (100. * H0)) * dz_loc);
-          dt_dp_min = MIN(dt_dp, dt_dp_min);
-        }
+	const double dz_loc = wpbl * ctl.turb_dz_pbl
+	  + wtrop * ctl.turb_dz_trop + wstrat * ctl.turb_dz_strat;
+	if (dz_loc > 0) {
+	  const double dt_dp = 0.5 * SQR(n_max * dp)
+	    / (SQR(met->p[ip] / (100. * H0)) * dz_loc);
+	  dt_dp_min = MIN(dt_dp, dt_dp_min);
+	}
 
-        /* Check PBL transition diffusion... */
-        if (pbl_trans > 0
-            && met->ps[ix][iy] > met->pbl[ix][iy]
-            && met->p[ip] <= met->pbl[ix][iy]
-            && met->p[ip] >= met->pbl[ix][iy]
-            - pbl_trans * (met->ps[ix][iy] - met->pbl[ix][iy])) {
-          const double p0 = met->pbl[ix][iy];
-          const double p1 = p0 - pbl_trans * (met->ps[ix][iy] - p0);
-          const double dz_trans = 1e3 * fabs(Z(p1) - Z(p0));
-          const double dz_max = MAX(ctl.turb_dz_pbl, ctl.turb_dz_trop);
-          if (dz_trans > 0 && dz_max > 0) {
-            const double dt_trans = 0.5 * SQR(n_max * dz_trans) / dz_max;
-            dt_pbl_min = MIN(dt_trans, dt_pbl_min);
-          }
-        }
+	/* Check PBL transition diffusion... */
+	if (pbl_trans > 0 && met->ps[ix][iy] > met->pbl[ix][iy]
+	    && met->p[ip] <= met->pbl[ix][iy]
+	    && met->p[ip] >= met->pbl[ix][iy]
+	    - pbl_trans * (met->ps[ix][iy] - met->pbl[ix][iy])) {
+	  const double p0 = met->pbl[ix][iy];
+	  const double p1 = p0 - pbl_trans * (met->ps[ix][iy] - p0);
+	  const double dz_trans = 1e3 * fabs(Z(p1) - Z(p0));
+	  const double dz_max = MAX(ctl.turb_dz_pbl, ctl.turb_dz_trop);
+	  if (dz_trans > 0 && dz_max > 0) {
+	    const double dt_trans = 0.5 * SQR(n_max * dz_trans) / dz_max;
+	    dt_pbl_min = MIN(dt_trans, dt_pbl_min);
+	  }
+	}
 
-        /* Check PBL depth diffusion on the full PBL scale. */
-        if (met->ps[ix][iy] > met->pbl[ix][iy]
-            && met->p[ip] >= met->pbl[ix][iy]) {
-          const double dz_pbl = 1e3 * fabs(Z(met->pbl[ix][iy]) - Z(met->ps[ix][iy]));
-          if (dz_pbl > 0 && ctl.turb_dz_pbl > 0) {
-            const double dt_pbl_depth = 0.5 * SQR(n_max * dz_pbl) / ctl.turb_dz_pbl;
-            dt_pbl_depth_min = MIN(dt_pbl_depth, dt_pbl_depth_min);
-          }
-        }
+	/* Check PBL depth diffusion on the full PBL scale. */
+	if (met->ps[ix][iy] > met->pbl[ix][iy]
+	    && met->p[ip] >= met->pbl[ix][iy]) {
+	  const double dz_pbl =
+	    1e3 * fabs(Z(met->pbl[ix][iy]) - Z(met->ps[ix][iy]));
+	  if (dz_pbl > 0 && ctl.turb_dz_pbl > 0) {
+	    const double dt_pbl_depth =
+	      0.5 * SQR(n_max * dz_pbl) / ctl.turb_dz_pbl;
+	    dt_pbl_depth_min = MIN(dt_pbl_depth, dt_pbl_depth_min);
+	  }
+	}
       }
 
     /* Write output... */
@@ -194,7 +193,7 @@ int main(
     const double out_dt_pbl_depth =
       dt_pbl_depth_min < 1e99 ? dt_pbl_depth_min : NAN;
     fprintf(out, "%g %g %g %g %g %g %g\n", Z(met->p[ip]), dt_x_min, dt_p_min,
-            out_dt_dx, out_dt_dp, out_dt_pbl, out_dt_pbl_depth);
+	    out_dt_dx, out_dt_dp, out_dt_pbl, out_dt_pbl_depth);
   }
 
   /* Close output file... */

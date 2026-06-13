@@ -4433,7 +4433,7 @@ void module_diff_pbl(
     /* Estimate Monin-Obukhov length to distinguish neutral, stable, and unstable cases. */
     double ol = 1e12;
     if (fabs(shf) > 1e-6 && ust > 0.0)
-      ol = -thetav * rho * CPD * CUBE(ust) / (KARMAN * G0 * shf);
+      ol = -thetav * rho * CPD * (ust * ust * ust) / (KARMAN * G0 * shf);
 
     /* Neutral conditions... */
     if (zi / fabs(ol) < 1.0) {
@@ -4450,29 +4450,28 @@ void module_diff_pbl(
     else if (ol < 0.0) {
 
       /* Convective velocity... */
-      const double wstar =
-        pow(G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
+      const double wstar = pow(G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
 
       /* Hanna/FLEXPART turbulent velocity variances... */
       sig_u = 1e-2 + ust * pow(12.0 - 0.5 * zi / ol, 1.0 / 3.0);
       sig_w = 1e-2 + sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zeta)
-                          * pow(zeta, 2.0 / 3.0)
-                          + (1.8 - 1.4 * zeta) * SQR(ust));
+			  * pow(zeta, 2.0 / 3.0)
+			  + (1.8 - 1.4 * zeta) * SQR(ust));
 
       /* Calculate derivative dsig_w/dz... */
       dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ust)
-                                     + SQR(wstar) *
-                                     (0.8 * pow(MAX(zeta, 1e-3), -1.0 / 3.0)
-                                      - 1.8 * pow(zeta, 2.0 / 3.0)));
+				     + SQR(wstar) *
+				     (0.8 * pow(MAX(zeta, 1e-3), -1.0 / 3.0)
+				      - 1.8 * pow(zeta, 2.0 / 3.0)));
 
       /* Hanna/FLEXPART Lagrangian timescales... */
       tau_u = 0.15 * zi / sig_u;
       if (z_m < fabs(ol))
-        tau_w = 0.1 * z_m / (sig_w * (0.55 - 0.38 * fabs(z_m / ol)));
+	tau_w = 0.1 * z_m / (sig_w * (0.55 - 0.38 * fabs(z_m / ol)));
       else if (zeta < 0.1)
-        tau_w = 0.59 * z_m / sig_w;
+	tau_w = 0.59 * z_m / sig_w;
       else
-        tau_w = 0.15 * zi / sig_w * (1.0 - exp(-5.0 * zeta));
+	tau_w = 0.15 * zi / sig_w * (1.0 - exp(-5.0 * zeta));
     }
 
     /* Stable conditions... */
@@ -4504,8 +4503,7 @@ void module_diff_pbl(
     const double dsigw2_dz = 2.0 * sig_w * dsigw_dz;
     const double rhoaux = -1.0 / (1e3 * H0);
     cache->uvwp[ip][2]
-      = (float) (cache->uvwp[ip][2] * rw
-		 + sig_w * rw2 * cache->rs[3 * ip + 2]
+      = (float) (cache->uvwp[ip][2] * rw + sig_w * rw2 * cache->rs[3 * ip + 2]
 		 + tau_w * (1.0 - rw) * (dsigw2_dz + rhoaux * SQR(sig_w)));
 
     /* Calculate new air parcel position... */
@@ -4516,9 +4514,9 @@ void module_diff_pbl(
     double znew = z + cache->uvwp[ip][2] * cache->dt[ip];
     while (znew < 0.0 || znew > zi) {
       if (znew < 0.0)
-        znew = -znew;
+	znew = -znew;
       if (znew > zi)
-        znew = 2.0 * zi - znew;
+	znew = 2.0 * zi - znew;
     }
     atm->p[ip] += DZ2DP((znew - z) / 1000., atm->p[ip]);
   }
