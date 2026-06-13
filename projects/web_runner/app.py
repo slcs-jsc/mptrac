@@ -85,7 +85,7 @@ MET_OPTIONS = {
 def run_command(cmd, timeout, run_id):
     try:
         logger.info(f"[EXEC] [{run_id}] Executing command: {' '.join(cmd)}")
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout)
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout, shell=False)
         logger.info(f"[EXEC] [{run_id}] Command finished with exit code {result.returncode}.")
         return result.returncode, result.stdout
     except subprocess.TimeoutExpired as e:
