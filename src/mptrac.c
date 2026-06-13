@@ -13809,7 +13809,7 @@ void write_met_nc(
 	     "Instantaneous northward turbulent surface stress", "N m**-2",
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("ishf", NC_FLOAT, 2, dimid2,
-	     "Instantaneous surface sensible heat flux", "W m**-1",
+	     "Instantaneous surface sensible heat flux", "W m**-2",
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-",
 	     ctl->met_nc_level, 0);

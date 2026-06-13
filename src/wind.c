@@ -17,7 +17,7 @@
   Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
-/*! 
+/*!
   \file
   Create meteorological data files with synthetic wind fields.
 */
@@ -40,27 +40,13 @@ int main(
   int argc,
   char *argv[]) {
 
-  ctl_t ctl;
+  static ctl_t ctl;
+  met_t *met;
 
   static char filename[LEN];
 
-  static double r, dataLon[EX], dataLat[EY], dataZ[EP];
-
-  static float *dataT, *dataU, *dataV, *dataW;
-
-  static int ncid, varid, dims[4], year, mon, day, hour, min, sec;
-
-  static size_t start[4], count[4];
-
-  /* Allocate... */
-  ALLOC(dataT, float,
-	EP * EY * EX);
-  ALLOC(dataU, float,
-	EP * EY * EX);
-  ALLOC(dataV, float,
-	EP * EY * EX);
-  ALLOC(dataW, float,
-	EP * EY * EX);
+  static int year, mon, day, hour, min, sec;
+  static double r;
 
   /* Print usage information... */
   USAGE;
@@ -73,7 +59,7 @@ int main(
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
-  double t0 = scan_ctl(argv[1], argc, argv, "WIND_T0", -1, "0", NULL);
+  const double t0 = scan_ctl(argv[1], argc, argv, "WIND_T0", -1, "0", NULL);
   const int nx =
     (int) scan_ctl(argv[1], argc, argv, "WIND_NX", -1, "360", NULL);
   const int ny =
@@ -91,94 +77,102 @@ int main(
     scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
   const int lat_reverse =
     (int) scan_ctl(argv[1], argc, argv, "WIND_LAT_REVERSE", -1, "0", NULL);
+  const double temp0 =
+    scan_ctl(argv[1], argc, argv, "WIND_TEMP0", -1, "280", NULL);
+  const double temp1 =
+    scan_ctl(argv[1], argc, argv, "WIND_TEMP1", -1, "280", NULL);
+  const double ps =
+    scan_ctl(argv[1], argc, argv, "WIND_PS", -1, "100000", NULL);
+  const double zs = scan_ctl(argv[1], argc, argv, "WIND_ZS", -1, "0", NULL);
+  const double t2m =
+    scan_ctl(argv[1], argc, argv, "WIND_T2M", -1, "280", NULL);
+  const double iews =
+    scan_ctl(argv[1], argc, argv, "WIND_IEWS", -1, "0", NULL);
+  const double inss =
+    scan_ctl(argv[1], argc, argv, "WIND_INSS", -1, "0", NULL);
+  const double ishf =
+    scan_ctl(argv[1], argc, argv, "WIND_ISHF", -1, "0", NULL);
+  const double lsm = scan_ctl(argv[1], argc, argv, "WIND_LSM", -1, "1", NULL);
+  const double sst =
+    scan_ctl(argv[1], argc, argv, "WIND_SST", -1, "280", NULL);
+  const double blh =
+    scan_ctl(argv[1], argc, argv, "WIND_BLH", -1, "1000", NULL);
+  const double q = scan_ctl(argv[1], argc, argv, "WIND_Q", -1, "0", NULL);
+  const double o3 = scan_ctl(argv[1], argc, argv, "WIND_O3", -1, "0", NULL);
 
   /* Check dimensions... */
-  if (nx < 1 || nx > EX)
-    ERRMSG("Set 1 <= NX <= MAX!");
-  if (ny < 1 || ny > EY)
-    ERRMSG("Set 1 <= NY <= MAX!");
-  if (nz < 1 || nz > EP)
-    ERRMSG("Set 1 <= NZ <= MAX!");
+  if (nx < 2 || nx > EX)
+    ERRMSG("Set 2 <= NX <= MAX!");
+  if (ny < 2 || ny > EY)
+    ERRMSG("Set 2 <= NY <= MAX!");
+  if (nz < 2 || nz > EP)
+    ERRMSG("Set 2 <= NZ <= MAX!");
 
-  /* Get time... */
+  /* Get time and output filename... */
   jsec2time(t0, &year, &mon, &day, &hour, &min, &sec, &r);
-  t0 = year * 10000. + mon * 100. + day + hour / 24.;
-
-  /* Set filename... */
   sprintf(filename, "%s_%d_%02d_%02d_%02d.nc", argv[2], year, mon, day, hour);
 
-  /* Create netCDF file... */
-  NC(nc_create(filename, NC_NETCDF4, &ncid));
+  /* Initialize synthetic meteorological data. */
+  ALLOC(met, met_t, 1);
+  met->time = t0;
+  met->coord_type = 0;
+  met->nx = nx;
+  met->ny = ny;
+  met->np = nz;
 
-  /* Create dimensions... */
-  NC(nc_def_dim(ncid, "time", 1, &dims[0]));
-  NC(nc_def_dim(ncid, "lev", (size_t) nz, &dims[1]));
-  NC(nc_def_dim(ncid, "lat", (size_t) ny, &dims[2]));
-  NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[3]));
-
-  /* Create variables... */
-  NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time", "day as %Y%m%d.%f", 0,
-	     0);
-  NC_DEF_VAR("lev", NC_DOUBLE, 1, &dims[1], "air_pressure", "Pa", 0, 0);
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[2], "latitude", "degrees_north", 0,
-	     0);
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[3], "longitude", "degrees_east", 0,
-	     0);
-  NC_DEF_VAR("T", NC_FLOAT, 4, &dims[0], "Temperature", "K", 0, 0);
-  NC_DEF_VAR("U", NC_FLOAT, 4, &dims[0], "zonal wind", "m s**-1", 0, 0);
-  NC_DEF_VAR("V", NC_FLOAT, 4, &dims[0], "meridional wind", "m s**-1", 0, 0);
-  NC_DEF_VAR("W", NC_FLOAT, 4, &dims[0], "vertical velocity", "Pa s**-1", 0,
-	     0);
-
-  /* End definition... */
-  NC(nc_enddef(ncid));
-
-  /* Set coordinates... */
+  /* Set grid... */
   for (int ix = 0; ix < nx; ix++)
-    dataLon[ix] = 360.0 / nx * (double) ix;
+    met->lon[ix] = 360.0 / nx * (double) ix;
   for (int iy = 0; iy < ny; iy++)
-    dataLat[iy] = (lat_reverse ? -(180.0 / (ny - 1) * (double) iy - 90)
-		   : (180.0 / (ny - 1) * (double) iy - 90));
+    met->lat[iy] = (lat_reverse ? -(180.0 / (ny - 1) * (double) iy - 90.0)
+		    : (180.0 / (ny - 1) * (double) iy - 90.0));
   for (int iz = 0; iz < nz; iz++)
-    dataZ[iz] = 100. * P(LIN(0.0, z0, nz - 1.0, z1, iz));
+    met->p[iz] = P(LIN(0.0, z0, nz - 1.0, z1, iz));
 
-  /* Write coordinates... */
-  NC_PUT_DOUBLE("time", &t0, 0);
-  NC_PUT_DOUBLE("lev", dataZ, 0);
-  NC_PUT_DOUBLE("lat", dataLat, 0);
-  NC_PUT_DOUBLE("lon", dataLon, 0);
-
-  /* Create wind fields (Williamson et al., 1992)... */
+  /* Set meteo data... */
   for (int ix = 0; ix < nx; ix++)
-    for (int iy = 0; iy < ny; iy++)
+    for (int iy = 0; iy < ny; iy++) {
+      const double usfc = u0
+	* (cos(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(alpha))
+	   + sin(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(met->lon[ix]))
+	   * sin(DEG2RAD(alpha)));
+      const double vsfc =
+	-u0 * sin(DEG2RAD(met->lon[ix])) * sin(DEG2RAD(alpha));
+
+      met->ps[ix][iy] = (float) (ps / 100.0);
+      met->zs[ix][iy] = (float) zs;
+      met->ts[ix][iy] = (float) t2m;
+      met->us[ix][iy] = (float) usfc;
+      met->vs[ix][iy] = (float) vsfc;
+      met->ess[ix][iy] = (float) iews;
+      met->nss[ix][iy] = (float) inss;
+      met->shf[ix][iy] = (float) ishf;
+      met->lsm[ix][iy] = (float) lsm;
+      met->sst[ix][iy] = (float) sst;
+      met->pbl[ix][iy] = (float) P(zs + blh / 1000.0);
+
       for (int iz = 0; iz < nz; iz++) {
-	int idx = (iz * ny + iy) * nx + ix;
-	dataU[idx] = (float) (LIN(0.0, u0, nz - 1.0, u1, iz)
-			      * (cos(DEG2RAD(dataLat[iy]))
-				 * cos(DEG2RAD(alpha))
-				 + sin(DEG2RAD(dataLat[iy]))
-				 * cos(DEG2RAD(dataLon[ix]))
-				 * sin(DEG2RAD(alpha))));
-	dataV[idx] = (float) (-LIN(0.0, u0, nz - 1.0, u1, iz)
-			      * sin(DEG2RAD(dataLon[ix]))
-			      * sin(DEG2RAD(alpha)));
-	dataW[idx] = (float) DZ2DP(1e-3 * w0, dataZ[iz]);
+	const double u = LIN(0.0, u0, nz - 1.0, u1, iz)
+	  * (cos(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(alpha))
+	     + sin(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(met->lon[ix]))
+	     * sin(DEG2RAD(alpha)));
+	const double v = -LIN(0.0, u0, nz - 1.0, u1, iz)
+	  * sin(DEG2RAD(met->lon[ix])) * sin(DEG2RAD(alpha));
+
+	met->t[ix][iy][iz] = (float) LIN(0.0, temp0, nz - 1.0, temp1, iz);
+	met->u[ix][iy][iz] = (float) u;
+	met->v[ix][iy][iz] = (float) v;
+	met->w[ix][iy][iz] = (float) DZ2DP(1e-3 * w0, met->p[iz]);
+	met->h2o[ix][iy][iz] = (float) (q * MA / MH2O);
+	met->o3[ix][iy][iz] = (float) (o3 * MA / MO3);
       }
+    }
 
-  /* Write data... */
-  NC_PUT_FLOAT("T", dataT, 0);
-  NC_PUT_FLOAT("U", dataU, 0);
-  NC_PUT_FLOAT("V", dataV, 0);
-  NC_PUT_FLOAT("W", dataW, 0);
-
-  /* Close file... */
-  NC(nc_close(ncid));
+  /* Write synthetic meteorological data. */
+  write_met_nc(filename, &ctl, met);
 
   /* Free... */
-  free(dataT);
-  free(dataU);
-  free(dataV);
-  free(dataW);
+  free(met);
 
   return EXIT_SUCCESS;
 }
