@@ -39,6 +39,8 @@ static uint64_t rng_ctr;
 static curandGenerator_t rng_curand;
 #endif
 
+/*****************************************************************************/
+
 #ifdef MPI
 void broadcast_large_data(
   void *data,
@@ -4392,18 +4394,18 @@ void module_diff_pbl(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
-    double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1,
-      tau_u = 300., tau_w = 100.;
+    double pbl, ps, dsigw_dz = 0.0, sig_u, sig_w, tau_u, tau_w;
 
-    /* Get surface and PBL pressure... */
-    double pbl, ps;
+    /* Get PBL pressure... */
     INTPOL_INIT;
-    INTPOL_2D(ps, 1);
-    INTPOL_2D(pbl, 0);
+    INTPOL_2D(pbl, 1);
 
     /* Let the background diffusion scheme handle particles above the PBL. */
     if (atm->p[ip] < pbl)
       continue;
+
+    /* Get surface pressure... */
+    INTPOL_2D(ps, 0);
 
     /* Calculate heights... */
     const double p = MIN(atm->p[ip], ps);
@@ -4430,7 +4432,8 @@ void module_diff_pbl(
     double shf;
     INTPOL_2D(shf, 1);
 
-    /* Estimate Monin-Obukhov length to distinguish neutral, stable, and unstable cases. */
+    /* Estimate Monin-Obukhov length to distinguish
+       neutral, stable, and unstable cases. */
     double ol = 1e12;
     if (fabs(shf) > 1e-6 && ust > 0.0)
       ol = -thetav * rho * CPD * (ust * ust * ust) / (KARMAN * G0 * shf);
@@ -4483,7 +4486,7 @@ void module_diff_pbl(
       tau_w = 0.1 * zi / sig_w * pow(zeta, 0.8);
     }
 
-    /* Set minimum values... */
+    /* Apply lower bounds for numerical robustness... */
     sig_u = MAX(sig_u, 0.25);
     sig_w = MAX(sig_w, 0.1);
     tau_u = MAX(tau_u, 10.);
@@ -4511,6 +4514,7 @@ void module_diff_pbl(
       DX2COORD(met0, cache->uvwp[ip][0] * cache->dt[ip], atm->lat[ip]);
     atm->lat[ip] += DY2COORD(met0, cache->uvwp[ip][1] * cache->dt[ip]);
 
+    /* Calculate new air parcel height... */
     double znew = z + cache->uvwp[ip][2] * cache->dt[ip];
     while (znew < 0.0 || znew > zi) {
       if (znew < 0.0)
