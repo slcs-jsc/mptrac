@@ -6807,10 +6807,8 @@ void mptrac_read_ctl(
 
   /* Advection parameters... */
   ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "2", NULL);
-  if (!
-      (ctl->advect == 0 || ctl->advect == 1 || ctl->advect == 2
-       || ctl->advect == 4))
-    ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
+  if (!(ctl->advect == 1 || ctl->advect == 2 || ctl->advect == 4))
+    ERRMSG("Set ADVECT to 1, 2, or 4!");
 
   /* Diffusion parameters... */
   ctl->diffusion

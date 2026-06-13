@@ -2767,7 +2767,7 @@ typedef struct {
   /*! Balloon position filename. */
   char balloon[LEN];
 
-  /*! Advection scheme (0=off, 1=Euler, 2=midpoint, 4=Runge-Kutta). */
+  /*! Advection scheme (1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
 
   /*! Vertical velocity of air parcels
