@@ -4525,6 +4525,10 @@ void module_diff_turb(
     INTPOL_2D(pbl, 1);
     INTPOL_2D(ps, 0);
 
+    /* Let optional PBL closure schemes handle turbulent diffusion inside the PBL. */
+    if (ctl->turb_pbl_scheme > 0 && atm->p[ip] >= pbl)
+      continue;
+
     /* Get weighting factors... */
     const double wpbl = pbl_weight(ctl, atm, ip, pbl, ps);
     const double wtrop = tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl);
@@ -6784,8 +6788,12 @@ void mptrac_read_ctl(
   /* Diffusion parameters... */
   ctl->diffusion
     = (int) scan_ctl(filename, argc, argv, "DIFFUSION", -1, "0", NULL);
-  if (ctl->diffusion < 0 || ctl->diffusion > 2)
-    ERRMSG("Set DIFFUSION to 0, 1 or 2!");
+  if (ctl->diffusion < 0 || ctl->diffusion > 1)
+    ERRMSG("Set DIFFUSION to 0 or 1!");
+  ctl->turb_pbl_scheme =
+    (int) scan_ctl(filename, argc, argv, "TURB_PBL_SCHEME", -1, "0", NULL);
+  if (ctl->turb_pbl_scheme < 0 || ctl->turb_pbl_scheme > 1)
+    ERRMSG("Set TURB_PBL_SCHEME to 0 or 1!");
   ctl->turb_dx_pbl =
     scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "50", NULL);
   ctl->turb_dx_trop =
@@ -7389,19 +7397,19 @@ void mptrac_run_timestep(
     module_advect(ctl, cache, *met0, *met1, atm);
 
   /* Turbulent diffusion... */
-  if (ctl->diffusion == 1
+  if (ctl->diffusion
       && (ctl->turb_dx_pbl > 0 || ctl->turb_dz_pbl > 0
 	  || ctl->turb_dx_trop > 0 || ctl->turb_dz_trop > 0
 	  || ctl->turb_dx_strat > 0 || ctl->turb_dz_strat > 0))
     module_diff_turb(ctl, cache, clim, *met0, *met1, atm);
 
-  /* Mesoscale diffusion... */
-  if (ctl->diffusion == 1 && (ctl->turb_mesox > 0 || ctl->turb_mesoz > 0))
-    module_diff_meso(ctl, cache, *met0, *met1, atm);
-
-  /* Diffusion... */
-  if (ctl->diffusion == 2)
+  /* Optional PBL-specific diffusion scheme... */
+  if (ctl->diffusion && ctl->turb_pbl_scheme == 1)
     module_diff_pbl(ctl, cache, *met0, *met1, atm);
+
+  /* Mesoscale diffusion... */
+  if (ctl->diffusion && (ctl->turb_mesox > 0 || ctl->turb_mesoz > 0))
+    module_diff_meso(ctl, cache, *met0, *met1, atm);
 
   /* Convection... */
   if ((ctl->conv_mix_pbl || ctl->conv_cape >= 0)

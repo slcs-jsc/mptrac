@@ -2777,8 +2777,11 @@ typedef struct {
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
 
-  /*! Diffusion scheme (0=off, 1=fixed-K, 2=PBL). */
+  /*! Diffusion switch (0=off, 1=on). */
   int diffusion;
+
+  /*! PBL turbulence scheme (0=none, 1=closure). */
+  int turb_pbl_scheme;
 
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
   double turb_dx_pbl;
@@ -6183,29 +6186,29 @@ void module_diff_pbl(
  * based on atmospheric layer influences (PBL, troposphere, stratosphere).
  *
  * @note
- * - Control parameters `TURB_DX_PBL`, `TURB_DX_TROP`, `TURB_DX_STRAT`, `TURB_DZ_TROP` and `TURB_DZ_PBL`, `TURB_DZ_TROP`, `TURB_DZ_STRAT` define horizontal and vertical
- *   diffusivities (in units of m**2 s**-1) in the PBL, troposphere, and stratosphere, respectively. The control parameter `DIFF_MIX_PBL` is used to switch vertical mixing
- *   in the PBL on or off.
+ * - Control parameters `TURB_DX_PBL`, `TURB_DX_TROP`, `TURB_DX_STRAT`, `TURB_DZ_PBL`, `TURB_DZ_TROP`, and `TURB_DZ_STRAT` define horizontal and vertical
+ *   diffusivities (in units of m**2 s**-1) in the PBL, troposphere, and stratosphere, respectively.
+ * - Control parameter `TURB_PBL_SCHEME` activates an optional PBL-specific closure scheme. If a PBL scheme is active, the fixed-K module is only applied outside the PBL.
  * - Apply the following settings to reproduce Stohl et al. (2005):
  *       TURB_DX_PBL = 50
  *       TURB_DX_TROP = 50
  *       TURB_DX_STRAT = 0
- *       TURB_DX_PBL = 0
- *       TURB_DX_TROP = 0
- *       TURB_DX_STRAT = 0.1
+ *       TURB_DZ_PBL = 0
+ *       TURB_DZ_TROP = 0
+ *       TURB_DZ_STRAT = 0.1
  *       TURB_MESOX = 0.16
  *       TURB_MESOZ = 0.16
- *       DIFF_MIX_PBL = 0
+ *       TURB_PBL_SCHEME = 0
  * - Apply the following setting to reproduce Maryon et al. (1991) and Ryall et al. (1998):
  *       TURB_DX_PBL = 5300
  *       TURB_DX_TROP = 1325
  *       TURB_DX_STRAT = 1325
- *       TURB_DX_PBL = 0
- *       TURB_DX_TROP = 1.5
- *       TURB_DX_STRAT = 1.5
+ *       TURB_DZ_PBL = 0
+ *       TURB_DZ_TROP = 1.5
+ *       TURB_DZ_STRAT = 1.5
  *       TURB_MESOX = 0
  *       TURB_MESOZ = 0
- *       DIFF_MIX_PBL = 1
+ *       TURB_PBL_SCHEME = 1
  *
  * @author Lars Hoffmann
  */

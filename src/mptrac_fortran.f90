@@ -372,6 +372,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: advect_vert_coord
      INTEGER(c_int) :: rng_type
      INTEGER(c_int) :: diffusion
+     INTEGER(c_int) :: turb_pbl_scheme
      REAL(c_double) :: turb_dx_pbl
      REAL(c_double) :: turb_dx_trop
      REAL(c_double) :: turb_dx_strat
