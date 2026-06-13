@@ -142,6 +142,8 @@ be used:
 |TURB_PBL_TRANS|PBL transition layer|fraction of PBL depth|$0$|
 |TURB_PBL_SCHEME|optional PBL-specific turbulence scheme ($0$=off, $1$=closure)|-|$0$|
 
+If `TURB_PBL_SCHEME=1`, MPTRAC applies a simplified Hanna/FLEXPART-style PBL closure only inside the diagnosed PBL, while the fixed-`K` background diffusion remains active outside the PBL. The current closure uses hard reflection at the surface and at the diagnosed PBL top.
+
 ## Subgrid-scale wind fluctuations
 
 In addition to turbulent diffusion, the effects of unresolved

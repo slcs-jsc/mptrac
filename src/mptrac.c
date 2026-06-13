@@ -4401,101 +4401,126 @@ void module_diff_pbl(
     INTPOL_2D(ps, 1);
     INTPOL_2D(pbl, 0);
 
-    /* Boundary layer... */
-    if (atm->p[ip] >= pbl) {
+    /* Let the background diffusion scheme handle particles above the PBL. */
+    if (atm->p[ip] < pbl)
+      continue;
 
-      /* Calculate heights... */
-      const double p = MIN(atm->p[ip], ps);
-      const double zs = Z(ps);
-      const double z = 1e3 * (Z(p) - zs);
-      const double zi = 1e3 * (Z(pbl) - zs);
-      const double zratio = z / zi;
+    /* Calculate heights... */
+    const double p = MIN(atm->p[ip], ps);
+    const double zs = Z(ps);
+    const double z = 1e3 * (Z(p) - zs);
+    const double zi = 1e3 * (Z(pbl) - zs);
+    const double zratio = z / zi;
 
-      /* Calculate friction velocity... */
-      double ess, nss, h2o, t;
-      INTPOL_2D(ess, 0);
-      INTPOL_2D(nss, 0);
-      INTPOL_3D(t, 1);
-      INTPOL_3D(h2o, 0);
-      const double rho = RHO(p, TVIRT(t, h2o));
-      const double tau = sqrt(SQR(ess) + SQR(nss));
-      const double ustar = sqrt(tau / rho);
+    /* Calculate friction velocity... */
+    double ess, nss, h2o, t;
+    INTPOL_2D(ess, 0);
+    INTPOL_2D(nss, 0);
+    INTPOL_3D(t, 1);
+    INTPOL_3D(h2o, 0);
+    const double thetav = THETAVIRT(p, t, h2o);
+    const double rho = RHO(p, TVIRT(t, h2o));
+    const double tau = sqrt(SQR(ess) + SQR(nss));
+    const double ustar = sqrt(tau / rho);
+    const double ust = MAX(1e-4, ustar);
+    const double zeta = MAX(zratio, 1e-6);
+    const double z_m = MAX(z, 1.0);
 
-      /* Get surface sensible heat flux... */
-      double shf;
-      INTPOL_2D(shf, 1);
+    /* Get surface sensible heat flux... */
+    double shf;
+    INTPOL_2D(shf, 1);
 
-      /* Stable or neutral conditions... */
-      if (shf <= 0) {
+    /* Estimate Monin-Obukhov length to distinguish neutral, stable, and unstable cases. */
+    double ol = 1e12;
+    if (fabs(shf) > 1e-6 && ust > 0.0)
+      ol = -thetav * rho * CPD * CUBE(ust) / (KARMAN * G0 * shf);
 
-	/* Calcalute turbulent velocity variances... */
-	sig_u = 1e-2 + 2.0 * ustar * (1.0 - zratio);
-	sig_w = 1e-2 + 1.3 * ustar * (1.0 - zratio);
+    /* Neutral conditions... */
+    if (zi / fabs(ol) < 1.0) {
+      const double corr = z_m / ust;
+      const double sigw0 = 1.3 * ust * exp(-2e-4 * corr);
+      sig_u = 1e-2 + 2.0 * ust * exp(-3e-4 * corr);
+      sig_w = 1e-2 + sigw0;
+      dsigw_dz = -2e-4 * sigw0;
+      tau_u = 0.5 * z_m / sig_w / (1.0 + 1.5e-3 * corr);
+      tau_w = tau_u;
+    }
 
-	/* Calculate derivative dsig_w/dz... */
-	dsigw_dz = -1.3 * ustar / zi;
+    /* Unstable conditions... */
+    else if (ol < 0.0) {
 
-	/* Calcalute Lagrangian timescales... */
-	tau_u = 0.07 * zi / sig_u * sqrt(zratio);
-	tau_w = 0.1 * zi / sig_w * pow(zratio, 0.8);
-      }
+      /* Convective velocity... */
+      const double wstar =
+        pow(G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
 
-      /* Unstable conditions... */
-      else {
+      /* Hanna/FLEXPART turbulent velocity variances... */
+      sig_u = 1e-2 + ust * pow(12.0 - 0.5 * zi / ol, 1.0 / 3.0);
+      sig_w = 1e-2 + sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zeta)
+                          * pow(zeta, 2.0 / 3.0)
+                          + (1.8 - 1.4 * zeta) * SQR(ust));
 
-	/* Convective velocity... */
-	const double wstar =
-	  pow(G0 / THETAVIRT(p, t, h2o) * shf / (rho * CPD) * zi, 1. / 3.);
+      /* Calculate derivative dsig_w/dz... */
+      dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ust)
+                                     + SQR(wstar) *
+                                     (0.8 * pow(MAX(zeta, 1e-3), -1.0 / 3.0)
+                                      - 1.8 * pow(zeta, 2.0 / 3.0)));
 
-	/* Calcalute turbulent velocity variances... */
-	sig_u = 1e-2
-	  + sqrt(0.4 * SQR(wstar) + (5.0 - 4.0 * zratio) * SQR(ustar));
-	sig_w = 1e-2 + sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zratio)
-			    * pow(zratio, 2.0 / 3.0)
-			    + (1.8 - 1.4 * zratio) * SQR(ustar));
+      /* Hanna/FLEXPART Lagrangian timescales... */
+      tau_u = 0.15 * zi / sig_u;
+      if (z_m < fabs(ol))
+        tau_w = 0.1 * z_m / (sig_w * (0.55 - 0.38 * fabs(z_m / ol)));
+      else if (zeta < 0.1)
+        tau_w = 0.59 * z_m / sig_w;
+      else
+        tau_w = 0.15 * zi / sig_w * (1.0 - exp(-5.0 * zeta));
+    }
 
-	/* Calculate derivative dsig_w/dz... */
-	dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ustar) + SQR(wstar)
-				       * (0.8 *
-					  pow(MAX(zratio, 1e-3), -1.0 / 3.0)
-					  - 1.8 * pow(zratio, 2.0 / 3.0)));
-
-	/* Calculate Lagrangian timescales... */
-	const double C0 = 3.0;	// TODO: typically 3...6, NAME model uses 3?
-	const double eps =
-	  (1.5 - 1.2 * pow(zratio, 1.0 / 3.0)) * SQR(wstar) * wstar / zi
-	  + SQR(ustar) * ustar * (1.0 - 0.8 * zratio) / (KARMAN * z);
-	tau_u = 2 * SQR(sig_u) / (C0 * eps);
-	tau_w = 2 * SQR(sig_w) / (C0 * eps);
-      }
+    /* Stable conditions... */
+    else {
+      sig_u = 1e-2 + 2.0 * ust * (1.0 - zeta);
+      sig_w = 1e-2 + 1.3 * ust * (1.0 - zeta);
+      dsigw_dz = -1.3 * ust / zi;
+      tau_u = 0.15 * zi / sig_u * sqrt(zeta);
+      tau_w = 0.1 * zi / sig_w * pow(zeta, 0.8);
     }
 
     /* Set minimum values... */
     sig_u = MAX(sig_u, 0.25);
     sig_w = MAX(sig_w, 0.1);
-    tau_u = MAX(tau_u, 300.);
-    tau_w = MAX(tau_w, 100.);
+    tau_u = MAX(tau_u, 10.);
+    tau_w = MAX(tau_w, 30.);
 
     /* Update perturbations... */
     const double ru = exp(-fabs(cache->dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
-      = (float) (cache->uvwp[ip][0] * ru + ru2 * cache->rs[3 * ip]);
+      = (float) (cache->uvwp[ip][0] * ru + sig_u * ru2 * cache->rs[3 * ip]);
     cache->uvwp[ip][1]
-      = (float) (cache->uvwp[ip][1] * ru + ru2 * cache->rs[3 * ip + 1]);
+      = (float) (cache->uvwp[ip][1] * ru
+		 + sig_u * ru2 * cache->rs[3 * ip + 1]);
 
     const double rw = exp(-fabs(cache->dt[ip]) / tau_w);
     const double rw2 = sqrt(1.0 - SQR(rw));
+    const double dsigw2_dz = 2.0 * sig_w * dsigw_dz;
+    const double rhoaux = -1.0 / (1e3 * H0);
     cache->uvwp[ip][2]
-      = (float) (cache->uvwp[ip][2] * rw + rw2 * cache->rs[3 * ip + 2]
-		 + sig_w * dsigw_dz * cache->dt[ip]);	// TODO: check approx for density correction?
+      = (float) (cache->uvwp[ip][2] * rw
+		 + sig_w * rw2 * cache->rs[3 * ip + 2]
+		 + tau_w * (1.0 - rw) * (dsigw2_dz + rhoaux * SQR(sig_w)));
 
     /* Calculate new air parcel position... */
     atm->lon[ip] +=
       DX2COORD(met0, cache->uvwp[ip][0] * cache->dt[ip], atm->lat[ip]);
     atm->lat[ip] += DY2COORD(met0, cache->uvwp[ip][1] * cache->dt[ip]);
-    atm->p[ip] +=
-      DZ2DP(cache->uvwp[ip][2] * cache->dt[ip] / 1000., atm->p[ip]);
+
+    double znew = z + cache->uvwp[ip][2] * cache->dt[ip];
+    while (znew < 0.0 || znew > zi) {
+      if (znew < 0.0)
+        znew = -znew;
+      if (znew > zi)
+        znew = 2.0 * zi - znew;
+    }
+    atm->p[ip] += DZ2DP((znew - z) / 1000., atm->p[ip]);
   }
 }
 
