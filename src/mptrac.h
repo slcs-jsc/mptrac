@@ -4037,19 +4037,6 @@ double clim_zm(
   const double p);
 
 /**
- * @brief Calculate compression throughput in MiB/s.
- *
- * This helper converts a processed byte count and elapsed wall-clock
- * time into a throughput value expressed in MiB/s.
- *
- * @param[in] nbytes Number of processed bytes.
- * @param[in] dt     Elapsed time in seconds.
- * @return Throughput in MiB/s, or @c NAN if @p dt is not positive.
- *
- * @author Lars Hoffmann
- */
-
-/**
  * @brief Compute error statistics between original and reconstructed data.
  *
  * The error is defined element-wise as @p cmp - @p org. The routine
@@ -4060,13 +4047,13 @@ double clim_zm(
  * @param[in]  org     Original values.
  * @param[in]  cmp     Reconstructed/compressed values.
  * @param[in]  n       Number of elements.
- * @param[out] mean      Mean error.
- * @param[out] stddev    Standard deviation of the error.
- * @param[out] min       Minimum error.
- * @param[out] max       Maximum error.
- * @param[out] nrmse     Normalized root-mean-square error.
- * @param[out] org_mean  Mean value of the original field.
- * @param[out] range     Value range of the original field.
+ * @param[out] mean    Mean error.
+ * @param[out] stddev  Standard deviation of the error.
+ * @param[out] min     Minimum error.
+ * @param[out] max     Maximum error.
+ * @param[out] nrmse   Normalized root-mean-square error.
+ * @param[out] org_mean Mean value of the original field.
+ * @param[out] range   Value range of the original field.
  *
  * @author Lars Hoffmann
  */
@@ -4135,46 +4122,20 @@ void compress_log_level(
 /**
  * @brief Compresses or decompresses a 3-D meteorological field using cmultiscale.
  *
- * This routine operates on a longitude/latitude regular grid of size @p nx × @p ny and @p np vertical
- * levels. The grid coordinates are generated internally:
- * - lon ∈ [0, 360] (inclusive) with @p nx points
- * - lat ∈ [ 90,-90] (inclusive) with @p ny points
+ * This routine operates on a longitude/latitude regular grid of size @p nx × @p ny and @p np vertical levels.
+ * The grid coordinates are generated internally.
  *
- * If @p decompress is non-zero, the function reads @p np CMS solutions from @p inout (optionally using Zstd),
- * evaluates them on the lon/lat grid, and fills @p array (3-D layout via ARRAY_3D macro).
+ * @param[in] ctl Control/settings structure providing CMS parameters.
+ * @param[in] varname Variable name used for selecting the CMS epsilon threshold.
+ * @param[in,out] array Field data buffer (decompress: output, compress: input).
+ * @param[in] nx Number of longitude grid points (>=2).
+ * @param[in] ny Number of latitude grid points (>=2).
+ * @param[in] np Number of vertical levels.
+ * @param[in] plev Pressure levels array of length @p np (used for logging).
+ * @param[in] decompress Non-zero to decompress; zero to compress.
+ * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable.
+ * @param[in,out] inout Binary stream used for CMS I/O (decompress: read, compress: write).
  *
- * If @p decompress is zero, the function processes the input @p array level-by-level:
- * - selects the CMS error threshold (eps) based on @p varname (e.g., "T","U","V",...)
- * - builds CMS solutions from the level data (coarsening)
- * - evaluates the reconstructed field and logs basic error metrics (bias, stddev, RMSE/NRMSE, correlation)
- * - writes CMS solutions to @p inout (optionally using Zstd)
- *
- * The overall compression ratio reported in logs is the harmonic mean across levels.
- *
- * @param[in]  ctl        Control/settings structure providing CMS parameters (Nd0, max level, eps per variable,
- *                        batching, and whether to use Zstd for I/O).
- * @param[in]  varname    Variable name used for selecting the CMS epsilon threshold (case-insensitive).
- *                        Supported names include: "Z","T","U","V","W","PV","H2O","O3","LWC","RWC","IWC","SWC","CC".
- * @param[in,out] array   Field data buffer.
- *                        - Decompress mode: output array filled with reconstructed values.
- *                        - Compress mode: input array to be compressed.
- *                        Expected indexing uses ARRAY_3D(ix, iy, ny, ip, np).
- * @param[in]  nx         Number of longitude grid points (must be >= 2).
- * @param[in]  ny         Number of latitude  grid points (must be >= 2).
- * @param[in]  np         Number of vertical levels (pressure levels).
- * @param[in]  plev       Pressure levels array of length @p np (used for logging).
- * @param[in]  decompress If non-zero, read CMS stream from @p inout and reconstruct @p array.
- *                        If zero, build CMS solutions from @p array and write them to @p inout.
- * @param[in,out] level_log Optional output stream for per-level compression diagnostics,
- *                          or @c NULL to disable per-level logging.
- * @param[in,out] inout   Binary stream used for CMS I/O:
- *                        - Decompress mode: read from this stream.
- *                        - Compress mode:   write to this stream.
- *
- * @note Uses OpenMP for parallel evaluation/coarsening, and GSL for statistics in compression mode.
- * @note The function allocates temporary per-level buffers in compression mode and frees them internally.
- * @warning @p varname must match one of the supported variable names; otherwise an error is raised.
- * 
  * @author Lars Hoffmann
  */
 void compress_cms(
@@ -4248,55 +4209,30 @@ int compress_metvar_index(
   const char *varname);
 
 /**
- * @brief Compresses or decompresses a 3D array of floats.
+ * @brief Compresses or decompresses a 3‑D float array using the PCK format.
  *
- * This function either compresses or decompresses a 3D array of
- * floats based on the value of the `decompress`
- * parameter. Compression reduces the storage size by converting float
- * values (4 bytes) to unsigned short values (2 bytes) with scaling
- * and offset. Decompression restores the original float values from
- * the compressed unsigned short representation.
+ * The routine works on the regular longitude/latitude grid described by the
+ * supplied @p met structure (nx, ny, np and pressure levels). In compress mode
+ * the data are scaled to unsigned short values; in decompress mode the values
+ * are reconstructed.
  *
- * @param varname The name of the variable being processed.
- * @param array Pointer to the 3D array of floats to be compressed or decompressed.
- * @param nxy The number of elements in the first two dimensions of the array.
- * @param nz The number of elements in the third dimension of the array.
- * @param plev Pressure levels corresponding to the third dimension of the array;
- * used only for per-level compression diagnostics.
- * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
- * @param pck_zstd If non-zero, an additional ZSTD compression layer is applied to or expected around the packed PCK payload.
- * @param zstd_level ZSTD compression level used when @p pck_zstd is enabled.
- * @param zstd_nworkers ZSTD worker thread count used when @p pck_zstd is enabled.
- * @param level_log Optional file stream for per-level compression diagnostics,
- * or @c NULL to disable logging.
- * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
- * and writing compressed data during compression.
- *
- * The function performs the following steps:
- * - If decompressing:
- *   - Reads scaling factors, offsets, and compressed data from the file.
- *   - Decompresses the data and stores it in the `array`.
- * - If compressing:
- *   - Computes the minimum and maximum values for each slice in the third dimension.
- *   - Calculates scaling factors and offsets based on these values.
- *   - Compresses the data by converting floats to unsigned shorts using the scaling factors and offsets.
- *   - Optionally applies an additional ZSTD compression step to the packed PCK payload.
- *   - Writes the scaling factors, offsets, and compressed data to the file.
- *
- * The function allocates memory for the compressed data array and frees it before returning.
+  * @param[in] ctl Control structure with compression parameters.
+ * @param[in] met      Meteorological meta‑data providing grid dimensions and
+ *                     pressure levels.
+ * @param[in] varname  Variable name for logging and error‑bound selection.
+ * @param[in,out] array Float array to compress or decompress.
+ * @param[in] decompress Non‑zero to decompress; zero to compress.
+ * @param[in,out] level_log Optional per‑level diagnostics stream, or @c NULL.
+ * @param[in,out] inout File stream for reading/writing the PCK payload.
  *
  * @author Lars Hoffmann
  */
 void compress_pck(
+  const ctl_t * ctl,
+  const met_t * met,
   const char *varname,
   float *array,
-  const size_t nxy,
-  const size_t nz,
-  const double *plev,
   const int decompress,
-  const int pck_zstd,
-  const int zstd_level,
-  const int zstd_nworkers,
   FILE * level_log,
   FILE * inout);
 
@@ -4307,23 +4243,16 @@ void compress_pck(
  * or reads compressed SZ3 data from a file stream and decompresses it into the provided array.
  * The SZ3 error bound can be specified either by relative precision (bits) or absolute tolerance.
  *
- * @param varname    Name of the variable (used for logging).
- * @param array      Pointer to the 3-D float array (input for compression, output for decompression).
- * @param nx         Size of the first dimension.
- * @param ny         Size of the second dimension.
- * @param nz         Size of the third dimension.
- * @param plev       Pressure levels corresponding to the third dimension of the array;
- *                   used only for per-level compression diagnostics.
- * @param precision  Relative precision in bits (used if > 0; tolerance must be 0).
- * @param tolerance  Absolute error bound (used if > 0; precision must be 0).
- * @param lossy_scale Scaling mode selector for lossy compression.
- * @param decompress Non-zero to decompress data from @p inout into @p array;
- *                   zero to compress @p array into @p inout.
- * @param level_log  Optional file stream for per-level compression diagnostics,
- *                   or @c NULL to disable logging.
- * @param inout      File stream for reading/writing compressed data.
+  * @param[in] ctl Control structure with compression parameters.
+  * @param[in] met Meteorological data providing dimensions.
+  * @param[in] varname Variable name for logging.
+  * @param[in,out] array Float array to compress or decompress.
+  * @param[in] decompress Non-zero to decompress; zero to compress.
+  * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
+  * @param[in,out] inout File stream for reading/writing compressed data.
  *
- * @note Exactly one of @p precision or @p tolerance must be set to a positive value.
+ * @note The function uses @c ctl->met_sz3_prec[] and @c ctl->met_sz3_tol[] to determine the error bound.
+ * @note Exactly one of @c ctl->met_sz3_prec[] or @c ctl->met_sz3_tol[] must be set to a positive value.
  * @note The SZ3 data type is fixed to @c SZ_FLOAT for this function.
  *
  * @throws ERRMSG if input parameters are invalid, memory allocation fails,
@@ -4335,15 +4264,10 @@ void compress_pck(
  * @author Lars Hoffmann
  */
 void compress_sz3(
+  const ctl_t * ctl,
+  const met_t * met,
   const char *varname,
   float *array,
-  const int nx,
-  const int ny,
-  const int nz,
-  const double *plev,
-  const int precision,
-  const double tolerance,
-  const int lossy_scale,
   const int decompress,
   FILE * level_log,
   FILE * inout);
@@ -4358,21 +4282,13 @@ void compress_sz3(
  * fixed-accuracy modes. Decompression restores the original float
  * values from the compressed representation.
  *
- * @param varname The name of the variable being processed.
- * @param array Pointer to the 3D array of floats to be compressed or decompressed.
- * @param nx The number of elements in the x-dimension of the array.
- * @param ny The number of elements in the y-dimension of the array.
- * @param nz The number of elements in the z-dimension of the array.
- * @param plev Pressure levels corresponding to the z-dimension of the array;
- * used only for per-level compression diagnostics.
- * @param precision The precision parameter for ZFP compression. If greater than 0, it sets the fixed precision mode.
- * @param tolerance The tolerance parameter for ZFP compression. If greater than 0 and precision is 0, it sets the fixed accuracy mode.
- * @param lossy_scale Scaling mode selector for lossy compression.
- * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
- * @param level_log Optional file stream for per-level compression diagnostics,
- * or @c NULL to disable logging.
- * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
- * and writing compressed data during compression.
+  * @param[in] ctl Control structure with compression parameters.
+  * @param[in] met Meteorological data providing dimensions.
+  * @param[in] varname Variable name for logging.
+  * @param[in,out] array Float array to compress or decompress.
+  * @param[in] decompress Non-zero to decompress; zero to compress.
+  * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
+  * @param[in,out] inout File stream for reading/writing compressed data.
  *
  * The function performs the following steps:
  * - Allocates metadata for the 3D array and the ZFP compressed stream.
@@ -4387,94 +4303,69 @@ void compress_sz3(
  *
  * The function logs the compression or decompression details and frees allocated resources before returning.
  *
+ * @note The function uses @c ctl->met_zfp_prec[] and @c ctl->met_zfp_tol[] to determine the error bound.
  * @note Ensure that either the precision or tolerance parameter is set to a value greater than 0.
  *
  * @author Lars Hoffmann
  */
 void compress_zfp(
+  const ctl_t * ctl,
+  const met_t * met,
   const char *varname,
   float *array,
-  const int nx,
-  const int ny,
-  const int nz,
-  const double *plev,
-  const int precision,
-  const double tolerance,
-  const int lossy_scale,
   const int decompress,
   FILE * level_log,
   FILE * inout);
 
 /**
- * @brief Compresses or decompresses a float array using Zstandard (ZSTD).
+ * @brief Compresses or decompresses a float array using ZSTD.
  *
- * This function either compresses a given float array and writes the result to a file,
- * or reads compressed data from a file and decompresses it into the array.
+ * The routine works on the regular grid described by @p met (nx, ny, np and pressure levels). In compress mode data are scaled and then ZSTD-compressed; in decompress mode they are reconstructed.
  *
- * @param[in]  varname     Name of the variable, used for logging.
- * @param[in,out] array    Pointer to the float array to compress or to fill with decompressed data.
- * @param[in]  nxy         Number of horizontal grid points per level.
- * @param[in]  nz          Number of levels in the array.
- * @param[in]  plev        Pressure levels corresponding to the vertical levels.
- * @param[in]  decompress  If non-zero, perform decompression; otherwise, perform compression.
- * @param[in]  level       Compression level (-5 to 22). Use 0 for the ZSTD default.
- * @param[in]  nworkers    Number of ZSTD worker threads (0=single-threaded).
- * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable it.
- * @param[in,out] inout    File pointer for input/output. Used for reading or writing compressed data.
+ * @param[in] ctl Control structure with compression parameters.
+ * @param[in] met Meteorological data providing grid dimensions and pressure levels.
+ * @param[in] varname Variable name for logging and error-bound selection.
+ * @param[in,out] array Float array to compress or decompress.
+ * @param[in] decompress Non-zero to decompress; zero to compress.
+ * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
+ * @param[in,out] inout File stream for reading/writing the ZSTD payload.
  *
- * @note This function uses ZSTD's advanced compression API (ZSTD_compress2),
- *       which supports optional multithreaded compression via @p nworkers.
- *       MPTRAC currently uses compression level -3 and 4 worker threads by default.
+ * @note This function uses ZSTD's advanced compression API (ZSTD_compress2) and may use multiple workers as configured in @p ctl.
  *
- * @warning The function allocates temporary memory for the compressed buffer
- *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
- * 
  * @author Lars Hoffmann
  */
 void compress_zstd(
+  const ctl_t * ctl,
+  const met_t * met,
   const char *varname,
   float *array,
-  const size_t nxy,
-  const size_t nz,
-  const double *plev,
   const int decompress,
-  const int level,
-  const int nworkers,
   FILE * level_log,
   FILE * inout);
 
 /**
  * @brief Compresses or decompresses a float array using LZ4.
  *
- * This function either compresses a given float array and writes the result to a file,
- * or reads compressed data from a file and decompresses it into the array.
+ * The routine works on the regular grid described by @p met (nx, ny, np and pressure levels). In compress mode data are scaled and then LZ4-compressed; in decompress mode they are reconstructed.
  *
- * @param[in]  varname      Name of the variable, used for logging.
- * @param[in,out] array     Pointer to the float array to compress or to fill with decompressed data.
- * @param[in]  nxy          Number of horizontal grid points per level.
- * @param[in]  nz           Number of levels in the array.
- * @param[in]  plev         Pressure levels corresponding to the vertical levels.
- * @param[in]  decompress   If non-zero, perform decompression; otherwise, perform compression.
- * @param[in]  acceleration LZ4 acceleration factor (>=1).
- * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable it.
- * @param[in,out] inout     File pointer for input/output. Used for reading or writing compressed data.
+ * @param[in] ctl Control structure with compression parameters.
+ * @param[in] met Meteorological data providing grid dimensions and pressure levels.
+ * @param[in] varname Variable name for logging and error-bound selection.
+ * @param[in,out] array Float array to compress or decompress.
+ * @param[in] decompress Non-zero to decompress; zero to compress.
+ * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
+ * @param[in,out] inout File pointer for input/output. Used for reading or writing compressed data.
  *
- * @note This function uses the block API (`LZ4_compress_fast` / `LZ4_decompress_safe`).
- *       MPTRAC currently uses acceleration factor 8 by default.
- *
- * @warning The function allocates temporary memory for the compressed buffer
- *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
+ * @note This function uses the block API (`LZ4_compress_fast` / `LZ4_decompress_safe`) and acceleration factor 8 by default.
  *
  * @author Lars Hoffmann
  */
 void compress_lz4(
+  const ctl_t * ctl,
+  const met_t * met,
   const char *varname,
   float *array,
-  const size_t nxy,
-  const size_t nz,
-  const double *plev,
   const int decompress,
-  const int acceleration,
   FILE * level_log,
   FILE * inout);
 
