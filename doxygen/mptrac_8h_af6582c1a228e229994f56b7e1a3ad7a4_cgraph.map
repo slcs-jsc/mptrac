@@ -1,19 +1,18 @@
 <map id="mptrac_write_met" name="mptrac_write_met">
 <area shape="rect" id="node1" title="Writes meteorological data to a file, supporting multiple formats and compression options." alt="" coords="5,157,132,184"/>
 <area shape="rect" id="node2" href="$mptrac_8c.html#af330c627ed04b0ae7098b89e2577e733" title="Writes meteorological data in binary format to a specified file." alt="" coords="180,107,283,133"/>
-<area shape="rect" id="node15" href="$mptrac_8c.html#a92ad405ee98c55d656f4b9fcb4957503" title="Writes meteorological data to a NetCDF file." alt="" coords="181,183,281,209"/>
+<area shape="rect" id="node14" href="$mptrac_8c.html#a92ad405ee98c55d656f4b9fcb4957503" title="Writes meteorological data to a NetCDF file." alt="" coords="181,183,281,209"/>
 <area shape="rect" id="node3" href="$mptrac_8c.html#a2af13ce9413d9d515934c39750c48970" title="Write the ASCII header for per&#45;level compression diagnostics." alt="" coords="331,31,480,57"/>
 <area shape="rect" id="node4" href="$mptrac_8c.html#ac27e0e729035eecb9097b57538aa1669" title="Writes a 2&#45;dimensional meteorological variable to a binary file." alt="" coords="343,81,467,108"/>
 <area shape="rect" id="node5" href="$mptrac_8c.html#a9c8a1e81cd4b8cb2edf0bab11f61a1bf" title="Writes a 3&#45;dimensional meteorological variable to a binary file." alt="" coords="343,132,467,159"/>
 <area shape="rect" id="node6" href="$mptrac_8h.html#a1038f5bcda8991b512330758a1902449" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="528,5,639,32"/>
 <area shape="rect" id="node7" href="$mptrac_8h.html#a993817523dc750d879a15a8b85e07854" title="Compresses or decompresses a float array using LZ4." alt="" coords="532,56,635,83"/>
 <area shape="rect" id="node8" href="$mptrac_8c.html#a24101651b3283a04f953cc82499c348c" title="Compresses or decompresses a 3D array of floats." alt="" coords="530,107,637,133"/>
-<area shape="rect" id="node12" href="$mptrac_8h.html#a21b8d0079303e81765166e3eee05227c" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="530,157,637,184"/>
-<area shape="rect" id="node13" href="$mptrac_8h.html#abaecd59ce65af99c8f6d82f330a16926" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="532,208,635,235"/>
-<area shape="rect" id="node14" href="$mptrac_8h.html#a2d5151bcbef31bf3f4069847391f359b" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="528,259,639,285"/>
-<area shape="rect" id="node9" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Compute error statistics between original and reconstructed data." alt="" coords="687,56,835,83"/>
-<area shape="rect" id="node10" href="$mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculates the standard deviation of a set of data." alt="" coords="884,81,945,108"/>
-<area shape="rect" id="node11" href="$mptrac_8c.html#a46417375cd04484401aaf5ef4efff304" title="Calculate compression throughput in MiB/s." alt="" coords="687,157,836,184"/>
-<area shape="rect" id="node16" href="$mptrac_8c.html#a0bed36c022857a81c5d80e45e8be582a" title="Writes a 2D meteorological variable to a NetCDF file." alt="" coords="345,183,466,209"/>
-<area shape="rect" id="node17" href="$mptrac_8c.html#ae14d46547d2b1260b2ba857499b180d7" title="Writes a 3D meteorological variable to a NetCDF file." alt="" coords="345,233,466,260"/>
+<area shape="rect" id="node11" href="$mptrac_8h.html#a21b8d0079303e81765166e3eee05227c" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="530,157,637,184"/>
+<area shape="rect" id="node12" href="$mptrac_8h.html#abaecd59ce65af99c8f6d82f330a16926" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="532,208,635,235"/>
+<area shape="rect" id="node13" href="$mptrac_8h.html#a2d5151bcbef31bf3f4069847391f359b" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="528,259,639,285"/>
+<area shape="rect" id="node9" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Calculate compression throughput in MiB/s." alt="" coords="687,81,835,108"/>
+<area shape="rect" id="node10" href="$mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculates the standard deviation of a set of data." alt="" coords="883,107,944,133"/>
+<area shape="rect" id="node15" href="$mptrac_8c.html#a0bed36c022857a81c5d80e45e8be582a" title="Writes a 2D meteorological variable to a NetCDF file." alt="" coords="345,183,466,209"/>
+<area shape="rect" id="node16" href="$mptrac_8c.html#ae14d46547d2b1260b2ba857499b180d7" title="Writes a 3D meteorological variable to a NetCDF file." alt="" coords="345,233,466,260"/>
 </map>
