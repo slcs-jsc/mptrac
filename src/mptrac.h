@@ -547,6 +547,21 @@
   (((v) < (lo)) ? (lo) : (((v) > (hi)) ? (hi) : (v)))
 
 /**
+ * @brief Calculate compression throughput in MiB/s.
+ *
+ * This helper converts a processed byte count and elapsed wall-clock
+ * time into a throughput value expressed in MiB/s.
+ *
+ * @param nbytes Number of processed bytes.
+ * @param dt     Elapsed time in seconds.
+ * @return Throughput in MiB/s, or @c NAN if @p dt is not positive.
+ *
+ * @author Lars Hoffmann
+ */
+#define COMPRESS_SPEED(nbytes, dt) \
+  ((dt) > 0 ? ((double)(nbytes)) / ((dt) * 1024. * 1024.) : NAN)
+
+/**
  * @brief Convert a longitude difference to a distance in the x-direction (east-west) at a specific latitude.
  *
  * This macro calculates the distance in the x-direction (east-west)
@@ -4033,9 +4048,6 @@ double clim_zm(
  *
  * @author Lars Hoffmann
  */
-double compress_speed_mib(
-  const size_t nbytes,
-  const double dt);
 
 /**
  * @brief Compute error statistics between original and reconstructed data.

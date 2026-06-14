@@ -542,7 +542,7 @@ void compress_cms(
     LOG(2, "Read 3-D variable: %s"
 	" (CMS, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, (double) np / cr, 32. * cr / (double) np, t_eval,
-	compress_speed_mib(nx * ny * np * sizeof(float), t_eval));
+	COMPRESS_SPEED(nx * ny * np * sizeof(float), t_eval));
   }
 
   /* Compress array and output compressed stream... */
@@ -689,8 +689,8 @@ void compress_cms(
 		"CMS", varname, (unsigned long) ip, plev[ip], ratio[ip],
 		bpv[ip], rho[ip], mean_err[ip], stddev_err[ip], min_err[ip],
 		max_err[ip], mean_org[ip], range_org[ip], nrmse[ip], t_coars,
-		compress_speed_mib(nbytes, t_coars),
-		t_eval, compress_speed_mib(nbytes, t_eval));
+		COMPRESS_SPEED(nbytes, t_coars), t_eval,
+		COMPRESS_SPEED(nbytes, t_eval));
     }
 
     /* Write info... */
@@ -698,8 +698,8 @@ void compress_cms(
 	" (CMS, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
 	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, (double) np / cr, 32. * cr / (double) np, t_coars,
-	compress_speed_mib(nx * ny * np * sizeof(float), t_coars), t_eval,
-	compress_speed_mib(nx * ny * np * sizeof(float), t_eval));
+	COMPRESS_SPEED(nx * ny * np * sizeof(float), t_coars), t_eval,
+	COMPRESS_SPEED(nx * ny * np * sizeof(float), t_eval));
   }
 
   /* Free... */
@@ -709,13 +709,7 @@ void compress_cms(
 
 /*****************************************************************************/
 
-double compress_speed_mib(
-  const size_t nbytes,
-  const double dt) {
 
-  /* Calculate compression speed in MiB/s... */
-  return (dt > 0 ? ((double) nbytes) / (dt * 1024. * 1024.) : NAN);
-}
 
 /*****************************************************************************/
 
@@ -835,9 +829,8 @@ void compress_log_level(
 	  "%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	  codec, varname, (unsigned long) lev, plev, ratio, bpv, rho_out,
 	  mean_err, stddev_err, min_err, max_err, mean_org, range_org, nrmse,
-	  t_comp,
-	  compress_speed_mib(nbytes, t_comp), t_decomp,
-	  compress_speed_mib(nbytes, t_decomp));
+	  t_comp, COMPRESS_SPEED(nbytes, t_comp), t_decomp,
+	  COMPRESS_SPEED(nbytes, t_decomp));
 }
 
 /*****************************************************************************/
@@ -1098,7 +1091,7 @@ void compress_pck(
     LOG(2, "Read 3-D variable: %s"
 	" (PCK%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, pck_zstd ? "+ZSTD" : "", ratio_out, bpv_out, t_decomp,
-	compress_speed_mib(nxy * nz * sizeof(float), t_decomp));
+	COMPRESS_SPEED(nxy * nz * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1220,8 +1213,8 @@ void compress_pck(
 	" (PCK%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
 	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, pck_zstd ? "+ZSTD" : "", ratio_out, bpv_out, t_comp,
-	compress_speed_mib(nxy * nz * sizeof(float), t_comp),
-	t_decomp, compress_speed_mib(nxy * nz * sizeof(float), t_decomp));
+	COMPRESS_SPEED(nxy * nz * sizeof(float), t_comp), t_decomp,
+	COMPRESS_SPEED(nxy * nz * sizeof(float), t_decomp));
 
     /* Write per-level diagnostics... */
     if (level_log) {
@@ -1235,11 +1228,10 @@ void compress_pck(
 		pck_zstd ? "PCKZSTD" : "PCK", varname, (unsigned long) iz,
 		plev[iz], ratio_level, bpv_level,
 		rho[iz], mean[iz], stddev[iz], min[iz], max[iz], org_mean[iz],
-		range[iz], nrmse[iz],
-		t_comp_level,
-		compress_speed_mib(nxy * sizeof(float), t_comp_level),
+		range[iz], nrmse[iz], t_comp_level,
+		COMPRESS_SPEED(nxy * sizeof(float), t_comp_level),
 		t_decomp_level,
-		compress_speed_mib(nxy * sizeof(float), t_decomp_level));
+		COMPRESS_SPEED(nxy * sizeof(float), t_decomp_level));
     }
 
     /* Free... */
@@ -1332,7 +1324,7 @@ void compress_sz3(
 	varname, precision, tolerance, stored_lossy_scale,
 	(double) (total_elems * sizeof(float)) / (double) sz3size,
 	(8. * (double) sz3size) / (double) total_elems, t_decomp,
-	compress_speed_mib(total_elems * sizeof(float), t_decomp));
+	COMPRESS_SPEED(total_elems * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1436,15 +1428,15 @@ void compress_sz3(
 	  varname, precision, tolerance, lossy_scale,
 	  (double) (total_elems * sizeof(float)) / (double) outSize,
 	  (8. * (double) outSize) / (double) total_elems, t_comp,
-	  compress_speed_mib(total_elems * sizeof(float), t_comp), t_decomp,
-	  compress_speed_mib(total_elems * sizeof(float), t_decomp));
+	  COMPRESS_SPEED(total_elems * sizeof(float), t_comp), t_decomp,
+	  COMPRESS_SPEED(total_elems * sizeof(float), t_decomp));
     } else
       LOG(2, "Write 3-D variable: %s"
 	  " (SZ3, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s)",
 	  varname, precision, tolerance, lossy_scale,
 	  (double) (total_elems * sizeof(float)) / (double) outSize,
 	  (8. * (double) outSize) / (double) total_elems, t_comp,
-	  compress_speed_mib(total_elems * sizeof(float), t_comp));
+	  COMPRESS_SPEED(total_elems * sizeof(float), t_comp));
     free(bytes);
     free(orig_all);
   }
@@ -1552,8 +1544,7 @@ void compress_zfp(
 	" (ZFP, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s,"
 	" V_DECOMP=%g MiB/s)",
 	varname, actual_prec, actual_tol, stored_lossy_scale, cr, bpv,
-	t_decomp, compress_speed_mib(snx * sny * snz * sizeof(float),
-				     t_decomp));
+	t_decomp, COMPRESS_SPEED(snx * sny * snz * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1641,9 +1632,8 @@ void compress_zfp(
 	" (ZFP, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_COMP=%g s,"
 	" V_COMP=%g MiB/s, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, actual_prec, actual_tol, lossy_scale, cr, bpv, t_comp,
-	compress_speed_mib(snx * sny * snz * sizeof(float), t_comp),
-	t_decomp,
-	compress_speed_mib(snx * sny * snz * sizeof(float), t_decomp));
+	COMPRESS_SPEED(snx * sny * snz * sizeof(float), t_comp),
+	t_decomp, COMPRESS_SPEED(snx * sny * snz * sizeof(float), t_decomp));
 
     free(tmp_all);
     free(tmp_org);
@@ -1706,7 +1696,7 @@ void compress_zstd(
 	" (ZSTD, LEVEL=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, level, ((double) uncomprLen) / (double) comprLen,
 	(8. * (double) comprLen) / (double) n, t_decomp,
-	compress_speed_mib(uncomprLen, t_decomp));
+	COMPRESS_SPEED(uncomprLen, t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1777,8 +1767,8 @@ void compress_zstd(
 	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, level, nworkers, ((double) uncomprLen) / (double) compsize,
 	(8. * (double) compsize) / (double) n, t_comp,
-	compress_speed_mib(uncomprLen, t_comp), t_decomp,
-	compress_speed_mib(uncomprLen, t_decomp));
+	COMPRESS_SPEED(uncomprLen, t_comp), t_decomp,
+	COMPRESS_SPEED(uncomprLen, t_decomp));
 
     ZSTD_freeCCtx(cctx);
     free(tmp_org);
@@ -1843,7 +1833,7 @@ void compress_lz4(
 	" (LZ4, ACCEL=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, accel, ((double) uncomprLen) / (double) comprLen,
 	(8. * (double) comprLen) / (double) n, t_decomp,
-	compress_speed_mib(uncomprLen, t_decomp));
+	COMPRESS_SPEED(uncomprLen, t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1900,8 +1890,8 @@ void compress_lz4(
 	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, accel, ((double) uncomprLen) / (double) compsize,
 	(8. * (double) compsize) / (double) n, t_comp,
-	compress_speed_mib(uncomprLen, t_comp), t_decomp,
-	compress_speed_mib(uncomprLen, t_decomp));
+	COMPRESS_SPEED(uncomprLen, t_comp), t_decomp,
+	COMPRESS_SPEED(uncomprLen, t_decomp));
 
     free(tmp_org);
     free(tmp_lz4);
@@ -4453,7 +4443,8 @@ void module_diff_pbl(
     else if (ol < 0.0) {
 
       /* Convective velocity... */
-      const double wstar = pow(-G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
+      const double wstar =
+	pow(-G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
 
       /* Hanna/FLEXPART turbulent velocity variances... */
       sig_u = 1e-2 + ust * pow(12.0 - 0.5 * zi / ol, 1.0 / 3.0);
