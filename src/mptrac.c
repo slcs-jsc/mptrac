@@ -4436,7 +4436,7 @@ void module_diff_pbl(
        neutral, stable, and unstable cases. */
     double ol = 1e12;
     if (fabs(shf) > 1e-6 && ust > 0.0)
-      ol = -thetav * rho * CPD * (ust * ust * ust) / (KARMAN * G0 * shf);
+      ol = thetav * rho * CPD * (ust * ust * ust) / (KARMAN * G0 * shf);
 
     /* Neutral conditions... */
     if (zi / fabs(ol) < 1.0) {
@@ -4453,7 +4453,7 @@ void module_diff_pbl(
     else if (ol < 0.0) {
 
       /* Convective velocity... */
-      const double wstar = pow(G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
+      const double wstar = pow(-G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
 
       /* Hanna/FLEXPART turbulent velocity variances... */
       sig_u = 1e-2 + ust * pow(12.0 - 0.5 * zi / ol, 1.0 / 3.0);
