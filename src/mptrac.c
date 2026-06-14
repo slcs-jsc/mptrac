@@ -10667,8 +10667,9 @@ void read_met_grib_surface(
   LOG(2, "Read surface data...");
 
   /* Init... */
-  int sp_flag = 0, z_flag = 0, t_flag = 0, u_flag = 0, v_flag = 0, lsm_flag =
-    0, sst_flag = 0, cape_flag = 0, cin_flag = 0, pbl_flag = 0;
+  int sp_flag = 0, z_flag = 0, t_flag = 0, u_flag = 0, v_flag = 0, ess_flag =
+    0, nss_flag = 0, shf_flag = 0, lsm_flag = 0, sst_flag = 0, cape_flag = 0,
+    cin_flag = 0, pbl_flag = 0;
 
   /* Iterate over all messages... */
   for (int i = 0; i < num_messages; i++) {
@@ -10698,6 +10699,15 @@ void read_met_grib_surface(
     /* Read meridional wind at the surface... */
     ECC_READ_2D("10v", met->vs, 1.0f, v_flag);
 
+    /* Read eastward turbulent surface stress... */
+    ECC_READ_2D("iews", met->ess, 1.0f, ess_flag);
+
+    /* Read northward turbulent surface stress... */
+    ECC_READ_2D("inss", met->nss, 1.0f, nss_flag);
+
+    /* Read surface sensible heat flux... */
+    ECC_READ_2D("ishf", met->shf, 1.0f, shf_flag);
+
     /* Read land-sea mask... */
     ECC_READ_2D("lsm", met->lsm, 1.0f, lsm_flag);
 
@@ -10713,8 +10723,8 @@ void read_met_grib_surface(
     }
 
     /* Read PBL... */
-    if (ctl->met_pbl == 0)
-      ECC_READ_2D("blh", met->pbl, 0.0001f, pbl_flag);
+    if (ctl->met_pbl == 1)
+      ECC_READ_2D("blh", met->pbl, 0.001f, pbl_flag);
   }
 
   /* Check whether data have been read... */
@@ -10728,6 +10738,12 @@ void read_met_grib_surface(
     WARN("Cannot read surface zonal wind!");
   if (v_flag == 0)
     WARN("Cannot read surface meridional wind!");
+  if (ess_flag == 0)
+    WARN("Cannot read eastward turbulent surface stress!");
+  if (nss_flag == 0)
+    WARN("Cannot read northward turbulent surface stress!");
+  if (shf_flag == 0)
+    WARN("Cannot read surface sensible heat flux!");
   if (lsm_flag == 0)
     WARN("Cannot read land-sea mask!");
   if (sst_flag == 0)
@@ -10738,8 +10754,8 @@ void read_met_grib_surface(
     if (cin_flag == 0)
       WARN("Cannot read convective inhibition!");
   }
-  if (ctl->met_pbl == 0 && pbl_flag == 0)
-    WARN("Cannot read planetary boundary layer!");
+  if (ctl->met_pbl == 1 && pbl_flag == 0)
+    WARN("Cannot read planetary boundary layer height!");
 }
 #endif
 
