@@ -144,6 +144,10 @@ be used:
 
 If `TURB_PBL_SCHEME=1`, MPTRAC applies a simplified Hanna/FLEXPART-style PBL closure only inside the diagnosed PBL, while the fixed-`K` background diffusion remains active outside the PBL. The current closure uses hard reflection at the surface and at the diagnosed PBL top.
 
+The current implementation interprets surface sensible heat flux in ECMWF
+convention, that is, positive downward and negative upward. Accordingly,
+negative `SHF` drives unstable daytime conditions in the closure.
+
 ## Subgrid-scale wind fluctuations
 
 In addition to turbulent diffusion, the effects of unresolved
