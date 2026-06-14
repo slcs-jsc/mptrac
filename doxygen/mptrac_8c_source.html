@@ -4507,7 +4507,7 @@ $(function() {
 <div class="line"><a id="l04436" name="l04436"></a><span class="lineno"> 4436</span><span class="comment">       neutral, stable, and unstable cases. */</span></div>
 <div class="line"><a id="l04437" name="l04437"></a><span class="lineno"> 4437</span>    <span class="keywordtype">double</span> ol = 1e12;</div>
 <div class="line"><a id="l04438" name="l04438"></a><span class="lineno"> 4438</span>    <span class="keywordflow">if</span> (fabs(shf) &gt; 1e-6 &amp;&amp; ust &gt; 0.0)</div>
-<div class="line"><a id="l04439" name="l04439"></a><span class="lineno"> 4439</span>      ol = -thetav * rho * <a class="code hl_define" href="mptrac_8h.html#af48c8f42b5451a04703d55d62ea50a3e">CPD</a> * (ust * ust * ust) / (<a class="code hl_define" href="mptrac_8h.html#a3566596468c1f46bc90ad143b5c9e203">KARMAN</a> * <a class="code hl_define" href="mptrac_8h.html#a6440afc9207bc5eba00d9161ff744e16">G0</a> * shf);</div>
+<div class="line"><a id="l04439" name="l04439"></a><span class="lineno"> 4439</span>      ol = thetav * rho * <a class="code hl_define" href="mptrac_8h.html#af48c8f42b5451a04703d55d62ea50a3e">CPD</a> * (ust * ust * ust) / (<a class="code hl_define" href="mptrac_8h.html#a3566596468c1f46bc90ad143b5c9e203">KARMAN</a> * <a class="code hl_define" href="mptrac_8h.html#a6440afc9207bc5eba00d9161ff744e16">G0</a> * shf);</div>
 <div class="line"><a id="l04440" name="l04440"></a><span class="lineno"> 4440</span> </div>
 <div class="line"><a id="l04441" name="l04441"></a><span class="lineno"> 4441</span>    <span class="comment">/* Neutral conditions... */</span></div>
 <div class="line"><a id="l04442" name="l04442"></a><span class="lineno"> 4442</span>    <span class="keywordflow">if</span> (zi / fabs(ol) &lt; 1.0) {</div>
@@ -4524,7 +4524,7 @@ $(function() {
 <div class="line"><a id="l04453" name="l04453"></a><span class="lineno"> 4453</span>    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ol &lt; 0.0) {</div>
 <div class="line"><a id="l04454" name="l04454"></a><span class="lineno"> 4454</span> </div>
 <div class="line"><a id="l04455" name="l04455"></a><span class="lineno"> 4455</span>      <span class="comment">/* Convective velocity... */</span></div>
-<div class="line"><a id="l04456" name="l04456"></a><span class="lineno"> 4456</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> wstar = pow(<a class="code hl_define" href="mptrac_8h.html#a6440afc9207bc5eba00d9161ff744e16">G0</a> / thetav * shf / (rho * <a class="code hl_define" href="mptrac_8h.html#af48c8f42b5451a04703d55d62ea50a3e">CPD</a>) * zi, 1. / 3.);</div>
+<div class="line"><a id="l04456" name="l04456"></a><span class="lineno"> 4456</span>      <span class="keyword">const</span> <span class="keywordtype">double</span> wstar = pow(-<a class="code hl_define" href="mptrac_8h.html#a6440afc9207bc5eba00d9161ff744e16">G0</a> / thetav * shf / (rho * <a class="code hl_define" href="mptrac_8h.html#af48c8f42b5451a04703d55d62ea50a3e">CPD</a>) * zi, 1. / 3.);</div>
 <div class="line"><a id="l04457" name="l04457"></a><span class="lineno"> 4457</span> </div>
 <div class="line"><a id="l04458" name="l04458"></a><span class="lineno"> 4458</span>      <span class="comment">/* Hanna/FLEXPART turbulent velocity variances... */</span></div>
 <div class="line"><a id="l04459" name="l04459"></a><span class="lineno"> 4459</span>      sig_u = 1e-2 + ust * pow(12.0 - 0.5 * zi / ol, 1.0 / 3.0);</div>
