@@ -1,5 +1,0 @@
-<map id="compress_pck" name="compress_pck">
-<area shape="rect" id="node1" title="Compresses or decompresses a 3D array of floats." alt="" coords="5,31,112,57"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Calculate compression throughput in MiB/s." alt="" coords="160,5,308,32"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculates the standard deviation of a set of data." alt="" coords="356,31,417,57"/>
-</map>

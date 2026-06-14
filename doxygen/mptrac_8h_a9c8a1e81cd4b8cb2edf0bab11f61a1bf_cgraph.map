@@ -1,11 +1,11 @@
 <map id="write_met_bin_3d" name="write_met_bin_3d">
 <area shape="rect" id="node1" title="Writes a 3&#45;dimensional meteorological variable to a binary file." alt="" coords="5,132,129,159"/>
 <area shape="rect" id="node2" href="$mptrac_8h.html#a1038f5bcda8991b512330758a1902449" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="177,5,288,32"/>
-<area shape="rect" id="node3" href="$mptrac_8h.html#a993817523dc750d879a15a8b85e07854" title="Compresses or decompresses a float array using LZ4." alt="" coords="181,56,284,83"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a24101651b3283a04f953cc82499c348c" title="Compresses or decompresses a 3D array of floats." alt="" coords="179,107,286,133"/>
-<area shape="rect" id="node7" href="$mptrac_8h.html#a21b8d0079303e81765166e3eee05227c" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="179,157,286,184"/>
-<area shape="rect" id="node8" href="$mptrac_8h.html#abaecd59ce65af99c8f6d82f330a16926" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="181,208,284,235"/>
-<area shape="rect" id="node9" href="$mptrac_8h.html#a2d5151bcbef31bf3f4069847391f359b" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="177,259,288,285"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Calculate compression throughput in MiB/s." alt="" coords="336,81,484,108"/>
+<area shape="rect" id="node3" href="$mptrac_8h.html#a886dc0ac4e7a0f48bd1888b1bb580c7c" title="Compresses or decompresses a float array using LZ4." alt="" coords="181,56,284,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a2ee9b49d5293211a43eff3d5c1aaef06" title="Compresses or decompresses a 3‑D float array using the PCK format." alt="" coords="179,107,286,133"/>
+<area shape="rect" id="node7" href="$mptrac_8h.html#a48abb251b3648aa37fbbabb38dba6022" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="179,157,286,184"/>
+<area shape="rect" id="node8" href="$mptrac_8h.html#a2da2394eb725e3f1daef68f9a1677d56" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="181,208,284,235"/>
+<area shape="rect" id="node9" href="$mptrac_8h.html#a5afd45ba43c3d57f47403cd0ad99e08e" title="Compresses or decompresses a float array using ZSTD." alt="" coords="177,259,288,285"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Compute error statistics between original and reconstructed data." alt="" coords="336,81,484,108"/>
 <area shape="rect" id="node6" href="$mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculates the standard deviation of a set of data." alt="" coords="532,107,593,133"/>
 </map>
