@@ -4140,12 +4140,9 @@ void compress_log_level(
  */
 void compress_cms(
   const ctl_t * ctl,
+  const met_t * met,
   const char *varname,
   float *array,
-  const size_t nx,
-  const size_t ny,
-  const size_t np,
-  const double *plev,
   const int decompress,
   FILE * level_log,
   FILE * inout);

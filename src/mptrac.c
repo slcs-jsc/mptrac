@@ -467,16 +467,16 @@ double clim_zm(
 #ifdef CMS
 void compress_cms(
   const ctl_t *ctl,
-  comst met_t *met,
+  const met_t *met,
   const char *varname,
   float *array,
   const int decompress,
   FILE *level_log,
   FILE *inout) {
 
-  const size_t nx = met->nx;
-  const size_t ny = met->ny;
-  const size_t np = met->np;
+  const size_t nx = (size_t) met->nx;
+  const size_t ny = (size_t) met->ny;
+  const size_t np = (size_t) met->np;
 
   /* Get meteo variable... */
   const int metvar = compress_metvar_index(varname);
