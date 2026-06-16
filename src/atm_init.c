@@ -40,9 +40,15 @@ int main(
   int argc,
   char *argv[]) {
 
+  ctl_t ctl;
+
+  clim_t *clim;
+
   atm_t *atm;
 
-  ctl_t ctl;
+  met_t *met0, *met1;
+
+  dd_t *dd;
 
   /* Print usage information... */
   USAGE;
@@ -54,7 +60,11 @@ int main(
 	   "Use -h for full help.");
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(atm, atm_t, 1);
+  ALLOC(met0, met_t, 1);
+  ALLOC(met1, met_t, 1);
+  ALLOC(dd, dd_t, 1);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -93,6 +103,8 @@ int main(
     scan_ctl(argv[1], argc, argv, "INIT_ULAT", -1, "0", NULL);
   const int even =
     (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "0", NULL);
+  const int rho =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_RHO", -1, "0", NULL);
   const int rep =
     (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
   const double m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
@@ -108,10 +120,21 @@ int main(
   if (ctl.met_coord_type != 0 && bellrad > 0)
     ERRMSG("INIT_BELLRAD is only supported for lat/lon grids");
 
+  /* Read climatological data... */
+  mptrac_read_clim(&ctl, clim);
+
   /* Initialize random number generator... */
   gsl_rng_env_setup();
   gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
+  /* Get meteorological data for density-weighted initialization... */
+  double ptop, ztop, rhomax = RHO(1100., 200.);
+  if (rho) {
+    mptrac_get_met(&ctl, clim, t0, &met0, &met1, dd);
+    ptop = gsl_stats_min(met0->p, 1, (size_t)met0->np);
+    ztop = Z(ptop);
+  }
+  
   /* Create grid... */
   for (double t = t0; t <= t1; t += dt)
     for (double z = z0; z <= z1; z += dz)
@@ -119,15 +142,17 @@ int main(
 	for (double lat = lat0; lat <= lat1; lat += dlat)
 	  for (int irep = 0; irep < rep; irep++) {
 
-	    /* Set position... */
+	    /* Set time... */
 	    double rg = gsl_ran_gaussian_ziggurat(rng, st / 2.3548);
 	    double ru = ut * (gsl_rng_uniform(rng) - 0.5);
 	    atm->time[atm->np] = (t + rg + ru);
 
+	    /* Set pressure... */
 	    rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
 	    ru = uz * (gsl_rng_uniform(rng) - 0.5);
 	    atm->p[atm->np] = P(z + rg + ru);
 
+	    /* Set horizontal position... */
 	    rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
 	    const double sx_coord =
 	      ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
@@ -135,9 +160,11 @@ int main(
 	    ru = ulon * (gsl_rng_uniform(rng) - 0.5);
 	    atm->lon[atm->np] = (lon + rg + rx + ru);
 
+	    /* Set ensemble index... */
 	    if (ctl.qnt_ens >= 0)
 	      atm->q[ctl.qnt_ens][atm->np] = ens;
 
+	    /* Apply cosine-latitude weighting... */
 	    do {
 	      rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
 	      const double sy_coord =
@@ -166,6 +193,23 @@ int main(
 		  0.5 * (1. + cos(M_PI * rad / bellrad));
 	    }
 
+	    /* Apply density weighting... */
+	    if (rho) {
+	      INTPOL_INIT;
+	      double ps, ttry;
+	      intpol_met_time_2d(met0, met0->ps, met1, met1->ps,
+				 atm->time[atm->np], atm->lon[atm->np],
+				 atm->lat[atm->np], &ps, ci, cw, 1);
+	      const double zs = Z(ps);
+	      do {
+		atm->p[atm->np] = P(zs + (ztop - zs) * gsl_rng_uniform(rng));
+		intpol_met_time_3d(met0, met0->t, met1, met1->t,
+				   atm->time[atm->np], atm->p[atm->np],
+				   atm->lon[atm->np], atm->lat[atm->np],
+				   &ttry, ci, cw, 0);
+	      } while (RHO(atm->p[atm->np], ttry) <= rhomax);
+	    }
+	    
 	    /* Set particle counter... */
 	    if ((++atm->np) > NP)
 	      ERRMSG("Too many particles!");
@@ -200,7 +244,11 @@ int main(
 
   /* Free... */
   gsl_rng_free(rng);
+  free(clim);
   free(atm);
+  free(met0);
+  free(met1);
+  free(dd);
 
   return EXIT_SUCCESS;
 }
