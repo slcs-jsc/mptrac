@@ -128,13 +128,14 @@ int main(
   gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Get meteorological data for density-weighted initialization... */
-  double ptop, ztop, rhomax = RHO(1100., 200.);
+  double ptop, ztop, rhomax;
   if (rho) {
     mptrac_get_met(&ctl, clim, t0, &met0, &met1, dd);
-    ptop = gsl_stats_min(met0->p, 1, (size_t)met0->np);
+    ptop = gsl_stats_min(met0->p, 1, (size_t) met0->np);
     ztop = Z(ptop);
+    rhomax = 1.5;
   }
-  
+
   /* Create grid... */
   for (double t = t0; t <= t1; t += dt)
     for (double z = z0; z <= z1; z += dz)
@@ -207,9 +208,10 @@ int main(
 				   atm->time[atm->np], atm->p[atm->np],
 				   atm->lon[atm->np], atm->lat[atm->np],
 				   &ttry, ci, cw, 0);
-	      } while (RHO(atm->p[atm->np], ttry) <= rhomax);
+	      } while (gsl_rng_uniform(rng) >=
+		       RHO(atm->p[atm->np], ttry) / rhomax);
 	    }
-	    
+
 	    /* Set particle counter... */
 	    if ((++atm->np) > NP)
 	      ERRMSG("Too many particles!");
