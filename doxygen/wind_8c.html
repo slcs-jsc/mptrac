@@ -274,7 +274,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  149</span>      met-&gt;<a class="code hl_variable" href="structmet__t.html#a3bc7785b3dea585270d402d925c02425">shf</a>[ix][iy] = (float) ishf;</div>
 <div class="line"><span class="lineno">  150</span>      met-&gt;<a class="code hl_variable" href="structmet__t.html#abe8e0b1c2d6241fa20e663db28e74445">lsm</a>[ix][iy] = (float) lsm;</div>
 <div class="line"><span class="lineno">  151</span>      met-&gt;<a class="code hl_variable" href="structmet__t.html#a04c8115782b3dc6697111fdeb7c8f860">sst</a>[ix][iy] = (float) sst;</div>
-<div class="line"><span class="lineno">  152</span>      met-&gt;<a class="code hl_variable" href="structmet__t.html#a9a55672423267749087311d62e924794">pbl</a>[ix][iy] = (float) <a class="code hl_define" href="mptrac_8h.html#a5e1d0f42ad38aba63907665ccdd43b86">P</a>(zs + blh / 1000.0);</div>
+<div class="line"><span class="lineno">  152</span>      met-&gt;<a class="code hl_variable" href="structmet__t.html#a9a55672423267749087311d62e924794">pbl</a>[ix][iy] = (float) <a class="code hl_define" href="mptrac_8h.html#a5e1d0f42ad38aba63907665ccdd43b86">P</a>(zs + blh);</div>
 <div class="line"><span class="lineno">  153</span> </div>
 <div class="line"><span class="lineno">  154</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt; nz; iz++) {</div>
 <div class="line"><span class="lineno">  155</span>        <span class="keyword">const</span> <span class="keywordtype">double</span> u = <a class="code hl_define" href="mptrac_8h.html#aebaef4a0f8136be064bf1d29ce1ced83">LIN</a>(0.0, u0, nz - 1.0, u1, iz)</div>
