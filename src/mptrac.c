@@ -4118,6 +4118,7 @@ void module_convection(
 
 #ifdef DD
 void module_dd(
+  double t,
   const ctl_t *ctl,
   cache_t *cache,
   dd_t *dd,
@@ -7595,7 +7596,7 @@ void mptrac_run_timestep(
   /* Domain decomposition... */
   if (ctl->dd) {
 #ifdef DD
-    module_dd(ctl, cache, dd, atm, met0);
+    module_dd(t, ctl, cache, dd, atm, met0);
 #else
     ERRMSG("Code was compiled without DD!");
 
