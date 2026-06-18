@@ -7364,6 +7364,10 @@ void mptrac_read_ctl(
     ERRMSG("Please provide zonal and meridional subdomain numbers!");
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
+  ctl->dd_sort_dt =
+    (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "-1", NULL);
+  if (ctl->dd_sort_dt == -1)
+    ctl->dd_sort_dt = ctl->dt_mod * 10.0;
 }
 
 /*****************************************************************************/

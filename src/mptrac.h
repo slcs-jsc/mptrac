@@ -3300,6 +3300,9 @@ typedef struct {
 
   /*! Domain decomposition size of halos given in grid-points. */
   int dd_halos_size;
+  
+  /*! Sorting time interval for the compactification. */
+  double dd_sort_dt;
 
 } ctl_t;
 
@@ -5940,6 +5943,7 @@ void module_convection(
  * @author Lars Hoffmann
  */
 void module_dd(
+  double t,
   const ctl_t * ctl,
   cache_t * cache,
   dd_t * dd,
