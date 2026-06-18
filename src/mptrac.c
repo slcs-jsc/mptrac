@@ -2268,60 +2268,66 @@ void dd_push(
   atm_t *atm,
   cache_t *cache,
   int *npart) {
-
   SELECT_TIMER("DD_PUSH", "DD");
-
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  /* Create a counter on the device... */
-  int device_counter = 0;
-  int *device_counter_ptr = (int *) acc_malloc(sizeof(int));
-  if (device_counter_ptr == NULL) {
+  int counter = 0;
+
+#ifdef _OPENACC
+  int *counter_ptr = (int *) acc_malloc(sizeof(int));
+  if (counter_ptr == NULL) {
     ERRMSG("Failed to allocate device counter memory!");
   }
-  acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
+  acc_memcpy_to_device(counter_ptr, &counter, sizeof(int));
+#else
+  int *counter_ptr = &counter;
+#endif
 
   /* Push non local particles behind the end of the atm... */
-#pragma acc parallel loop present(atm, cache) deviceptr(device_counter_ptr)
+#ifdef _OPENACC
+#pragma acc parallel loop present(atm, cache) deviceptr(counter_ptr)
+#else
+#pragma omp parallel for
+#endif
   for (int ip = 0; ip < atm->np; ip++) {
     if ((int) atm->q[ctl->qnt_subdomain][ip] != -1 &&
-	(int) atm->q[ctl->qnt_destination][ip] != rank) {
-
+        (int) atm->q[ctl->qnt_destination][ip] != rank) {
       int local_idx;
-
+#ifdef _OPENACC
 #pragma acc atomic capture
+#else
+#pragma omp atomic capture
+#endif
       {
-	local_idx = *device_counter_ptr;
-	(*device_counter_ptr)++;
+        local_idx = *counter_ptr;
+        (*counter_ptr)++;
       }
-
       int global_index = atm->np + local_idx;
-
       /* Copy time, pressure, longitude, and latitude... */
       atm->time[global_index] = atm->time[ip];
       atm->p[global_index] = atm->p[ip];
       atm->lon[global_index] = atm->lon[ip];
       atm->lat[global_index] = atm->lat[ip];
-
       /* Copy all quantity data (q array)... */
       for (int iq = 0; iq < NQ; iq++) {
-	atm->q[iq][global_index] = atm->q[iq][ip];
+        atm->q[iq][global_index] = atm->q[iq][ip];
       }
-
       /* Mark the original parcel as processed... */
       atm->q[ctl->qnt_destination][ip] = -1;
       atm->q[ctl->qnt_subdomain][ip] = -1;
-
       /* Reset cache->dt for the shifted particle... */
       cache->dt[global_index] = cache->dt[ip];
       cache->dt[ip] = 0;
     }
   }
 
-  /* Update host and free... */
-  acc_memcpy_from_device(npart, device_counter_ptr, sizeof(int));
-  acc_free(device_counter_ptr);
+#ifdef _OPENACC
+  acc_memcpy_from_device(npart, counter_ptr, sizeof(int));
+  acc_free(counter_ptr);
+#else
+  *npart = counter;
+#endif
 }
 #endif
 
