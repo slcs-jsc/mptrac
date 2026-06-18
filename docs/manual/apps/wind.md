@@ -29,7 +29,7 @@ Optional control parameters:
 * WIND_LAT_REVERSE: latitude direction flag (default: 0, set to 1 for reversed latitude direction)
 * WIND_TEMP0: temperature at the lowermost level (default: 280 K)
 * WIND_TEMP1: temperature at the uppermost level (default: 280 K)
-* WIND_PS: surface pressure (default: 100000 Pa)
+* WIND_PS: surface pressure in hPa (default: 1013.25 hPa)
 * WIND_ZS: surface height (default: 0 km)
 * WIND_T2M: 2 m temperature (default: 280 K)
 * WIND_IEWS: eastward turbulent surface stress (default: 0 N/m^2)

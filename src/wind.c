@@ -82,7 +82,7 @@ int main(
   const double temp1 =
     scan_ctl(argv[1], argc, argv, "WIND_TEMP1", -1, "280", NULL);
   const double ps =
-    scan_ctl(argv[1], argc, argv, "WIND_PS", -1, "100000", NULL);
+    scan_ctl(argv[1], argc, argv, "WIND_PS", -1, "1013.25", NULL);
   const double zs = scan_ctl(argv[1], argc, argv, "WIND_ZS", -1, "0", NULL);
   const double t2m =
     scan_ctl(argv[1], argc, argv, "WIND_T2M", -1, "280", NULL);
@@ -96,7 +96,7 @@ int main(
   const double sst =
     scan_ctl(argv[1], argc, argv, "WIND_SST", -1, "280", NULL);
   const double blh =
-    scan_ctl(argv[1], argc, argv, "WIND_BLH", -1, "1000", NULL);
+    scan_ctl(argv[1], argc, argv, "WIND_BLH", -1, "1.0", NULL);
   const double q = scan_ctl(argv[1], argc, argv, "WIND_Q", -1, "0", NULL);
   const double o3 = scan_ctl(argv[1], argc, argv, "WIND_O3", -1, "0", NULL);
 
@@ -139,7 +139,7 @@ int main(
       const double vsfc =
 	-u0 * sin(DEG2RAD(met->lon[ix])) * sin(DEG2RAD(alpha));
 
-      met->ps[ix][iy] = (float) (ps / 100.0);
+      met->ps[ix][iy] = (float) ps;
       met->zs[ix][iy] = (float) zs;
       met->ts[ix][iy] = (float) t2m;
       met->us[ix][iy] = (float) usfc;
