@@ -149,7 +149,7 @@ int main(
       met->shf[ix][iy] = (float) ishf;
       met->lsm[ix][iy] = (float) lsm;
       met->sst[ix][iy] = (float) sst;
-      met->pbl[ix][iy] = (float) P(zs + blh / 1000.0);
+      met->pbl[ix][iy] = (float) P(zs + blh);
 
       for (int iz = 0; iz < nz; iz++) {
 	const double u = LIN(0.0, u0, nz - 1.0, u1, iz)
