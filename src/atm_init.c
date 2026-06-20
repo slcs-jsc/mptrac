@@ -103,10 +103,14 @@ int main(
     scan_ctl(argv[1], argc, argv, "INIT_ULAT", -1, "0", NULL);
   const int even =
     (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "0", NULL);
-  const int rho =
-    (int) scan_ctl(argv[1], argc, argv, "INIT_RHO", -1, "0", NULL);
+  const int col_mass =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_COL_MASS", -1, "0", NULL);
+  const int well_mixed =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_WELL_MIXED", -1, "0", NULL);
   const int rep =
     (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
+  const int init_np =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_NP", -1, "0", NULL);
   const double m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
   const double vmr = scan_ctl(argv[1], argc, argv, "INIT_VMR", -1, "0", NULL);
   const double bellrad =
@@ -119,6 +123,21 @@ int main(
     ERRMSG("INIT_EVENLY is only supported for lat/lon grids");
   if (ctl.met_coord_type != 0 && bellrad > 0)
     ERRMSG("INIT_BELLRAD is only supported for lat/lon grids");
+  if (rep <= 0)
+    ERRMSG("INIT_REP must be positive!");
+  if (init_np < 0 || init_np > NP)
+    ERRMSG("INIT_NP must be between 0 and NP!");
+  if (well_mixed && ctl.met_coord_type != 0)
+    ERRMSG("INIT_WELL_MIXED is only supported for lat/lon grids!");
+  if (well_mixed && !even)
+    ERRMSG("INIT_WELL_MIXED requires INIT_EVENLY=1!");
+  if (well_mixed && !col_mass)
+    ERRMSG("INIT_WELL_MIXED requires INIT_COL_MASS=1!");
+  if (init_np > 0 && !well_mixed)
+    ERRMSG("INIT_NP requires INIT_WELL_MIXED!");
+  if (col_mass && (t1 != t0 || st > 0 || ut > 0))
+    ERRMSG
+      ("INIT_COL_MASS/INIT_WELL_MIXED require INIT_T0 == INIT_T1 and no time scattering!");
 
   /* Read climatological data... */
   mptrac_read_clim(&ctl, clim);
@@ -127,95 +146,112 @@ int main(
   gsl_rng_env_setup();
   gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
-  /* Get meteorological data for density-weighted initialization... */
-  double ptop, ztop, rhomax;
-  if (rho) {
+  /* Get meteorological data for column-mass and well-mixed initialization... */
+  double ptop = 0, dpcolmax = 0;
+  if (col_mass) {
     mptrac_get_met(&ctl, clim, t0, &met0, &met1, dd);
     ptop = gsl_stats_min(met0->p, 1, (size_t) met0->np);
-    ztop = Z(ptop);
-    rhomax = 1.5;
+    double psmax = -1;
+    for (int ix = 0; ix < met0->nx; ix++)
+      for (int iy = 0; iy < met0->ny; iy++) {
+	psmax = MAX(psmax, met0->ps[ix][iy]);
+	psmax = MAX(psmax, met1->ps[ix][iy]);
+      }
+    dpcolmax = psmax - ptop;
   }
 
   /* Create grid... */
-  for (double t = t0; t <= t1; t += dt)
-    for (double z = z0; z <= z1; z += dz)
-      for (double lon = lon0; lon <= lon1; lon += dlon)
-	for (double lat = lat0; lat <= lat1; lat += dlat)
-	  for (int irep = 0; irep < rep; irep++) {
+  int ntry = 0;
+  const int ntrymax = init_np > 0 ? 1000000 * init_np : 0;
+  do {
+    for (double t = t0; t <= t1 && !(init_np > 0 && atm->np >= init_np);
+	 t += dt)
+      for (double z = z0; z <= z1 && !(init_np > 0 && atm->np >= init_np);
+	   z += dz)
+	for (double lon = lon0;
+	     lon <= lon1 && !(init_np > 0 && atm->np >= init_np); lon += dlon)
+	  for (double lat = lat0;
+	       lat <= lat1 && !(init_np > 0 && atm->np >= init_np);
+	       lat += dlat)
+	    for (int irep = 0;
+		 irep < rep && !(init_np > 0 && atm->np >= init_np); irep++) {
 
-	    /* Set time... */
-	    double rg = gsl_ran_gaussian_ziggurat(rng, st / 2.3548);
-	    double ru = ut * (gsl_rng_uniform(rng) - 0.5);
-	    atm->time[atm->np] = (t + rg + ru);
+	      /* Check number of attempts... */
+	      if (init_np > 0 && ++ntry > ntrymax)
+		ERRMSG
+		  ("INIT_NP could not be reached by INIT_WELL_MIXED sampling!");
 
-	    /* Set pressure... */
-	    rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
-	    ru = uz * (gsl_rng_uniform(rng) - 0.5);
-	    atm->p[atm->np] = P(z + rg + ru);
+	      /* Set time... */
+	      double rg = gsl_ran_gaussian_ziggurat(rng, st / 2.3548);
+	      double ru = ut * (gsl_rng_uniform(rng) - 0.5);
+	      atm->time[atm->np] = (t + rg + ru);
 
-	    /* Set horizontal position... */
-	    rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
-	    const double sx_coord =
-	      ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
-	    double rx = gsl_ran_gaussian_ziggurat(rng, sx_coord / 2.3548);
-	    ru = ulon * (gsl_rng_uniform(rng) - 0.5);
-	    atm->lon[atm->np] = (lon + rg + rx + ru);
+	      /* Set pressure... */
+	      rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
+	      ru = uz * (gsl_rng_uniform(rng) - 0.5);
+	      atm->p[atm->np] = P(z + rg + ru);
 
-	    /* Set ensemble index... */
-	    if (ctl.qnt_ens >= 0)
-	      atm->q[ctl.qnt_ens][atm->np] = ens;
+	      /* Set horizontal position... */
+	      rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
+	      const double sx_coord =
+		ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
+	      double rx = gsl_ran_gaussian_ziggurat(rng, sx_coord / 2.3548);
+	      ru = ulon * (gsl_rng_uniform(rng) - 0.5);
+	      atm->lon[atm->np] = (lon + rg + rx + ru);
 
-	    /* Apply cosine-latitude weighting... */
-	    do {
-	      rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
-	      const double sy_coord =
-		ctl.met_coord_type == 0 ? DY2DEG(sx) : sx;
-	      rx = gsl_ran_gaussian_ziggurat(rng, sy_coord / 2.3548);
-	      ru = ulat * (gsl_rng_uniform(rng) - 0.5);
-	      atm->lat[atm->np] = (lat + rg + rx + ru);
-	    } while (even && gsl_rng_uniform(rng) >
-		     fabs(cos(DEG2RAD(atm->lat[atm->np]))));
+	      /* Set ensemble index... */
+	      if (ctl.qnt_ens >= 0)
+		atm->q[ctl.qnt_ens][atm->np] = ens;
 
-	    /* Apply cosine bell (Williamson et al., 1992)... */
-	    if (bellrad > 0) {
-	      double x0[3], x1[3];
-	      geo2cart(0.0, 0.5 * (lon0 + lon1), 0.5 * (lat0 + lat1), x0);
-	      geo2cart(0.0, atm->lon[atm->np], atm->lat[atm->np], x1);
-	      const double rad =
-		RE * acos(DOTP(x0, x1) / sqrt(DOTP(x0, x0)) /
-			  sqrt(DOTP(x1, x1)));
-	      if (rad > bellrad)
-		continue;
-	      if (ctl.qnt_m >= 0)
-		atm->q[ctl.qnt_m][atm->np] =
-		  0.5 * (1. + cos(M_PI * rad / bellrad));
-	      if (ctl.qnt_vmr >= 0)
-		atm->q[ctl.qnt_vmr][atm->np] =
-		  0.5 * (1. + cos(M_PI * rad / bellrad));
-	    }
-
-	    /* Apply density weighting... */
-	    if (rho) {
-	      INTPOL_INIT;
-	      double ps, ttry;
-	      intpol_met_time_2d(met0, met0->ps, met1, met1->ps,
-				 atm->time[atm->np], atm->lon[atm->np],
-				 atm->lat[atm->np], &ps, ci, cw, 1);
-	      const double zs = Z(ps);
+	      /* Apply cosine-latitude weighting... */
 	      do {
-		atm->p[atm->np] = P(zs + (ztop - zs) * gsl_rng_uniform(rng));
-		intpol_met_time_3d(met0, met0->t, met1, met1->t,
-				   atm->time[atm->np], atm->p[atm->np],
-				   atm->lon[atm->np], atm->lat[atm->np],
-				   &ttry, ci, cw, 0);
-	      } while (gsl_rng_uniform(rng) >=
-		       RHO(atm->p[atm->np], ttry) / rhomax);
+		rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
+		const double sy_coord =
+		  ctl.met_coord_type == 0 ? DY2DEG(sx) : sx;
+		rx = gsl_ran_gaussian_ziggurat(rng, sy_coord / 2.3548);
+		ru = ulat * (gsl_rng_uniform(rng) - 0.5);
+		atm->lat[atm->np] = (lat + rg + rx + ru);
+	      } while (even && gsl_rng_uniform(rng) >
+		       fabs(cos(DEG2RAD(atm->lat[atm->np]))));
+
+	      /* Apply cosine bell (Williamson et al., 1992)... */
+	      if (bellrad > 0) {
+		double x0[3], x1[3];
+		geo2cart(0.0, 0.5 * (lon0 + lon1), 0.5 * (lat0 + lat1), x0);
+		geo2cart(0.0, atm->lon[atm->np], atm->lat[atm->np], x1);
+		const double rad =
+		  RE * acos(DOTP(x0, x1) / sqrt(DOTP(x0, x0)) /
+			    sqrt(DOTP(x1, x1)));
+		if (rad > bellrad)
+		  continue;
+		if (ctl.qnt_m >= 0)
+		  atm->q[ctl.qnt_m][atm->np] =
+		    0.5 * (1. + cos(M_PI * rad / bellrad));
+		if (ctl.qnt_vmr >= 0)
+		  atm->q[ctl.qnt_vmr][atm->np] =
+		    0.5 * (1. + cos(M_PI * rad / bellrad));
+	      }
+
+	      /* Apply column-mass and globally well-mixed air-mass weighting... */
+	      if (col_mass) {
+		INTPOL_INIT;
+		double ps;
+		intpol_met_time_2d(met0, met0->ps, met1, met1->ps,
+				   atm->time[atm->np], atm->lon[atm->np],
+				   atm->lat[atm->np], &ps, ci, cw, 1);
+		const double dpcol = ps - ptop;
+		if (gsl_rng_uniform(rng) > dpcol / dpcolmax)
+		  continue;
+		if (well_mixed)
+		  atm->p[atm->np] = ptop + dpcol * gsl_rng_uniform(rng);
+	      }
+
+	      /* Set particle counter... */
+	      if ((++atm->np) > NP)
+		ERRMSG("Too many particles!");
 	    }
 
-	    /* Set particle counter... */
-	    if ((++atm->np) > NP)
-	      ERRMSG("Too many particles!");
-	  }
+  } while (init_np > 0 && atm->np < init_np);
 
   /* Check number of air parcels... */
   if (atm->np <= 0)
