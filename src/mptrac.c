@@ -4361,7 +4361,6 @@ void module_diff_pbl(
 			  * pow(zeta, 2.0 / 3.0)
 			  + (1.8 - 1.4 * zeta) * SQR(ust));
 
-      /* Calculate derivative dsig_w/dz... */
       dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ust)
 				     + SQR(wstar) *
 				     (0.8 * pow(MAX(zeta, 1e-3), -1.0 / 3.0)
@@ -4392,6 +4391,9 @@ void module_diff_pbl(
     tau_u = MAX(tau_u, 10.);
     tau_w = MAX(tau_w, 30.);
 
+    if (sig_w <= 0.1 + 1e-9)
+      dsigw_dz = 0.0;
+
     /* Update perturbations... */
     const double ru = exp(-fabs(cache->dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
@@ -4403,11 +4405,11 @@ void module_diff_pbl(
 
     const double rw = exp(-fabs(cache->dt[ip]) / tau_w);
     const double rw2 = sqrt(1.0 - SQR(rw));
-    const double dsigw2_dz = 2.0 * sig_w * dsigw_dz;
     const double rhoaux = -1.0 / (1e3 * H0);
     cache->uvwp[ip][2]
       = (float) (cache->uvwp[ip][2] * rw + sig_w * rw2 * cache->rs[3 * ip + 2]
-		 + tau_w * (1.0 - rw) * (dsigw2_dz + rhoaux * SQR(sig_w)));
+		 + tau_w * (1.0 - rw)
+		   * (2.0 * sig_w * dsigw_dz + rhoaux * SQR(sig_w)));
 
     /* Calculate new air parcel position... */
     atm->lon[ip] +=
@@ -4416,13 +4418,18 @@ void module_diff_pbl(
 
     /* Calculate new air parcel height... */
     double znew = z + cache->uvwp[ip][2] * cache->dt[ip];
-    while (znew < 0.0 || znew > zi) {
-      if (znew < 0.0)
-	znew = -znew;
-      if (znew > zi)
-	znew = 2.0 * zi - znew;
+    if (znew < 0.0) {
+      znew = -znew;
+      cache->uvwp[ip][2] = -cache->uvwp[ip][2];
     }
-    atm->p[ip] += DZ2DP((znew - z) / 1000., atm->p[ip]);
+    if (znew > zi) {
+      znew = 2.0 * zi - znew;
+      cache->uvwp[ip][2] = -cache->uvwp[ip][2];
+    }
+    if (fabs(znew) < 1e-9)
+      atm->p[ip] = ps;
+    else
+      atm->p[ip] += DZ2DP((znew - z) / 1000.0, p);
   }
 }
 
@@ -4476,8 +4483,13 @@ void module_diff_turb(
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      const double sigma = sqrt(2.0 * dz * fabs(cache->dt[ip])) / 1000.;
-      atm->p[ip] += DZ2DP(cache->rs[3 * ip + 2] * sigma, atm->p[ip]);
+      const double dz_h = dz * (H0 / atm->p[ip]) * (H0 / atm->p[ip]);
+      const double sigma = sqrt(2.0 * dz_h * fabs(cache->dt[ip])) / 1000.;
+      double H = -H0 * log(atm->p[ip] / ps);
+      H += cache->rs[3 * ip + 2] * sigma;
+      if (H < 0)
+        H = -H;
+      atm->p[ip] = ps * exp(-H / H0);
     }
   }
 }
@@ -5222,9 +5234,12 @@ void module_position(
     if (atm->p[ip] < met0->p[met0->np - 1]) {
       atm->p[ip] = met0->p[met0->np - 1];
     } else if (atm->p[ip] > 300.) {
-      INTPOL_2D(ps, 1);
-      if (atm->p[ip] > ps)
-	atm->p[ip] = ps;
+      INTPOL_2D(ps, 0);
+      if (atm->p[ip] > ps) {
+	double H = -H0 * log(atm->p[ip] / ps);
+	H = -H;
+	atm->p[ip] = ps * exp(-H / H0);
+      }
     }
   }
 }
