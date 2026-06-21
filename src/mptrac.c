@@ -4299,7 +4299,7 @@ void module_diff_pbl(
     INTPOL_INIT;
     INTPOL_2D(pbl, 1);
 
-    /* Let the background diffusion scheme handle particles above the PBL. */
+    /* Let the background diffusion scheme handle particles above the PBL... */
     if (atm->p[ip] < pbl)
       continue;
 
@@ -4332,7 +4332,7 @@ void module_diff_pbl(
     INTPOL_2D(shf, 1);
 
     /* Estimate Monin-Obukhov length to distinguish
-       neutral, stable, and unstable cases. */
+       neutral, stable, and unstable cases... */
     double ol = 1e12;
     if (fabs(shf) > 1e-6 && ust > 0.0)
       ol = thetav * rho * CPD * (ust * ust * ust) / (KARMAN * G0 * shf);
@@ -4360,7 +4360,6 @@ void module_diff_pbl(
       sig_w = 1e-2 + sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zeta)
 			  * pow(zeta, 2.0 / 3.0)
 			  + (1.8 - 1.4 * zeta) * SQR(ust));
-
       dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ust)
 				     + SQR(wstar) *
 				     (0.8 * pow(MAX(zeta, 1e-3), -1.0 / 3.0)
@@ -4390,11 +4389,10 @@ void module_diff_pbl(
     sig_w = MAX(sig_w, 0.1);
     tau_u = MAX(tau_u, 10.);
     tau_w = MAX(tau_w, 30.);
-
     if (sig_w <= 0.1 + 1e-9)
       dsigw_dz = 0.0;
 
-    /* Update perturbations... */
+    /* Update horizontal perturbation... */
     const double ru = exp(-fabs(cache->dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
@@ -4403,13 +4401,14 @@ void module_diff_pbl(
       = (float) (cache->uvwp[ip][1] * ru
 		 + sig_u * ru2 * cache->rs[3 * ip + 1]);
 
+    /* Update vertical perturbation... */
     const double rw = exp(-fabs(cache->dt[ip]) / tau_w);
     const double rw2 = sqrt(1.0 - SQR(rw));
     const double rhoaux = -1.0 / (1e3 * H0);
     cache->uvwp[ip][2]
       = (float) (cache->uvwp[ip][2] * rw + sig_w * rw2 * cache->rs[3 * ip + 2]
 		 + tau_w * (1.0 - rw)
-		   * (2.0 * sig_w * dsigw_dz + rhoaux * SQR(sig_w)));
+		 * (2.0 * sig_w * dsigw_dz + rhoaux * SQR(sig_w)));
 
     /* Calculate new air parcel position... */
     atm->lon[ip] +=
@@ -4458,6 +4457,7 @@ void module_diff_turb(
     INTPOL_INIT;
     INTPOL_2D(pbl, 1);
     INTPOL_2D(ps, 0);
+    const double ptop = met0->p[met0->np - 1];
 
     /* Let optional PBL closure schemes handle turbulent diffusion inside the PBL. */
     if (ctl->turb_pbl_scheme > 0 && atm->p[ip] >= pbl)
@@ -4480,16 +4480,17 @@ void module_diff_turb(
       atm->lon[ip] += DX2COORD(met0, cache->rs[3 * ip] * sigma, atm->lat[ip]);
       atm->lat[ip] += DY2COORD(met0, cache->rs[3 * ip + 1] * sigma);
     }
-
+    
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      const double dz_h = dz * (H0 / atm->p[ip]) * (H0 / atm->p[ip]);
-      const double sigma = sqrt(2.0 * dz_h * fabs(cache->dt[ip])) / 1000.;
-      double H = -H0 * log(atm->p[ip] / ps);
-      H += cache->rs[3 * ip + 2] * sigma;
-      if (H < 0)
-        H = -H;
-      atm->p[ip] = ps * exp(-H / H0);
+      const double sigma = sqrt(2.0 * dz * fabs(cache->dt[ip])) * 1e-3;
+      double ptrial =
+	atm->p[ip] + DZ2DP(cache->rs[3 * ip + 2] * sigma, atm->p[ip]);
+      if (ptrial > ps)
+	ptrial = ps * ps / ptrial;
+      if (ptrial < ptop)
+	ptrial = ptop * ptop / ptrial;
+      atm->p[ip] = ptrial;
     }
   }
 }
@@ -5228,18 +5229,15 @@ void module_position(
 			     atm->lon[ip], atm->lat[ip], &atm->lon[ip],
 			     &atm->lat[ip]);
     }
-
-
+    
     /* Check pressure... */
-    if (atm->p[ip] < met0->p[met0->np - 1]) {
-      atm->p[ip] = met0->p[met0->np - 1];
+    const double ptop = met0->p[met0->np - 1];
+    if (atm->p[ip] < ptop) {
+      atm->p[ip] = ptop * ptop / atm->p[ip];
     } else if (atm->p[ip] > 300.) {
       INTPOL_2D(ps, 0);
-      if (atm->p[ip] > ps) {
-	double H = -H0 * log(atm->p[ip] / ps);
-	H = -H;
-	atm->p[ip] = ps * exp(-H / H0);
-      }
+      if (atm->p[ip] > ps)
+	atm->p[ip] = ps * ps / atm->p[ip];
     }
   }
 }
