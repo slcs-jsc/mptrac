@@ -4480,12 +4480,43 @@ void module_diff_turb(
       atm->lon[ip] += DX2COORD(met0, cache->rs[3 * ip] * sigma, atm->lat[ip]);
       atm->lat[ip] += DY2COORD(met0, cache->rs[3 * ip + 1] * sigma);
     }
-    
+
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      const double sigma = sqrt(2.0 * dz * fabs(cache->dt[ip])) * 1e-3;
-      double ptrial =
-	atm->p[ip] + DZ2DP(cache->rs[3 * ip + 2] * sigma, atm->p[ip]);
+      const double dt_abs = fabs(cache->dt[ip]);
+      const double sigma = sqrt(2.0 * dz * dt_abs) * 1e-3;
+      double dz_drift = 0.0;
+
+      /* Add a well-mixed drift correction based on dKz/dz... */
+      const double p_save = atm->p[ip];
+      const double eps_km = 0.01;
+      const double p_up = p_save + DZ2DP(eps_km, p_save);
+      const double p_dn = p_save + DZ2DP(-eps_km, p_save);
+
+      atm->p[ip] = MAX(ptop, MIN(ps, p_up));
+      const double wpbl_up = pbl_weight(ctl, atm, ip, pbl, ps);
+      const double wtrop_up =
+	tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl_up);
+      const double wstrat_up = 1.0 - wpbl_up - wtrop_up;
+      const double dz_up =
+	wpbl_up * ctl->turb_dz_pbl + wtrop_up * ctl->turb_dz_trop +
+	wstrat_up * ctl->turb_dz_strat;
+
+      atm->p[ip] = MAX(ptop, MIN(ps, p_dn));
+      const double wpbl_dn = pbl_weight(ctl, atm, ip, pbl, ps);
+      const double wtrop_dn =
+	tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl_dn);
+      const double wstrat_dn = 1.0 - wpbl_dn - wtrop_dn;
+      const double dz_dn =
+	wpbl_dn * ctl->turb_dz_pbl + wtrop_dn * ctl->turb_dz_trop +
+	wstrat_dn * ctl->turb_dz_strat;
+
+      atm->p[ip] = p_save;
+      dz_drift = ((dz_up - dz_dn) / (2.0 * eps_km * 1e3)) * dt_abs * 1e-3;
+
+      /* Update particle pressure... */
+      double ptrial = atm->p[ip]
+	+ DZ2DP(cache->rs[3 * ip + 2] * sigma + dz_drift, atm->p[ip]);
       if (ptrial > ps)
 	ptrial = ps * ps / ptrial;
       if (ptrial < ptop)
@@ -5229,7 +5260,7 @@ void module_position(
 			     atm->lon[ip], atm->lat[ip], &atm->lon[ip],
 			     &atm->lat[ip]);
     }
-    
+
     /* Check pressure... */
     const double ptop = met0->p[met0->np - 1];
     if (atm->p[ip] < ptop) {
@@ -6751,12 +6782,16 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
   ctl->turb_pbl_trans =
     scan_ctl(filename, argc, argv, "TURB_PBL_TRANS", -1, "0", NULL);
+  if (ctl->turb_pbl_trans < 0 || ctl->turb_pbl_trans > 1)
+    ERRMSG("TURB_PBL_TRANS must be in the range [0, 1]!");
 
   /* Convection... */
   ctl->conv_mix_pbl
     = (int) scan_ctl(filename, argc, argv, "CONV_MIX_PBL", -1, "0", NULL);
   ctl->conv_pbl_trans
     = scan_ctl(filename, argc, argv, "CONV_PBL_TRANS", -1, "0", NULL);
+  if (ctl->conv_pbl_trans < 0 || ctl->conv_pbl_trans > 1)
+    ERRMSG("CONV_PBL_TRANS must be in the range [0, 1]!");
   ctl->conv_cape
     = scan_ctl(filename, argc, argv, "CONV_CAPE", -1, "-999", NULL);
   ctl->conv_cin
