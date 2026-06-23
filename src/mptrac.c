@@ -4452,76 +4452,132 @@ void module_diff_turb(
   PARTICLE_LOOP(0, atm->np, 1,
 		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
-    /* Get PBL and surface pressure... */
-    double pbl, ps;
+    /* Get PBL pressure... */
+    double pbl;
     INTPOL_INIT;
     INTPOL_2D(pbl, 1);
-    INTPOL_2D(ps, 0);
-    const double ptop = met0->p[met0->np - 1];
 
     /* Let optional PBL closure schemes handle turbulent diffusion inside the PBL. */
     if (ctl->turb_pbl_scheme > 0 && atm->p[ip] >= pbl)
       continue;
 
-    /* Get weighting factors... */
+    /* Get surface pressure... */
+    double ps;
+    INTPOL_2D(ps, 0);
+
+    /* Pressure at model top [hPa]. */
+    const double ptop = met0->p[met0->np - 1];
+
+    /* Get weighting factors at current particle position... */
     const double wpbl = pbl_weight(ctl, atm, ip, pbl, ps);
     const double wtrop = tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl);
     const double wstrat = 1.0 - wpbl - wtrop;
 
-    /* Set diffusivity... */
-    const double dx = wpbl * ctl->turb_dx_pbl + wtrop * ctl->turb_dx_trop
-      + wstrat * ctl->turb_dx_strat;
-    const double dz = wpbl * ctl->turb_dz_pbl + wtrop * ctl->turb_dz_trop
-      + wstrat * ctl->turb_dz_strat;
+    /* Set diffusivities [m2/s]... */
+    const double Kx =
+      wpbl * ctl->turb_dx_pbl
+      + wtrop * ctl->turb_dx_trop + wstrat * ctl->turb_dx_strat;
 
-    /* Horizontal turbulent diffusion... */
-    if (dx > 0) {
-      const double sigma = sqrt(2.0 * dx * fabs(cache->dt[ip]));
-      atm->lon[ip] += DX2COORD(met0, cache->rs[3 * ip] * sigma, atm->lat[ip]);
-      atm->lat[ip] += DY2COORD(met0, cache->rs[3 * ip + 1] * sigma);
+    const double Kz =
+      wpbl * ctl->turb_dz_pbl
+      + wtrop * ctl->turb_dz_trop + wstrat * ctl->turb_dz_strat;
+
+    /* Set time step... */
+    const double dt_abs = fabs(cache->dt[ip]);
+
+    /* Horizontal turbulent diffusion...
+       Kx [m2/s], dt [s] => sigma_h [m]. */
+    if (Kx > 0) {
+      const double sigma_h = sqrt(2.0 * Kx * dt_abs);
+
+      atm->lon[ip] +=
+	DX2COORD(met0, cache->rs[3 * ip] * sigma_h, atm->lat[ip]);
+
+      atm->lat[ip] += DY2COORD(met0, cache->rs[3 * ip + 1] * sigma_h);
     }
 
     /* Vertical turbulent diffusion... */
-    if (dz > 0) {
-      const double dt_abs = fabs(cache->dt[ip]);
-      const double sigma = sqrt(2.0 * dz * dt_abs) * 1e-3;
-      double dz_drift = 0.0;
+    if (Kz > 0) {
 
-      /* Add a well-mixed drift correction based on dKz/dz... */
+      /* Random displacement:
+         Kz [m2/s], dt [s] => sigma_z [m], converted to [km]. */
+      const double sigma_z = sqrt(2.0 * Kz * dt_abs) * 1e-3;
+
+      /* Save current pressure because pbl_weight() and tropo_weight()
+         use atm->p[ip]. */
       const double p_save = atm->p[ip];
+
+      /* Estimate dKz/dz by centered finite difference.
+         eps_km = 0.01 km = 10 m.
+         Positive z is upward; therefore p_up < p_save and p_dn > p_save. */
       const double eps_km = 0.01;
       const double p_up = p_save + DZ2DP(eps_km, p_save);
       const double p_dn = p_save + DZ2DP(-eps_km, p_save);
 
+      /* Kz above... */
       atm->p[ip] = MAX(ptop, MIN(ps, p_up));
       const double wpbl_up = pbl_weight(ctl, atm, ip, pbl, ps);
       const double wtrop_up =
 	tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl_up);
       const double wstrat_up = 1.0 - wpbl_up - wtrop_up;
-      const double dz_up =
-	wpbl_up * ctl->turb_dz_pbl + wtrop_up * ctl->turb_dz_trop +
-	wstrat_up * ctl->turb_dz_strat;
 
+      const double Kz_up =
+	wpbl_up * ctl->turb_dz_pbl
+	+ wtrop_up * ctl->turb_dz_trop + wstrat_up * ctl->turb_dz_strat;
+
+      /* Kz below... */
       atm->p[ip] = MAX(ptop, MIN(ps, p_dn));
       const double wpbl_dn = pbl_weight(ctl, atm, ip, pbl, ps);
       const double wtrop_dn =
 	tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl_dn);
       const double wstrat_dn = 1.0 - wpbl_dn - wtrop_dn;
-      const double dz_dn =
-	wpbl_dn * ctl->turb_dz_pbl + wtrop_dn * ctl->turb_dz_trop +
-	wstrat_dn * ctl->turb_dz_strat;
 
+      const double Kz_dn =
+	wpbl_dn * ctl->turb_dz_pbl
+	+ wtrop_dn * ctl->turb_dz_trop + wstrat_dn * ctl->turb_dz_strat;
+
+      /* Restore current pressure... */
       atm->p[ip] = p_save;
-      dz_drift = ((dz_up - dz_dn) / (2.0 * eps_km * 1e3)) * dt_abs * 1e-3;
+
+      /* Well-mixed drift:
+         w_drift = dKz/dz + Kz * dlnrho/dz
+
+         Units:
+         dKz_dz     [m2/s] / [m] = [m/s]
+         dlnrho_dz  [1/m]
+         Kz*dlnrho  [m2/s] * [1/m] = [m/s]
+         dz_drift   [m/s] * [s] * 1e-3 = [km]
+
+         With exponential atmosphere rho ~ exp(-z/H0):
+         dlnrho/dz = -1 / (1000 * H0)
+         because H0 is in [km]. */
+      const double dKz_dz = (Kz_up - Kz_dn) / (2.0 * eps_km * 1e3);
+      const double dlnrho_dz = -1.0 / (1e3 * H0);
+      const double w_drift = dKz_dz + Kz * dlnrho_dz;
+      const double dz_drift = w_drift * dt_abs * 1e-3;
+
+      /* Total vertical displacement [km]. */
+      const double dz_tot = cache->rs[3 * ip + 2] * sigma_z + dz_drift;
 
       /* Update particle pressure... */
-      double ptrial = atm->p[ip]
-	+ DZ2DP(cache->rs[3 * ip + 2] * sigma + dz_drift, atm->p[ip]);
-      if (ptrial > ps)
-	ptrial = ps * ps / ptrial;
-      if (ptrial < ptop)
-	ptrial = ptop * ptop / ptrial;
-      atm->p[ip] = ptrial;
+      double ptrial = p_save + DZ2DP(dz_tot, p_save);
+
+      /* Reflect at surface and model top.
+         The transformation p -> pb^2 / p corresponds to reflection in
+         logarithmic pressure / approximate height coordinates.  Use repeated
+         reflection for robustness in case a large random step crosses more
+         than one boundary. */
+      for (int iter = 0; iter < 10; iter++) {
+	if (ptrial > ps)
+	  ptrial = ps * ps / ptrial;
+	else if (ptrial < ptop)
+	  ptrial = ptop * ptop / ptrial;
+	else
+	  break;
+      }
+
+      /* Final safety clamp in case of an exceptionally large displacement... */
+      atm->p[ip] = MAX(ptop, MIN(ps, ptrial));
     }
   }
 }
