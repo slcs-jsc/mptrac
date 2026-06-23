@@ -1195,7 +1195,13 @@ or relative humidity (<code>RH</code>), ozone (<code>O3</code>), cloud liquid/ra
 content (<code>CLWC</code>/<code>CRWC</code>), cloud ice/snow water content (<code>CIWC</code>/<code>CSWC</code>),
 and cloud cover (<code>CC</code>).</p>
 <p>It is also necessary to provide the surface pressure (<code>LNSP</code>, <code>PS</code>, or
-<code>SP</code>) and the surface geopotential height (<code>Z</code> or <code>ZM</code>). Optionally,
+<code>SP</code>) and the surface geopotential height (<code>Z</code> or <code>ZM</code>). The <code>Z</code>
+variable is expected in geopotential units (<code>m^2 s^-2</code>) and is always
+converted to surface height in kilometres. The <code>ZM</code> variable is
+normally expected to already contain surface height in metres; set
+<code>MET_GP2Z = 1</code> if <code>ZM</code> instead stores surface geopotential in
+<code>m^2 s^-2</code> and should be converted to kilometres during input.
+Optionally,
 the surface temperature (<code>T2M</code>), the surface wind components (<code>U10M</code>,
 <code>V10M</code>), the land-sea mask (<code>LSM</code>), and sea surface temperature
 (<code>SSTK</code>) are read in.</p>
