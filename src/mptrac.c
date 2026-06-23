@@ -4293,25 +4293,45 @@ void module_diff_pbl(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
-    double pbl, ps, dsigw_dz = 0.0, sig_u, sig_w, tau_u, tau_w;
+    double pbl, ps, dsigw_dz = 0.0, sig_u = 0.0, sig_w = 0.0;
+    double tau_u = 0.0, tau_w = 0.0;
 
     /* Get PBL pressure... */
     INTPOL_INIT;
     INTPOL_2D(pbl, 1);
 
-    /* Let the background diffusion scheme handle particles above the PBL... */
+    /* Let the background diffusion scheme handle particles above the PBL. */
     if (atm->p[ip] < pbl)
       continue;
 
     /* Get surface pressure... */
     INTPOL_2D(ps, 0);
 
-    /* Calculate heights... */
+    /* Skip invalid or vanishing PBL layers. */
+    if (!(ps > 0.0 && pbl > 0.0 && ps > pbl))
+      continue;
+
+    /* Calculate heights [m] above ground.
+       Z() returns altitude in km, so multiply differences by 1e3. */
     const double p = MIN(atm->p[ip], ps);
     const double zs = Z(ps);
-    const double z = 1e3 * (Z(p) - zs);
+    const double z_raw = 1e3 * (Z(p) - zs);
     const double zi = 1e3 * (Z(pbl) - zs);
-    const double zratio = z / zi;
+
+    /* Require a physically meaningful PBL depth. */
+    if (!(zi > 1.0))
+      continue;
+
+    /* Clamp height to the PBL interval for closure evaluation. */
+    const double z = CLAMP(z_raw, 0.0, zi);
+    const double zeta = CLAMP(z / zi, 1e-6, 1.0 - 1e-6);
+    const double z_m = MAX(z, 1.0);
+
+    /* Temporarily use clamped pressure for thermodynamic interpolation.
+       This avoids inconsistent interpolation if a particle has slipped
+       below the surface pressure. */
+    const double p_save = atm->p[ip];
+    atm->p[ip] = p;
 
     /* Calculate friction velocity... */
     double ess, nss, h2o, t;
@@ -4319,31 +4339,46 @@ void module_diff_pbl(
     INTPOL_2D(nss, 0);
     INTPOL_3D(t, 1);
     INTPOL_3D(h2o, 0);
-    const double thetav = THETAVIRT(p, t, h2o);
-    const double rho = RHO(p, TVIRT(t, h2o));
-    const double tau = sqrt(SQR(ess) + SQR(nss));
-    const double ustar = sqrt(tau / rho);
-    const double ust = MAX(1e-4, ustar);
-    const double zeta = MAX(zratio, 1e-6);
-    const double z_m = MAX(z, 1.0);
 
-    /* Get surface sensible heat flux... */
+    /* Restore particle pressure before any continue/update path. */
+    atm->p[ip] = p_save;
+
+    const double tv = TVIRT(t, h2o);
+    const double thetav = THETAVIRT(p, t, h2o);
+    const double rho = RHO(p, tv);
+    const double tau = sqrt(SQR(ess) + SQR(nss));
+
+    if (!(rho > 0.0))
+      continue;
+
+    const double ustar = sqrt(MAX(tau / rho, 0.0));
+    const double ust = MAX(1e-4, ustar);
+
+    /* Get surface sensible heat flux.
+       Sign convention assumed here: unstable surface heating gives shf < 0,
+       as in the existing implementation. */
     double shf;
     INTPOL_2D(shf, 1);
 
-    /* Estimate Monin-Obukhov length to distinguish
-       neutral, stable, and unstable cases... */
+    /* Estimate Monin-Obukhov length [m] to distinguish
+       neutral, stable, and unstable cases. */
     double ol = 1e12;
-    if (fabs(shf) > 1e-6 && ust > 0.0)
-      ol = thetav * rho * CPD * (ust * ust * ust) / (KARMAN * G0 * shf);
+    if (fabs(shf) > 1e-6)
+      ol = thetav * rho * CPD * SQR(ust) * ust / (KARMAN * G0 * shf);
 
     /* Neutral conditions... */
     if (zi / fabs(ol) < 1.0) {
+
+      /* corr has units of seconds, hence the exponential coefficients
+         have units of s^-1. The derivative d(sig_w)/dz therefore needs
+         the extra factor 1/ust. */
       const double corr = z_m / ust;
       const double sigw0 = 1.3 * ust * exp(-2e-4 * corr);
+
       sig_u = 1e-2 + 2.0 * ust * exp(-3e-4 * corr);
       sig_w = 1e-2 + sigw0;
-      dsigw_dz = -2e-4 * sigw0;
+      dsigw_dz = -2e-4 * sigw0 / ust;
+
       tau_u = 0.5 * z_m / sig_w / (1.0 + 1.5e-3 * corr);
       tau_w = tau_u;
     }
@@ -4351,25 +4386,39 @@ void module_diff_pbl(
     /* Unstable conditions... */
     else if (ol < 0.0) {
 
-      /* Convective velocity... */
-      const double wstar =
-	pow(-G0 / thetav * shf / (rho * CPD) * zi, 1. / 3.);
+      /* Convective velocity scale [m/s]. */
+      const double wstar_arg = -G0 / thetav * shf / (rho * CPD) * zi;
+      const double wstar = pow(MAX(wstar_arg, 0.0), 1.0 / 3.0);
 
-      /* Hanna/FLEXPART turbulent velocity variances... */
-      sig_u = 1e-2 + ust * pow(12.0 - 0.5 * zi / ol, 1.0 / 3.0);
-      sig_w = 1e-2 + sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zeta)
-			  * pow(zeta, 2.0 / 3.0)
-			  + (1.8 - 1.4 * zeta) * SQR(ust));
-      dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ust)
-				     + SQR(wstar) *
-				     (0.8 * pow(MAX(zeta, 1e-3), -1.0 / 3.0)
-				      - 1.8 * pow(zeta, 2.0 / 3.0)));
+      /* Hanna/FLEXPART turbulent velocity standard deviations [m/s]. */
+      sig_u = 1e-2 + ust * pow(MAX(12.0 - 0.5 * zi / ol, 0.0), 1.0 / 3.0);
 
-      /* Hanna/FLEXPART Lagrangian timescales... */
-      tau_u = 0.15 * zi / sig_u;
-      if (z_m < fabs(ol))
-	tau_w = 0.1 * z_m / (sig_w * (0.55 - 0.38 * fabs(z_m / ol)));
-      else if (zeta < 0.1)
+      const double a =
+	1.2 * SQR(wstar) * (1.0 - 0.9 * zeta) * pow(zeta, 2.0 / 3.0)
+	+ (1.8 - 1.4 * zeta) * SQR(ust);
+
+      const double sigw0 = sqrt(MAX(a, 0.0));
+      sig_w = 1e-2 + sigw0;
+
+      /* Derivative of sig_w with respect to z [1/s].
+         Use sigw0 rather than sig_w in the denominator because the
+         1e-2 floor is not part of the analytical Hanna expression. */
+      if (sigw0 > 1e-12)
+	dsigw_dz = 0.5 / sigw0 / zi * (-1.4 * SQR(ust)
+				       + SQR(wstar)
+				       * (0.8 *
+					  pow(MAX(zeta, 1e-3), -1.0 / 3.0)
+					  - 1.8 * pow(zeta, 2.0 / 3.0)));
+      else
+	dsigw_dz = 0.0;
+
+      /* Hanna/FLEXPART Lagrangian timescales [s]. */
+      tau_u = 0.15 * zi / MAX(sig_u, 1e-12);
+
+      if (z_m < fabs(ol)) {
+	const double denom = 0.55 - 0.38 * fabs(z_m / ol);
+	tau_w = 0.1 * z_m / (sig_w * MAX(denom, 0.05));
+      } else if (zeta < 0.1)
 	tau_w = 0.59 * z_m / sig_w;
       else
 	tau_w = 0.15 * zi / sig_w * (1.0 - exp(-5.0 * zeta));
@@ -4377,58 +4426,86 @@ void module_diff_pbl(
 
     /* Stable conditions... */
     else {
+
       sig_u = 1e-2 + 2.0 * ust * (1.0 - zeta);
       sig_w = 1e-2 + 1.3 * ust * (1.0 - zeta);
       dsigw_dz = -1.3 * ust / zi;
+
       tau_u = 0.15 * zi / sig_u * sqrt(zeta);
       tau_w = 0.1 * zi / sig_w * pow(zeta, 0.8);
     }
 
-    /* Apply lower bounds for numerical robustness... */
+    /* Apply lower bounds for numerical robustness. */
     sig_u = MAX(sig_u, 0.25);
-    sig_w = MAX(sig_w, 0.1);
-    tau_u = MAX(tau_u, 10.);
-    tau_w = MAX(tau_w, 30.);
-    if (sig_w <= 0.1 + 1e-9)
+    sig_w = MAX(sig_w, 0.10);
+    tau_u = MAX(tau_u, 10.0);
+    tau_w = MAX(tau_w, 30.0);
+
+    /* If the imposed lower bound dominates, avoid an inconsistent
+       analytical derivative of an expression that is no longer active. */
+    if (sig_w <= 0.10 + 1e-9)
       dsigw_dz = 0.0;
 
-    /* Update horizontal perturbation... */
-    const double ru = exp(-fabs(cache->dt[ip]) / tau_u);
-    const double ru2 = sqrt(1.0 - SQR(ru));
+    /* Skip pathological states. */
+    if (!(sig_u > 0.0 && sig_w > 0.0 && tau_u > 0.0 && tau_w > 0.0))
+      continue;
+
+    /* Update horizontal perturbation [m/s]. */
+    const double dt = cache->dt[ip];
+    const double dt_abs = fabs(dt);
+
+    const double ru = exp(-dt_abs / tau_u);
+    const double ru2 = sqrt(MAX(0.0, 1.0 - SQR(ru)));
+
     cache->uvwp[ip][0]
       = (float) (cache->uvwp[ip][0] * ru + sig_u * ru2 * cache->rs[3 * ip]);
+
     cache->uvwp[ip][1]
       = (float) (cache->uvwp[ip][1] * ru
 		 + sig_u * ru2 * cache->rs[3 * ip + 1]);
 
-    /* Update vertical perturbation... */
-    const double rw = exp(-fabs(cache->dt[ip]) / tau_w);
-    const double rw2 = sqrt(1.0 - SQR(rw));
+    /* Update vertical perturbation [m/s].
+       The drift term is d(sig_w^2)/dz + sig_w^2/rho * d(rho)/dz.
+       With exponential scale height H0 [km], dln(rho)/dz ~= -1/(1000 H0). */
+    const double rw = exp(-dt_abs / tau_w);
+    const double rw2 = sqrt(MAX(0.0, 1.0 - SQR(rw)));
     const double rhoaux = -1.0 / (1e3 * H0);
+
     cache->uvwp[ip][2]
       = (float) (cache->uvwp[ip][2] * rw + sig_w * rw2 * cache->rs[3 * ip + 2]
 		 + tau_w * (1.0 - rw)
 		 * (2.0 * sig_w * dsigw_dz + rhoaux * SQR(sig_w)));
 
-    /* Calculate new air parcel position... */
-    atm->lon[ip] +=
-      DX2COORD(met0, cache->uvwp[ip][0] * cache->dt[ip], atm->lat[ip]);
-    atm->lat[ip] += DY2COORD(met0, cache->uvwp[ip][1] * cache->dt[ip]);
+    /* Calculate new horizontal air parcel position. */
+    atm->lon[ip] += DX2COORD(met0, cache->uvwp[ip][0] * dt, atm->lat[ip]);
+    atm->lat[ip] += DY2COORD(met0, cache->uvwp[ip][1] * dt);
 
-    /* Calculate new air parcel height... */
-    double znew = z + cache->uvwp[ip][2] * cache->dt[ip];
-    if (znew < 0.0) {
-      znew = -znew;
-      cache->uvwp[ip][2] = -cache->uvwp[ip][2];
+    /* Calculate new height and reflect robustly at surface and PBL top.
+       Each boundary reflection reverses the vertical turbulent velocity.
+       This loop is intentionally simple and explicit: it remains correct
+       even if a large step crosses multiple boundaries. */
+    double znew = z + cache->uvwp[ip][2] * dt;
+
+    while (znew < 0.0 || znew > zi) {
+
+      if (znew < 0.0) {
+	znew = -znew;
+	cache->uvwp[ip][2] = -cache->uvwp[ip][2];
+      }
+
+      if (znew > zi) {
+	znew = 2.0 * zi - znew;
+	cache->uvwp[ip][2] = -cache->uvwp[ip][2];
+      }
     }
-    if (znew > zi) {
-      znew = 2.0 * zi - znew;
-      cache->uvwp[ip][2] = -cache->uvwp[ip][2];
-    }
-    if (fabs(znew) < 1e-9)
-      atm->p[ip] = ps;
-    else
-      atm->p[ip] += DZ2DP((znew - z) / 1000.0, p);
+
+    /* Set pressure from reflected geometric height.
+       This is more consistent than a linearized DZ2DP update for
+       potentially large turbulent steps. */
+    atm->p[ip] = P(zs + znew / 1000.0);
+
+    /* Enforce exact pressure limits of the local PBL column. */
+    atm->p[ip] = CLAMP(atm->p[ip], pbl, ps);
   }
 }
 
