@@ -23,7 +23,13 @@ content (`CLWC`/`CRWC`), cloud ice/snow water content (`CIWC`/`CSWC`),
 and cloud cover (`CC`).
 
 It is also necessary to provide the surface pressure (`LNSP`, `PS`, or
-`SP`) and the surface geopotential height (`Z` or `ZM`). Optionally,
+`SP`) and the surface geopotential height (`Z` or `ZM`). The `Z`
+variable is expected in geopotential units (`m^2 s^-2`) and is always
+converted to surface height in kilometres. The `ZM` variable is
+normally expected to already contain surface height in metres; set
+`MET_GP2Z = 1` if `ZM` instead stores surface geopotential in
+`m^2 s^-2` and should be converted to kilometres during input.
+Optionally,
 the surface temperature (`T2M`), the surface wind components (`U10M`,
 `V10M`), the land-sea mask (`LSM`), and sea surface temperature
 (`SSTK`) are read in.

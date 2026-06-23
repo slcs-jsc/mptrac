@@ -317,6 +317,7 @@ MODULE mptrac_struct
      REAL(c_double) :: met_utm_ref_lat
      REAL(c_double) :: met_utm_ref_lon
      INTEGER(c_int) :: met_vert_coord
+     INTEGER(c_int) :: met_gp2z
      INTEGER(c_int) :: met_type
      INTEGER(c_int) :: met_clams
      INTEGER(c_int) :: met_nc_scale

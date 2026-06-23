@@ -2622,6 +2622,9 @@ typedef struct {
      (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). */
   int met_vert_coord;
 
+  /*! Convert surface geopotential to geopotential height (0=no, 1=yes). */
+  int met_gp2z;
+
   /*! Type of meteo data files
      (0=netCDF, 1=binary, 2=pck, 3=ZFP, 4=ZSTD, 5=cms, 6=grib, 7=SZ3, 8=LZ4). */
   int met_type;
@@ -8213,6 +8216,7 @@ void read_met_nc_levels(
  * - Reads surface pressure data and converts it if necessary.
  * - Handles different data formats for MPTRAC and CLaMS meteorological data.
  * - Reads geopotential height at the surface and processes it based on the data format.
+ * - Optionally converts `zm` surface geopotential data from m^2 s^-2 to km when `MET_GP2Z = 1`.
  * - Retrieves surface temperature, zonal and meridional wind, and other surface parameters.
  * - Logs warnings if specific data fields cannot be read.
  * - Uses helper functions to read 2D and 3D data fields from the NetCDF file.

@@ -6682,6 +6682,11 @@ void mptrac_read_ctl(
     ERRMSG
       ("Using ADVECT_VERT_COORD = 3 requires A and B model level coefficients!");
 
+  ctl->met_gp2z =
+    (int) scan_ctl(filename, argc, argv, "MET_GP2Z", -1, "0", NULL);
+  if (ctl->met_gp2z != 0 && ctl->met_gp2z != 1)
+    ERRMSG("Set MET_GP2Z to 0 or 1!");
+
   /* Time steps of simulation... */
   ctl->direction =
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
@@ -9463,7 +9468,7 @@ void read_met_nc_surface(
 	 (float) (1. / (1000. * G0)), 1))
       if (!read_met_nc_2d
 	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
-	   (float) (1. / 1000.), 1))
+	   (ctl->met_gp2z ? (float) (1e-3 / G0) : (float) (1. / 1000.)), 1))
 	WARN("Cannot read surface geopotential height!");
   }
 
