@@ -10305,40 +10305,6 @@ int read_met_nc_3d(
       help_halo_bnd_count[3] = dd->halo_bnd_count[1];
     }
 
-
-    int ndims;
-    nc_inq_varndims(ncid, varid, &ndims);
-
-    if (ndims == 3) {
-      if (ctl->met_convention == 0) {
-	help_subdomain_start[0] = dd->subdomain_start[1];
-	help_subdomain_start[1] = dd->subdomain_start[2];
-	help_subdomain_start[2] = dd->subdomain_start[3];
-	help_subdomain_count[0] = dd->subdomain_count[1];
-	help_subdomain_count[1] = dd->subdomain_count[2];
-	help_subdomain_count[2] = dd->subdomain_count[3];
-	help_halo_bnd_start[0] = dd->halo_bnd_start[1];
-	help_halo_bnd_start[1] = dd->halo_bnd_start[2];
-	help_halo_bnd_start[2] = dd->halo_bnd_start[3];
-	help_halo_bnd_count[0] = dd->halo_bnd_count[1];
-	help_halo_bnd_count[1] = dd->halo_bnd_count[2];
-	help_halo_bnd_count[2] = dd->halo_bnd_count[3];
-      } else {
-	help_subdomain_start[0] = dd->subdomain_start[3];
-	help_subdomain_start[1] = dd->subdomain_start[2];
-	help_subdomain_start[2] = dd->subdomain_start[1];
-	help_subdomain_count[0] = dd->subdomain_count[3];
-	help_subdomain_count[1] = dd->subdomain_count[2];
-	help_subdomain_count[2] = dd->subdomain_count[1];
-	help_halo_bnd_start[0] = dd->halo_bnd_start[3];
-	help_halo_bnd_start[1] = dd->halo_bnd_start[2];
-	help_halo_bnd_start[2] = dd->halo_bnd_start[1];
-	help_halo_bnd_count[0] = dd->halo_bnd_count[3];
-	help_halo_bnd_count[1] = dd->halo_bnd_count[2];
-	help_halo_bnd_count[2] = dd->halo_bnd_count[1];
-      }
-    }
-
     /* Allocate... */
     float *help;
     ALLOC(help, float,
