@@ -2292,7 +2292,7 @@ void dd_push(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
     if ((int) atm->q[ctl->qnt_subdomain][ip] != -1 &&
-        (int) atm->q[ctl->qnt_destination][ip] != rank) {
+	(int) atm->q[ctl->qnt_destination][ip] != rank) {
       int local_idx;
 #ifdef _OPENACC
 #pragma acc atomic capture
@@ -2300,8 +2300,8 @@ void dd_push(
 #pragma omp atomic capture
 #endif
       {
-        local_idx = *counter_ptr;
-        (*counter_ptr)++;
+	local_idx = *counter_ptr;
+	(*counter_ptr)++;
       }
       int global_index = atm->np + local_idx;
       /* Copy time, pressure, longitude, and latitude... */
@@ -2311,7 +2311,7 @@ void dd_push(
       atm->lat[global_index] = atm->lat[ip];
       /* Copy all quantity data (q array)... */
       for (int iq = 0; iq < NQ; iq++) {
-        atm->q[iq][global_index] = atm->q[iq][ip];
+	atm->q[iq][global_index] = atm->q[iq][ip];
       }
       /* Mark the original parcel as processed... */
       atm->q[ctl->qnt_destination][ip] = -1;
@@ -3557,7 +3557,7 @@ void module_advect(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECT", "PHYSICS");
-  
+
   /* Use omega vertical velocity... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
 
@@ -3619,14 +3619,14 @@ void module_advect(
 	vm += k * v[i];
 	wm += k * w[i];
       }
-     
+
       /* Set new position... */
       atm->time[ip] += cache->dt[ip];
       atm->lon[ip] += DX2COORD(met0, cache->dt[ip] * um,
 			       (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2COORD(met0, cache->dt[ip] * vm);
       atm->p[ip] += cache->dt[ip] * wm;
-      
+
     }
   }
 
@@ -4301,8 +4301,8 @@ void module_diff_pbl(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
-    double pbl, ps, dsigw_dz = 0.0, sig_u = 0.0, sig_w = 0.0;
-    double tau_u = 0.0, tau_w = 0.0;
+    double pbl, ps, dsigw_dz = 0.0, sig_u = 0.0, sig_v = 0.0, sig_w = 0.0;
+    double tau_u = 0.0, tau_v = 0.0, tau_w = 0.0;
 
     /* Get PBL pressure... */
     INTPOL_INIT;
@@ -4383,11 +4383,13 @@ void module_diff_pbl(
       const double corr = z_m / ust;
       const double sigw0 = 1.3 * ust * exp(-2e-4 * corr);
 
-      sig_u = 1e-2 + 2.0 * ust * exp(-3e-4 * corr);
-      sig_w = 1e-2 + sigw0;
+      sig_u = MAX(2.0 * ust * exp(-3e-4 * corr), 1e-5);
+      sig_v = MAX(sigw0, 1e-5);
+      sig_w = MAX(sigw0, 1e-5);
       dsigw_dz = -2e-4 * sigw0 / ust;
 
       tau_u = 0.5 * z_m / sig_w / (1.0 + 1.5e-3 * corr);
+      tau_v = tau_u;
       tau_w = tau_u;
     }
 
@@ -4397,31 +4399,41 @@ void module_diff_pbl(
       /* Convective velocity scale [m/s]. */
       const double wstar_arg = -G0 / thetav * shf / (rho * CPD) * zi;
       const double wstar = pow(MAX(wstar_arg, 0.0), 1.0 / 3.0);
+      double dsigw2_dz = 0.0;
 
-      /* Hanna/FLEXPART turbulent velocity standard deviations [m/s]. */
-      sig_u = 1e-2 + ust * pow(MAX(12.0 - 0.5 * zi / ol, 0.0), 1.0 / 3.0);
+      /* Hanna1/FLEXPART turbulent velocity standard deviations [m/s]. */
+      sig_u = MAX(ust * pow(MAX(12.0 - 0.5 * zi / ol, 0.0), 1.0 / 3.0), 1e-6);
+      sig_v = sig_u;
 
-      const double a =
-	1.2 * SQR(wstar) * (1.0 - 0.9 * zeta) * pow(zeta, 2.0 / 3.0)
-	+ (1.8 - 1.4 * zeta) * SQR(ust);
+      if (zeta < 0.03) {
+	const double arg = MAX(3.0 * zeta - ol / zi, 1e-12);
+	sig_w = 0.96 * wstar * pow(arg, 1.0 / 3.0);
+	dsigw2_dz = 1.8432 * SQR(wstar) / zi * pow(arg, -1.0 / 3.0);
+      } else if (zeta < 0.4) {
+	const double arg = MAX(3.0 * zeta - ol / zi, 1e-12);
+	const double s1 = 0.96 * pow(arg, 1.0 / 3.0);
+	const double s2 = 0.763 * pow(zeta, 0.175);
+	if (s1 < s2) {
+	  sig_w = wstar * s1;
+	  dsigw2_dz = 1.8432 * SQR(wstar) / zi * pow(arg, -1.0 / 3.0);
+	} else {
+	  sig_w = wstar * s2;
+	  dsigw2_dz = 0.203759 * SQR(wstar) / zi * pow(zeta, -0.65);
+	}
+      } else if (zeta < 0.96) {
+	sig_w = 0.722 * wstar * pow(1.0 - zeta, 0.207);
+	dsigw2_dz = -0.215812 * SQR(wstar) / zi * pow(1.0 - zeta, -0.586);
+      } else {
+	sig_w = 0.37 * wstar;
+	dsigw2_dz = 0.0;
+      }
 
-      const double sigw0 = sqrt(MAX(a, 0.0));
-      sig_w = 1e-2 + sigw0;
-
-      /* Derivative of sig_w with respect to z [1/s].
-         Use sigw0 rather than sig_w in the denominator because the
-         1e-2 floor is not part of the analytical Hanna expression. */
-      if (sigw0 > 1e-12)
-	dsigw_dz = 0.5 / sigw0 / zi * (-1.4 * SQR(ust)
-				       + SQR(wstar)
-				       * (0.8 *
-					  pow(MAX(zeta, 1e-3), -1.0 / 3.0)
-					  - 1.8 * pow(zeta, 2.0 / 3.0)));
-      else
-	dsigw_dz = 0.0;
+      sig_w = MAX(sig_w, 1e-6);
+      dsigw_dz = sig_w > 1e-12 ? 0.5 * dsigw2_dz / sig_w : 0.0;
 
       /* Hanna/FLEXPART Lagrangian timescales [s]. */
       tau_u = 0.15 * zi / MAX(sig_u, 1e-12);
+      tau_v = tau_u;
 
       if (z_m < fabs(ol)) {
 	const double denom = 0.55 - 0.38 * fabs(z_m / ol);
@@ -4435,27 +4447,24 @@ void module_diff_pbl(
     /* Stable conditions... */
     else {
 
-      sig_u = 1e-2 + 2.0 * ust * (1.0 - zeta);
-      sig_w = 1e-2 + 1.3 * ust * (1.0 - zeta);
+      sig_u = MAX(2.0 * ust * (1.0 - zeta), 1e-6);
+      sig_v = MAX(1.3 * ust * (1.0 - zeta), 1e-6);
+      sig_w = MAX(1.3 * ust * (1.0 - zeta), 1e-6);
       dsigw_dz = -1.3 * ust / zi;
 
       tau_u = 0.15 * zi / sig_u * sqrt(zeta);
+      tau_v = 0.467 * tau_u;
       tau_w = 0.1 * zi / sig_w * pow(zeta, 0.8);
     }
 
-    /* Apply lower bounds for numerical robustness. */
-    sig_u = MAX(sig_u, 0.25);
-    sig_w = MAX(sig_w, 0.10);
+    /* Apply FLEXPART-consistent lower bounds for timescales. */
     tau_u = MAX(tau_u, 10.0);
+    tau_v = MAX(tau_v, 10.0);
     tau_w = MAX(tau_w, 30.0);
 
-    /* If the imposed lower bound dominates, avoid an inconsistent
-       analytical derivative of an expression that is no longer active. */
-    if (sig_w <= 0.10 + 1e-9)
-      dsigw_dz = 0.0;
-
     /* Skip pathological states. */
-    if (!(sig_u > 0.0 && sig_w > 0.0 && tau_u > 0.0 && tau_w > 0.0))
+    if (!(sig_u > 0.0 && sig_v > 0.0
+	  && sig_w > 0.0 && tau_u > 0.0 && tau_v > 0.0 && tau_w > 0.0))
       continue;
 
     /* Update horizontal perturbation [m/s]. */
@@ -4464,13 +4473,15 @@ void module_diff_pbl(
 
     const double ru = exp(-dt_abs / tau_u);
     const double ru2 = sqrt(MAX(0.0, 1.0 - SQR(ru)));
+    const double rv = exp(-dt_abs / tau_v);
+    const double rv2 = sqrt(MAX(0.0, 1.0 - SQR(rv)));
 
     cache->uvwp[ip][0]
       = (float) (cache->uvwp[ip][0] * ru + sig_u * ru2 * cache->rs[3 * ip]);
 
     cache->uvwp[ip][1]
-      = (float) (cache->uvwp[ip][1] * ru
-		 + sig_u * ru2 * cache->rs[3 * ip + 1]);
+      = (float) (cache->uvwp[ip][1] * rv
+		 + sig_v * rv2 * cache->rs[3 * ip + 1]);
 
     /* Update vertical perturbation [m/s].
        The drift term is d(sig_w^2)/dz + sig_w^2/rho * d(rho)/dz.
@@ -10091,7 +10102,7 @@ int read_met_nc_2d(
     free(help);
     free(help_halo);
   }
- 
+
   /* Return... */
   return 1;
 }
@@ -10293,41 +10304,41 @@ int read_met_nc_3d(
       help_halo_bnd_count[2] = dd->halo_bnd_count[2];
       help_halo_bnd_count[3] = dd->halo_bnd_count[1];
     }
-    
-    
-int ndims;
-nc_inq_varndims(ncid, varid, &ndims);
 
-if (ndims == 3) {
-  if (ctl->met_convention == 0) {
-    help_subdomain_start[0] = dd->subdomain_start[1];
-    help_subdomain_start[1] = dd->subdomain_start[2];
-    help_subdomain_start[2] = dd->subdomain_start[3];
-    help_subdomain_count[0] = dd->subdomain_count[1];
-    help_subdomain_count[1] = dd->subdomain_count[2];
-    help_subdomain_count[2] = dd->subdomain_count[3];
-    help_halo_bnd_start[0] = dd->halo_bnd_start[1];
-    help_halo_bnd_start[1] = dd->halo_bnd_start[2];
-    help_halo_bnd_start[2] = dd->halo_bnd_start[3];
-    help_halo_bnd_count[0] = dd->halo_bnd_count[1];
-    help_halo_bnd_count[1] = dd->halo_bnd_count[2];
-    help_halo_bnd_count[2] = dd->halo_bnd_count[3];
-  } else {
-    help_subdomain_start[0] = dd->subdomain_start[3];
-    help_subdomain_start[1] = dd->subdomain_start[2];
-    help_subdomain_start[2] = dd->subdomain_start[1];
-    help_subdomain_count[0] = dd->subdomain_count[3];
-    help_subdomain_count[1] = dd->subdomain_count[2];
-    help_subdomain_count[2] = dd->subdomain_count[1];
-    help_halo_bnd_start[0] = dd->halo_bnd_start[3];
-    help_halo_bnd_start[1] = dd->halo_bnd_start[2];
-    help_halo_bnd_start[2] = dd->halo_bnd_start[1];
-    help_halo_bnd_count[0] = dd->halo_bnd_count[3];
-    help_halo_bnd_count[1] = dd->halo_bnd_count[2];
-    help_halo_bnd_count[2] = dd->halo_bnd_count[1];
-  }
-}
-    
+
+    int ndims;
+    nc_inq_varndims(ncid, varid, &ndims);
+
+    if (ndims == 3) {
+      if (ctl->met_convention == 0) {
+	help_subdomain_start[0] = dd->subdomain_start[1];
+	help_subdomain_start[1] = dd->subdomain_start[2];
+	help_subdomain_start[2] = dd->subdomain_start[3];
+	help_subdomain_count[0] = dd->subdomain_count[1];
+	help_subdomain_count[1] = dd->subdomain_count[2];
+	help_subdomain_count[2] = dd->subdomain_count[3];
+	help_halo_bnd_start[0] = dd->halo_bnd_start[1];
+	help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+	help_halo_bnd_start[2] = dd->halo_bnd_start[3];
+	help_halo_bnd_count[0] = dd->halo_bnd_count[1];
+	help_halo_bnd_count[1] = dd->halo_bnd_count[2];
+	help_halo_bnd_count[2] = dd->halo_bnd_count[3];
+      } else {
+	help_subdomain_start[0] = dd->subdomain_start[3];
+	help_subdomain_start[1] = dd->subdomain_start[2];
+	help_subdomain_start[2] = dd->subdomain_start[1];
+	help_subdomain_count[0] = dd->subdomain_count[3];
+	help_subdomain_count[1] = dd->subdomain_count[2];
+	help_subdomain_count[2] = dd->subdomain_count[1];
+	help_halo_bnd_start[0] = dd->halo_bnd_start[3];
+	help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+	help_halo_bnd_start[2] = dd->halo_bnd_start[1];
+	help_halo_bnd_count[0] = dd->halo_bnd_count[3];
+	help_halo_bnd_count[1] = dd->halo_bnd_count[2];
+	help_halo_bnd_count[2] = dd->halo_bnd_count[1];
+      }
+    }
+
     /* Allocate... */
     float *help;
     ALLOC(help, float,
@@ -10340,7 +10351,7 @@ if (ndims == 3) {
 #endif
     NC(nc_get_vara_float
        (ncid, varid, help_subdomain_start, help_subdomain_count, help));
-       
+
     /* Read halos separately at boundaries... */
     float *help_halo;
     ALLOC(help_halo, float,
@@ -10350,10 +10361,12 @@ if (ndims == 3) {
 #ifdef DD
     NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
 #endif
-    if (dd->halo_bnd_count[1] > 0 && dd->halo_bnd_count[2] > 0 && dd->halo_bnd_count[3] > 0) {
-        NC(nc_get_vara_float(ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
+    if (dd->halo_bnd_count[1] > 0 && dd->halo_bnd_count[2] > 0
+	&& dd->halo_bnd_count[3] > 0) {
+      NC(nc_get_vara_float
+	 (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
     }
-			 
+
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
 
@@ -10371,8 +10384,7 @@ if (ndims == 3) {
 		&& fabsf(aux) < 1e14f) {
 	      dest[ix + dd->halo_offset_start][iy][ip] = scl * aux;
 
-	    }
-	    else
+	    } else
 	      dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	  }
 
@@ -13909,7 +13921,7 @@ void write_met_nc(
   NC_DEF_VAR("lev", NC_DOUBLE, 1, &levid, "pressure", "Pa", 0, 0);
 
   /* Define surface variables... */
-  int dimid2[3] = {tid, latid, lonid };
+  int dimid2[3] = { tid, latid, lonid };
   NC_DEF_VAR("sp", NC_FLOAT, 3, dimid2, "Surface pressure", "Pa",
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("z", NC_FLOAT, 3, dimid2, "Geopotential", "m**2 s**-2",
@@ -13967,7 +13979,7 @@ void write_met_nc(
 	     ctl->met_nc_level, 0);
 
   /* Define level data... */
-  int dimid3[4] = {tid, levid, latid, lonid };
+  int dimid3[4] = { tid, levid, latid, lonid };
   NC_DEF_VAR("t", NC_FLOAT, 4, dimid3, "Temperature", "K",
 	     ctl->met_nc_level, ctl->met_nc_quant);
   NC_DEF_VAR("u", NC_FLOAT, 4, dimid3, "U velocity", "m s**-1",

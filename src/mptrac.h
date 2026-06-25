@@ -3300,7 +3300,7 @@ typedef struct {
 
   /*! Domain decomposition size of halos given in grid-points. */
   int dd_halos_size;
-  
+
   /*! Sorting time interval for the compactification. */
   double dd_sort_dt;
 
