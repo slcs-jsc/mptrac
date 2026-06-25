@@ -3557,7 +3557,7 @@ void module_advect(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECT", "PHYSICS");
-
+  
   /* Use omega vertical velocity... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
 
@@ -3619,13 +3619,14 @@ void module_advect(
 	vm += k * v[i];
 	wm += k * w[i];
       }
-
+     
       /* Set new position... */
       atm->time[ip] += cache->dt[ip];
       atm->lon[ip] += DX2COORD(met0, cache->dt[ip] * um,
 			       (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2COORD(met0, cache->dt[ip] * vm);
       atm->p[ip] += cache->dt[ip] * wm;
+      
     }
   }
 
@@ -7365,9 +7366,7 @@ void mptrac_read_ctl(
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
   ctl->dd_sort_dt =
-    (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "-1", NULL);
-  if (ctl->dd_sort_dt == -1)
-    ctl->dd_sort_dt = ctl->dt_mod * 10.0;
+    (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "1800", NULL);
 }
 
 /*****************************************************************************/
@@ -10092,7 +10091,7 @@ int read_met_nc_2d(
     free(help);
     free(help_halo);
   }
-
+ 
   /* Return... */
   return 1;
 }
@@ -10294,7 +10293,41 @@ int read_met_nc_3d(
       help_halo_bnd_count[2] = dd->halo_bnd_count[2];
       help_halo_bnd_count[3] = dd->halo_bnd_count[1];
     }
+    
+    
+int ndims;
+nc_inq_varndims(ncid, varid, &ndims);
 
+if (ndims == 3) {
+  if (ctl->met_convention == 0) {
+    help_subdomain_start[0] = dd->subdomain_start[1];
+    help_subdomain_start[1] = dd->subdomain_start[2];
+    help_subdomain_start[2] = dd->subdomain_start[3];
+    help_subdomain_count[0] = dd->subdomain_count[1];
+    help_subdomain_count[1] = dd->subdomain_count[2];
+    help_subdomain_count[2] = dd->subdomain_count[3];
+    help_halo_bnd_start[0] = dd->halo_bnd_start[1];
+    help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+    help_halo_bnd_start[2] = dd->halo_bnd_start[3];
+    help_halo_bnd_count[0] = dd->halo_bnd_count[1];
+    help_halo_bnd_count[1] = dd->halo_bnd_count[2];
+    help_halo_bnd_count[2] = dd->halo_bnd_count[3];
+  } else {
+    help_subdomain_start[0] = dd->subdomain_start[3];
+    help_subdomain_start[1] = dd->subdomain_start[2];
+    help_subdomain_start[2] = dd->subdomain_start[1];
+    help_subdomain_count[0] = dd->subdomain_count[3];
+    help_subdomain_count[1] = dd->subdomain_count[2];
+    help_subdomain_count[2] = dd->subdomain_count[1];
+    help_halo_bnd_start[0] = dd->halo_bnd_start[3];
+    help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+    help_halo_bnd_start[2] = dd->halo_bnd_start[1];
+    help_halo_bnd_count[0] = dd->halo_bnd_count[3];
+    help_halo_bnd_count[1] = dd->halo_bnd_count[2];
+    help_halo_bnd_count[2] = dd->halo_bnd_count[1];
+  }
+}
+    
     /* Allocate... */
     float *help;
     ALLOC(help, float,
@@ -10303,26 +10336,24 @@ int read_met_nc_3d(
 
     /* Use default NetCDF parallel I/O behavior */
 #ifdef DD
-    nc_var_par_access(ncid, varid, NC_COLLECTIVE);
+    NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
 #endif
     NC(nc_get_vara_float
        (ncid, varid, help_subdomain_start, help_subdomain_count, help));
-
+       
     /* Read halos separately at boundaries... */
     float *help_halo;
     ALLOC(help_halo, float,
 	  dd->halo_bnd_count[0] * dd->halo_bnd_count[1] *
 	  dd->halo_bnd_count[2] * dd->halo_bnd_count[3]);
 
-    /* Halo read also uses independent access */
 #ifdef DD
-    nc_var_par_access(ncid, varid, NC_COLLECTIVE);
+    NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
 #endif
-    NC(nc_get_vara_float(ncid,
-			 varid,
-			 help_halo_bnd_start, help_halo_bnd_count,
-			 help_halo));
-
+    if (dd->halo_bnd_count[1] > 0 && dd->halo_bnd_count[2] > 0 && dd->halo_bnd_count[3] > 0) {
+        NC(nc_get_vara_float(ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
+    }
+			 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
 
@@ -10337,8 +10368,10 @@ int read_met_nc_3d(
 			    (int) dd->subdomain_count[3])];
 	    if ((fillval == 0 || aux != fillval)
 		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
+		&& fabsf(aux) < 1e14f) {
 	      dest[ix + dd->halo_offset_start][iy][ip] = scl * aux;
+
+	    }
 	    else
 	      dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	  }
@@ -13876,86 +13909,86 @@ void write_met_nc(
   NC_DEF_VAR("lev", NC_DOUBLE, 1, &levid, "pressure", "Pa", 0, 0);
 
   /* Define surface variables... */
-  int dimid2[2] = { latid, lonid };
-  NC_DEF_VAR("sp", NC_FLOAT, 2, dimid2, "Surface pressure", "Pa",
+  int dimid2[3] = {tid, latid, lonid };
+  NC_DEF_VAR("sp", NC_FLOAT, 3, dimid2, "Surface pressure", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("z", NC_FLOAT, 2, dimid2, "Geopotential", "m**2 s**-2",
+  NC_DEF_VAR("z", NC_FLOAT, 3, dimid2, "Geopotential", "m**2 s**-2",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("t2m", NC_FLOAT, 2, dimid2, "2 metre temperature", "K",
+  NC_DEF_VAR("t2m", NC_FLOAT, 3, dimid2, "2 metre temperature", "K",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("u10m", NC_FLOAT, 2, dimid2, "10 metre U wind component",
+  NC_DEF_VAR("u10m", NC_FLOAT, 3, dimid2, "10 metre U wind component",
 	     "m s**-1", ctl->met_nc_level, 0);
-  NC_DEF_VAR("v10m", NC_FLOAT, 2, dimid2, "10 metre V wind component",
+  NC_DEF_VAR("v10m", NC_FLOAT, 3, dimid2, "10 metre V wind component",
 	     "m s**-1", ctl->met_nc_level, 0);
-  NC_DEF_VAR("iews", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("iews", NC_FLOAT, 3, dimid2,
 	     "Instantaneous eastward turbulent surface stress", "N m**-2",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("inss", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("inss", NC_FLOAT, 3, dimid2,
 	     "Instantaneous northward turbulent surface stress", "N m**-2",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("ishf", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("ishf", NC_FLOAT, 3, dimid2,
 	     "Instantaneous surface sensible heat flux", "W m**-2",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-",
+  NC_DEF_VAR("lsm", NC_FLOAT, 3, dimid2, "Land/sea mask", "-",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K",
+  NC_DEF_VAR("sstk", NC_FLOAT, 3, dimid2, "Sea surface temperature", "K",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("blp", NC_FLOAT, 2, dimid2, "Boundary layer pressure", "Pa",
+  NC_DEF_VAR("blp", NC_FLOAT, 3, dimid2, "Boundary layer pressure", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("pt", NC_FLOAT, 2, dimid2, "Tropopause pressure", "Pa",
+  NC_DEF_VAR("pt", NC_FLOAT, 3, dimid2, "Tropopause pressure", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("tt", NC_FLOAT, 2, dimid2, "Tropopause temperature", "K",
+  NC_DEF_VAR("tt", NC_FLOAT, 3, dimid2, "Tropopause temperature", "K",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("zt", NC_FLOAT, 2, dimid2, "Tropopause height", "m",
+  NC_DEF_VAR("zt", NC_FLOAT, 3, dimid2, "Tropopause height", "m",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("h2ot", NC_FLOAT, 2, dimid2, "Tropopause water vapor", "ppv",
+  NC_DEF_VAR("h2ot", NC_FLOAT, 3, dimid2, "Tropopause water vapor", "ppv",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("pct", NC_FLOAT, 2, dimid2, "Cloud top pressure", "Pa",
+  NC_DEF_VAR("pct", NC_FLOAT, 3, dimid2, "Cloud top pressure", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("pcb", NC_FLOAT, 2, dimid2, "Cloud bottom pressure", "Pa",
+  NC_DEF_VAR("pcb", NC_FLOAT, 3, dimid2, "Cloud bottom pressure", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("cl", NC_FLOAT, 2, dimid2, "Total column cloud water",
+  NC_DEF_VAR("cl", NC_FLOAT, 3, dimid2, "Total column cloud water",
 	     "kg m**2", ctl->met_nc_level, 0);
-  NC_DEF_VAR("plcl", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("plcl", NC_FLOAT, 3, dimid2,
 	     "Pressure at lifted condensation level (LCL)", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("plfc", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("plfc", NC_FLOAT, 3, dimid2,
 	     "Pressure at level of free convection (LFC)", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("pel", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("pel", NC_FLOAT, 3, dimid2,
 	     "Pressure at equilibrium level (EL)", "Pa", ctl->met_nc_level,
 	     0);
-  NC_DEF_VAR("cape", NC_FLOAT, 2, dimid2,
+  NC_DEF_VAR("cape", NC_FLOAT, 3, dimid2,
 	     "Convective available potential energy", "J kg**-1",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("cin", NC_FLOAT, 2, dimid2, "Convective inhibition",
+  NC_DEF_VAR("cin", NC_FLOAT, 3, dimid2, "Convective inhibition",
 	     "J kg**-1", ctl->met_nc_level, 0);
-  NC_DEF_VAR("o3c", NC_FLOAT, 2, dimid2, "Total column ozone", "DU",
+  NC_DEF_VAR("o3c", NC_FLOAT, 3, dimid2, "Total column ozone", "DU",
 	     ctl->met_nc_level, 0);
 
   /* Define level data... */
-  int dimid3[3] = { levid, latid, lonid };
-  NC_DEF_VAR("t", NC_FLOAT, 3, dimid3, "Temperature", "K",
+  int dimid3[4] = {tid, levid, latid, lonid };
+  NC_DEF_VAR("t", NC_FLOAT, 4, dimid3, "Temperature", "K",
 	     ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("u", NC_FLOAT, 3, dimid3, "U velocity", "m s**-1",
+  NC_DEF_VAR("u", NC_FLOAT, 4, dimid3, "U velocity", "m s**-1",
 	     ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("v", NC_FLOAT, 3, dimid3, "V velocity", "m s**-1",
+  NC_DEF_VAR("v", NC_FLOAT, 4, dimid3, "V velocity", "m s**-1",
 	     ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("w", NC_FLOAT, 3, dimid3, "Vertical velocity", "Pa s**-1",
+  NC_DEF_VAR("w", NC_FLOAT, 4, dimid3, "Vertical velocity", "Pa s**-1",
 	     ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("q", NC_FLOAT, 3, dimid3, "Specific humidity", "kg kg**-1",
+  NC_DEF_VAR("q", NC_FLOAT, 4, dimid3, "Specific humidity", "kg kg**-1",
 	     ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("o3", NC_FLOAT, 3, dimid3, "Ozone mass mixing ratio",
+  NC_DEF_VAR("o3", NC_FLOAT, 4, dimid3, "Ozone mass mixing ratio",
 	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("clwc", NC_FLOAT, 3, dimid3, "Cloud liquid water content",
+  NC_DEF_VAR("clwc", NC_FLOAT, 4, dimid3, "Cloud liquid water content",
 	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("crwc", NC_FLOAT, 3, dimid3, "Cloud rain water content",
+  NC_DEF_VAR("crwc", NC_FLOAT, 4, dimid3, "Cloud rain water content",
 	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("ciwc", NC_FLOAT, 3, dimid3, "Cloud ice water content",
+  NC_DEF_VAR("ciwc", NC_FLOAT, 4, dimid3, "Cloud ice water content",
 	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("cswc", NC_FLOAT, 3, dimid3, "Cloud snow water content",
+  NC_DEF_VAR("cswc", NC_FLOAT, 4, dimid3, "Cloud snow water content",
 	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
-  NC_DEF_VAR("cc", NC_FLOAT, 3, dimid3, "Cloud cover", "-",
+  NC_DEF_VAR("cc", NC_FLOAT, 4, dimid3, "Cloud cover", "-",
 	     ctl->met_nc_level, ctl->met_nc_quant);
 
   /* End definitions... */

@@ -27,7 +27,7 @@ rm -rf data && mkdir -p data "$meteo_data_dir"
 
 # Parse arguments - check all arguments for keywords
 compile=""
-hpc_mode=""
+hpc_mode="hpc"
 skip_wind=""
 skip_run=""
 skip_compare=""
@@ -57,8 +57,11 @@ done
 # Check if running on HPC system
 if [[ "$hpc_mode" == "hpc" ]]; then
     echo "[INFO] Running in HPC mode"
-    ml purge
-    ml NVHPC ParaStationMPI bzip2/.1.0.8
+    module purge
+    module load Stages/2026
+    module load GCC/14.3.0 ParaStationMPI/5.13.0-1
+    module load GSL
+    module load netCDF/4.9.3
 else
     echo "[INFO] Running in non-HPC mode"
 fi
@@ -210,10 +213,11 @@ MET_PRESS_LEVEL_DEF = ${met_press_level_def}
 MET_CLAMS = ${met_clams}
 MET_VERT_COORD = ${met_vert_coord}
 MET_DT_OUT = ${met_dt_out}
+MET_CONVENTION = 0
 ATM_TYPE = ${atm_type}
 ATM_TYPE_OUT = 4
 ADVECT = 2
-ADVECT_VERT_COORD = 1
+ADVECT_VERT_COORD = 0
 TURB_DX_TROP = 0
 TURB_DX_STRAT = 0
 TURB_DZ_TROP = 0
@@ -308,6 +312,7 @@ MET_PRESS_LEVEL_DEF = ${met_press_level_def}
 MET_CLAMS = ${met_clams}
 MET_VERT_COORD = ${met_vert_coord}
 MET_DT_OUT = ${met_dt_out}
+MET_CONVENTION = 0
 ATM_TYPE = ${atm_type}
 ATM_TYPE_OUT = 0
 ADVECT = 2
@@ -407,7 +412,7 @@ else
                 "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
         else
             echo "[INFO] Running with CPU-only on HPC (cpus-per-task=$cpus_per_task)"
-            srun --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
+            srun --nodes $nnodes --ntasks $ntasks --account=clams-esm --time=00:59:00 \
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
                 --output="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
                 --error="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
