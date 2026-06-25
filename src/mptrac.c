@@ -9392,8 +9392,8 @@ void read_met_nc_grid(
     if (met->coord_type != 0)
       ERRMSG("Domain decomposition is only supported for lat/lon grids!");
 
-    /* Use 'naive', i.e. equidistant lat-lon domain decomposition... */
-    read_met_nc_grid_dd_naive(dd, ctl, met, ncid);
+    /* Use equidistant lat-lon domain decomposition... */
+    dd_read_met_nc_grid(dd, ctl, met, ncid);
 
   }
 
@@ -11028,7 +11028,7 @@ int read_met_nc(
 
 /*****************************************************************************/
 
-void read_met_nc_grid_dd_naive(
+void dd_read_met_nc_grid(
   dd_t *dd,
   const ctl_t *ctl,
   met_t *met,

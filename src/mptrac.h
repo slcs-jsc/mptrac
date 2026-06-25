@@ -4775,12 +4775,64 @@ void dd_particles2atm(
   const particle_t * particles,
   const int npart,
   atm_t * atm);
+  
 
 void dd_push(
   const ctl_t * ctl,
   atm_t * atm,
   cache_t * cache,
   int *npart);
+  
+
+/**
+ * @brief Read meteorological grid information and construct the
+ *        domain-decomposed grid with halo regions.
+ *
+ * This routine reads the global longitude and latitude grid from a
+ * NetCDF meteorological input file and initializes the domain
+ * decomposition used for parallel processing. The global grid is
+ * partitioned into zonal and meridional subdomains according to
+ * `ctl->dd_subdomains_zonal` and `ctl->dd_subdomains_meridional`.
+ *
+ * For the current MPI rank, the routine determines the core subdomain
+ * in index space and constructs a hyperslab describing the portion of
+ * the meteorological grid that must be read from the NetCDF file.
+ * The hyperslab is extended with inner halo cells to overlap with
+ * neighboring subdomains. For ranks located at the zonal boundaries,
+ * additional periodic boundary halos are created.
+ *
+ * The function populates the local longitude and latitude arrays in
+ * the `met_t` structure for the subdomain including halos, and stores
+ * the hyperslab definitions and halo offsets in the `dd_t` structure.
+ *
+ * @param[out] dd   Domain decomposition structure. On return it contains
+ *                  global grid dimensions, hyperslab definitions for the
+ *                  local subdomain, and halo metadata.
+ * @param[in]  ctl  Control structure specifying the number of zonal and
+ *                  meridional subdomains and the halo size
+ *                  (`dd_subdomains_zonal`, `dd_subdomains_meridional`,
+ *                  `dd_halos_size`).
+ * @param[out] met  Meteorological grid structure. On return it contains
+ *                  the local longitude and latitude arrays and the grid
+ *                  dimensions (`nx`, `ny`, `np`) of the halo-extended
+ *                  subdomain.
+ * @param[in]  ncid NetCDF file identifier returned by `nc_open()`.
+ *
+ * @note
+ * - Requires MPI when compiled with `-DMPI`.
+ * - The domain decomposition is performed in index space; the global
+ *   grid may therefore have irregular spacing (e.g. Gaussian latitudes).
+ * - Zonal periodicity is handled by constructing additional boundary
+ *   halo hyperslabs with appropriate longitude shifts.
+ *
+ * @author Jan Clemens
+ * @author Lars Hoffmann
+ */
+void dd_read_met_nc_grid(
+  dd_t * dd,
+  const ctl_t * ctl,
+  met_t * met,
+  const int ncid);
 
 /**
  * @brief Sort local atmospheric particles and determine export counts
@@ -8115,56 +8167,6 @@ void read_met_nc_grid(
   const ctl_t * ctl,
   met_t * met,
   dd_t * dd);
-
-/**
- * @brief Read meteorological grid information and construct the
- *        domain-decomposed grid with halo regions.
- *
- * This routine reads the global longitude and latitude grid from a
- * NetCDF meteorological input file and initializes the domain
- * decomposition used for parallel processing. The global grid is
- * partitioned into zonal and meridional subdomains according to
- * `ctl->dd_subdomains_zonal` and `ctl->dd_subdomains_meridional`.
- *
- * For the current MPI rank, the routine determines the core subdomain
- * in index space and constructs a hyperslab describing the portion of
- * the meteorological grid that must be read from the NetCDF file.
- * The hyperslab is extended with inner halo cells to overlap with
- * neighboring subdomains. For ranks located at the zonal boundaries,
- * additional periodic boundary halos are created.
- *
- * The function populates the local longitude and latitude arrays in
- * the `met_t` structure for the subdomain including halos, and stores
- * the hyperslab definitions and halo offsets in the `dd_t` structure.
- *
- * @param[out] dd   Domain decomposition structure. On return it contains
- *                  global grid dimensions, hyperslab definitions for the
- *                  local subdomain, and halo metadata.
- * @param[in]  ctl  Control structure specifying the number of zonal and
- *                  meridional subdomains and the halo size
- *                  (`dd_subdomains_zonal`, `dd_subdomains_meridional`,
- *                  `dd_halos_size`).
- * @param[out] met  Meteorological grid structure. On return it contains
- *                  the local longitude and latitude arrays and the grid
- *                  dimensions (`nx`, `ny`, `np`) of the halo-extended
- *                  subdomain.
- * @param[in]  ncid NetCDF file identifier returned by `nc_open()`.
- *
- * @note
- * - Requires MPI when compiled with `-DMPI`.
- * - The domain decomposition is performed in index space; the global
- *   grid may therefore have irregular spacing (e.g. Gaussian latitudes).
- * - Zonal periodicity is handled by constructing additional boundary
- *   halo hyperslabs with appropriate longitude shifts.
- *
- * @author Jan Clemens
- * @author Lars Hoffmann
- */
-void read_met_nc_grid_dd_naive(
-  dd_t * dd,
-  const ctl_t * ctl,
-  met_t * met,
-  const int ncid);
 
 /**
  * @brief Reads and processes meteorological level data from NetCDF files with domain decomposition.
