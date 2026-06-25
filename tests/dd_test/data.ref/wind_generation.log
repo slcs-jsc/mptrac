@@ -1,11 +1,12 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -316,7 +317,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -324,7 +325,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)
@@ -364,12 +365,13 @@ WIND_O3 = 0
   Write 3-D variable: cc (netCDF)
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -680,7 +682,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -688,7 +690,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)
@@ -728,12 +730,13 @@ WIND_O3 = 0
   Write 3-D variable: cc (netCDF)
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -1044,7 +1047,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -1052,7 +1055,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)
@@ -1092,12 +1095,13 @@ WIND_O3 = 0
   Write 3-D variable: cc (netCDF)
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -1408,7 +1412,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -1416,7 +1420,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)
@@ -1456,12 +1460,13 @@ WIND_O3 = 0
   Write 3-D variable: cc (netCDF)
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -1772,7 +1777,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -1780,7 +1785,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)
@@ -1820,12 +1825,13 @@ WIND_O3 = 0
   Write 3-D variable: cc (netCDF)
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -2136,7 +2142,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -2144,7 +2150,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)
@@ -2184,12 +2190,13 @@ WIND_O3 = 0
   Write 3-D variable: cc (netCDF)
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/wind | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 0
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 1e100
 DT_MOD = 180
@@ -2500,7 +2507,7 @@ WIND_ALPHA = 90
 WIND_LAT_REVERSE = 1
 WIND_TEMP0 = 280
 WIND_TEMP1 = 280
-WIND_PS = 100000
+WIND_PS = 1013.25
 WIND_ZS = 0
 WIND_T2M = 280
 WIND_IEWS = 0
@@ -2508,7 +2515,7 @@ WIND_INSS = 0
 WIND_ISHF = 0
 WIND_LSM = 1
 WIND_SST = 280
-WIND_BLH = 1000
+WIND_BLH = 1.0
 WIND_Q = 0
 WIND_O3 = 0
   Write 2-D variable: sp (netCDF)

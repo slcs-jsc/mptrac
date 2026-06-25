@@ -1917,7 +1917,7 @@ void dd_assign_subdomains(
   for (int ip = 0; ip < atm->np; ip++) {
 
     /* Skip already invalid particles... */
-    if (!init && (int) atm->q[ctl->qnt_subdomain][ip] == -1)
+    if (!init && (int) atm->q[ctl->qnt_current_subdomain][ip] == -1)
       continue;
 
     /* Normalize coordinates... */
@@ -1932,13 +1932,13 @@ void dd_assign_subdomains(
 
     /* Init... */
     if (init) {
-      atm->q[ctl->qnt_subdomain][ip] = inside ? rank : -1;
-      atm->q[ctl->qnt_destination][ip] = inside ? rank : -1;
+      atm->q[ctl->qnt_current_subdomain][ip] = inside ? rank : -1;
+      atm->q[ctl->qnt_target_subdomain][ip] = inside ? rank : -1;
     }
 
     /* Reassign... */
     else {
-      atm->q[ctl->qnt_destination][ip] =
+      atm->q[ctl->qnt_target_subdomain][ip] =
 	inside ? rank : dd_calc_subdomain_from_coords(ctl, dd, lon, lat);
     }
   }
@@ -1972,9 +1972,9 @@ void dd_atm2particles(
 #pragma acc parallel loop present(atm, ctl, particles, cache, npart)
 #endif
   for (int ip = atm->np; ip < atm->np + npart; ip++)
-    if (((int) (atm->q[ctl->qnt_destination][ip]) != rank)
-	&& ((int) (atm->q[ctl->qnt_destination][ip]) >= 0)
-	&& ((int) atm->q[ctl->qnt_subdomain][ip] >= 0)) {
+    if (((int) (atm->q[ctl->qnt_target_subdomain][ip]) != rank)
+	&& ((int) (atm->q[ctl->qnt_target_subdomain][ip]) >= 0)
+	&& ((int) atm->q[ctl->qnt_current_subdomain][ip] >= 0)) {
 
       particles[ip - atm->np].time = atm->time[ip];
       particles[ip - atm->np].lon = atm->lon[ip];
@@ -1983,7 +1983,7 @@ void dd_atm2particles(
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
 
-      atm->q[ctl->qnt_subdomain][ip] = -1;
+      atm->q[ctl->qnt_current_subdomain][ip] = -1;
       cache->dt[ip] = 0;
     }
 #ifdef _OPENACC
@@ -2064,7 +2064,7 @@ void dd_communicate_particles(
   /* Count particles per destination rank... */
 #pragma omp parallel for
   for (int ip = 0; ip < *npart; ip++) {
-    const int dest = (int) (*particles)[ip].q[ctl->qnt_destination];
+    const int dest = (int) (*particles)[ip].q[ctl->qnt_target_subdomain];
     if (dest == rank)
       continue;
     if (dest < 0 || dest >= size)
@@ -2099,7 +2099,7 @@ void dd_communicate_particles(
 
   /* Pack particles into send buffer... */
   for (int ip = 0; ip < *npart; ip++) {
-    const int dest = (int) (*particles)[ip].q[ctl->qnt_destination];
+    const int dest = (int) (*particles)[ip].q[ctl->qnt_target_subdomain];
     if (dest == rank)
       continue;
     memcpy(&sendbuf[offsets[dest]], &(*particles)[ip], sizeof(particle_t));
@@ -2129,8 +2129,8 @@ void dd_communicate_particles(
 #pragma omp parallel for
   for (int ip = 0; ip < nrecv; ip++) {
     (*particles)[ip] = recvbuf[ip];
-    (*particles)[ip].q[ctl->qnt_destination] = rank;
-    (*particles)[ip].q[ctl->qnt_subdomain] = rank;
+    (*particles)[ip].q[ctl->qnt_target_subdomain] = rank;
+    (*particles)[ip].q[ctl->qnt_current_subdomain] = rank;
   }
   *npart = nrecv;
 
@@ -2291,8 +2291,8 @@ void dd_push(
 #pragma omp parallel for
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
-    if ((int) atm->q[ctl->qnt_subdomain][ip] != -1 &&
-	(int) atm->q[ctl->qnt_destination][ip] != rank) {
+    if ((int) atm->q[ctl->qnt_current_subdomain][ip] != -1 &&
+        (int) atm->q[ctl->qnt_target_subdomain][ip] != rank) {
       int local_idx;
 #ifdef _OPENACC
 #pragma acc atomic capture
@@ -2314,8 +2314,8 @@ void dd_push(
 	atm->q[iq][global_index] = atm->q[iq][ip];
       }
       /* Mark the original parcel as processed... */
-      atm->q[ctl->qnt_destination][ip] = -1;
-      atm->q[ctl->qnt_subdomain][ip] = -1;
+      atm->q[ctl->qnt_target_subdomain][ip] = -1;
+      atm->q[ctl->qnt_current_subdomain][ip] = -1;
       /* Reset cache->dt for the shifted particle... */
       cache->dt[global_index] = cache->dt[ip];
       cache->dt[ip] = 0;
@@ -2363,8 +2363,8 @@ void dd_sort(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
-    if ((int) atm->q[ctl->qnt_subdomain][ip] != -1) {
-      if ((int) atm->q[ctl->qnt_destination][ip] == rank)
+    if ((int) atm->q[ctl->qnt_current_subdomain][ip] != -1) {
+      if ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank)
 	dd->sort_key[ip] =
 	  (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) *
 		     met0->ny + locate_irr(met0->lat, met0->ny, atm->lat[ip]))
@@ -2413,8 +2413,8 @@ void dd_sort(
 #pragma acc parallel loop reduction(+:nkeep) present(atm, ctl)
 #endif
   for (int ip = 0; ip < np; ip++)
-    if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
-	&& ((int) atm->q[ctl->qnt_destination][ip] == rank))
+    if (((int) atm->q[ctl->qnt_current_subdomain][ip] != -1)
+	&& ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank))
       nkeep++;
 
   /* Count number of particles to send... */
@@ -2423,8 +2423,8 @@ void dd_sort(
 #pragma acc parallel loop reduction(+:nsend) present(atm, ctl)
 #endif
   for (int ip = nkeep; ip < np; ip++)
-    if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
-	&& ((int) atm->q[ctl->qnt_destination][ip] != rank))
+    if (((int) atm->q[ctl->qnt_current_subdomain][ip] != -1)
+	&& ((int) atm->q[ctl->qnt_target_subdomain][ip] != rank))
       nsend++;
 
   /* Reset sizes... */
@@ -2433,7 +2433,7 @@ void dd_sort(
   /* Count particles with -1 subdomain (these will be effectively lost) */
   int nlost = 0;
   for (int ip = 0; ip < np; ip++)
-    if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
+    if ((int) atm->q[ctl->qnt_current_subdomain][ip] == -1)
       nlost++;
 
   if (nlost > 0)
@@ -5800,7 +5800,7 @@ void module_timesteps(
 		    || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
 	cache->dt[ip] = 0.0;
     } else {
-      if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
+      if ((int) atm->q[ctl->qnt_current_subdomain][ip] == -1)
 	cache->dt[ip] = 0;
     }
   }
@@ -6531,8 +6531,8 @@ void mptrac_read_ctl(
   ctl->qnt_Acs137 = -1;
   ctl->qnt_Ai131 = -1;
   ctl->qnt_Axe133 = -1;
-  ctl->qnt_subdomain = -1;
-  ctl->qnt_destination = -1;
+  ctl->qnt_current_subdomain = -1;
+  ctl->qnt_target_subdomain = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -6659,9 +6659,10 @@ void mptrac_read_ctl(
       SET_QNT(qnt_Acs137, "Acs137", "Cs-137 activity", "Bq")
       SET_QNT(qnt_Ai131, "Ai131", "I-131 activity", "Bq")
       SET_QNT(qnt_Axe133, "Axe133", "Xe-133 activity", "Bq")
-      SET_QNT(qnt_subdomain, "subdomain", "current subdomain index", "-")
-      SET_QNT(qnt_destination, "destination",
-	      "subdomain index of destination", "-")
+      SET_QNT(qnt_current_subdomain, "current_subdomain", 
+              "current subdomain rank", "-")
+      SET_QNT(qnt_target_subdomain, "target_subdomain",
+	      "target subdomain rank", "-")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 

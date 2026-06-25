@@ -2579,10 +2579,10 @@ typedef struct {
   int qnt_Axe133;
 
   /*! Quantity array index for current subdomain in domain decomposition. */
-  int qnt_subdomain;
+  int qnt_current_subdomain;
 
   /*! Quantity array index for destination subdomain in domain decomposition. */
-  int qnt_destination;
+  int qnt_target_subdomain;
 
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
@@ -4448,20 +4448,20 @@ void day2doy(
  *
  * If @p init is nonzero, the routine performs the initial ownership
  * assignment. Particles inside the local subdomain are assigned to the
- * current MPI rank by setting both `ctl->qnt_subdomain` and
- * `ctl->qnt_destination` to that rank. Particles outside the local
+ * current MPI rank by setting both `ctl->qnt_current_subdomain` and
+ * `ctl->qnt_target_subdomain` to that rank. Particles outside the local
  * subdomain are marked invalid by setting both quantities to `-1`.
  *
  * If @p init is zero, the routine updates only the destination rank.
- * Particles already marked invalid (`qnt_subdomain == -1`) are skipped.
+ * Particles already marked invalid (`qnt_current_subdomain == -1`) are skipped.
  * For particles that remain inside the local subdomain,
- * `ctl->qnt_destination` is set to the current MPI rank. For particles
+ * `ctl->qnt_target_subdomain` is set to the current MPI rank. For particles
  * that have left the local subdomain, the destination rank is recomputed
  * with ::dd_calc_subdomain_from_coords().
  *
  * @param[in]     ctl   Control structure containing the indices of the
- *                      domain-decomposition quantities `qnt_subdomain`
- *                      and `qnt_destination`.
+ *                      domain-decomposition quantities `qnt_current_subdomain`
+ *                      and `qnt_target_subdomain`.
  * @param[in]     dd    Domain decomposition structure containing the
  *                      global grid and subdomain layout information.
  * @param[in,out] atm   Atmospheric state. Particle positions are read
@@ -4497,21 +4497,21 @@ void dd_assign_subdomains(
  * The routine processes atmospheric entries in the index range
  * `[atm->np, atm->np + npart)`. A particle is selected for export
  * if all of the following conditions are met:
- * - `atm->q[ctl->qnt_destination][ip] != rank`,
- * - `atm->q[ctl->qnt_destination][ip] >= 0`,
- * - `atm->q[ctl->qnt_subdomain][ip] >= 0`.
+ * - `atm->q[ctl->qnt_target_subdomain][ip] != rank`,
+ * - `atm->q[ctl->qnt_target_subdomain][ip] >= 0`,
+ * - `atm->q[ctl->qnt_current_subdomain][ip] >= 0`.
  *
  * For each selected entry, the particle coordinates (`time`, `lon`,
  * `lat`, `p`) and all quantities `q[iq]` are copied into
  * `particles[ip - atm->np]`.
  *
  * After copying, the atmospheric entry is marked as inactive for local
- * ownership by setting `atm->q[ctl->qnt_subdomain][ip] = -1`, and the
+ * ownership by setting `atm->q[ctl->qnt_current_subdomain][ip] = -1`, and the
  * cached time step `cache->dt[ip]` is reset to zero.
  *
  * @param[in]     ctl         Pointer to the control structure
  *                            containing the quantity indices
- *                            `qnt_destination`, `qnt_subdomain`, and
+ *                            `qnt_target_subdomain`, `qnt_current_subdomain`, and
  *                            the number of quantities `nq`.
  * @param[in,out] cache       Pointer to the cache structure. The cached
  *                            time-step values `dt[ip]` of exported
@@ -4584,7 +4584,7 @@ int dd_calc_subdomain_from_coords(
  *
  * This routine migrates particles to their assigned destination MPI
  * ranks using collective communication. The destination rank of each
- * particle is read from `(*particles)[ip].q[ctl->qnt_destination]`.
+ * particle is read from `(*particles)[ip].q[ctl->qnt_target_subdomain]`.
  *
  * First, the routine counts how many local particles must be sent to
  * each MPI rank, excluding particles whose destination equals the
@@ -4596,7 +4596,7 @@ int dd_calc_subdomain_from_coords(
  *
  * After communication, the received particles replace the leading
  * entries of the particle buffer. For each received particle, both
- * `ctl->qnt_destination` and `ctl->qnt_subdomain` are reset to the
+ * `ctl->qnt_target_subdomain` and `ctl->qnt_current_subdomain` are reset to the
  * current MPI rank.
  *
  * If the receive buffer exceeds the currently allocated particle
@@ -4604,8 +4604,8 @@ int dd_calc_subdomain_from_coords(
  * `realloc()`.
  *
  * @param[in]     ctl        Pointer to the control structure containing
- *                           the quantity indices `qnt_destination` and
- *                           `qnt_subdomain`.
+ *                           the quantity indices `qnt_target_subdomain` and
+ *                           `qnt_current_subdomain`.
  * @param[in]     dd         Pointer to the domain decomposition
  *                           structure containing the MPI datatype
  *                           `MPI_Particle` used for particle
@@ -4867,7 +4867,7 @@ void dd_read_met_nc_grid(
  * particle set. A warning is issued if such particles are encountered.
  *
  * @param[in]     ctl    Control structure containing the quantity
- *                       indices `qnt_subdomain`, `qnt_destination`,
+ *                       indices `qnt_current_subdomain`, `qnt_target_subdomain`,
  *                       and the number of quantities `nq`.
  * @param[in]     met0   Meteorological grid used to compute sorting
  *                       keys from particle longitude, latitude, and

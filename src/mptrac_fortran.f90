@@ -304,8 +304,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_Acs137
      INTEGER(c_int) :: qnt_Ai131
      INTEGER(c_int) :: qnt_Axe133
-     INTEGER(c_int) :: qnt_subdomain
-     INTEGER(c_int) :: qnt_destination
+     INTEGER(c_int) :: qnt_current_subdomain
+     INTEGER(c_int) :: qnt_target_subdomain
      INTEGER(c_int) :: direction
      REAL(c_double) :: t_start
      REAL(c_double) :: t_stop

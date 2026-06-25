@@ -1,6 +1,6 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -12,15 +12,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -351,8 +352,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -456,11 +459,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 0 ... 15 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -472,15 +475,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -811,8 +815,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -916,11 +922,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 16 ... 31 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -932,15 +938,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -1271,8 +1278,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -1376,11 +1385,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 32 ... 47 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -1392,15 +1401,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -1731,8 +1741,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -1836,11 +1848,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 48 ... 63 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -1852,15 +1864,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -2191,8 +2204,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -2296,11 +2311,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 64 ... 79 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -2312,15 +2327,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -2651,8 +2667,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -2756,11 +2774,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 80 ... 95 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -2772,15 +2790,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -3111,8 +3130,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -3216,11 +3237,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 96 ... 111 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -3232,15 +3253,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -3571,8 +3593,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -3676,11 +3700,11 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 112 ... 127 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-142-g6f820d-dirty | compiled: Jun 25 2026, 20:19:14)
+(executable: /p/project1/clams-esm/clemens1/mptrac_new/src/atm_init | version: v3.1-156-g23d65f-dirty | compiled: Jun 25 2026, 21:23:36)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -3692,15 +3716,16 @@ QNT_FORMAT[1] = %g
 QNT_NAME[2] = m
 QNT_LONGNAME[2] = m
 QNT_FORMAT[2] = %g
-QNT_NAME[3] = subdomain
-QNT_LONGNAME[3] = subdomain
+QNT_NAME[3] = current_subdomain
+QNT_LONGNAME[3] = current_subdomain
 QNT_FORMAT[3] = %g
-QNT_NAME[4] = destination
-QNT_LONGNAME[4] = destination
+QNT_NAME[4] = target_subdomain
+QNT_LONGNAME[4] = target_subdomain
 QNT_FORMAT[4] = %g
 MET_COORD_TYPE = 0
 ADVECT_VERT_COORD = 0
 MET_VERT_COORD = 0
+MET_GP2Z = 0
 DIRECTION = 1
 T_STOP = 707464800.00
 DT_MOD = 600
@@ -4031,8 +4056,10 @@ INIT_UZ = 0
 INIT_ULON = 0
 INIT_ULAT = 0
 INIT_EVENLY = 0
-INIT_RHO = 0
+INIT_COL_MASS = 0
+INIT_WELL_MIXED = 0
 INIT_REP = 1
+INIT_NP = 0
 INIT_MASS = 0
 INIT_VMR = 0
 INIT_BELLRAD = 0
@@ -4136,5 +4163,5 @@ Write atmospheric data: /p/project1/clams-esm/clemens1/mptrac_new/tests/dd_test/
   Quantity idx range: 128 ... 143 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg
-  Quantity subdomain range: 0 ... 0 -
-  Quantity destination range: 0 ... 0 -
+  Quantity current_subdomain range: 0 ... 0 -
+  Quantity target_subdomain range: 0 ... 0 -

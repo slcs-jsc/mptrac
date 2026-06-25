@@ -5,8 +5,8 @@
 # $5 = idx [-]
 # $6 = zeta [K]
 # $7 = m [kg]
-# $8 = subdomain [-]
-# $9 = destination [-]
+# $8 = current_subdomain [-]
+# $9 = target_subdomain [-]
 
 707457600.00 10 12.2901 -24.0303 16 0 0 1 1
 707457600.00 10 14.0826 -9.12831 17 0 0 1 1
