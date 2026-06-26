@@ -4777,6 +4777,50 @@ void dd_particles2atm(
   atm_t * atm);
   
 
+/**
+ * @brief Compact and stage non-local particles for domain decomposition transfer.
+ *
+ * This routine scans all local atmospheric particles and moves those
+ * that need to be transferred to other MPI ranks to a contiguous region
+ * at the end of the particle arrays (starting at index @c atm->np).
+ *
+ * A particle is selected for transfer if:
+ * - @c atm->q[ctl->qnt_current_subdomain][ip] != -1 (particle is active), AND
+ * - @c atm->q[ctl->qnt_target_subdomain][ip] != rank (destination is not current rank)
+ *
+ * For each selected particle:
+ * - All particle data (time, p, lon, lat, all quantities q[iq]) are copied
+ *   to the end of the respective arrays
+ * - The original particle is marked as invalid by setting both
+ *   @c q[ctl->qnt_target_subdomain][ip] = -1 and
+ *   @c q[ctl->qnt_current_subdomain][ip] = -1
+ * - The cached time step @c cache->dt[ip] is copied to the new location and
+ *   reset to zero at the original position
+ *
+ * @param[in]     ctl    Pointer to the control structure containing the
+ *                       quantity indices @c qnt_target_subdomain and
+ *                       @c qnt_current_subdomain.
+ * @param[in,out] atm    Pointer to the atmospheric state. Selected particles
+ *                       are copied to indices [atm->np, atm->np+npart) and
+ *                       original entries are invalidated.
+ * @param[in,out] cache  Pointer to the cache structure. Time-step values
+ *                       for moved particles are preserved; original positions
+ *                       are reset to zero.
+ * @param[out]    npart  Number of particles staged for transfer (i.e., the
+ *                       number of valid particles in the range
+ *                       [atm->np, atm->np + npart)).
+ *
+ * @note
+ * - The current MPI rank is obtained internally from @c MPI_COMM_WORLD.
+ * - This routine performs a compaction operation: valid local particles
+ *   remain in [0, atm->np), non-local particles are moved to
+ *   [atm->np, atm->np + npart).
+ * - When compiled with @c _OPENACC, the selection and copy operations
+ *   execute on the accelerator using atomic operations for the counter.
+ *
+ * @author Jan Clemens
+ * @author Lars Hoffmann
+ */
 void dd_push(
   const ctl_t * ctl,
   atm_t * atm,
