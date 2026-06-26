@@ -137,8 +137,13 @@ int main(
 
 #ifdef DD
       /* Set-up domain decomposition... */
-      if ((t == ctl->t_start) && (ctl->dd == 1))
+      if ((t == ctl->t_start))
 	dd_init(ctl, dd, atm);
+#else
+      /* Catch misconfiguration... */
+      if ((ctl->dd) 
+      || (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional > 1))
+        ERRMSG("Model configured for domain decomposition, but not compiled for it!");
 #endif
 
       /* Run a single time step... */

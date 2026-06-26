@@ -2154,6 +2154,13 @@ void dd_init(
   const ctl_t *ctl,
   dd_t *dd,
   atm_t *atm) {
+  
+  /* Check configuration... */
+  if ((ctl->dd) && 
+  (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional == 1))
+    ERRMSG("Please provide zonal and meridional subdomain numbers!");
+  if (!ctl->dd)
+    ERRMSG("Activate controle flag DD!");
 
   /* Check if enough tasks are requested... */
   int size;
@@ -7364,17 +7371,18 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
 
   /* Domain decomposition... */
+#ifdef DD
+  ctl->dd = (int) scan_ctl(filename, argc, argv, "DD", -1, "1", NULL);
+#else
   ctl->dd = (int) scan_ctl(filename, argc, argv, "DD", -1, "0", NULL);
+#endif
+
   ctl->dd_subdomains_meridional =
     (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_MERIDIONAL", -1,
 		   (ctl->dd == 1) ? "2" : "1", NULL);
   ctl->dd_subdomains_zonal =
     (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_ZONAL", -1,
 		   (ctl->dd == 1) ? "2" : "1", NULL);
-  if (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional > 1)
-    ctl->dd = 1;
-  else if (ctl->dd == 1)
-    ERRMSG("Please provide zonal and meridional subdomain numbers!");
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
   ctl->dd_sort_dt =
@@ -7609,16 +7617,12 @@ void mptrac_run_timestep(
     module_radio_decay(ctl, cache, atm);
 
   /* Domain decomposition... */
-  if (ctl->dd) {
 #ifdef DD
     module_dd(t, ctl, cache, dd, atm, met0);
 #else
+    (void) dd;
     ERRMSG("Code was compiled without DD!");
-
-    /* This will never execute, hack to avoid compilation error... */
-    LOG(3, "%d", dd->nx_glob);
 #endif
-  }
 
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
