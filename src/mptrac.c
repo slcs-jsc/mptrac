@@ -7621,7 +7621,6 @@ void mptrac_run_timestep(
     module_dd(t, ctl, cache, dd, atm, met0);
 #else
     (void) dd;
-    ERRMSG("Code was compiled without DD!");
 #endif
 
   /* KPP chemistry... */
