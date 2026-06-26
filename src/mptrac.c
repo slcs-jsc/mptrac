@@ -2317,7 +2317,7 @@ void dd_push(
       atm->lon[global_index] = atm->lon[ip];
       atm->lat[global_index] = atm->lat[ip];
       /* Copy all quantity data (q array)... */
-      for (int iq = 0; iq < NQ; iq++) {
+      for (int iq = 0; iq < ctl->nq; iq++) {
 	atm->q[iq][global_index] = atm->q[iq][ip];
       }
       /* Mark the original parcel as processed... */
