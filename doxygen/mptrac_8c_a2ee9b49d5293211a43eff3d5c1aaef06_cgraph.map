@@ -1,5 +1,4 @@
 <map id="compress_pck" name="compress_pck">
-<area shape="rect" id="node1" title="Compresses or decompresses a 3‑D float array using the PCK format." alt="" coords="5,31,112,57"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Compute error statistics between original and reconstructed data." alt="" coords="160,5,308,32"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculates the standard deviation of a set of data." alt="" coords="356,31,417,57"/>
+<area shape="rect" id="node1" title="Compresses or decompresses a 3‑D float array using the PCK format." alt="" coords="5,5,112,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ae9f0c3f03e2e5704e2cde5cfedd8708b" title="Write one row of per&#45;level compression diagnostics." alt="" coords="160,5,297,32"/>
 </map>

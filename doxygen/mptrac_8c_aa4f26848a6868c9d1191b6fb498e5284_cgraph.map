@@ -1,0 +1,4 @@
+<map id="compress_write_lossy_scale" name="compress_write_lossy_scale">
+<area shape="rect" id="node1" title="Write optional lossyscaling metadata for a 3&#45;D field." alt="" coords="5,5,156,47"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a79b6277066a57d9e6fa7d72928f9d9d4" title="Scales each vertical level of a 3&#45;D field independently to the interval [0,1]." alt="" coords="204,13,367,39"/>
+</map>
