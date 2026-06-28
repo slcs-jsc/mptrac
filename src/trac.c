@@ -141,9 +141,10 @@ int main(
 	dd_init(ctl, dd, atm);
 #else
       /* Catch misconfiguration... */
-      if ((ctl->dd) 
-      || (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional > 1))
-        ERRMSG("Model configured for domain decomposition, but not compiled for it!");
+      if ((ctl->dd)
+	  || (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional > 1))
+	ERRMSG
+	  ("Model configured for domain decomposition, but not compiled for it!");
 #endif
 
       /* Run a single time step... */

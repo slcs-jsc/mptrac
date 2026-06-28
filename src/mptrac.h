@@ -562,6 +562,30 @@
   ((dt) > 0 ? ((double)(nbytes)) / ((dt) * 1024. * 1024.) : NAN)
 
 /**
+ * @brief Calculate the compression ratio from raw and stored byte counts.
+ *
+ * @param raw_size    Uncompressed payload size in bytes.
+ * @param stored_size Compressed/stored payload size in bytes.
+ * @return Compression ratio.
+ *
+ * @author Lars Hoffmann
+ */
+#define COMPRESS_RATIO(raw_size, stored_size) \
+  ((double) (raw_size) / (double) (stored_size))
+
+/**
+ * @brief Calculate bits per value from stored size and element count.
+ *
+ * @param n           Number of stored values.
+ * @param stored_size Compressed/stored payload size in bytes.
+ * @return Bits per stored value.
+ *
+ * @author Lars Hoffmann
+ */
+#define COMPRESS_BPV(n, stored_size) \
+  ((8.0 * (double) (stored_size)) / (double) (n))
+
+/**
  * @brief Convert a longitude difference to a distance in the x-direction (east-west) at a specific latitude.
  *
  * This macro calculates the distance in the x-direction (east-west)
@@ -4126,6 +4150,45 @@ void compress_log_level(
   const float *cmp);
 
 /**
+ * @brief Write per-level compression diagnostics for a full 3-D field.
+ *
+ * This helper extracts each vertical level from the original and reconstructed
+ * 3-D fields and forwards the diagnostics to ::compress_log_level().
+ *
+ * @param[in,out] out       Output stream, or @c NULL to disable logging.
+ * @param[in]     codec     Compression codec name.
+ * @param[in]     varname   Variable name.
+ * @param[in]     met       Meteorological meta-data with pressure levels.
+ * @param[in]     org_all   Original 3-D field in horizontal-major order.
+ * @param[in]     cmp_all   Reconstructed 3-D field in horizontal-major order.
+ * @param[in]     nxy       Number of horizontal points per level.
+ * @param[in]     nz        Number of vertical levels.
+ * @param[in]     ratio     Compression ratio.
+ * @param[in]     bpv       Bits per value.
+ * @param[in]     rho       Correlation coefficient, or @c NAN to compute it.
+ * @param[in]     t_comp    Compression time in seconds.
+ * @param[in]     t_decomp  Decompression time in seconds.
+ * @param[in]     nbytes    Byte count used for throughput reporting.
+ *
+ * @author Lars Hoffmann
+ */
+void compress_log_levels_3d(
+  FILE * out,
+  const char *codec,
+  const char *varname,
+  const met_t * met,
+  const float *org_all,
+  const float *cmp_all,
+  const size_t nxy,
+  const size_t nz,
+  const double ratio,
+  const double bpv,
+  const double rho,
+  const double t_comp,
+  const double t_decomp,
+  const size_t nbytes);
+
+/**
  * @brief Compresses or decompresses a 3-D meteorological field using cmultiscale.
  *
  * This routine operates on a longitude/latitude regular grid of size @p nx × @p ny and @p np vertical levels.
@@ -4775,7 +4838,7 @@ void dd_particles2atm(
   const particle_t * particles,
   const int npart,
   atm_t * atm);
-  
+
 
 /**
  * @brief Compact and stage non-local particles for domain decomposition transfer.
@@ -4826,7 +4889,7 @@ void dd_push(
   atm_t * atm,
   cache_t * cache,
   int *npart);
-  
+
 
 /**
  * @brief Read meteorological grid information and construct the
