@@ -586,6 +586,72 @@
   ((8.0 * (double) (stored_size)) / (double) (n))
 
 /**
+ * @brief Log common read-side compression metrics for a 3-D variable.
+ *
+ * The @p codec_info string contains the codec name and any codec-specific
+ * attributes that should appear before the shared ratio/BPV/timing fields.
+ *
+ * @param varname     Variable name.
+ * @param codec_info  Codec label including optional attributes.
+ * @param ratio       Compression ratio.
+ * @param bpv         Bits per value.
+ * @param t_decomp    Decompression time in seconds.
+ * @param nbytes      Uncompressed payload size in bytes.
+ *
+ * @author Lars Hoffmann
+ */
+#define COMPRESS_LOG_READ(varname, codec_info, ratio, bpv, t_decomp, nbytes) \
+  LOG(2, "Read 3-D variable: %s" \
+      " (%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)", \
+      (varname), (codec_info), (ratio), (bpv), (t_decomp), \
+      COMPRESS_SPEED((nbytes), (t_decomp)))
+
+/**
+ * @brief Log common read/write compression metrics for a 3-D variable.
+ *
+ * The @p codec_info string contains the codec name and any codec-specific
+ * attributes that should appear before the shared ratio/BPV/timing fields.
+ *
+ * @param varname     Variable name.
+ * @param codec_info  Codec label including optional attributes.
+ * @param ratio       Compression ratio.
+ * @param bpv         Bits per value.
+ * @param t_comp      Compression time in seconds.
+ * @param t_decomp    Decompression time in seconds.
+ * @param nbytes      Uncompressed payload size in bytes.
+ *
+ * @author Lars Hoffmann
+ */
+#define COMPRESS_LOG_WRITE(varname, codec_info, ratio, bpv, t_comp, t_decomp, nbytes) \
+  LOG(2, "Write 3-D variable: %s" \
+      " (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s," \
+      " T_DECOMP=%g s, V_DECOMP=%g MiB/s)", \
+      (varname), (codec_info), (ratio), (bpv), (t_comp), \
+      COMPRESS_SPEED((nbytes), (t_comp)), (t_decomp), \
+      COMPRESS_SPEED((nbytes), (t_decomp)))
+
+/**
+ * @brief Log write-side compression metrics when no decompression timing is available.
+ *
+ * The @p codec_info string contains the codec name and any codec-specific
+ * attributes that should appear before the shared ratio/BPV/timing fields.
+ *
+ * @param varname     Variable name.
+ * @param codec_info  Codec label including optional attributes.
+ * @param ratio       Compression ratio.
+ * @param bpv         Bits per value.
+ * @param t_comp      Compression time in seconds.
+ * @param nbytes      Uncompressed payload size in bytes.
+ *
+ * @author Lars Hoffmann
+ */
+#define COMPRESS_LOG_WRITE_COMP(varname, codec_info, ratio, bpv, t_comp, nbytes) \
+  LOG(2, "Write 3-D variable: %s" \
+      " (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s)", \
+      (varname), (codec_info), (ratio), (bpv), (t_comp), \
+      COMPRESS_SPEED((nbytes), (t_comp)))
+
+/**
  * @brief Convert a longitude difference to a distance in the x-direction (east-west) at a specific latitude.
  *
  * This macro calculates the distance in the x-direction (east-west)
@@ -4067,54 +4133,11 @@ double clim_zm(
   const double p);
 
 /**
- * @brief Compute error statistics between original and reconstructed data.
- *
- * The error is defined element-wise as @p cmp - @p org. The routine
- * returns the mean error, standard deviation, minimum, maximum, and the
- * normalized root-mean-square error (NRMSE), together with the mean value
- * and value range of the original field.
- *
- * @param[in]  org     Original values.
- * @param[in]  cmp     Reconstructed/compressed values.
- * @param[in]  n       Number of elements.
- * @param[out] mean    Mean error.
- * @param[out] stddev  Standard deviation of the error.
- * @param[out] min     Minimum error.
- * @param[out] max     Maximum error.
- * @param[out] nrmse   Normalized root-mean-square error.
- * @param[out] org_mean Mean value of the original field.
- * @param[out] range   Value range of the original field.
- *
- * @author Lars Hoffmann
- */
-void compress_error_stats(
-  const float *org,
-  const float *cmp,
-  const size_t n,
-  double *mean,
-  double *stddev,
-  double *min,
-  double *max,
-  double *nrmse,
-  double *org_mean,
-  double *range);
-
-/**
- * @brief Write the ASCII header for per-level compression diagnostics.
- *
- * @param[in,out] out Output stream receiving the table header.
- *
- * @author Lars Hoffmann
- */
-void compress_log_header(
-  FILE * out);
-
-/**
  * @brief Write one row of per-level compression diagnostics.
  *
- * This helper computes the error statistics for one level and writes one
- * ASCII table row to @p out. If @p rho is @c NAN, the correlation
- * coefficient is derived from @p org and @p cmp using GSL.
+ * This helper computes the error statistics for one level (from @p org and
+ * @p cmp) and writes one ASCII table row to @p out. If @p rho is @c NAN, the
+ * correlation coefficient is derived from @p org and @p cmp using GSL.
  *
  * @param[in,out] out       Output stream.
  * @param[in]     codec     Compression codec name.
@@ -4123,7 +4146,6 @@ void compress_log_header(
  * @param[in]     plev      Pressure level in hPa.
  * @param[in]     ratio     Compression ratio.
  * @param[in]     bpv       Bits per value.
- * @param[in]     rho       Correlation coefficient, or @c NAN to compute it.
  * @param[in]     t_comp    Compression time in seconds.
  * @param[in]     t_decomp  Decompression time in seconds.
  * @param[in]     n         Number of data values in the level slice.
@@ -4141,7 +4163,6 @@ void compress_log_level(
   const double plev,
   const double ratio,
   const double bpv,
-  const double rho,
   const double t_comp,
   const double t_decomp,
   const size_t n,
@@ -4165,7 +4186,6 @@ void compress_log_level(
  * @param[in]     nz        Number of vertical levels.
  * @param[in]     ratio     Compression ratio.
  * @param[in]     bpv       Bits per value.
- * @param[in]     rho       Correlation coefficient, or @c NAN to compute it.
  * @param[in]     t_comp    Compression time in seconds.
  * @param[in]     t_decomp  Decompression time in seconds.
  * @param[in]     nbytes    Byte count used for throughput reporting.
@@ -4183,7 +4203,6 @@ void compress_log_levels_3d(
   const size_t nz,
   const double ratio,
   const double bpv,
-  const double rho,
   const double t_comp,
   const double t_decomp,
   const size_t nbytes);
@@ -4259,6 +4278,73 @@ void compress_unscale_from_unit(
   const size_t nz,
   const double *off,
   const double *scl);
+
+/**
+ * @brief Read optional lossyscaling metadata for a 3-D field.
+ *
+ * This helper reads the stored `MET_LOSSY_SCALE` flag and, if enabled,
+ * allocates and fills the per-level offset and scale arrays used by
+ * ::compress_unscale_from_unit(). The caller owns the returned arrays and
+ * must free them.
+ *
+ * @param[in,out] in   Input stream.
+ * @param[in]     nz   Number of vertical levels.
+ * @param[out]    off  Returned per-level offsets, or @c NULL if disabled.
+ * @param[out]    scl  Returned per-level scales, or @c NULL if disabled.
+ * @return Stored lossyscaling flag (`0` or `1`).
+ *
+ * @author Lars Hoffmann
+ */
+int compress_read_lossy_scale(
+  FILE * in,
+  const size_t nz,
+  double **off,
+  double **scl);
+
+/**
+ * @brief Write optional lossyscaling metadata for a 3-D field.
+ *
+ * This helper writes the `MET_LOSSY_SCALE` flag and, if enabled, allocates
+ * the per-level offset and scale arrays, scales the field in place to
+ * `[0,1]`, and writes the resulting metadata to @p out. The caller owns the
+ * returned arrays and must free them.
+ *
+ * @param[in,out] out      Output stream.
+ * @param[in]     enabled  Lossyscaling flag (`0` or `1`).
+ * @param[in,out] array    Field values stored in horizontal-major order.
+ * @param[in]     nxy      Number of horizontal points per level.
+ * @param[in]     nz       Number of vertical levels.
+ * @param[out]    off      Returned per-level offsets, or @c NULL if disabled.
+ * @param[out]    scl      Returned per-level scales, or @c NULL if disabled.
+ *
+ * @author Lars Hoffmann
+ */
+void compress_write_lossy_scale(
+  FILE * out,
+  const int enabled,
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  double **off,
+  double **scl);
+
+#ifdef ZSTD
+/**
+ * @brief Create and initialize a ZSTD compression context.
+ *
+ * This helper allocates a ZSTD compression context and applies the
+ * compression level and worker count used by MPTRAC compression helpers.
+ *
+ * @param[in] level     ZSTD compression level.
+ * @param[in] nworkers  Number of ZSTD worker threads.
+ * @return Initialized ZSTD compression context.
+ *
+ * @author Lars Hoffmann
+ */
+ZSTD_CCtx *compress_zstd_create_cctx(
+  const int level,
+  const int nworkers);
+#endif
 
 /**
  * @brief Maps a meteorological variable name to its internal MPTRAC variable index.
