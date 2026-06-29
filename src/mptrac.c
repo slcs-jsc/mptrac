@@ -1,19 +1,19 @@
 /*
   This file is part of MPTRAC.
-  
+
   MPTRAC is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   MPTRAC is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
-  
+
   Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
@@ -477,12 +477,12 @@ void compress_cms(
   const size_t nx = (size_t) met->nx;
   const size_t ny = (size_t) met->ny;
   const size_t np = (size_t) met->np;
+  const size_t nxy = nx * ny;
 
   /* Get meteo variable... */
   const int metvar = compress_metvar_index(varname);
 
   /* Set lon-lat grid... */
-  const size_t nxy = nx * ny;
   double lon[EX], lat[EY];
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
@@ -538,9 +538,10 @@ void compress_cms(
     }
 
     /* Write info... */
-    COMPRESS_LOG_READ(varname, "CMS", (double) np / cr,
-		      32. * cr / (double) np, t_eval,
-		      nx * ny * np * sizeof(float));
+    LOG(2, "Read 3-D variable: %s"
+	" (CMS, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, (double) np / cr, 32. * cr / (double) np, t_eval,
+	COMPRESS_SPEED(nx * ny * np * sizeof(float), t_eval));
   }
 
   /* Compress array and output compressed stream... */
@@ -647,9 +648,12 @@ void compress_cms(
     }
 
     /* Write info... */
-    COMPRESS_LOG_WRITE(varname, "CMS", (double) np / cr,
-		       32. * cr / (double) np, t_coars, t_eval,
-		       nx * ny * np * sizeof(float));
+    LOG(2, "Write 3-D variable: %s"
+	" (CMS, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, (double) np / cr, 32. * cr / (double) np, t_coars,
+	COMPRESS_SPEED(nx * ny * np * sizeof(float), t_coars), t_eval,
+	COMPRESS_SPEED(nx * ny * np * sizeof(float), t_eval));
   }
 
   /* Free... */
@@ -679,7 +683,7 @@ void compress_log_level(
 
   /* Calculate error statistics... */
   double mean_err = 0.0, stddev_err = 0.0;
-  double nrmse = NAN, mean_orig = 0.0, orig_range = 0.0, rho_out = NAN;
+  double nrmse = NAN, mean_orig = 0.0, orig_range = 0.0, rho = NAN;
 
   double sum_err = 0.0, sumsq_err = 0.0;
   double sum_orig = 0.0, sum_cmp = 0.0;
@@ -688,6 +692,7 @@ void compress_log_level(
   double min_orig = 0.0, max_orig = 0.0;
   double min_err = 0.0, max_err = 0.0;
 
+  /* Accumulate error, signal and cross-product sums in one pass... */
   for (size_t i = 0; i < n; i++) {
     const double o = (double) org[i];
     const double c = (double) cmp[i];
@@ -713,44 +718,43 @@ void compress_log_level(
       max_orig = o;
   }
 
+  /* Derive the basic error and signal summary statistics... */
   mean_err = sum_err / (double) n;
   mean_orig = sum_orig / (double) n;
   orig_range = max_orig - min_orig;
 
-  {
-    const double var_err =
-      (sumsq_err - (sum_err * sum_err) / (double) n) / (double) n;
+  /* Convert the accumulated error sums into a standard deviation... */
+  const double var_err =
+    (sumsq_err - (sum_err * sum_err) / (double) n) / (double) n;
+  stddev_err = sqrt(var_err > 0.0 ? var_err : 0.0);
 
-    stddev_err = sqrt(var_err > 0.0 ? var_err : 0.0);
-  }
-
+  /* Normalize RMSE by the original data range if available... */
   nrmse = (orig_range > 0.0)
     ? sqrt(sumsq_err / (double) n) / orig_range : NAN;
 
-  {
-    const double nn = (double) n;
-    const double cov = sum_org_cmp - sum_orig * sum_cmp / nn;
-    const double var_orig = sumsq_orig - sum_orig * sum_orig / nn;
-    const double var_cmp = sumsq_cmp - sum_cmp * sum_cmp / nn;
-    const double denom = sqrt(var_orig * var_cmp);
+  /* Compute the Pearson correlation from the accumulated moments... */
+  const double nn = (double) n;
+  const double cov = sum_org_cmp - sum_orig * sum_cmp / nn;
+  const double var_orig = sumsq_orig - sum_orig * sum_orig / nn;
+  const double var_cmp = sumsq_cmp - sum_cmp * sum_cmp / nn;
+  const double denom = sqrt(var_orig * var_cmp);
+  rho = denom > 0.0 ? cov / denom : NAN;
 
-    rho_out = denom > 0.0 ? cov / denom : NAN;
-  }
-
-  /* Write output... */
+  /* Reset the variable separator state when the target file changes... */
   if (out != last_out) {
     last_out = out;
     last_var[0] = '\0';
   }
 
+  /* Separate diagnostic blocks when switching to a new variable... */
   if (last_var[0] != '\0' && strcmp(last_var, varname) != 0)
     fprintf(out, "\n");
-
   snprintf(last_var, LEN, "%s", varname);
 
+  /* Logging... */
   fprintf(out,
 	  "%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	  codec, varname, (unsigned long) lev, plev, ratio, bpv, rho_out,
+	  codec, varname, (unsigned long) lev, plev, ratio, bpv, rho,
 	  mean_err, stddev_err, min_err, max_err, mean_orig, orig_range,
 	  nrmse, t_comp, COMPRESS_SPEED(nbytes, t_comp), t_decomp,
 	  COMPRESS_SPEED(nbytes, t_decomp));
@@ -776,6 +780,7 @@ void compress_log_levels_3d(
   if (!out)
     return;
 
+  /* Allocate temporary buffers for one level... */
   float *tmp_org, *tmp_cmp;
   ALLOC(tmp_org, float,
 	nxy);
@@ -791,10 +796,12 @@ void compress_log_levels_3d(
       tmp_cmp[ixy] = cmp_all[ixy * nz + lev];
     }
 
+    /* Write diagnostics for the extracted level... */
     compress_log_level(out, codec, varname, lev, met->p[lev], ratio, bpv,
 		       t_comp, t_decomp, nxy, nbytes, tmp_org, tmp_cmp);
   }
 
+  /* Free... */
   free(tmp_org);
   free(tmp_cmp);
 }
@@ -808,11 +815,13 @@ void compress_scale_to_unit(
   double *off,
   double *scl) {
 
+  /* Initialize per-level minima and maxima from the first sample... */
   for (size_t iz = 0; iz < nz; iz++) {
     off[iz] = array[iz];
     scl[iz] = array[iz];
   }
 
+  /* Scan the remaining samples to get per-level minima and maxima... */
   for (size_t ixy = 1; ixy < nxy; ixy++)
     for (size_t iz = 0; iz < nz; iz++) {
       const double value = array[ixy * nz + iz];
@@ -822,12 +831,14 @@ void compress_scale_to_unit(
 	scl[iz] = value;
     }
 
+  /* Convert maxima into ranges and suppress numerically flat levels... */
   for (size_t iz = 0; iz < nz; iz++) {
     const double range = scl[iz] - off[iz];
     const double ref = fmax(1.0, fmax(fabs(off[iz]), fabs(scl[iz])));
     scl[iz] = !(range > 1e-12 * ref) ? 0.0 : range;
   }
 
+  /* Scale each level independently to the unit interval... */
 #pragma omp parallel for default(shared)
   for (size_t ixy = 0; ixy < nxy; ixy++)
     for (size_t iz = 0; iz < nz; iz++)
@@ -847,6 +858,7 @@ void compress_unscale_from_unit(
   const double *off,
   const double *scl) {
 
+  /* Restore each level from unit space back to its original range... */
 #pragma omp parallel for default(shared)
   for (size_t ixy = 0; ixy < nxy; ixy++)
     for (size_t iz = 0; iz < nz; iz++)
@@ -869,6 +881,7 @@ int compress_read_lossy_scale(
   *off = NULL;
   *scl = NULL;
 
+  /* Read input... */
   FREAD(&enabled, int,
 	1,
 	in);
@@ -905,12 +918,14 @@ void compress_write_lossy_scale(
   *off = NULL;
   *scl = NULL;
 
+  /* Write output... */
   FWRITE(&enabled, int,
 	 1,
 	 out);
   if (enabled <= 0)
     return;
 
+  /* Derive per-level scaling data... */
   ALLOC(*off, double,
 	nz);
   ALLOC(*scl, double,
@@ -933,6 +948,7 @@ ZSTD_CCtx *compress_zstd_create_cctx(
   const int level,
   const int nworkers) {
 
+  /* Create and configure the ZSTD context... */
   ZSTD_CCtx *cctx = ZSTD_createCCtx();
   if (!cctx)
     ERRMSG("Cannot create ZSTD context!");
@@ -984,26 +1000,31 @@ void compress_pck(
 
   double vmin[EP], vmax[EP], off[EP], scl[EP];
   uint16_t *sarray;
+
+  /* PCK+ZSTD payload = scale + offset + packed 16-bit samples... */
   const size_t payload_len = 2 * nz * sizeof(double) + pck_bytes;
   size_t stored_len = payload_len;
   const char *codec_info = ctl->met_pck_zstd ? "PCK+ZSTD" : "PCK";
 
-  /* Allocate... */
+  /* Allocate packed sample buffer... */
   ALLOC(sarray, uint16_t, n);
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
     double t_zstd = 0.0;
 
-    /* Read data... */
+    /* Read packed data... */
     if (ctl->met_pck_zstd) {
 #ifdef ZSTD
       uint64_t magic, pck_zstd_magic = UINT64_C(0x50434b5a53544431);
       unsigned char *compr = NULL, *payload = NULL;
 
+      /* Read input... */
       FREAD(&magic, uint64_t, 1, inout);
       if (magic != pck_zstd_magic)
 	ERRMSG("PCK+ZSTD magic mismatch! Check MET_PCK_ZSTD and file type.");
+
+      /* Read and decompress the outer ZSTD payload... */
       FREAD(&stored_len, size_t,
 	    1,
 	    inout);
@@ -1020,15 +1041,20 @@ void compress_pck(
       t_zstd = omp_get_wtime() - t0_decomp;
       if (ZSTD_isError(out_len) || out_len != payload_len)
 	ERRMSG("PCK ZSTD decompression failed or size mismatch!");
+
+      /* Split payload into scale, offset and packed samples... */
       memcpy(scl, payload, nz * sizeof(double));
       memcpy(off, payload + nz * sizeof(double), nz * sizeof(double));
       memcpy(sarray, payload + 2 * nz * sizeof(double), pck_bytes);
+
+      /* Free... */
       free(payload);
       free(compr);
 #else
       ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
     } else {
+      /* Read input... */
       FREAD(&scl, double,
 	    nz,
 	    inout);
@@ -1038,20 +1064,25 @@ void compress_pck(
       FREAD(sarray, uint16_t, n, inout);
     }
 
-    /* Measure time... */
+    /* Measure the scalar unpacking step separately from optional ZSTD... */
     const double t0 = omp_get_wtime();
 
-    /* Convert to float... */
+    /* Convert packed 16-bit samples back to floating-point values... */
 #pragma omp parallel for default(shared)
     for (size_t ixy = 0; ixy < nxy; ixy++)
       for (size_t iz = 0; iz < nz; iz++)
 	array[ixy * nz + iz]
 	  = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
 
-    /* Write info... */
+    /* Add optional ZSTD time to the scalar unpacking time... */
     const double t_decomp = t_zstd + omp_get_wtime() - t0;
-    COMPRESS_LOG_READ(varname, codec_info, COMPRESS_RATIO(nbytes, stored_len),
-		      COMPRESS_BPV(n, stored_len), t_decomp, nbytes);
+
+    /* Logging... */
+    LOG(2, "Read 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, COMPRESS_RATIO(nbytes, stored_len),
+	COMPRESS_BPV(n, stored_len), t_decomp, COMPRESS_SPEED(nbytes,
+							      t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1060,13 +1091,13 @@ void compress_pck(
     double t_comp_sum = 0, t_decomp_sum = 0, t_zstd = 0, t_zstd_decomp = 0;
     double t_comp_level[EP], t_decomp_level[EP];
 
-    /* Allocate... */
+    /* Allocate temporary buffers for one level... */
     ALLOC(tmp_org, float,
 	  nxy);
     ALLOC(tmp_pck, float,
 	  nxy);
 
-    /* Get range... */
+    /* Derive per-level minima and maxima for the 16-bit quantization... */
     for (size_t iz = 0; iz < nz; iz++) {
       vmin[iz] = array[iz];
       vmax[iz] = array[iz];
@@ -1079,13 +1110,13 @@ void compress_pck(
 	  vmax[iz] = array[ixy * nz + iz];
       }
 
-    /* Get offset and scaling factor... */
+    /* Derive per-level offset and scaling factor... */
     for (size_t iz = 0; iz < nz; iz++) {
       scl[iz] = (vmax[iz] - vmin[iz]) / 65533.;
       off[iz] = vmin[iz];
     }
 
-    /* Convert to 16-bit values and evaluate per level... */
+    /* Quantize each level and time encode/decode diagnostics on the fly... */
     for (size_t iz = 0; iz < nz; iz++) {
       const double t0 = omp_get_wtime();
 
@@ -1112,12 +1143,14 @@ void compress_pck(
       t_decomp_sum += t_decomp_level[iz];
     }
 
-    /* Write data... */
+    /* Write packed data, optionally wrapped in ZSTD... */
     if (ctl->met_pck_zstd) {
 #ifdef ZSTD
       uint64_t pck_zstd_magic = UINT64_C(0x50434b5a53544431);
       unsigned char *payload = NULL, *payload_chk = NULL;
       void *stored_data = NULL;
+
+      /* Pack plain PCK data into one ZSTD payload... */
       ALLOC(payload, unsigned char,
 	    payload_len);
       memcpy(payload, scl, nz * sizeof(double));
@@ -1135,6 +1168,8 @@ void compress_pck(
       ZSTD_freeCCtx(cctx);
       if (ZSTD_isError(stored_len))
 	ERRMSG("PCK ZSTD compression failed!");
+
+      /* Decompress once for validation and timing... */
       ALLOC(payload_chk, unsigned char,
 	    payload_len);
       const double t0_decomp2 = omp_get_wtime();
@@ -1143,8 +1178,12 @@ void compress_pck(
       t_zstd_decomp = omp_get_wtime() - t0_decomp2;
       if (ZSTD_isError(out_len2) || out_len2 != payload_len)
 	ERRMSG("PCK ZSTD decompression failed or size mismatch!");
+
+      /* Free... */
       free(payload_chk);
       free(payload);
+
+      /* Write output... */
       FWRITE(&pck_zstd_magic, uint64_t, 1, inout);
       FWRITE(&stored_len, size_t,
 	     1,
@@ -1152,11 +1191,15 @@ void compress_pck(
       FWRITE(stored_data, unsigned char,
 	     stored_len,
 	     inout);
+
+      /* Free... */
       free(stored_data);
 #else
       ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
     } else {
+
+      /* Write output... */
       FWRITE(&scl, double,
 	     nz,
 	     inout);
@@ -1166,26 +1209,35 @@ void compress_pck(
       FWRITE(sarray, uint16_t, n, inout);
     }
 
-    /* Write info... */
+    /* Combine PCK and optional ZSTD timing and size metrics... */
     const double ratio_out = COMPRESS_RATIO(nbytes, stored_len);
     const double bpv_out = COMPRESS_BPV(n, stored_len);
     const double t_comp = t_comp_sum + t_zstd;
     const double t_decomp = t_decomp_sum + t_zstd_decomp;
-    COMPRESS_LOG_WRITE(varname, codec_info, ratio_out, bpv_out, t_comp,
-		       t_decomp, nbytes);
 
-    /* Write per-level diagnostics... */
+    /* Logging... */
+    LOG(2, "Write 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio_out, bpv_out, t_comp,
+	COMPRESS_SPEED(nbytes, t_comp), t_decomp,
+	COMPRESS_SPEED(nbytes, t_decomp));
+
+    /* Distribute optional ZSTD cost across levels for diagnostics... */
     if (level_log) {
       const double t_zstd_level = t_zstd / (double) nz;
       const double t_zstd_decomp_level = t_zstd_decomp / (double) nz;
       const char *codec = ctl->met_pck_zstd ? "PCKZSTD" : "PCK";
       for (size_t iz = 0; iz < nz; iz++) {
 #pragma omp parallel for default(shared)
+
+	/* Rebuild one decoded level for diagnostics... */
 	for (size_t ixy = 0; ixy < nxy; ixy++) {
 	  tmp_org[ixy] = array[ixy * nz + iz];
 	  tmp_pck[ixy] = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
 	}
 
+	/* Logging... */
 	compress_log_level(level_log, codec, varname, iz, met->p[iz],
 			   ratio_out, bpv_out,
 			   t_comp_level[iz] + t_zstd_level,
@@ -1233,10 +1285,13 @@ void compress_sz3(
   /* Read compressed stream and decompress array... */
   if (decompress) {
 
+    /* Read optional scaling metadata before the SZ3 byte stream... */
     const int stored_lossy_scale =
       compress_read_lossy_scale(inout, r1, &scale_off, &scale_scl);
 
     size_t sz3size;
+
+    /* Read input... */
     FREAD(&sz3size, size_t,
 	  1,
 	  inout);
@@ -1246,30 +1301,40 @@ void compress_sz3(
 	  sz3size,
 	  inout);
 
+    /* Let SZ3 rebuild the scaled field in its native 3-D layout... */
     const double t0 = omp_get_wtime();
     void *outData = SZ_decompress(SZ_FLOAT, bytes, sz3size, 0, 0, r3, r2, r1);
     if (!outData)
       ERRMSG("Decompression failed!");
 
     memcpy(array, outData, total_elems * sizeof(float));
+
+    /* Restore the original value range after lossy unit scaling... */
     if (stored_lossy_scale > 0)
       compress_unscale_from_unit(array, r2 * r3, r1, scale_off, scale_scl);
     const double t_decomp = omp_get_wtime() - t0;
 
+    /* Free... */
     free(outData);
     free(bytes);
 
+    const double ratio = COMPRESS_RATIO(total_elems * sizeof(float), sz3size);
+    const double bpv = COMPRESS_BPV(total_elems, sz3size);
     snprintf(codec_info, LEN, "SZ3, PREC=%d, TOL=%g, SCALE=%d",
 	     ctl->met_sz3_prec[metvar], ctl->met_sz3_tol[metvar],
 	     stored_lossy_scale);
-    COMPRESS_LOG_READ(varname, codec_info,
-		      COMPRESS_RATIO(total_elems * sizeof(float), sz3size),
-		      COMPRESS_BPV(total_elems, sz3size), t_decomp,
-		      total_elems * sizeof(float));
+
+    /* Logging... */
+    LOG(2, "Read 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_decomp,
+	COMPRESS_SPEED(total_elems * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
+
+    /* Translate MPTRAC settings into the SZ3 absolute/relative error mode... */
     const int errBoundMode = (ctl->met_sz3_prec[metvar] > 0) ? REL : ABS;
     const double absBound =
       (errBoundMode == ABS) ? ctl->met_sz3_tol[metvar] : 0.0;
@@ -1278,14 +1343,18 @@ void compress_sz3(
       : 0.0;
     const size_t raw_size = total_elems * sizeof(float);
 
+    /* Preserve the unscaled input only if diagnostics need it later... */
     if (ctl->met_lossy_scale[metvar] > 0 && level_log) {
       ALLOC(orig_all, float,
 	    total_elems);
       memcpy(orig_all, array, total_elems * sizeof(float));
     }
+
+    /* Optionally scale each vertical level to unit space before SZ3... */
     compress_write_lossy_scale(inout, ctl->met_lossy_scale[metvar], array,
 			       r2 * r3, r1, &scale_off, &scale_scl);
 
+    /* Compress the possibly scaled field with the selected SZ3 error mode... */
     const double t0 = omp_get_wtime();
     bytes = SZ_compress_args(SZ_FLOAT, array, &outSize,
 			     errBoundMode, absBound, relBound, 0.0,
@@ -1294,6 +1363,7 @@ void compress_sz3(
     if (!bytes || outSize == 0)
       ERRMSG("Compression failed!");
 
+    /* Write output... */
     FWRITE(&outSize, size_t,
 	   1,
 	   inout);
@@ -1305,6 +1375,7 @@ void compress_sz3(
 	     ctl->met_sz3_prec[metvar], ctl->met_sz3_tol[metvar],
 	     ctl->met_lossy_scale[metvar]);
 
+    /* Reconstruct once more only when per-level diagnostics are requested... */
     double t_decomp = NAN;
     if (level_log) {
       unsigned char *bytes_copy;
@@ -1323,6 +1394,7 @@ void compress_sz3(
       if (!decData)
 	ERRMSG("Decompression failed!");
 
+      /* Rebuild the decoded field so diagnostics compare like with like... */
       ALLOC(tmp_all, float,
 	    total_elems);
       memcpy(tmp_all, decData, total_elems * sizeof(float));
@@ -1330,29 +1402,40 @@ void compress_sz3(
 	compress_unscale_from_unit(tmp_all, r2 * r3, r1, scale_off,
 				   scale_scl);
 
+      const double ratio = COMPRESS_RATIO(raw_size, outSize);
+      const double bpv = COMPRESS_BPV(total_elems, outSize);
       compress_log_levels_3d(level_log, "SZ3", varname, met,
 			     (orig_all ? orig_all : array), tmp_all, nxy, r1,
-			     COMPRESS_RATIO(raw_size, outSize),
-			     COMPRESS_BPV(total_elems, outSize), t_comp,
-			     t_decomp, raw_size);
+			     ratio, bpv, t_comp, t_decomp, raw_size);
 
+      /* Free... */
       free(tmp_all);
       free(decData);
       free(bytes_copy);
 
-      COMPRESS_LOG_WRITE(varname, codec_info,
-			 COMPRESS_RATIO(raw_size, outSize),
-			 COMPRESS_BPV(total_elems, outSize), t_comp,
-			 t_decomp, raw_size);
-    } else
-      COMPRESS_LOG_WRITE_COMP(varname, codec_info,
-			      COMPRESS_RATIO(raw_size, outSize),
-			      COMPRESS_BPV(total_elems, outSize), t_comp,
-			      raw_size);
+      /* Logging... */
+      LOG(2, "Write 3-D variable: %s"
+	  " (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	  " T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	  varname, codec_info, ratio, bpv, t_comp,
+	  COMPRESS_SPEED(raw_size, t_comp), t_decomp,
+	  COMPRESS_SPEED(raw_size, t_decomp));
+    } else {
+      const double ratio = COMPRESS_RATIO(raw_size, outSize);
+      const double bpv = COMPRESS_BPV(total_elems, outSize);
+
+      /* Logging... */
+      LOG(2, "Write 3-D variable: %s"
+	  " (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s)",
+	  varname, codec_info, ratio, bpv, t_comp,
+	  COMPRESS_SPEED(raw_size, t_comp));
+    }
+    /* Free... */
     free(bytes);
     free(orig_all);
   }
 
+  /* Free... */
   free(scale_off);
   free(scale_scl);
 }
@@ -1377,6 +1460,8 @@ void compress_zfp(
   const size_t snx = (size_t) met->np;
   const size_t sny = (size_t) met->ny;
   const size_t snz = (size_t) met->nx;
+  const size_t n = snx * sny * snz;
+  const size_t raw_size = n * sizeof(float);
   const zfp_type type = zfp_type_float;
   zfp_field *field = zfp_field_3d(array, type, snx, sny, snz);
 
@@ -1413,8 +1498,11 @@ void compress_zfp(
   double *scale_off = NULL, *scale_scl = NULL;
   char codec_info[LEN];
   if (decompress) {
+
+    /* Read optional scaling metadata before the ZFP bit stream... */
     const int stored_lossy_scale =
       compress_read_lossy_scale(inout, snx, &scale_off, &scale_scl);
+    /* Read input... */
     FREAD(&zfpsize, size_t,
 	  1,
 	  inout);
@@ -1423,44 +1511,56 @@ void compress_zfp(
     FREAD(buffer, unsigned char,
 	  zfpsize,
 	  inout);
+
+    /* Decode the bit stream directly into the caller-provided field... */
     const double t0 = omp_get_wtime();
     if (!zfp_decompress(zfp, field))
       ERRMSG("Decompression failed!");
+
+    /* Restore the original value range after lossy unit scaling... */
     if (stored_lossy_scale > 0)
       compress_unscale_from_unit(array, sny * snz, snx, scale_off, scale_scl);
     const double t_decomp = omp_get_wtime() - t0;
-    const double cr =
-      ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
-    const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
+    const double ratio = COMPRESS_RATIO(raw_size, zfpsize);
+    const double bpv = COMPRESS_BPV(n, zfpsize);
     snprintf(codec_info, LEN, "ZFP, PREC=%d, TOL=%g, SCALE=%d",
 	     actual_prec, actual_tol, stored_lossy_scale);
-    COMPRESS_LOG_READ(varname, codec_info, cr, bpv, t_decomp,
-		      snx * sny * snz * sizeof(float));
+
+    /* Logging... */
+    LOG(2, "Read 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_decomp, COMPRESS_SPEED(raw_size,
+								  t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
     float *tmp_all, *orig_all = NULL;
     const size_t nxy = sny * snz;
-    const size_t raw_size = snx * sny * snz * sizeof(float);
 
+    /* Preserve the unscaled input only if diagnostics need it later... */
     if (ctl->met_lossy_scale[metvar] > 0 && level_log) {
       ALLOC(orig_all, float,
-	    snx * sny * snz);
-      memcpy(orig_all, array, snx * sny * snz * sizeof(float));
+	    n);
+      memcpy(orig_all, array, raw_size);
     }
+
+    /* Optionally scale each vertical level to unit space before ZFP... */
     compress_write_lossy_scale(inout, ctl->met_lossy_scale[metvar], array,
 			       nxy, snx, &scale_off, &scale_scl);
 
+    /* Keep a temporary decode buffer for the shared diagnostics path... */
     ALLOC(tmp_all, float,
-	  snx * sny * snz);
+	  n);
 
+    /* Compress the field into the configured ZFP bit stream... */
     const double t0 = omp_get_wtime();
     zfpsize = zfp_compress(zfp, field);
     const double t_comp = omp_get_wtime() - t0;
     if (!zfpsize) {
       ERRMSG("Compression failed!");
     } else {
+      /* Write output... */
       FWRITE(&zfpsize, size_t,
 	     1,
 	     inout);
@@ -1469,10 +1569,12 @@ void compress_zfp(
 	     inout);
     }
 
+    /* Decode once into a temporary field for the shared diagnostics... */
     zfp_field *dec_field = zfp_field_3d(tmp_all, type, snx, sny, snz);
     if (!dec_field)
       ERRMSG("Failed to allocate zfp structures!");
 
+    /* Rewind the bit stream and decode once for diagnostics and timing... */
     const double t1 = omp_get_wtime();
     zfp_stream_rewind(zfp);
     if (!zfp_decompress(zfp, dec_field))
@@ -1481,24 +1583,30 @@ void compress_zfp(
       compress_unscale_from_unit(tmp_all, nxy, snx, scale_off, scale_scl);
     const double t_decomp = omp_get_wtime() - t1;
 
+    const double ratio = COMPRESS_RATIO(raw_size, zfpsize);
+    const double bpv = COMPRESS_BPV(n, zfpsize);
     compress_log_levels_3d(level_log, "ZFP", varname, met,
 			   (orig_all ? orig_all : array), tmp_all, nxy, snx,
-			   COMPRESS_RATIO(raw_size, zfpsize),
-			   COMPRESS_BPV(snx * sny * snz, zfpsize),
-			   t_comp, t_decomp, raw_size);
+			   ratio, bpv, t_comp, t_decomp, raw_size);
 
-    const double cr = COMPRESS_RATIO(raw_size, zfpsize);
-    const double bpv = COMPRESS_BPV(snx * sny * snz, zfpsize);
     snprintf(codec_info, LEN, "ZFP, PREC=%d, TOL=%g, SCALE=%d",
 	     actual_prec, actual_tol, ctl->met_lossy_scale[metvar]);
-    COMPRESS_LOG_WRITE(varname, codec_info, cr, bpv, t_comp, t_decomp,
-		       raw_size);
 
+    /* Logging... */
+    LOG(2, "Write 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_comp, COMPRESS_SPEED(raw_size,
+								t_comp),
+	t_decomp, COMPRESS_SPEED(raw_size, t_decomp));
+
+    /* Free... */
     free(tmp_all);
     free(orig_all);
     zfp_field_free(dec_field);
   }
 
+  /* Free... */
   free(scale_off);
   free(scale_scl);
 
@@ -1536,21 +1644,30 @@ void compress_zstd(
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
+
+    /* Read input... */
     FREAD(&comprLen, size_t,
 	  1,
 	  inout);
     FREAD(compr, unsigned char,
 	  comprLen,
 	  inout);
+
+    /* Decode one full frame and validate the restored byte count... */
     const double t0 = omp_get_wtime();
     compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
     const double t_decomp = omp_get_wtime() - t0;
     if (ZSTD_isError(compsize) || compsize != uncomprLen)
       ERRMSG("Decompression failed or size mismatch!");
+    const double ratio = COMPRESS_RATIO(uncomprLen, comprLen);
+    const double bpv = COMPRESS_BPV(n, comprLen);
     snprintf(codec_info, LEN, "ZSTD, LEVEL=%d", ctl->met_zstd_level);
-    COMPRESS_LOG_READ(varname, codec_info,
-		      COMPRESS_RATIO(uncomprLen, comprLen),
-		      COMPRESS_BPV(n, comprLen), t_decomp, uncomprLen);
+
+    /* Logging... */
+    LOG(2, "Read 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_decomp, COMPRESS_SPEED(uncomprLen,
+								  t_decomp));
   }
 
   /* Compress array and output compressed stream... */
@@ -1558,12 +1675,14 @@ void compress_zstd(
     ZSTD_CCtx *cctx;
     float *tmp_all;
 
+    /* Keep one temporary decode buffer for the shared diagnostics path... */
     ALLOC(tmp_all, float,
 	  n);
 
     cctx = compress_zstd_create_cctx(ctl->met_zstd_level,
 				     ctl->met_zstd_nworkers);
 
+    /* Compress one full field with the preconfigured ZSTD context... */
     const double t0 = omp_get_wtime();
     compsize = ZSTD_compress2(cctx, compr, comprLen, uncompr, uncomprLen);
     const double t_comp = omp_get_wtime() - t0;
@@ -1571,6 +1690,8 @@ void compress_zstd(
       ZSTD_freeCCtx(cctx);
       ERRMSG("Compression failed!");
     } else {
+
+      /* Write output... */
       FWRITE(&compsize, size_t,
 	     1,
 	     inout);
@@ -1579,6 +1700,7 @@ void compress_zstd(
 	     inout);
     }
 
+    /* Decode once more so the common diagnostics see the reconstructed field... */
     const double t1 = omp_get_wtime();
     const size_t decomp_size = ZSTD_decompress(tmp_all, uncomprLen, compr,
 					       compsize);
@@ -1586,18 +1708,23 @@ void compress_zstd(
     if (ZSTD_isError(decomp_size) || decomp_size != uncomprLen)
       ERRMSG("Decompression failed or size mismatch!");
 
+    const double ratio = COMPRESS_RATIO(uncomprLen, compsize);
+    const double bpv = COMPRESS_BPV(n, compsize);
     compress_log_levels_3d(level_log, "ZSTD", varname, met, array, tmp_all,
-			   nxy, nz, COMPRESS_RATIO(uncomprLen, compsize),
-			   COMPRESS_BPV(n, compsize), t_comp, t_decomp,
-			   uncomprLen);
+			   nxy, nz, ratio, bpv, t_comp, t_decomp, uncomprLen);
 
     snprintf(codec_info, LEN, "ZSTD, LEVEL=%d, NWORKERS=%d",
 	     ctl->met_zstd_level, ctl->met_zstd_nworkers);
-    COMPRESS_LOG_WRITE(varname, codec_info,
-		       COMPRESS_RATIO(uncomprLen, compsize),
-		       COMPRESS_BPV(n, compsize), t_comp, t_decomp,
-		       uncomprLen);
 
+    /* Logging... */
+    LOG(2, "Write 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_comp, COMPRESS_SPEED(uncomprLen,
+								t_comp),
+	t_decomp, COMPRESS_SPEED(uncomprLen, t_decomp));
+
+    /* Free... */
     ZSTD_freeCCtx(cctx);
     free(tmp_all);
   }
@@ -1642,6 +1769,8 @@ void compress_lz4(
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
+
+    /* Read input... */
     FREAD(&comprLen, size_t,
 	  1,
 	  inout);
@@ -1650,24 +1779,33 @@ void compress_lz4(
     FREAD(compr, unsigned char,
 	  comprLen,
 	  inout);
+
+    /* Decode one full frame and validate the restored byte count... */
     const double t0 = omp_get_wtime();
     const int decomp_size =
       LZ4_decompress_safe(compr, uncompr, (int) comprLen, uncomprLenInt);
     const double t_decomp = omp_get_wtime() - t0;
     if (decomp_size != uncomprLenInt)
       ERRMSG("Decompression failed or size mismatch!");
-    COMPRESS_LOG_READ(varname, codec_info,
-		      COMPRESS_RATIO(uncomprLen, comprLen),
-		      COMPRESS_BPV(n, comprLen), t_decomp, uncomprLen);
+    const double ratio = COMPRESS_RATIO(uncomprLen, comprLen);
+    const double bpv = COMPRESS_BPV(n, comprLen);
+
+    /* Logging... */
+    LOG(2, "Read 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_decomp, COMPRESS_SPEED(uncomprLen,
+								  t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
     float *tmp_all;
 
+    /* Keep one temporary decode buffer for the shared diagnostics path... */
     ALLOC(tmp_all, float,
 	  n);
 
+    /* Compress one full field with the configured LZ4 acceleration... */
     const double t0 = omp_get_wtime();
     const int compsizeInt =
       LZ4_compress_fast(uncompr, compr, uncomprLenInt, comprCapInt, accel);
@@ -1675,6 +1813,8 @@ void compress_lz4(
     if (compsizeInt <= 0)
       ERRMSG("Compression failed!");
     const size_t compsize = (size_t) compsizeInt;
+
+    /* Write output... */
     FWRITE(&compsize, size_t,
 	   1,
 	   inout);
@@ -1682,6 +1822,7 @@ void compress_lz4(
 	   compsize,
 	   inout);
 
+    /* Decode once more so the common diagnostics see the reconstructed field... */
     const double t1 = omp_get_wtime();
     const int decomp_size =
       LZ4_decompress_safe(compr, (char *) tmp_all, compsizeInt,
@@ -1690,15 +1831,18 @@ void compress_lz4(
     if (decomp_size != uncomprLenInt)
       ERRMSG("Decompression failed or size mismatch!");
 
+    const double ratio = COMPRESS_RATIO(uncomprLen, compsize);
+    const double bpv = COMPRESS_BPV(n, compsize);
     compress_log_levels_3d(level_log, "LZ4", varname, met, array, tmp_all,
-			   nxy, nz, COMPRESS_RATIO(uncomprLen, compsize),
-			   COMPRESS_BPV(n, compsize), t_comp, t_decomp,
-			   uncomprLen);
+			   nxy, nz, ratio, bpv, t_comp, t_decomp, uncomprLen);
 
-    COMPRESS_LOG_WRITE(varname, codec_info,
-		       COMPRESS_RATIO(uncomprLen, compsize),
-		       COMPRESS_BPV(n, compsize), t_comp, t_decomp,
-		       uncomprLen);
+    /* Logging... */
+    LOG(2, "Write 3-D variable: %s"
+	" (%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, codec_info, ratio, bpv, t_comp, COMPRESS_SPEED(uncomprLen,
+								t_comp),
+	t_decomp, COMPRESS_SPEED(uncomprLen, t_decomp));
 
     free(tmp_all);
   }
