@@ -930,6 +930,26 @@ $ ./atm_init  &lt;ctl&gt; &lt;atm_out&gt;
 <td style="text-align: right;">1</td>
 </tr>
 <tr>
+<td style="text-align: left;">INIT_RELZ0</td>
+<td style="text-align: left;">Release start position relative to the local PBL depth <code>z/zi</code></td>
+<td style="text-align: right;">-999</td>
+</tr>
+<tr>
+<td style="text-align: left;">INIT_RELZ1</td>
+<td style="text-align: left;">Release end position relative to the local PBL depth <code>z/zi</code></td>
+<td style="text-align: right;">-999</td>
+</tr>
+<tr>
+<td style="text-align: left;">INIT_DRELZ</td>
+<td style="text-align: left;">Release interval in relative PBL coordinates</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td style="text-align: left;">INIT_RANDOM_RELZ</td>
+<td style="text-align: left;">Uniform random sampling between <code>INIT_RELZ0</code> and <code>INIT_RELZ1</code></td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
 <td style="text-align: left;">INIT_LON0</td>
 <td style="text-align: left;">Release longitude range start</td>
 <td style="text-align: right;">0</td>
@@ -981,6 +1001,9 @@ metres for UTM grids.</p>
 <li>INIT_NP: Target number of air parcels when using INIT_WELL_MIXED sampling. The simulation will retry the grid sampling until this number is reached. Must be between 0 and NP. Requires INIT_WELL_MIXED=1. Default is 0 (grid-based sampling, no retry loop).</li>
 <li>INIT_IDX_OFFSET: Offset value added to air parcel indices. This parameter allows customization of the starting index for air parcels, which can be useful for domain decomposition or when combining multiple initialization runs. The default value is 0. </li>
 </ul>
+<p>Relative-PBL releases use the local surface pressure and local PBL pressure from the meteorological data to convert <code>z/zi</code> to pressure. Therefore <code>INIT_RELZ0</code> and <code>INIT_RELZ1</code> require meteorological input and a fixed release time (<code>INIT_T0 == INIT_T1</code>, <code>INIT_ST = INIT_UT = 0</code>). They cannot be combined with <code>INIT_Z0</code> and <code>INIT_Z1</code>.</p>
+<p>If <code>INIT_RANDOM_RELZ = 0</code>, the code constructs a regular release grid in relative PBL coordinates using <code>INIT_RELZ0</code>, <code>INIT_RELZ1</code>, and <code>INIT_DRELZ</code>. If <code>INIT_RANDOM_RELZ = 1</code>, the vertical position is sampled uniformly at random between <code>INIT_RELZ0</code> and <code>INIT_RELZ1</code> for each parcel.</p>
+<p><code>INIT_REP</code> and <code>INIT_NP</code> serve different purposes: <code>INIT_REP</code> repeats every release position in the configured grid, while <code>INIT_NP</code> is only used together with <code>INIT_WELL_MIXED = 1</code> to keep resampling until a target total number of parcels has been accepted.</p>
 <p><strong>Note:</strong> Instead of using the control file the configuration parameters can also be appended to the function call. </p>
 
 
