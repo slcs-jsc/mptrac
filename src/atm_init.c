@@ -76,6 +76,15 @@ int main(
   const double z0 = scan_ctl(argv[1], argc, argv, "INIT_Z0", -1, "0", NULL);
   const double z1 = scan_ctl(argv[1], argc, argv, "INIT_Z1", -1, "0", NULL);
   const double dz = scan_ctl(argv[1], argc, argv, "INIT_DZ", -1, "1", NULL);
+  const double relz0 =
+    scan_ctl(argv[1], argc, argv, "INIT_RELZ0", -1, "-999", NULL);
+  const double relz1 =
+    scan_ctl(argv[1], argc, argv, "INIT_RELZ1", -1, "-999", NULL);
+  const double drelz =
+    scan_ctl(argv[1], argc, argv, "INIT_DRELZ", -1, "1", NULL);
+  const int random_relz =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_RANDOM_RELZ", -1, "0", NULL);
+  const int use_relz = (relz0 > -900.0 || relz1 > -900.0);
   const double lon0 =
     scan_ctl(argv[1], argc, argv, "INIT_LON0", -1, "0", NULL);
   const double lon1 =
@@ -138,6 +147,19 @@ int main(
   if (col_mass && (t1 != t0 || st > 0 || ut > 0))
     ERRMSG
       ("INIT_COL_MASS/INIT_WELL_MIXED require INIT_T0 == INIT_T1 and no time scattering!");
+  if (use_relz && (z0 != 0.0 || z1 != 0.0))
+    ERRMSG("INIT_RELZ0/INIT_RELZ1 cannot be combined with INIT_Z0/INIT_Z1!");
+  if (use_relz && (relz0 <= -900.0 || relz1 <= -900.0))
+    ERRMSG("INIT_RELZ0 and INIT_RELZ1 must both be set!");
+  if (use_relz && (t1 != t0 || st > 0 || ut > 0))
+    ERRMSG
+      ("INIT_RELZ0/INIT_RELZ1 require INIT_T0 == INIT_T1 and no time scattering!");
+  if (use_relz && random_relz && relz1 < relz0)
+    ERRMSG("INIT_RELZ1 must be greater than or equal to INIT_RELZ0!");
+  if (use_relz && !random_relz && drelz <= 0)
+    ERRMSG("INIT_DRELZ must be positive!");
+  if (!use_relz && dz <= 0)
+    ERRMSG("INIT_DZ must be positive!");
 
   /* Read climatological data... */
   mptrac_read_clim(&ctl, clim);
@@ -146,9 +168,9 @@ int main(
   gsl_rng_env_setup();
   gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
-  /* Get meteorological data for column-mass and well-mixed initialization... */
+  /* Get meteorological data for column-mass, well-mixed, and relative-PBL initialization... */
   double ptop = 0, dpcolmax = 0;
-  if (col_mass) {
+  if (col_mass || use_relz) {
     mptrac_get_met(&ctl, clim, t0, &met0, &met1, dd);
     ptop = gsl_stats_min(met0->p, 1, (size_t) met0->np);
     double psmax = -1;
@@ -164,10 +186,14 @@ int main(
   int ntry = 0;
   const int ntrymax = init_np > 0 ? 1000000 * init_np : 0;
   do {
+    const double vert0 = use_relz ? relz0 : z0;
+    const double vert1 = use_relz ? (random_relz ? relz0 : relz1) : z1;
+    const double dvert = use_relz ? (random_relz ? 1.0 : drelz) : dz;
     for (double t = t0; t <= t1 && !(init_np > 0 && atm->np >= init_np);
 	 t += dt)
-      for (double z = z0; z <= z1 && !(init_np > 0 && atm->np >= init_np);
-	   z += dz)
+      for (double vert = vert0;
+	   vert <= vert1 && !(init_np > 0 && atm->np >= init_np);
+	   vert += dvert)
 	for (double lon = lon0;
 	     lon <= lon1 && !(init_np > 0 && atm->np >= init_np); lon += dlon)
 	  for (double lat = lat0;
@@ -186,10 +212,12 @@ int main(
 	      double ru = ut * (gsl_rng_uniform(rng) - 0.5);
 	      atm->time[atm->np] = (t + rg + ru);
 
-	      /* Set pressure... */
-	      rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
-	      ru = uz * (gsl_rng_uniform(rng) - 0.5);
-	      atm->p[atm->np] = P(z + rg + ru);
+	      if (!use_relz) {
+		/* Keep the legacy RNG order for absolute-height initialization. */
+		rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
+		ru = uz * (gsl_rng_uniform(rng) - 0.5);
+		atm->p[atm->np] = P(vert + rg + ru);
+	      }
 
 	      /* Set horizontal position... */
 	      rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
@@ -213,6 +241,33 @@ int main(
 		atm->lat[atm->np] = (lat + rg + rx + ru);
 	      } while (even && gsl_rng_uniform(rng) >
 		       fabs(cos(DEG2RAD(atm->lat[atm->np]))));
+
+	      if (use_relz) {
+		/* Relative-PBL initialization needs the final horizontal position first. */
+		rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
+		ru = uz * (gsl_rng_uniform(rng) - 0.5);
+		const double relz_sample =
+		  random_relz ? relz0 + gsl_rng_uniform(rng) * (relz1 - relz0)
+		  : vert;
+		INTPOL_INIT;
+		double ps, pbl;
+		intpol_met_time_2d(met0, met0->ps, met1, met1->ps,
+				   atm->time[atm->np], atm->lon[atm->np],
+				   atm->lat[atm->np], &ps, ci, cw, 1);
+		intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl,
+				   atm->time[atm->np], atm->lon[atm->np],
+				   atm->lat[atm->np], &pbl, ci, cw, 1);
+		if (ctl.qnt_ps >= 0)
+		  atm->q[ctl.qnt_ps][atm->np] = ps;
+		if (ctl.qnt_pbl >= 0)
+		  atm->q[ctl.qnt_pbl][atm->np] = pbl;
+		const double zsurf = Z(ps);
+		const double zpbl = Z(pbl);
+		const double depth = zpbl - zsurf;
+		if (depth <= 0)
+		  continue;
+		atm->p[atm->np] = P(zsurf + (relz_sample + rg + ru) * depth);
+	      }
 
 	      /* Apply cosine bell (Williamson et al., 1992)... */
 	      if (bellrad > 0) {

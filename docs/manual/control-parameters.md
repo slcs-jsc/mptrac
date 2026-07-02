@@ -55,3 +55,11 @@ Control parameters can also be specified via command line arguments:
 
 Command line arguments take precedence over values provided in the
 control parameter file.
+
+This mechanism is also useful for short sensitivity studies. For example, a release layer can be defined in relative PBL coordinates without editing the control file permanently:
+
+```
+./atm_init trac.ctl data/atm_init.tab \
+               INIT_T0 360547200 INIT_T1 360547200 \
+               INIT_RELZ0 0.0 INIT_RELZ1 1.2 INIT_DRELZ 0.2
+```
