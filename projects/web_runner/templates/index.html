@@ -4,9 +4,83 @@
     <title>MPTRAC Web Runner</title>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        border: none;
+        border-radius: 14px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+      }
+
+      .btn-primary {
+        background: #0d4f8b;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #1666ad;
+        color: white;
+      }
+
+      .btn-secondary {
+        background: #2b3440;
+        color: #f4f7fb;
+      }
+
+      .btn-secondary:hover {
+        background: #3a4654;
+        color: white;
+      }
+
+      .btn-large {
+        padding: 14px 24px;
+        font-size: 18px;
+        border-radius: 18px;
+      }
+
+      .btn-medium {
+        padding: 11px 18px;
+        font-size: 16px;
+      }
+
+      .btn-section {
+        padding: 13px 18px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .btn-small {
+        padding: 9px 14px;
+        font-size: 15px;
+        border-radius: 12px;
+      }
+
+      .btn-block {
+        display: flex;
+        width: 100%;
+        text-align: left;
+      }
+
+      .btn-footer {
+        padding: 7px 12px;
+        font-size: 14px;
+        border-radius: 10px;
+      }
+
+    </style>
   </head>
   
-  <body style="font-family:monospace; background:#111; color:#ccc; padding:20px;">
+  <body style="font-family:'Segoe UI', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; background:#111; color:#ccc; padding:20px;">
     
     <!-- Header -->
     <div class="w3-container w3-padding-24" style="background: linear-gradient(90deg, #001530, #003366); color: white;">
@@ -14,7 +88,7 @@
 	<div style="display: flex; align-items: center;">
 	  <img src="{{ url_for('static', filename='images/MPTRAC.svg') }}" alt="Logo" style="height:100px; margin-right:20px;">
 	  <div style="text-align: left;">
-            <h1 style="font-family: monospace; margin:0; font-size:32px;">Massive-Parallel Trajectory Calculations</h1>
+            <h1 style="margin:0; font-size:32px;">Massive-Parallel Trajectory Calculations</h1>
             <h4 style="margin-top:6px; font-size:18px; color: #ddd;">Web Runner for Air Parcel Trajectory Calculations</h4>
 	  </div>
 	</div>
@@ -30,9 +104,9 @@
 	  This service is under active development. Please feel free to contact us with feedback or issues!
 	</p>
 	<div style="margin-top: 20px;">
-	  <a href="https://slcs-jsc.github.io/mptrac/" class="w3-button w3-hover-shadow w3-padding-medium w3-round-large w3-hover-light-blue" style="background: #003366; color: white; font-size: 16px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">📘 MPTRAC Documentation</a>
-	  <a href="https://github.com/slcs-jsc/mptrac" class="w3-button w3-hover-shadow w3-padding-medium w3-round-large w3-hover-light-blue" style="background: #003366; color: white; font-size: 16px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">💻 GitHub Repository</a>
-	  <a href="mailto:l.hoffmann@fz-juelich.de?subject=Feedback%20on%20MPTRAC%20Web%20Runner" class="w3-button w3-hover-shadow w3-padding-medium w3-round-large w3-hover-light-blue" style="background: #003366; color: white; font-size: 16px; border: none; transition: background-color 0.3s ease;">📬 Contact Us</a>
+	  <a href="https://slcs-jsc.github.io/mptrac/" class="btn btn-primary btn-medium" style="margin-right: 20px;">📘 MPTRAC Documentation</a>
+	  <a href="https://github.com/slcs-jsc/mptrac" class="btn btn-primary btn-medium" style="margin-right: 20px;">💻 GitHub Repository</a>
+	  <a href="mailto:l.hoffmann@fz-juelich.de?subject=Feedback%20on%20MPTRAC%20Web%20Runner" class="btn btn-primary btn-medium">📬 Contact Us</a>
 	</div>
       </div>
     </div>
@@ -55,7 +129,7 @@
     <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16" style="width: 80%; margin: 0 auto;">
       
       <!-- Examples -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('example-settings')">
+      <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('example-settings')">
 	<i class="fa fa-caret-down"></i> Examples
       </button>
       <div id="example-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
@@ -126,7 +200,7 @@
       </div>
       
       <!-- Meteo Data -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('meteo-settings')">
+      <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('meteo-settings')">
 	<i class="fa fa-caret-down"></i> Meteorological Data
       </button>
       <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
@@ -190,7 +264,7 @@
       </div>
       
       <!-- Initialization -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('init-settings')">
+      <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('init-settings')">
 	<i class="fa fa-caret-down"></i> Initialization
       </button>
       <div id="init-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
@@ -273,7 +347,7 @@
       </div>
       
       <!-- Physics Settings -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('diffusivity-settings')">
+      <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('diffusivity-settings')">
 	<i class="fa fa-caret-down"></i> Physics
       </button>
       <div id="diffusivity-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
@@ -338,7 +412,7 @@
       </div>
       
       <!-- Output -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('output-settings')">
+      <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('output-settings')">
 	<i class="fa fa-caret-down"></i> Output
       </button>
       <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
@@ -404,15 +478,15 @@
       <!-- Buttons -->
       <div class="w3-bar w3-center" style="margin-top: 20px;">
 	<input type="file" id="setupFileInput" accept=".json" style="display:none" onchange="loadSetupFromFile(this)">
-	<button type="button" onclick="document.getElementById('setupFileInput').click()" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">
+	<button type="button" onclick="document.getElementById('setupFileInput').click()" class="btn btn-primary btn-large" style="margin-right: 20px;">
 	  📂 Load Setup
 	</button>
 	
-	<button type="reset" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">
+	<button type="reset" class="btn btn-primary btn-large" style="margin-right: 20px;">
 	  ♻️ Reset Form
 	</button>
 	
-	<button class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;" type="submit">
+	<button class="btn btn-primary btn-large" type="submit">
 	  ▶️ Run Simulation
 	</button>	
       </div>
@@ -440,12 +514,11 @@
 	<div class="w3-center w3-padding-16 w3-margin-top">
 	  <i class="w3-spin w3-jumbo w3-text-light-blue fa fa-cog"></i>
 	</div>
-	<p id="timer" class="w3-text-light-grey w3-margin-top" style="font-size: 16px;">
+	<p id="timer" class="w3-text-light-grey w3-margin-top">
 	  Elapsed Time: 00:00
 	</p>
 	<button onclick="location.reload()" 
-		class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue w3-margin-top" 
-		style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
+		class="btn btn-primary btn-large w3-margin-top">
 	  ⏹️ Stop Simulation
 	</button>
       </div>
@@ -782,12 +855,9 @@
     <!-- Footer -->
     <footer class="w3-container w3-center w3-padding-32" style="background-color:#001f4d; color:white; margin-top:40px;">
       <p style="margin: 0;">
-	<a href="/terms" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Terms & Conditions</a>
-	| <a href="https://www.fz-juelich.de/en/legal-notice" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Legal Notice</a>
-	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Privacy Policy</a>
-	| <a href="https://www.fz-juelich.de" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background-color: white; color: #003366; ; padding: 2px 10px;">
-	  <img src="/static/images/fzj_logo.png" alt="FZJ Logo" style="height: 26px; padding: 0pt;">
-	</a>
+	<a href="/terms" class="btn btn-primary btn-footer">Terms & Conditions</a>
+	| <a href="https://www.fz-juelich.de/en/legal-notice" class="btn btn-primary btn-footer">Legal Notice</a>
+	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="btn btn-primary btn-footer">Privacy Policy</a>
       </p>
     </footer>
     

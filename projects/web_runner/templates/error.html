@@ -4,9 +4,77 @@
     <title>MPTRAC Web Runner</title>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        border: none;
+        border-radius: 14px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+      }
+
+      .btn-primary {
+        background: #0d4f8b;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #1666ad;
+        color: white;
+      }
+
+      .btn-secondary {
+        background: #2b3440;
+        color: #f4f7fb;
+      }
+
+      .btn-secondary:hover {
+        background: #3a4654;
+        color: white;
+      }
+
+      .btn-large {
+        padding: 14px 24px;
+        font-size: 18px;
+        border-radius: 18px;
+      }
+
+      .btn-medium {
+        padding: 11px 18px;
+        font-size: 16px;
+      }
+
+      .btn-small {
+        padding: 9px 14px;
+        font-size: 15px;
+        border-radius: 12px;
+      }
+
+      .btn-block {
+        display: flex;
+        width: 100%;
+        text-align: left;
+      }
+
+      .btn-footer {
+        padding: 7px 12px;
+        font-size: 14px;
+        border-radius: 10px;
+      }
+
+    </style>
   </head>
   
-  <body style="font-family:monospace; background:#111; color:#ccc; padding:20px;">
+  <body style="font-family:'Segoe UI', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; background:#111; color:#ccc; padding:20px;">
 
     <!-- Header -->
     <div class="w3-container w3-padding-24" style="background: linear-gradient(90deg, #001530, #003366); color: white;">
@@ -14,7 +82,7 @@
 	<div style="display: flex; align-items: center;">
 	  <img src="{{ url_for('static', filename='images/MPTRAC.svg') }}" alt="Logo" style="height:100px; margin-right:20px;">
 	  <div style="text-align: left;">
-            <h1 style="font-family: monospace; margin:0; font-size:32px;">Massive-Parallel Trajectory Calculations</h1>
+            <h1 style="margin:0; font-size:32px;">Massive-Parallel Trajectory Calculations</h1>
             <h4 style="margin-top:6px; font-size:18px; color: #ddd;">Web Runner for Air Parcel Trajectory Calculations</h4>
 	  </div>
 	</div>
@@ -33,7 +101,7 @@
     <div style="width: 80%; margin: 0 auto; box-sizing: border-box;">
       
       <h3 class="w3-center">Log Output</h3>
-      <p style="color: #ccc; font-size: 16px; margin-bottom: 10px; text-align: center; font-family: monospace;">
+      <p style="color: #ccc; margin-bottom: 10px; text-align: center;">
 	Please carefully check the log output below for warnings or errors.
       </p>
       <pre class="w3-round-large"
@@ -46,14 +114,13 @@
     
     <div class="w3-bar w3-center">
       <button onclick="window.history.back()"
-	      class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue"
-	      style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">
+	      class="btn btn-primary btn-large"
+	      style="margin-right: 20px;">
 	🔁 Modify Simulation
       </button>
       
       <button onclick="window.location.href='/'"
-	      class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue"
-	      style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
+	      class="btn btn-primary btn-large">
 	🏠 Return to Homepage
       </button>
     </div>
@@ -61,12 +128,9 @@
     <!-- Footer -->
     <footer class="w3-container w3-center w3-padding-32" style="background-color:#001f4d; color:white; margin-top:40px;">
       <p style="margin: 0;">
-	<a href="/terms" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Terms & Conditions</a>
-	| <a href="https://www.fz-juelich.de/en/legal-notice" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Legal Notice</a>
-	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Privacy Policy</a>
-	| <a href="https://www.fz-juelich.de" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background-color: white; color: #003366; ; padding: 2px 10px;">
-	  <img src="/static/images/fzj_logo.png" alt="FZJ Logo" style="height: 26px; padding: 0pt;">
-	</a>
+	<a href="/terms" class="btn btn-primary btn-footer">Terms & Conditions</a>
+	| <a href="https://www.fz-juelich.de/en/legal-notice" class="btn btn-primary btn-footer">Legal Notice</a>
+	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="btn btn-primary btn-footer">Privacy Policy</a>
       </p>
     </footer>
     
