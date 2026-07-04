@@ -77,13 +77,94 @@
         border-radius: 10px;
       }
 
+      .page-width {
+        width: min(1180px, 88vw);
+        margin: 0 auto;
+      }
+
+      .hero-panel {
+        background: linear-gradient(120deg, #041a34, #0a3f73);
+        color: white;
+        border: 1px solid rgba(160, 205, 255, 0.18);
+        border-radius: 24px;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+      }
+
+      .subhero-panel {
+        background: linear-gradient(180deg, rgba(24, 31, 41, 0.96), rgba(17, 23, 31, 0.96));
+        color: white;
+        border: 1px solid rgba(101, 129, 163, 0.28);
+        border-radius: 22px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.26);
+      }
+
+      .surface-panel {
+        background: linear-gradient(180deg, rgba(26, 32, 42, 0.98), rgba(21, 27, 36, 0.98));
+        border: 1px solid rgba(91, 111, 136, 0.26);
+        border-radius: 20px;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .button-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: 24px 0 8px 0;
+      }
+
+      .button-row--spacious {
+        margin: 28px 0 14px 0;
+      }
+
+      .log-box {
+        width: 100%;
+        background: #161b22;
+        padding: 18px;
+        max-height: 500px;
+        overflow: auto;
+        box-sizing: border-box;
+        border: 1px solid rgba(96, 119, 150, 0.25);
+        border-radius: 18px;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      .plot-frame {
+        width: 100%;
+        max-height: 85vh;
+        background: #161b22;
+        padding: 15px;
+        box-sizing: border-box;
+        object-fit: contain;
+        border: 1px solid rgba(96, 119, 150, 0.25);
+      }
+
+      .section-card {
+        background: linear-gradient(180deg, rgba(26, 32, 42, 0.98), rgba(21, 27, 36, 0.98));
+        color: white;
+        padding: 18px;
+        margin-bottom: 14px;
+        border: 1px solid rgba(91, 111, 136, 0.26);
+        border-radius: 18px;
+      }
+
     </style>
   </head>
   
-  <body style="font-family:'Segoe UI', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; background:#111; color:#ccc; padding:20px;">
+  <body style="font-family:'Segoe UI', Arial, Helvetica, sans-serif; font-size:18px; line-height:1.55; background: radial-gradient(circle at top, #16263b 0%, #10151d 42%, #0b0f15 100%); color:#d7e0eb; padding:20px;">
     
     <!-- Header -->
-    <div class="w3-container w3-padding-24" style="background: linear-gradient(90deg, #001530, #003366); color: white;">
+    <div class="w3-container w3-padding-24 page-width hero-panel">
       <div class="w3-row w3-center w3-padding-16 w3-content" style="max-width:1200px; margin:auto; display: flex; align-items: center; justify-content: center;">  
 	<div style="display: flex; align-items: center;">
 	  <img src="{{ url_for('static', filename='images/MPTRAC.svg') }}" alt="Logo" style="height:100px; margin-right:20px;">
@@ -96,16 +177,16 @@
     </div>
     
     <!-- Intro -->
-    <div class="w3-container w3-padding-16 w3-center" style="background-color: #1a1a1a; color: white; transition: all 0.3s ease; margin-top: 10px;">
+    <div class="w3-container w3-padding-20 w3-center page-width subhero-panel" style="margin-top: 14px;">
       <div class="w3-row w3-content" style="max-width:1200px; margin:auto;">
 	<p style="font-size: 18px; color: #ddd; line-height: 1.6;">
 	  <strong>Explore the MPTRAC Web Runner:</strong> Simulate and visualize air parcel trajectories to study atmospheric transport. 
 	  Configure simulations with key parameters and download results for analysis and further studies.
 	  This service is under active development. Please feel free to contact us with feedback or issues!
 	</p>
-	<div style="margin-top: 20px;">
-	  <a href="https://slcs-jsc.github.io/mptrac/" class="btn btn-primary btn-medium" style="margin-right: 20px;">📘 MPTRAC Documentation</a>
-	  <a href="https://github.com/slcs-jsc/mptrac" class="btn btn-primary btn-medium" style="margin-right: 20px;">💻 GitHub Repository</a>
+	<div class="button-row button-row--spacious">
+	  <a href="https://slcs-jsc.github.io/mptrac/" class="btn btn-primary btn-medium" >📘 MPTRAC Documentation</a>
+	  <a href="https://github.com/slcs-jsc/mptrac" class="btn btn-primary btn-medium" >💻 GitHub Repository</a>
 	  <a href="mailto:l.hoffmann@fz-juelich.de?subject=Feedback%20on%20MPTRAC%20Web%20Runner" class="btn btn-primary btn-medium">📬 Contact Us</a>
 	</div>
       </div>
@@ -114,7 +195,7 @@
     <br>
 
     {% if test_mode %}
-    <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-amber" style="width: 80%; margin: 0 auto 20px auto; color: #222;">
+    <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-amber page-width" style="margin: 0 auto 20px auto; color: #222; border-radius: 16px;">
       <p><strong>Local Test Mode:</strong> The form is preconfigured for the repository-local ERA-Interim test dataset.</p>
     </div>
     {% endif %}
@@ -126,13 +207,13 @@
     </p>
     
     <!-- Form -->
-    <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16" style="width: 80%; margin: 0 auto;">
+    <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16 page-width">
       
       <!-- Examples -->
       <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('example-settings')">
 	<i class="fa fa-caret-down"></i> Examples
       </button>
-      <div id="example-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+      <div id="example-settings" class="w3-container w3-hide section-card">
 	<p>Select a case study from the available examples below to auto-fill simulation parameters.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
@@ -203,7 +284,7 @@
       <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('meteo-settings')">
 	<i class="fa fa-caret-down"></i> Meteorological Data
       </button>
-      <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+      <div id="meteo-settings" class="w3-container w3-hide section-card">
 	<p>Select the meteorological dataset for the trajectory calculations.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
@@ -267,7 +348,7 @@
       <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('init-settings')">
 	<i class="fa fa-caret-down"></i> Initialization
       </button>
-      <div id="init-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+      <div id="init-settings" class="w3-container w3-hide section-card">
 	
 	<!-- Time Settings -->
 	<p><strong>Simulation Time:</strong> Enter the simulation start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Simulations can run forward or backward in time but must not exceed 30 days.</p>
@@ -350,7 +431,7 @@
       <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('diffusivity-settings')">
 	<i class="fa fa-caret-down"></i> Physics
       </button>
-      <div id="diffusivity-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+      <div id="diffusivity-settings" class="w3-container w3-hide section-card">
 	<p>Define the stochastic perturbations of air parcel locations along trajectories by setting the horizontal and vertical diffusivity values for the PBL, troposphere, and stratosphere. Additionally, specify the subgrid-scale winds for both horizontal and vertical directions.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
@@ -415,7 +496,7 @@
       <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('output-settings')">
 	<i class="fa fa-caret-down"></i> Output
       </button>
-      <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+      <div id="output-settings" class="w3-container w3-hide section-card">
 	<p>Select the output interval to determine how frequently simulation results are recorded.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
@@ -476,13 +557,13 @@
       <br>
       
       <!-- Buttons -->
-      <div class="w3-bar w3-center" style="margin-top: 20px;">
+      <div class="button-row">
 	<input type="file" id="setupFileInput" accept=".json" style="display:none" onchange="loadSetupFromFile(this)">
-	<button type="button" onclick="document.getElementById('setupFileInput').click()" class="btn btn-primary btn-large" style="margin-right: 20px;">
+	<button type="button" onclick="document.getElementById('setupFileInput').click()" class="btn btn-primary btn-large">
 	  📂 Load Setup
 	</button>
 	
-	<button type="reset" class="btn btn-primary btn-large" style="margin-right: 20px;">
+	<button type="reset" class="btn btn-primary btn-large">
 	  ♻️ Reset Form
 	</button>
 	
@@ -506,7 +587,7 @@
     
     <!-- Modal for showing progress -->
     <div id="progressModal" class="w3-modal" style="display:none;">
-      <div class="w3-modal-content w3-center w3-round-large w3-padding-32" style="background:#222;">
+      <div class="w3-modal-content w3-center w3-round-large w3-padding-32 surface-panel" style="max-width: 720px;">
 	<h2 class="w3-text-white">Running Simulation...</h2>
 	<p class="w3-text-light-grey w3-margin-top" style="width: 80%; margin-left: auto; margin-right: auto;">
 	  Please wait while we process your request. Processing may take several minutes. Maximum runtime is limited to 10 minutes.
@@ -853,12 +934,12 @@
     </script>
     
     <!-- Footer -->
-    <footer class="w3-container w3-center w3-padding-32" style="background-color:#001f4d; color:white; margin-top:40px;">
-      <p style="margin: 0;">
+    <footer class="w3-container w3-center w3-padding-32 page-width subhero-panel" style="margin-top:40px;">
+      <div class="footer-links">
 	<a href="/terms" class="btn btn-primary btn-footer">Terms & Conditions</a>
-	| <a href="https://www.fz-juelich.de/en/legal-notice" class="btn btn-primary btn-footer">Legal Notice</a>
-	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="btn btn-primary btn-footer">Privacy Policy</a>
-      </p>
+	<a href="https://www.fz-juelich.de/en/legal-notice" class="btn btn-primary btn-footer">Legal Notice</a>
+	<a href="https://www.fz-juelich.de/en/privacy-policy" class="btn btn-primary btn-footer">Privacy Policy</a>
+      </div>
     </footer>
     
   </body>
