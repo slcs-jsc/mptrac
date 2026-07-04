@@ -38,6 +38,12 @@
     </div>
     
     <br>
+
+    {% if test_mode %}
+    <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-amber" style="width: 80%; margin: 0 auto 20px auto; color: #222;">
+      <p><strong>Local Test Mode:</strong> The form is preconfigured for the repository-local ERA-Interim test dataset.</p>
+    </div>
+    {% endif %}
     
     <h2 class="w3-center">Simulation Parameters</h2>
     
@@ -150,11 +156,11 @@
               <div>
 		<h5 style="margin: 8px 0; color: #ccc;">Reanalyses</h5>
 		<label class="w3-block w3-padding-small">
-		  <input type="radio" name="met_source" value="era5low_6h" checked>
+		  <input type="radio" name="met_source" value="era5low_6h" {% if default_met_source == 'era5low_6h' %}checked{% endif %}>
 		  ERA5 low resolution (6-hourly | 1.0° × 1.0° | 137 levels | 1978–present)
 		</label>
 		<label class="w3-block w3-padding-small">
-		  <input type="radio" name="met_source" value="erai_6h" required>
+		  <input type="radio" name="met_source" value="erai_6h" {% if default_met_source == 'erai_6h' %}checked{% endif %} required>
 		  ERA-Interim (6-hourly | 0.75° × 0.75° | 60 levels | 1979–2019)
 		</label>
 		<label class="w3-block w3-padding-small">
@@ -194,11 +200,11 @@
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
 	    <label>Start Time</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" value="2000-01-01 00:00" required>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" value="{{ default_start_time }}" required>
 	  </div>
 	  <div class="w3-half" style="padding: 16px;">
 	    <label>Stop Time</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" value="2000-01-05 00:00" required>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" value="{{ default_stop_time }}" required>
 	  </div>
 	</div>
 	
@@ -217,7 +223,7 @@
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Mean Height [km]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mz" value="0.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mz" value="{{ default_mz }}">
 	  </div>
 	</div>
 	
@@ -236,7 +242,7 @@
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Uniform Spread Height [km]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="0.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="{{ default_uz }}">
 	  </div>
 	</div>
 	<div class="w3-row-padding">
@@ -448,8 +454,19 @@
     <script>
       let timerInterval;
       let startTime;
+
+      function resetProgressModal() {
+	  document.getElementById('progressModal').style.display = 'none';
+	  document.getElementById('timer').textContent = 'Elapsed Time: 00:00';
+	  if (timerInterval) {
+	      clearInterval(timerInterval);
+	      timerInterval = null;
+	  }
+	  startTime = null;
+      }
       
       function showProgressModal() {
+	  resetProgressModal();
 	  document.getElementById('progressModal').style.display = 'block';
 	  startTime = Date.now();
 	  
@@ -465,7 +482,11 @@
       function hideProgressModal() {
 	  document.getElementById('progressModal').style.display = 'none';
 	  clearInterval(timerInterval);
+	  timerInterval = null;
       }
+
+      window.addEventListener('pageshow', resetProgressModal);
+      window.addEventListener('load', resetProgressModal);
     </script>
     
     <!-- Loading example settings -->

@@ -56,8 +56,9 @@ runs/               Working directories, logs, and output archives
 1. Install and compile MPTRAC following the official installation instructions.  
 2. Configure meteorological data paths in `app.py` by updating the `MET_OPTIONS` dictionary to match your system’s file locations.  
 3. Navigate to `[mptrac_dir]/projects/web_runner/` and set up a Python environment.  
-4. Run locally with `python app.py` or `./run.sh`.  
-5. For production, deploy with Gunicorn behind Nginx.
+4. Run locally with `python app.py` for normal paths or `python app.py --test` / `./run.sh` to use the repository-local ERA-Interim test dataset under `../../tests/data/ei`.  
+5. In local test mode, select **ERA-Interim** in the web form and use the test interval `2011-06-05 00:00` to `2011-06-08 00:00`.  
+6. For production, deploy with Gunicorn behind Nginx.
 
 ## Usage
 

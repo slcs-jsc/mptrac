@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, send_from_directory
+import argparse
 import os, time, uuid, glob, shutil, textwrap, zipfile, subprocess
 from datetime import datetime, timezone
 import numpy as np
@@ -56,6 +57,15 @@ def fast_zip_no_compression(zip_path, source_dir):
 
 # Flask app...
 app = Flask(__name__)
+app.config['TEST_MODE'] = False
+
+TEST_MET_SOURCE = 'erai_6h'
+TEST_METBASE = '../../tests/data/ei'
+TEST_DT_MET = 86400
+TEST_START_TIME = '2011-06-05 00:00'
+TEST_STOP_TIME = '2011-06-08 00:00'
+TEST_MZ = '30.0'
+TEST_UZ = '60.0'
 
 # Meteo options...
 MET_OPTIONS = {
@@ -198,7 +208,17 @@ def validation_error(message, run_id):
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
 @app.route('/')
-def index(): return render_template('index.html')
+def index():
+    test_mode = app.config.get('TEST_MODE', False)
+    return render_template(
+        'index.html',
+        test_mode=test_mode,
+        default_met_source=TEST_MET_SOURCE if test_mode else 'era5low_6h',
+        default_start_time=TEST_START_TIME if test_mode else '2000-01-01 00:00',
+        default_stop_time=TEST_STOP_TIME if test_mode else '2000-01-05 00:00',
+        default_mz=TEST_MZ if test_mode else '0.0',
+        default_uz=TEST_UZ if test_mode else '0.0'
+    )
 
 @app.route('/download/<run_id>')
 def download(run_id):
@@ -239,11 +259,22 @@ def run():
         # Parse parameters...
         to_f = lambda x: float(f[x])
         met_source = f.get('met_source', 'erai_6h')
+        if met_source not in MET_OPTIONS:
+            return validation_error(f"Unknown meteorological source: {met_source}", run_id=run_id)
+
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-        # METBASE = '../../tests/data/ei'
-        # DT_MET = 86400
+
+        if app.config.get('TEST_MODE', False):
+            if met_source != TEST_MET_SOURCE:
+                return validation_error(
+                    "Local test mode only supports ERA-Interim test data. Please select ERA-Interim.",
+                    run_id=run_id
+                )
+            METBASE = TEST_METBASE
+            DT_MET = TEST_DT_MET
+
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
@@ -574,4 +605,16 @@ def show_logs():
         return render_template('error.html', stdout=f"❌ Error reading log file: {e}"), 500
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run the MPTRAC web runner.')
+    parser.add_argument(
+        '--test',
+        action='store_true',
+        help='Use the local ERA-Interim test dataset from ../../tests/data/ei.'
+    )
+    args = parser.parse_args()
+
+    app.config['TEST_MODE'] = args.test
+    if app.config['TEST_MODE']:
+        logger.info('[CONFIG] Running in local test mode with ../../tests/data/ei.')
+
     app.run(debug=False)
