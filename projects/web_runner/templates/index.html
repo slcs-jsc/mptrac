@@ -180,9 +180,9 @@
     <div class="w3-container w3-padding-20 w3-center page-width subhero-panel" style="margin-top: 14px;">
       <div class="w3-row w3-content" style="max-width:1200px; margin:auto;">
 	<p style="font-size: 18px; color: #ddd; line-height: 1.6;">
-	  <strong>Explore the MPTRAC Web Runner:</strong> Simulate and visualize air parcel trajectories to study atmospheric transport. 
-	  Configure simulations with key parameters and download results for analysis and further studies.
-	  This service is under active development. Please feel free to contact us with feedback or issues!
+	  <strong>Run MPTRAC in your browser:</strong> Set up, run, and visualize air parcel trajectory simulations for atmospheric transport studies. 
+	  Choose the key input parameters, start the simulation, and download the results for further analysis.
+	  This service is under active development. Feedback and bug reports are welcome.
 	</p>
 	<div class="button-row button-row--spacious">
 	  <a href="https://slcs-jsc.github.io/mptrac/" class="btn btn-primary btn-medium" >📘 MPTRAC Documentation</a>
@@ -196,14 +196,14 @@
 
     {% if test_mode %}
     <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-amber page-width" style="margin: 0 auto 20px auto; color: #222; border-radius: 16px;">
-      <p><strong>Local Test Mode:</strong> The form is preconfigured for the repository-local ERA-Interim test dataset.</p>
+      <p><strong>Local Test Mode:</strong> This page is preconfigured for the repository-local ERA-Interim test dataset and can be started directly.</p>
     </div>
     {% endif %}
     
     <h2 class="w3-center">Simulation Parameters</h2>
     
     <p style="text-align: center; max-width: 900px; margin: 0 auto; color: #ccc;">
-      Please specify simulation parameters below including meteorological data, initialization, physics, and output options. You can also load predefined case studies from the “Examples” menu.
+      Choose a meteorological dataset, define the release location and time, adjust optional physics and output settings, then start the simulation. You can also load a predefined case from the Examples section.
     </p>
     
     <!-- Form -->
@@ -214,7 +214,7 @@
 	<i class="fa fa-caret-down"></i> Examples
       </button>
       <div id="example-settings" class="w3-container w3-hide section-card">
-	<p>Select a case study from the available examples below to auto-fill simulation parameters.</p>
+	<p>Select a predefined case to fill the form with a complete simulation setup.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
 	    <div class="w3-text-white">
@@ -285,7 +285,7 @@
 	<i class="fa fa-caret-down"></i> Meteorological Data
       </button>
       <div id="meteo-settings" class="w3-container w3-hide section-card">
-	<p>Select the meteorological dataset for the trajectory calculations.</p>
+	<p>Select the meteorological dataset that will drive the trajectory simulation.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
 	    <div class="w3-text-white">
@@ -351,7 +351,7 @@
       <div id="init-settings" class="w3-container w3-hide section-card">
 	
 	<!-- Time Settings -->
-	<p><strong>Simulation Time:</strong> Enter the simulation start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Simulations can run forward or backward in time but must not exceed 30 days.</p>
+	<p><strong>Simulation Time:</strong> Enter the start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Runs can go forward or backward in time, but the total duration must not exceed 30 days.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
 	    <label>Start Time</label>
@@ -366,7 +366,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Position Settings -->
-	<p><strong>Initial Position:</strong> Specify the mean initial location of the air parcels. Heights are in kilometers above sea level and converted to pressure internally.</p>
+	<p><strong>Initial Position:</strong> Set the mean release location of the air parcels. Heights are given in kilometers above sea level and converted internally.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Mean Longitude [°]</label>
@@ -385,7 +385,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Perturbations -->
-	<p><strong>Random Perturbations:</strong> Define uniform or Gaussian spreads (Full Width at Half Maximum, FWHM) to randomly perturb the initial positions of air parcels in longitude, latitude, and height.</p>
+	<p><strong>Random Perturbations:</strong> Use uniform or Gaussian spreads to perturb the initial parcel positions in longitude, latitude, and height.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Uniform Spread Longitude [°]</label>
@@ -418,7 +418,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Number of Parcels -->
-	<p><strong>Number of Parcels:</strong> Specify the total number of air parcels to be released. The maximum allowed is 10,000.</p>
+	<p><strong>Number of Parcels:</strong> Choose how many air parcels to release. The maximum is 10,000.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Number of Air Parcels</label>
@@ -432,47 +432,47 @@
 	<i class="fa fa-caret-down"></i> Physics
       </button>
       <div id="diffusivity-settings" class="w3-container w3-hide section-card">
-	<p>Define the stochastic perturbations of air parcel locations along trajectories by setting the horizontal and vertical diffusivity values for the PBL, troposphere, and stratosphere. Additionally, specify the subgrid-scale winds for both horizontal and vertical directions.</p>
+	<p>Adjust turbulence and subgrid-scale wind parameters for the PBL, troposphere, and stratosphere.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Horizontal Diffusivity in PBL [m²/s]</label>
+            <label>Horiz. Diffusivity in PBL [m²/s]</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dx_pbl" value="50.0" required>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Horizontal Diffusivity in Troposphere [m²/s]</label>
+            <label>Horiz. Diffusivity in Troposphere [m²/s]</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dx_trop" value="50.0" required>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Horizontal Diffusivity in Stratosphere [m²/s]</label>
+            <label>Horiz. Diffusivity in Stratosphere [m²/s]</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dx_strat" value="0.0" required>
 	  </div>
 	</div>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Vertical Diffusivity in PBL [m²/s]</label>
+            <label>Vert. Diffusivity in PBL [m²/s]</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dz_pbl" value="0.0" required>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Vertical Diffusivity in Troposphere [m²/s]</label>
+            <label>Vert. Diffusivity in Troposphere [m²/s]</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dz_trop" value="0.0" required>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Vertical Diffusivity in Stratosphere [m²/s]</label>
+            <label>Vert. Diffusivity in Stratosphere [m²/s]</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dz_strat" value="0.1" required>
 	  </div>
 	</div>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Horizontal Subgrid-Scale Winds</label>
+            <label>Horiz. Subgrid-Scale Winds</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_mesox" value="0.16" required>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Vertical Subgrid-Scale Winds</label>
+            <label>Vert. Subgrid-Scale Winds</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_mesoz" value="0.16" required>
 	  </div>
 	</div>
 	<hr style="border-color: #444;">
-	<p>Select thresholds for extreme convection parametrization, and choose whether to enable vertical mixing throughout the planetary boundary layer (PBL).</p>
+	<p>Set optional convection thresholds and choose whether to enable vertical mixing throughout the planetary boundary layer (PBL).</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label for="conv_cape">CAPE Threshold [J/kg]</label>
@@ -497,7 +497,7 @@
 	<i class="fa fa-caret-down"></i> Output
       </button>
       <div id="output-settings" class="w3-container w3-hide section-card">
-	<p>Select the output interval to determine how frequently simulation results are recorded.</p>
+	<p>Choose how often model output is written during the simulation.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
 	    <label>Output Interval</label><br>
@@ -512,7 +512,7 @@
 	</div>
 	
 	<hr style="border-color: #444;">
-	<p>Select parameters for quick look plot.</p>
+	<p>Choose the settings for the quick-look trajectory plots.</p>
 	
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
@@ -590,7 +590,7 @@
       <div class="w3-modal-content w3-center w3-round-large w3-padding-32 surface-panel" style="max-width: 720px;">
 	<h2 class="w3-text-white">Running Simulation...</h2>
 	<p class="w3-text-light-grey w3-margin-top" style="width: 80%; margin-left: auto; margin-right: auto;">
-	  Please wait while we process your request. Processing may take several minutes. Maximum runtime is limited to 10 minutes.
+	  Please wait while the simulation is running. Processing may take several minutes, and model runtime is limited to 10 minutes.
 	</p>
 	<div class="w3-center w3-padding-16 w3-margin-top">
 	  <i class="w3-spin w3-jumbo w3-text-light-blue fa fa-cog"></i>
