@@ -510,8 +510,23 @@
 	    <label style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="86400"> 24 h</label>
 	  </div>
 	</div>
-	
+
 	<hr style="border-color: #444;">
+	<p>Choose whether trajectory output files should be written to the ZIP archive as ASCII or converted to netCDF after plotting.</p>
+	<div class="w3-row-padding">
+	  <div class="w3-full" style="padding: 16px;">
+	    <label>Output Format</label><br>
+	    <label style="margin-right: 16px;"><input class="w3-radio" type="radio" name="output_format" value="ascii" checked> ASCII</label>
+	    <label><input class="w3-radio" type="radio" name="output_format" value="netcdf"> netCDF</label>
+	  </div>
+	</div>
+      </div>
+
+      <!-- Visualization -->
+      <button type="button" class="btn btn-secondary btn-section btn-block" style="margin-bottom: 12px;" onclick="toggleCollapsible('visualization-settings')">
+	<i class="fa fa-caret-down"></i> Visualization
+      </button>
+      <div id="visualization-settings" class="w3-container w3-hide section-card">
 	<p>Choose the settings for the quick-look trajectory plots.</p>
 	
 	<div class="w3-row-padding">

@@ -16,6 +16,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # Config...
 ATM_INIT_CMD = '../../src/atm_init'
 TRAC_CMD = '../../src/trac'
+ATM_CONV_CMD = '../../src/atm_conv'
 
 # Create directories...
 RUNS_DIR, ZIPS_DIR, LOG_DIR = 'runs/working', 'runs/zips', 'runs/logs'
@@ -295,6 +296,7 @@ def run():
         conv_cape, conv_cin = to_f('conv_cape'), to_f('conv_cin')
         conv_mix_pbl = int(f.get('conv_mix_pbl', 0))
         atm_dt_out = to_f('atm_dt_out')
+        output_format = f.get('output_format', 'ascii')
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
         lon_min, lat_min, lon_max, lat_max = to_f('lon_min'), to_f('lat_min'), to_f('lon_max'), to_f('lat_max')
@@ -318,6 +320,8 @@ def run():
             return validation_error("Central longitude must be between -180° and 180°.", run_id=run_id)
         if not (-90 <= central_lat <= 90):
             return validation_error("Central latitude must be between -90° and 90°.", run_id=run_id)
+        if output_format not in ['ascii', 'netcdf']:
+            return validation_error("Output format must be ASCII or netCDF.", run_id=run_id)
         
         # Set forward/backward trajectory flag...
         direction = -1 if stop_time < start_time else 1
@@ -568,6 +572,36 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             key=lambda name: datetime.strptime(name.split("_")[1][:-4], "%Y-%m-%dT%H:%MZ")
         )
         logger.info(f"[PLOT] [{run_id}] Plots finished.")
+
+        # Optionally convert ASCII trajectory output to netCDF after plotting...
+        atm_conv_output = ""
+        if output_format == 'netcdf':
+            conv_logs = []
+            for ascii_file in files:
+                nc_file = os.path.splitext(ascii_file)[0] + '.nc'
+                conv_code, conv_output = run_command(
+                    [ATM_CONV_CMD, ctl_file, ascii_file, '0', nc_file, '2'],
+                    timeout=120,
+                    run_id=run_id
+                )
+                conv_logs.append(
+                    f"=== atm_conv Output | {os.path.basename(ascii_file)} ===\n{conv_output}"
+                )
+                if conv_code != 0:
+                    combined_output += "\n\n" + "\n\n".join(conv_logs)
+                    logger.error(
+                        f"[CONVERT] [{run_id}] netCDF conversion failed for {ascii_file}: exit code {conv_code}"
+                    )
+                    return render_template('error.html', stdout=combined_output), 500
+                try:
+                    os.remove(ascii_file)
+                except Exception as e:
+                    combined_output += "\n\n" + "\n\n".join(conv_logs)
+                    logger.error(f"[CONVERT] [{run_id}] Failed to remove {ascii_file}: {e}")
+                    return render_template('error.html', stdout=combined_output), 500
+            atm_conv_output = "\n\n" + "\n\n".join(conv_logs)
+            combined_output += atm_conv_output
+            logger.info(f"[CONVERT] [{run_id}] Converted {len(files)} atmosphere files to netCDF.")
         
         # Create zip file...
         zip_path = os.path.join(ZIPS_DIR, f"mptrac_{run_id}.zip")
