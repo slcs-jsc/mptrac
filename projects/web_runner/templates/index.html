@@ -255,7 +255,7 @@
     <h2 class="w3-center">Simulation Parameters</h2>
     
     <p style="text-align: center; max-width: 900px; margin: 0 auto; color: #ccc;">
-      Choose a meteorological dataset, define the release location and time, adjust optional physics and output settings, then start the simulation. You can also load a predefined case from the Examples section.
+      For a first run, choose a meteorological dataset, set the release time and location, and keep most other default settings unchanged. You can also load a predefined case from the Examples section.
     </p>
     
     <!-- Form -->
@@ -266,7 +266,7 @@
 	<i class="fa fa-caret-down"></i> Examples
       </button>
       <div id="example-settings" class="w3-container w3-hide section-card">
-	<p>Select a predefined case to fill the form with a complete simulation setup.</p>
+	<p>Select a predefined case to fill the form with a complete simulation setup. Choosing an example may overwrite your current entries.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
 	    <div class="w3-text-white">
@@ -337,7 +337,7 @@
 	<i class="fa fa-caret-down"></i> Meteorological Data
       </button>
       <div id="meteo-settings" class="w3-container w3-hide section-card">
-	<p>Select the meteorological dataset that will drive the trajectory simulation.</p>
+	<p>Select the meteorological dataset that will drive the trajectory simulation. Forecast products mainly support recent dates, while reanalysis datasets cover longer historical periods.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
 	    <div class="w3-text-white">
@@ -403,7 +403,7 @@
       <div id="init-settings" class="w3-container w3-hide section-card">
 	
 	<!-- Time Settings -->
-	<p>Enter the start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Runs can go forward or backward in time, but the total duration must not exceed 30 days.</p>
+	<p>Define the release time and initial air parcel location. Enter start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Runs can go forward or backward in time, but the total duration must not exceed 30 days.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
 	    <label>Start Time</label>
@@ -418,7 +418,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Position Settings -->
-	<p>Set the mean release location of the air parcels. Heights are given in kilometers above sea level and converted internally.</p>
+	<p>Set the mean release location of the air parcels. Heights are given in kilometers above sea level and converted internally to pressure. The mean values define the center of the release.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Mean Longitude [°]</label>
@@ -437,7 +437,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Perturbations -->
-	<p>Use uniform or Gaussian spreads to perturb the initial parcel positions in longitude, latitude, and height.</p>
+	<p>Use uniform or Gaussian spreads to perturb the initial parcel positions in longitude, latitude, and height. Uniform spread defines a bounded release box, while Gaussian spread defines a normally distributed spread around the mean location.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Uniform Spread Longitude [°]</label>
@@ -484,7 +484,7 @@
 	<i class="fa fa-caret-down"></i> Physics
       </button>
       <div id="diffusivity-settings" class="w3-container w3-hide section-card">
-	<p>Adjust turbulence and subgrid-scale wind parameters for the PBL, troposphere, and stratosphere.</p>
+	<p>Adjust turbulence and subgrid-scale wind parameters for the PBL, troposphere, and stratosphere. For many standard trajectory runs, the default values are sufficient.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
             <label>Horiz. Diffusivity in PBL [m²/s]</label>
@@ -524,7 +524,7 @@
 	  </div>
 	</div>
 	<hr style="border-color: #444;">
-	<p>Set optional convection thresholds and choose whether to enable vertical mixing throughout the planetary boundary layer (PBL).</p>
+	<p>Set optional convection thresholds and choose whether to enable vertical mixing throughout the planetary boundary layer (PBL). These settings are mainly relevant for advanced sensitivity studies, and the default values are suitable for standard runs.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label for="conv_cape">CAPE Threshold [J/kg]</label>
@@ -549,7 +549,7 @@
 	<i class="fa fa-caret-down"></i> Output
       </button>
       <div id="output-settings" class="w3-container w3-hide section-card">
-	<p>Choose how often model output is written during the simulation.</p>
+	<p>Choose how often model output is written during the simulation. Shorter intervals produce more detailed trajectory output, but increase file size and processing time.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
 	    <label>Output Interval</label><br>
@@ -564,7 +564,7 @@
 	</div>
 
 	<hr style="border-color: #444;">
-	<p>Select up to {{ max_output_quantities }} output quantities for the trajectory files. The recommended fields are preselected.</p>
+	<p>Select up to {{ max_output_quantities }} output quantities for the trajectory files. The recommended fields are preselected for standard transport analysis, and fewer variables reduce output size.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
 	    <label>Output Variables</label>
@@ -586,7 +586,7 @@
 	</div>
 
 	<hr style="border-color: #444;">
-	<p>Choose whether trajectory output files should be written to the ZIP archive as ASCII or converted to netCDF after plotting.</p>
+	<p>Choose whether trajectory output files should be written to the ZIP archive as ASCII or converted to netCDF after plotting. ASCII is simple and transparent, while netCDF is more convenient for structured post-processing.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
 	    <label>Output Format</label><br>
@@ -601,7 +601,7 @@
 	<i class="fa fa-caret-down"></i> Visualization
       </button>
       <div id="visualization-settings" class="w3-container w3-hide section-card">
-	<p>Choose the settings for the quick-look trajectory plots.</p>
+	<p>Choose the settings for the quick-look trajectory plots. These options affect only the plots shown in the browser and do not change the trajectory calculation itself.</p>
 	
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
