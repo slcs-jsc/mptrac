@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, send_from_directory
 import argparse
-import os, time, uuid, glob, shutil, textwrap, zipfile, subprocess
+import os, time, uuid, glob, shutil, textwrap, zipfile, subprocess, multiprocessing
 from datetime import datetime, timezone
 import numpy as np
 import matplotlib
@@ -13,17 +13,27 @@ import json
 from logging.handlers import RotatingFileHandler
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# Config...
+# MPTRAC tool paths and local test-mode defaults.
 ATM_INIT_CMD = '../../src/atm_init'
 TRAC_CMD = '../../src/trac'
 ATM_CONV_CMD = '../../src/atm_conv'
+MET_ACCESS_TIMEOUT = 10
+MET_ACCESS_PATH = '/mnt/slmet_mnt/met_data/'
+TEST_MET_SOURCE = 'erai_6h'
+TEST_METBASE = '../../tests/data/ei'
+TEST_DT_MET = 86400
+TEST_START_TIME = '2011-06-05 00:00'
+TEST_STOP_TIME = '2011-06-08 00:00'
+TEST_MZ = '30.0'
+TEST_UZ = '60.0'
 
-# Create directories...
+# Directories for working files, downloads, and logs.
 RUNS_DIR, ZIPS_DIR, LOG_DIR = 'runs/working', 'runs/zips', 'runs/logs'
+# Create the required runtime directories once.
 for path in [RUNS_DIR, ZIPS_DIR, LOG_DIR]:
     os.makedirs(path, exist_ok=True)
 
-# Logging setup...
+# Rotating log file for the web application.
 log_file = os.path.join(LOG_DIR, 'web_runner.log')
 logger = logging.getLogger('web_runner')
 logger.setLevel(logging.INFO)
@@ -31,8 +41,11 @@ handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
 handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s in %(threadName)s: %(message)s'))
 logger.addHandler(handler)
 
-# Clean up working directory...
+# Global constants for output variables and timeouts.
+
+# Clean up old run directories and ZIP files.
 def clean_old_runs(max_age_sec=3600):
+    # Current time used as the cleanup reference.
     now = time.time()
     for directory in [RUNS_DIR, ZIPS_DIR]:
         logger.info(f"[CLEANUP] Scanning {directory} for files older than {max_age_sec} seconds.")
@@ -47,8 +60,9 @@ def clean_old_runs(max_age_sec=3600):
                 except Exception as e:
                     logger.warning(f"[CLEANUP] Failed to remove {path}: {e}")
 
-# Create zip file...
+# Create a ZIP archive quickly without compression.
 def fast_zip_no_compression(zip_path, source_dir):
+    # Recursively package all files in the run directory.
     with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_STORED) as zipf:
         for root, _, files in os.walk(source_dir):
             for file in files:
@@ -56,19 +70,11 @@ def fast_zip_no_compression(zip_path, source_dir):
                 arcname = os.path.relpath(file_path, source_dir)
                 zipf.write(file_path, arcname)
 
-# Flask app...
+# Initialize the Flask application and feature flags.
 app = Flask(__name__)
 app.config['TEST_MODE'] = False
 
-TEST_MET_SOURCE = 'erai_6h'
-TEST_METBASE = '../../tests/data/ei'
-TEST_DT_MET = 86400
-TEST_START_TIME = '2011-06-05 00:00'
-TEST_STOP_TIME = '2011-06-08 00:00'
-TEST_MZ = '30.0'
-TEST_UZ = '60.0'
-
-# Meteo options...
+# Available meteorological data sources and their metadata.
 MET_OPTIONS = {
     'aifs_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ecmwf/open_data/data/aifs-single_YYYY_MM_DD/aifs-single',
                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ECMWF AIFS'),
@@ -92,7 +98,7 @@ MET_OPTIONS = {
                      DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2')
 }
 
-
+# Output quantities offered in the web interface.
 MAX_OUTPUT_QUANTITIES = 15
 DEFAULT_OUTPUT_QUANTITIES = ['zg', 'p', 't', 'theta', 'u', 'v', 'w', 'pv', 'h2o', 'o3', 'ps', 'pbl', 'pt', 'cc']
 OUTPUT_QUANTITY_GROUPS = [
@@ -184,8 +190,36 @@ ALLOWED_OUTPUT_QUANTITIES = {
     for quantity in group['quantities']
 }
 
-# Execute shell command and check result...
+# Availability rules for meteorological datasets used by the web runner.
+MET_TIME_LIMITS = {
+    'erai_6h': {
+        'min_time': '1979-01-01 00:00',
+        'max_time': '2019-08-31 18:00',
+    },
+    'jra55_6h': {
+        'min_time': '1958-01-01 00:00',
+        'max_time': '2023-12-31 18:00',
+    },
+    'era5low_6h': {
+        'min_time': '1978-12-01 00:00',
+    },
+    'merra2_3h': {
+        'min_time': '1980-01-01 00:00',
+    },
+    'jra3q_6h': {
+        'min_time': '1948-01-01 00:00',
+    },
+    'ncep_6h': {
+        'min_time': '1948-01-01 00:00',
+    },
+    'ncep2_6h': {
+        'min_time': '1979-01-01 00:00',
+    },
+}
+
+# Run external processes with timeout handling and logging.
 def run_command(cmd, timeout, run_id):
+    # Actual subprocess invocation.
     try:
         logger.info(f"[EXEC] [{run_id}] Executing command: {' '.join(cmd)}")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout)
@@ -195,20 +229,63 @@ def run_command(cmd, timeout, run_id):
         logger.warning(f"[EXEC] [{run_id}] Command timed out after {timeout} seconds.")
         return -1, (e.stdout or "") + f"\n❌ Command timed out after {timeout} seconds."
 
-# Calculate seconds since 2000-01-01, 00:00 UTC...
+# Convert a UTC timestamp into MPTRAC seconds.
 def seconds_since_2000(time_str):
     dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
+# Parse a web-form timestamp string into a UTC datetime object.
+def parse_form_datetime(time_str):
+    return datetime.strptime(time_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
 
-
+# Serialize form data, including multi-value selections.
 def serialize_form_data(form):
+    # Build a JSON-compatible dictionary.
     data = {}
     for key, values in form.lists():
         data[key] = values if len(values) != 1 else values[0]
     return data
 
-# Create map plot of air parcel data...
+# Probe a directory in a child process so hanging mounts do not block the request.
+def _probe_directory_access(path, conn):
+    # Actual filesystem access in the child process.
+    try:
+        with os.scandir(path) as entries:
+            next(entries, None)
+        conn.send((True, None))
+    except Exception as exc:
+        conn.send((False, str(exc)))
+    finally:
+        conn.close()
+
+# Test directory reachability with a short timeout.
+def check_directory_access(path, timeout_sec=MET_ACCESS_TIMEOUT):
+    # Communication between the parent and child process.
+    parent_conn, child_conn = multiprocessing.Pipe(duplex=False)
+    process = multiprocessing.Process(
+        target=_probe_directory_access,
+        args=(path, child_conn),
+        daemon=True
+    )
+    process.start()
+    child_conn.close()
+    process.join(timeout_sec)
+
+    if process.is_alive():
+        logger.warning(f"[METCHECK] Timed out while probing meteorological data path: {path}")
+        process.terminate()
+        process.join(1)
+        parent_conn.close()
+        return False, f"Timed out after {timeout_sec} seconds."
+
+    if parent_conn.poll():
+        result = parent_conn.recv()
+    else:
+        result = (False, "No response from filesystem probe.")
+    parent_conn.close()
+    return result
+
+# Draw a quick-look map for one output time step.
 def create_plot_file(
     lons, lats, heights, filepath,
     projection='cartesian', region='global',
@@ -218,6 +295,7 @@ def create_plot_file(
     met_name='', time_str='',
     mlon=None, mlat=None
 ):
+    # Select the map projection for the plot.
     proj_map = {
         'cartesian': ccrs.PlateCarree(),
         'orthographic': ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat),
@@ -256,7 +334,7 @@ def create_plot_file(
     plt.savefig(filepath, bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close()
 
-# Parallel processing of plots...
+# Load a trajectory file and generate a plot image.
 def process_plot(
     run_id, file, work_dir,
     map_projection, plot_region,
@@ -266,6 +344,7 @@ def process_plot(
     lon_max, lat_max,
     z_min, z_max
 ):
+    # Derive the timestamp and plot filename from the output filename.
     filename = os.path.splitext(os.path.basename(file))[0]
     parts = filename.split('_')[1:6]
     dt = datetime.strptime("_".join(parts), "%Y_%m_%d_%H_%M")
@@ -303,13 +382,39 @@ def process_plot(
     )
     return plot_filename
 
-# Exit with error message...
+# Render and log validation errors consistently.
 def validation_error(message, run_id):
     logger.error(f"[VALIDATE] [{run_id}] Validation failed: {message}")
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
+# Validate the requested time window against dataset-specific availability rules.
+def validate_met_time_range(met_source, start_dt, stop_dt):
+    limits = MET_TIME_LIMITS.get(met_source)
+    if not limits:
+        return None
+
+    requested_min = min(start_dt, stop_dt)
+    requested_max = max(start_dt, stop_dt)
+
+    min_time = parse_form_datetime(limits['min_time']) if 'min_time' in limits else None
+    max_time = parse_form_datetime(limits['max_time']) if 'max_time' in limits else None
+
+    if min_time and requested_min < min_time:
+        return (
+            f"{MET_OPTIONS[met_source]['MET_NAME']} data are only available from "
+            f"{limits['min_time']} UTC."
+        )
+    if max_time and requested_max > max_time:
+        return (
+            f"{MET_OPTIONS[met_source]['MET_NAME']} data are only available until "
+            f"{limits['max_time']} UTC."
+        )
+    return None
+
+# Render the main form with defaults and UI metadata.
 @app.route('/')
 def index():
+    # Switch between normal mode and local test mode.
     test_mode = app.config.get('TEST_MODE', False)
     return render_template(
         'index.html',
@@ -324,6 +429,7 @@ def index():
         output_quantity_groups=OUTPUT_QUANTITY_GROUPS,
     )
 
+# Download the ZIP archive of a completed run.
 @app.route('/download/<run_id>')
 def download(run_id):
     logger.info(f"[DOWNLOAD] [{run_id}] Download requested.")
@@ -332,6 +438,7 @@ def download(run_id):
         return render_template('error.html', stdout="❌ ZIP file not found."), 404
     return send_from_directory(ZIPS_DIR, f"mptrac_{run_id}.zip", as_attachment=True)
 
+# Download the saved setup JSON of a run.
 @app.route('/download_setup/<run_id>')
 def download_setup(run_id):
     setup_path = os.path.join(RUNS_DIR, run_id, "setup.json")
@@ -345,14 +452,15 @@ def download_setup(run_id):
         download_name=f"mptrac_setup_{run_id}.json"
     )
 
+# Main run route with validation, model execution, and result rendering.
 @app.route('/run', methods=['POST'])
 def run():
     
-    # Get run ID...
+    # Unique identifier for this simulation run.
     run_id = str(uuid.uuid4())
     logger.info(f"[RUN] [{run_id}] Run started from {request.remote_addr}.")
     
-    # Clean up old runs first
+    # Clean up old runs before starting a new one.
     clean_old_runs()
     
     # Parse input form...
@@ -361,7 +469,7 @@ def run():
         form_data = serialize_form_data(f)
         logger.info(f"[RUN] [{run_id}] Received input form: {form_data}")
         
-        # Parse parameters...
+        # Read and convert the form parameters.
         to_f = lambda x: float(f[x])
         met_source = f.get('met_source', 'erai_6h')
         if met_source not in MET_OPTIONS:
@@ -371,6 +479,7 @@ def run():
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
 
+        # Special overrides for local test mode.
         if app.config.get('TEST_MODE', False):
             if met_source != TEST_MET_SOURCE:
                 return validation_error(
@@ -382,7 +491,8 @@ def run():
 
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
-        start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
+        start_dt = parse_form_datetime(f['start_time'])
+        stop_dt = parse_form_datetime(f['stop_time'])
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         if met_source == 'aifs_6h':
             METBASE = f"/mnt/slmet_mnt/met_data/ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"
@@ -390,6 +500,22 @@ def run():
             METBASE = f"/mnt/slmet_mnt/met_data/ecmwf/open_data/data/ifs_{start_dt.strftime('%Y_%m_%d')}/ifs"
         if met_source == 'gfs_3h':
             METBASE = f"/mnt/slmet_mnt/met_data/ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"
+
+        # Early reachability check of the meteo mount.
+        if not app.config.get('TEST_MODE', False):
+            met_access_path = MET_ACCESS_PATH
+            met_access_ok, met_access_error = check_directory_access(met_access_path)
+            if not met_access_ok:
+                return validation_error(
+                    f"Meteorological data directory is not reachable: {met_access_path} ({met_access_error})",
+                    run_id=run_id
+                )
+
+        # Apply dataset-specific time-range checks where the archive bounds are stable enough.
+        met_time_error = validate_met_time_range(met_source, start_dt, stop_dt)
+        if met_time_error:
+            return validation_error(met_time_error, run_id=run_id)
+
         mlon, mlat, mz = to_f('mlon'), to_f('mlat'), to_f('mz')
         ulon, ulat, uz = to_f('ulon'), to_f('ulat'), to_f('uz')
         slon, slat, sz = to_f('slon'), to_f('slat'), to_f('sz')
@@ -408,7 +534,7 @@ def run():
         z_min, z_max = to_f('z_min'), to_f('z_max')
         central_lon, central_lat = to_f('central_lon'), to_f('central_lat')
         
-        # Check values...
+        # Semantic validation of the input values.
         if abs(start_time - stop_time) > 30*86400:
             return validation_error("Trajectory duration exceeds 30 days.", run_id=run_id)
         if not (-100 <= mz <= 100):
@@ -445,20 +571,21 @@ def run():
     except Exception as e:
         return validation_error(str(e), run_id=run_id)
     
-    # Create working directory...
+    # Create the run-specific working directory.
     work_dir = os.path.join(RUNS_DIR, run_id)
     os.makedirs(work_dir, exist_ok=True)
 
-    # Save setup...
+    # Save the complete form setup as JSON.
     setup_file = os.path.join(work_dir, "setup.json")
     with open(setup_file, "w") as fobj:
         json.dump(form_data, fobj, indent=2)
     
-    # Create control parameter file...
+    # Create the MPTRAC control file.
     ctl_file, dirlist_file, init_file = map(lambda x: os.path.join(work_dir, x), ['trac.ctl', 'dirlist.txt', 'atm_init.tab'])
     atm_file = os.path.join(work_dir, 'atm')
     with open(dirlist_file, 'w') as f: f.write("./\n")
 
+    # Build NQ and QNT_NAME entries dynamically.
     quantity_block = "\n".join(
         ['# Variables...', f'NQ = {len(selected_quantities)}']
         + [f'QNT_NAME[{idx}] = {name}' for idx, name in enumerate(selected_quantities)]
@@ -631,33 +758,34 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
     elif met_source in ['ncep2_6h']:
         ctl_template += "MET_RELHUM = 1\n"
     
+    # Write the final control file into the working directory.
     with open(ctl_file, 'w') as f: f.write(ctl_template)
     logger.info(f"[RUN] [{run_id}] Control file written at {ctl_file}.")
     
-    # Run atm_init and trac...
+    # Launch the MPTRAC programs with timeouts.
     atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120, run_id=run_id)
     trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600, run_id=run_id)
     
-    # Logging...
+    # Summary logging for success or failure.
     if atm_init_code != 0 or trac_code != 0:
         logger.error(f"[RUN] [{run_id}] Run failed: atm_init_code={atm_init_code}, trac_code={trac_code}")
     else:
         logger.info(f"[RUN] [{run_id}] Run succeeded.")
 
-    # Combine log message...
+    # Combine tool output for the result page.
     combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
     
-    # Run successfull...
+    # Follow-up workflow after a successful trac run.
     if trac_code == 0:
 
-        # Init...
+        # Initialize the list of generated plot files.
         plot_filenames = []
         
-        # Get list of filenames...
+        # Collect all trajectory output files.
         files = sorted(glob.glob(os.path.join(work_dir, 'atm_19*.tab')) +
                        glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
 
-        # Parallel creation of plots...
+        # Generate the quick-look plots in parallel.
         logger.info(f"[PLOT] [{run_id}] {len(files)} plot files to process.")
         with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
             futures = [
@@ -671,14 +799,14 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
                 if result:
                     plot_filenames.append(result)
                     
-        # Sort filenames...
+        # Sort the plot filenames by time.
         plot_filenames = sorted(
             [f for f in plot_filenames if f],
             key=lambda name: datetime.strptime(name.split("_")[1][:-4], "%Y-%m-%dT%H:%MZ")
         )
         logger.info(f"[PLOT] [{run_id}] Plots finished.")
 
-        # Optionally convert ASCII trajectory output to netCDF after plotting...
+        # Optional netCDF conversion after plotting.
         atm_conv_output = ""
         if output_format == 'netcdf':
             conv_logs = []
@@ -708,13 +836,13 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             combined_output += atm_conv_output
             logger.info(f"[CONVERT] [{run_id}] Converted {len(files)} atmosphere files to netCDF.")
         
-        # Create zip file...
+        # Package all run results into a ZIP archive.
         zip_path = os.path.join(ZIPS_DIR, f"mptrac_{run_id}.zip")
         logger.info(f"[ZIP] [{run_id}] Creating zip file: {zip_path}")
         fast_zip_no_compression(zip_path, work_dir)
         logger.info(f"[ZIP] [{run_id}] Zip file created successfully: {zip_path}")
         
-        # Show results...
+        # Return the result page to the browser.
         return render_template(
             'result.html',
             run_id=run_id,
@@ -722,19 +850,23 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             plot_filenames=plot_filenames
         )
     
-    # Show error...
+    # Error page for a failed model run.
     return render_template('error.html', stdout=combined_output), 500
 
+# Render the terms and conditions page.
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
 
+# Serve generated plot images from the run directory.
 @app.route('/runs/working/<run_id>/<filename>')
 def serve_plot_image(run_id, filename):
     return send_from_directory(os.path.join(RUNS_DIR, run_id), filename)
 
+# Show the log file for browser-based debugging.
 @app.route('/logs')
 def show_logs():
+    # Read the current log file for the browser view.
     try:
         with open(log_file, 'r') as f:
             log_contents = f.read()
@@ -743,7 +875,9 @@ def show_logs():
         logger.error(f"[LOG] Error reading log file: {e}")
         return render_template('error.html', stdout=f"❌ Error reading log file: {e}"), 500
 
+# Parse command-line options and start the Flask server.
 if __name__ == '__main__':
+    # Define the optional command-line arguments.
     parser = argparse.ArgumentParser(description='Run the MPTRAC web runner.')
     parser.add_argument(
         '--test',
