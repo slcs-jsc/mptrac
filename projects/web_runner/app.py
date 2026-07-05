@@ -92,6 +92,98 @@ MET_OPTIONS = {
                      DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2')
 }
 
+
+MAX_OUTPUT_QUANTITIES = 15
+DEFAULT_OUTPUT_QUANTITIES = ['zg', 'p', 't', 'theta', 'u', 'v', 'w', 'pv', 'h2o', 'o3', 'ps', 'pbl', 'pt', 'cc']
+OUTPUT_QUANTITY_GROUPS = [
+    {
+        'title': 'Core State',
+        'quantities': [
+            {'name': 'zg', 'label': 'Geopotential height'},
+            {'name': 'p', 'label': 'Pressure'},
+            {'name': 't', 'label': 'Temperature'},
+            {'name': 'theta', 'label': 'Potential temperature'},
+            {'name': 'rho', 'label': 'Air density'},
+        ],
+    },
+    {
+        'title': 'Winds and Dynamics',
+        'quantities': [
+            {'name': 'u', 'label': 'Zonal wind'},
+            {'name': 'v', 'label': 'Meridional wind'},
+            {'name': 'w', 'label': 'Vertical velocity'},
+            {'name': 'vh', 'label': 'Horizontal velocity'},
+            {'name': 'vz', 'label': 'Vertical velocity in m/s'},
+            {'name': 'pv', 'label': 'Potential vorticity'},
+            {'name': 'zeta_d', 'label': 'Diagnosed zeta coordinate'},
+        ],
+    },
+    {
+        'title': 'Humidity and Thermodynamics',
+        'quantities': [
+            {'name': 'h2o', 'label': 'Water vapor'},
+            {'name': 'o3', 'label': 'Ozone'},
+            {'name': 'sh', 'label': 'Specific humidity'},
+            {'name': 'rh', 'label': 'Relative humidity'},
+            {'name': 'rhice', 'label': 'Relative humidity over ice'},
+            {'name': 'tvirt', 'label': 'Virtual temperature'},
+            {'name': 'tdew', 'label': 'Dew point temperature'},
+            {'name': 'tice', 'label': 'Frost point temperature'},
+            {'name': 'psat', 'label': 'Saturation pressure over water'},
+            {'name': 'psice', 'label': 'Saturation pressure over ice'},
+            {'name': 'pw', 'label': 'Partial water vapor pressure'},
+        ],
+    },
+    {
+        'title': 'Surface and Boundary Layer',
+        'quantities': [
+            {'name': 'ps', 'label': 'Surface pressure'},
+            {'name': 'pbl', 'label': 'Planetary boundary layer'},
+            {'name': 'ts', 'label': 'Surface temperature'},
+            {'name': 'zs', 'label': 'Surface height'},
+            {'name': 'us', 'label': 'Surface zonal wind'},
+            {'name': 'vs', 'label': 'Surface meridional wind'},
+            {'name': 'ess', 'label': 'Eastward turbulent surface stress'},
+            {'name': 'nss', 'label': 'Northward turbulent surface stress'},
+            {'name': 'shf', 'label': 'Surface sensible heat flux'},
+            {'name': 'lsm', 'label': 'Land-sea mask'},
+            {'name': 'sst', 'label': 'Sea surface temperature'},
+        ],
+    },
+    {
+        'title': 'Tropopause',
+        'quantities': [
+            {'name': 'pt', 'label': 'Tropopause pressure'},
+            {'name': 'tt', 'label': 'Tropopause temperature'},
+            {'name': 'zt', 'label': 'Tropopause geopotential height'},
+            {'name': 'h2ot', 'label': 'Tropopause water vapor'},
+        ],
+    },
+    {
+        'title': 'Clouds and Convection',
+        'quantities': [
+            {'name': 'cc', 'label': 'Cloud cover'},
+            {'name': 'cape', 'label': 'CAPE'},
+            {'name': 'cin', 'label': 'CIN'},
+            {'name': 'plcl', 'label': 'Lifted condensation level'},
+            {'name': 'plfc', 'label': 'Level of free convection'},
+            {'name': 'pel', 'label': 'Equilibrium level'},
+            {'name': 'lwc', 'label': 'Cloud liquid water content'},
+            {'name': 'rwc', 'label': 'Cloud rain water content'},
+            {'name': 'iwc', 'label': 'Cloud ice water content'},
+            {'name': 'swc', 'label': 'Cloud snow water content'},
+            {'name': 'pct', 'label': 'Cloud top pressure'},
+            {'name': 'pcb', 'label': 'Cloud bottom pressure'},
+            {'name': 'cl', 'label': 'Total column cloud water'},
+        ],
+    },
+]
+ALLOWED_OUTPUT_QUANTITIES = {
+    quantity['name']
+    for group in OUTPUT_QUANTITY_GROUPS
+    for quantity in group['quantities']
+}
+
 # Execute shell command and check result...
 def run_command(cmd, timeout, run_id):
     try:
@@ -107,6 +199,14 @@ def run_command(cmd, timeout, run_id):
 def seconds_since_2000(time_str):
     dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
+
+
+
+def serialize_form_data(form):
+    data = {}
+    for key, values in form.lists():
+        data[key] = values if len(values) != 1 else values[0]
+    return data
 
 # Create map plot of air parcel data...
 def create_plot_file(
@@ -218,7 +318,10 @@ def index():
         default_start_time=TEST_START_TIME if test_mode else '2000-01-01 00:00',
         default_stop_time=TEST_STOP_TIME if test_mode else '2000-01-05 00:00',
         default_mz=TEST_MZ if test_mode else '0.0',
-        default_uz=TEST_UZ if test_mode else '0.0'
+        default_uz=TEST_UZ if test_mode else '0.0',
+        max_output_quantities=MAX_OUTPUT_QUANTITIES,
+        default_output_quantities=DEFAULT_OUTPUT_QUANTITIES,
+        output_quantity_groups=OUTPUT_QUANTITY_GROUPS,
     )
 
 @app.route('/download/<run_id>')
@@ -255,7 +358,8 @@ def run():
     # Parse input form...
     try:
         f = request.form
-        logger.info(f"[RUN] [{run_id}] Received input form: {dict(f)}")
+        form_data = serialize_form_data(f)
+        logger.info(f"[RUN] [{run_id}] Received input form: {form_data}")
         
         # Parse parameters...
         to_f = lambda x: float(f[x])
@@ -297,6 +401,7 @@ def run():
         conv_mix_pbl = int(f.get('conv_mix_pbl', 0))
         atm_dt_out = to_f('atm_dt_out')
         output_format = f.get('output_format', 'ascii')
+        selected_quantities = list(dict.fromkeys(f.getlist('quantities')))
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
         lon_min, lat_min, lon_max, lat_max = to_f('lon_min'), to_f('lat_min'), to_f('lon_max'), to_f('lat_max')
@@ -322,6 +427,17 @@ def run():
             return validation_error("Central latitude must be between -90° and 90°.", run_id=run_id)
         if output_format not in ['ascii', 'netcdf']:
             return validation_error("Output format must be ASCII or netCDF.", run_id=run_id)
+        if len(selected_quantities) > MAX_OUTPUT_QUANTITIES:
+            return validation_error(
+                f"Select at most {MAX_OUTPUT_QUANTITIES} output quantities.",
+                run_id=run_id
+            )
+        invalid_quantities = [q for q in selected_quantities if q not in ALLOWED_OUTPUT_QUANTITIES]
+        if invalid_quantities:
+            return validation_error(
+                "Unknown output quantities: " + ", ".join(invalid_quantities),
+                run_id=run_id
+            )
         
         # Set forward/backward trajectory flag...
         direction = -1 if stop_time < start_time else 1
@@ -335,32 +451,21 @@ def run():
 
     # Save setup...
     setup_file = os.path.join(work_dir, "setup.json")
-    with open(setup_file, "w") as f:
-        json.dump(request.form.to_dict(), f, indent=2)
+    with open(setup_file, "w") as fobj:
+        json.dump(form_data, fobj, indent=2)
     
     # Create control parameter file...
     ctl_file, dirlist_file, init_file = map(lambda x: os.path.join(work_dir, x), ['trac.ctl', 'dirlist.txt', 'atm_init.tab'])
     atm_file = os.path.join(work_dir, 'atm')
     with open(dirlist_file, 'w') as f: f.write("./\n")
 
-    ctl_template = textwrap.dedent(f"""\
-    # Variables...
-    NQ = 14
-    QNT_NAME[0] = zg
-    QNT_NAME[1] = p
-    QNT_NAME[2] = t
-    QNT_NAME[3] = theta
-    QNT_NAME[4] = u
-    QNT_NAME[5] = v
-    QNT_NAME[6] = w
-    QNT_NAME[7] = pv
-    QNT_NAME[8] = h2o
-    QNT_NAME[9] = o3
-    QNT_NAME[10] = cc
-    QNT_NAME[11] = ps
-    QNT_NAME[12] = pbl
-    QNT_NAME[13] = pt
-    
+    quantity_block = "\n".join(
+        ['# Variables...', f'NQ = {len(selected_quantities)}']
+        + [f'QNT_NAME[{idx}] = {name}' for idx, name in enumerate(selected_quantities)]
+    )
+
+    ctl_template = quantity_block + textwrap.dedent(f"""
+
     # atm_init...
     INIT_T0 = {start_time}
     INIT_T1 = {start_time}

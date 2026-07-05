@@ -7,7 +7,7 @@
     <style>
       .btn {
         display: inline-flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         gap: 0.45rem;
         border: none;
@@ -156,6 +156,58 @@
         margin-bottom: 14px;
         border: 1px solid rgba(91, 111, 136, 0.26);
         border-radius: 18px;
+      }
+
+      .quantity-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .quantity-group {
+        background: rgba(12, 18, 26, 0.38);
+        border: 1px solid rgba(96, 119, 150, 0.22);
+        border-radius: 16px;
+        padding: 16px 18px;
+      }
+
+      .quantity-group h5 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        color: #f4f7fb;
+      }
+
+      .quantity-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+        color: #d7e0eb;
+      }
+
+      .quantity-option input {
+        appearance: auto;
+        -webkit-appearance: checkbox;
+        width: 18px;
+        height: 18px;
+        margin: 0.18rem 0 0 0;
+        flex: 0 0 auto;
+      }
+
+      .quantity-option strong {
+        color: #ffffff;
+      }
+
+      .quantity-option span {
+        color: #c6d1de;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 900px) {
+        .quantity-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
     </style>
@@ -351,7 +403,7 @@
       <div id="init-settings" class="w3-container w3-hide section-card">
 	
 	<!-- Time Settings -->
-	<p><strong>Simulation Time:</strong> Enter the start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Runs can go forward or backward in time, but the total duration must not exceed 30 days.</p>
+	<p>Enter the start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Runs can go forward or backward in time, but the total duration must not exceed 30 days.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
 	    <label>Start Time</label>
@@ -366,7 +418,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Position Settings -->
-	<p><strong>Initial Position:</strong> Set the mean release location of the air parcels. Heights are given in kilometers above sea level and converted internally.</p>
+	<p>Set the mean release location of the air parcels. Heights are given in kilometers above sea level and converted internally.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Mean Longitude [°]</label>
@@ -385,7 +437,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Perturbations -->
-	<p><strong>Random Perturbations:</strong> Use uniform or Gaussian spreads to perturb the initial parcel positions in longitude, latitude, and height.</p>
+	<p>Use uniform or Gaussian spreads to perturb the initial parcel positions in longitude, latitude, and height.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Uniform Spread Longitude [°]</label>
@@ -418,7 +470,7 @@
 	<hr style="border-color: #444;">
 	
 	<!-- Number of Parcels -->
-	<p><strong>Number of Parcels:</strong> Choose how many air parcels to release. The maximum is 10,000.</p>
+	<p>Choose how many air parcels to release. The maximum is 10,000.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Number of Air Parcels</label>
@@ -508,6 +560,28 @@
 	    <label style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="21600" checked> 6 h</label>
 	    <label style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="43200"> 12 h</label>
 	    <label style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="86400"> 24 h</label>
+	  </div>
+	</div>
+
+	<hr style="border-color: #444;">
+	<p>Select up to {{ max_output_quantities }} output quantities for the trajectory files. The recommended fields are preselected.</p>
+	<div class="w3-row-padding">
+	  <div class="w3-full" style="padding: 16px;">
+	    <label>Output Variables</label>
+	    <div class="quantity-grid w3-margin-top">
+	      {% for group in output_quantity_groups %}
+	      <div class="quantity-group">
+	        <h5>{{ group.title }}</h5>
+	        {% for quantity in group.quantities %}
+	        <label class="quantity-option">
+	          <input type="checkbox" name="quantities" value="{{ quantity.name }}"
+	                 {% if quantity.name in default_output_quantities %}checked{% endif %}>
+	          <span><strong>{{ quantity.name }}</strong> - {{ quantity.label }}</span>
+	        </label>
+	        {% endfor %}
+	      </div>
+	      {% endfor %}
+	    </div>
 	  </div>
 	</div>
 
@@ -928,16 +1002,22 @@
 		  
 		  Object.entries(setup).forEach(([name, value]) => {
 		      const elements = document.querySelectorAll(`[name="${name}"]`);
-		      
-		      elements.forEach(el => {
-			  if (el.type === "radio") {
-			      if (String(el.value) === String(value)) {
-				  el.checked = true;
-			      }
-			  } else {
+		      if (!elements.length) return;
+
+		      if (elements[0].type === "checkbox") {
+			  const values = Array.isArray(value) ? value.map(String) : [String(value)];
+			  elements.forEach(el => {
+			      el.checked = values.includes(String(el.value));
+			  });
+		      } else if (elements[0].type === "radio") {
+			  elements.forEach(el => {
+			      el.checked = String(el.value) === String(value);
+			  });
+		      } else {
+			  elements.forEach(el => {
 			      el.value = value;
-			  }
-		      });
+			  });
+		      }
 		  });
 	      } catch (err) {
 		  alert("Failed to load setup file. Invalid JSON format.");
