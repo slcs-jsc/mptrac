@@ -32,7 +32,7 @@ Links to external resources:
 
 * [Helmholtz Research Software Directory](https://helmholtz.software/software/mptrac)
 
-* [Rocket.Chat channel](https://chat.fz-juelich.de/channel/mptrac) (internal)
+* [Matrix room](https://matrix.to/#/#mptrac:fz-juelich.de)
 
 * [User and developer meeting](https://iffmd.fz-juelich.de/s/7EQXSZTDy#) (internal)
 
