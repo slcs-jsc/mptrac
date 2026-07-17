@@ -4327,13 +4327,13 @@ void compress_pck(
  * or reads compressed SZ3 data from a file stream and decompresses it into the provided array.
  * The SZ3 error bound can be specified either by relative precision (bits) or absolute tolerance.
  *
-  * @param[in] ctl Control structure with compression parameters.
-  * @param[in] met Meteorological data providing dimensions.
-  * @param[in] varname Variable name for logging.
-  * @param[in,out] array Float array to compress or decompress.
-  * @param[in] decompress Non-zero to decompress; zero to compress.
-  * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
-  * @param[in,out] inout File stream for reading/writing compressed data.
+ * @param[in] ctl Control structure with compression parameters.
+ * @param[in] met Meteorological data providing dimensions.
+ * @param[in] varname Variable name for logging.
+ * @param[in,out] array Float array to compress or decompress.
+ * @param[in] decompress Non-zero to decompress; zero to compress.
+ * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
+ * @param[in,out] inout File stream for reading/writing compressed data.
  *
  * @note The function uses @c ctl->met_sz3_prec[] and @c ctl->met_sz3_tol[] to determine the error bound.
  * @note Exactly one of @c ctl->met_sz3_prec[] or @c ctl->met_sz3_tol[] must be set to a positive value.
@@ -4366,13 +4366,13 @@ void compress_sz3(
  * fixed-accuracy modes. Decompression restores the original float
  * values from the compressed representation.
  *
-  * @param[in] ctl Control structure with compression parameters.
-  * @param[in] met Meteorological data providing dimensions.
-  * @param[in] varname Variable name for logging.
-  * @param[in,out] array Float array to compress or decompress.
-  * @param[in] decompress Non-zero to decompress; zero to compress.
-  * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
-  * @param[in,out] inout File stream for reading/writing compressed data.
+ * @param[in] ctl Control structure with compression parameters.
+ * @param[in] met Meteorological data providing dimensions.
+ * @param[in] varname Variable name for logging.
+ * @param[in,out] array Float array to compress or decompress.
+ * @param[in] decompress Non-zero to decompress; zero to compress.
+ * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
+ * @param[in,out] inout File stream for reading/writing compressed data.
  *
  * The function performs the following steps:
  * - Allocates metadata for the 3D array and the ZFP compressed stream.
@@ -4404,11 +4404,13 @@ void compress_zfp(
 /**
  * @brief Compresses or decompresses a float array using ZSTD.
  *
- * The routine works on the regular grid described by @p met (nx, ny, np and pressure levels). In compress mode data are scaled and then ZSTD-compressed; in decompress mode they are reconstructed.
+ * The routine compresses or decompresses one full 3-D meteorological field as a raw byte stream.
+ * It does not apply level-wise scaling or quantization; the reconstructed field is the direct
+ * result of the ZSTD frame decode.
  *
  * @param[in] ctl Control structure with compression parameters.
  * @param[in] met Meteorological data providing grid dimensions and pressure levels.
- * @param[in] varname Variable name for logging and error-bound selection.
+ * @param[in] varname Variable name for logging.
  * @param[in,out] array Float array to compress or decompress.
  * @param[in] decompress Non-zero to decompress; zero to compress.
  * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
@@ -4430,17 +4432,20 @@ void compress_zstd(
 /**
  * @brief Compresses or decompresses a float array using LZ4.
  *
- * The routine works on the regular grid described by @p met (nx, ny, np and pressure levels). In compress mode data are scaled and then LZ4-compressed; in decompress mode they are reconstructed.
+ * The routine compresses or decompresses one full 3-D meteorological field as a raw byte stream.
+ * It does not apply level-wise scaling or quantization; the reconstructed field is the direct
+ * result of the LZ4 block decode.
  *
  * @param[in] ctl Control structure with compression parameters.
  * @param[in] met Meteorological data providing grid dimensions and pressure levels.
- * @param[in] varname Variable name for logging and error-bound selection.
+ * @param[in] varname Variable name for logging.
  * @param[in,out] array Float array to compress or decompress.
  * @param[in] decompress Non-zero to decompress; zero to compress.
  * @param[in,out] level_log Optional per-level diagnostics stream, or @c NULL.
  * @param[in,out] inout File pointer for input/output. Used for reading or writing compressed data.
  *
- * @note This function uses the block API (`LZ4_compress_fast` / `LZ4_decompress_safe`) and acceleration factor 8 by default.
+ * @note This function uses the block API (`LZ4_compress_fast` / `LZ4_decompress_safe`).
+ * @note The default acceleration factor is 1 when @c ctl->met_lz4_accel is not positive.
  *
  * @author Lars Hoffmann
  */
