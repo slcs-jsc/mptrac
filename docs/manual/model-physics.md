@@ -170,7 +170,7 @@ are simulated by means of a Langevin equation,
 
 $$
 \begin{align}
-  & v_i'(t+\Delta t) = rv_i'(t) + \sqrt{1-r^2} (f\sigma_i)^2 \xi_i, \\
+  & v_i'(t+\Delta t) = rv_i'(t) + \sqrt{1-r^2} \, f_i\sigma_i \, \xi_i, \\
   & r = 1-2\frac{\Delta t}{\Delta t_{met}}.
 \end{align}
 $$
@@ -179,24 +179,17 @@ Mathematically, this represents a Markov chain or a random walk, which
 adds temporally correlated stochastic perturbations to the winds over
 time. The degree of correlation depends on the correlation coefficient
 $r$, and therefore on the time step $\Delta t$ of the model and the
-time step $\Delta t_{met}$ of the meteorological data. The variance
-$(f\sigma_i)^2$ of the random component added at each time step
-depends on the grid-scale variance $\sigma_i^2$ of the wind and
-velocity data and a scaling factor $f$, which is used for downscaling
-to the subgrid scale. The scaling factor $f$ needs to be specified as
-a control parameter of the model. The default value is $f=40$%,
-following a choice made for the FLEXPART model (Stohl et al.,
-2005). For each air parcel, the grid-scale variance $\sigma_i^2$ is
-calculated from the neighbouring eight grid boxes and two-time step of
-the meteorological data. To make computations more efficient, the
-grid-scale variance of each parcel is kept in cache. As before,
-$\vec{\xi}$ is a vector of random variates to be drawn from the
-standard normal distribution.
-
-The scaling factor f is *not* directly set in MPTRAC. Instead the
-square $f^2$ can be set for the vertical and horizontal dispersion of
-air parcels with the parameters `TURB_MESOX` and `TURB_MESOZ`. Accordingly
-their default value is 16%.
+time step $\Delta t_{met}$ of the meteorological data. The stochastic
+increment is proportional to the grid-scale standard deviation
+$\sigma_i$ of the wind or vertical velocity and to a user-defined
+scaling factor $f_i$ for the corresponding component. In MPTRAC these
+scaling factors are specified directly through the control parameters
+`TURB_MESOX` (horizontal) and `TURB_MESOZ` (vertical). Their default
+value is 16%, following a choice made for the FLEXPART model (Stohl et
+al., 2005). For each air parcel, the grid-scale standard deviation is
+calculated from the neighbouring eight grid boxes and two time steps of
+the meteorological data. As before, $\vec{\xi}$ is a vector of random
+variates drawn from the standard normal distribution.
 
 ## Convection
 
