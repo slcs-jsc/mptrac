@@ -6765,6 +6765,8 @@ void mptrac_read_ctl(
   /* Meteo data... */
   scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "3600", NULL);
+  if (ctl->dt_mod > ctl->dt_met)
+    ERRMSG("DT_MOD must not exceed DT_MET!");
   ctl->met_convention =
     (int) scan_ctl(filename, argc, argv, "MET_CONVENTION", -1, "0", NULL);
   ctl->met_type =
