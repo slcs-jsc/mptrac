@@ -140,7 +140,7 @@ done
 # Compare files...
 echo
 error=0
-for f in $(ls data.ref/atm*tab data.ref/grid*tab) ; do
-    diff -q -s data/"$(basename "$f")" "$f" || error=1
+for f in $(ls data/atm_2011*tab data/grid_2011*tab) ; do
+    diff -q -s "$f" "data.ref/$(basename "$f")" || error=1
 done
 exit $error
