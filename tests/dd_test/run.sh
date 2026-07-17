@@ -4,7 +4,7 @@ set -e
 # Usage: ./run.sh [compile] [hpc] [skip_wind] [skip_run] [skip_compare]
 # Arguments:
 #   compile: Enable compilation step (default is to skip compilation)
-#   hpc: Run in HPC mode (uses ml and srun), otherwise uses mpirun
+#   hpc: Optional. Run in HPC mode (uses module and srun); default is local mode via mpirun
 #   skip_wind: Skip wind data generation
 #   skip_run: Skip MPTRAC simulation run
 #   skip_compare: Skip result comparison
@@ -438,6 +438,7 @@ cd "$work_dir"
 echo -e "\nComparing .tab files recursively..."
 error=0
 if [ -d "data.ref" ]; then
+    # Compare sorted .tab contents because DD output ordering can vary across ranks.
     # Find all .tab files in data.ref and compare with corresponding files in data
     while IFS= read -r -d '' ref_file; do
         # Get relative path from data.ref
