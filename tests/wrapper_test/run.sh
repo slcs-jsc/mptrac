@@ -129,7 +129,7 @@ $trac/trac_fortran data/dirlist trac.ctl atm_split.tab \
 mv data/*00.tab data/*.vtk data/fortran/
 
 # Compare files...
-## Files are limited to time, altitude, longitude and latitude, because Fortran wrapper includes only advection 
+## Legacy comparison path kept for reference from the earlier advection-only wrapper phase.
 #echo -e "\nCompare results..."
 #error=0
 #for f in $(ls data/c/atm*00.tab ) ; do

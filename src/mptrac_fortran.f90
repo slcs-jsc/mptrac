@@ -716,17 +716,18 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_ctl
 
      ! Read meteorological data...
-     SUBROUTINE mptrac_read_met(filename, ctl, clim, met, dd) &
+     FUNCTION mptrac_read_met(filename, ctl, clim, met, dd) &
           bind(c,name='mptrac_read_met')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t, dd_t
+       USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, dd_t
        IMPLICIT NONE
-       CHARACTER(c_char), DIMENSION(:), INTENT(in) :: filename
+       INTEGER(c_int) :: mptrac_read_met
+       CHARACTER(c_char), INTENT(in) :: filename
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(clim_t), INTENT(in), TARGET :: clim
        TYPE(met_t), INTENT(out), TARGET :: met
-       TYPE(dd_t), INTENT(out), TARGET :: dd
-     END SUBROUTINE mptrac_read_met
+       TYPE(dd_t), INTENT(inout), TARGET :: dd
+     END FUNCTION mptrac_read_met
 
      ! Run model time step...
      SUBROUTINE mptrac_run_timestep(ctl, cache, clim, met0, met1, atm, t, dd) &
