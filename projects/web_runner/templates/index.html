@@ -735,45 +735,50 @@
     <!-- Loading example settings -->
     <script>
       function loadExample(example) {
-	  if (!example) return;
-	  
-	  const examples = {
-	      katrina: {
-		  start_time: "2005-08-25 00:00",
-		  stop_time: "2005-08-31 00:00",
-		  mlon: "-80.0",
-		  mlat: "24.0",
-		  mz: "2.0",
-		  sz: "0.5",
-		  uz: "0.0",
-		  ulon: "20.0",
-		  ulat: "12.0",
-		  met_source: "erai_6h",
-		  plot_region: "regional",
-		  map_projection: "cartesian",
+          if (!example) return;
+
+          const form = document.querySelector('form[action="/run"]');
+          if (!form) return;
+
+          const examples = {
+              katrina: {
+                  start_time: "2005-08-25 00:00",
+                  stop_time: "2005-08-31 00:00",
+                  mlon: "-80.0",
+                  mlat: "24.0",
+                  mz: "2.0",
+                  sz: "0.5",
+                  uz: "0.0",
+                  ulon: "20.0",
+                  ulat: "12.0",
+                  met_source: "erai_6h",
+                  plot_region: "regional",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
                   central_lat: "0.0",
                   lon_min: "-150.0",
                   lon_max: "-30.0",
                   lat_min: "0.0",
                   lat_max: "60.0",
-                  z_min: "0",
+                  z_min: "0.0",
                   z_max: "16.0",
                   atm_dt_out: "10800"
               },
-	      eyjafjallajokull: {
-		  start_time: "2010-04-15 12:00",
-		  stop_time: "2010-04-19 12:00",
-		  mlon: "-19.633",
-		  mlat: "63.633",
-		  mz: "4.0",
-		  sz: "0.0",
-		  uz: "8.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "erai_6h",
-		  plot_region: "regional",
-		  map_projection: "robinson",
-		  central_lat: "0.0",
+              eyjafjallajokull: {
+                  start_time: "2010-04-15 12:00",
+                  stop_time: "2010-04-19 12:00",
+                  mlon: "-19.633",
+                  mlat: "63.633",
+                  mz: "4.0",
+                  sz: "0.0",
+                  uz: "8.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "erai_6h",
+                  plot_region: "regional",
+                  map_projection: "robinson",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-30.0",
                   lon_max: "60.0",
                   lat_min: "30.0",
@@ -781,21 +786,22 @@
                   z_min: "0.0",
                   z_max: "8.0",
                   atm_dt_out: "10800"
-	      },
-	      puyehue: {
-		  start_time: "2011-06-04 19:15",
-		  stop_time: "2011-06-17 00:00",
-		  mlon: "-72.112",
-		  mlat: "-40.590",
-		  mz: "10.0",
-		  sz: "1.0",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "erai_6h",
-		  plot_region: "global",
-		  map_projection: "orthographic",
-		  central_lat: "-90.0",
+              },
+              puyehue: {
+                  start_time: "2011-06-04 19:15",
+                  stop_time: "2011-06-17 00:00",
+                  mlon: "-72.112",
+                  mlat: "-40.590",
+                  mz: "10.0",
+                  sz: "1.0",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "erai_6h",
+                  plot_region: "global",
+                  map_projection: "orthographic",
+                  central_lon: "-72.112",
+                  central_lat: "-90.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -803,21 +809,22 @@
                   z_min: "0.0",
                   z_max: "12.0",
                   atm_dt_out: "21600"
-	      },
-	      raikoke: {
-		  start_time: "2019-06-21 00:00",
-		  stop_time: "2019-06-27 00:00",
-		  mlon: "153.3",
-		  mlat: "48.3",
-		  mz: "15.0",
-		  sz: "1.0",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "global",
-		  map_projection: "orthographic",
-		  central_lat: "90.0",
+              },
+              raikoke: {
+                  start_time: "2019-06-21 00:00",
+                  stop_time: "2019-06-27 00:00",
+                  mlon: "153.3",
+                  mlat: "48.3",
+                  mz: "15.0",
+                  sz: "1.0",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "global",
+                  map_projection: "orthographic",
+                  central_lon: "153.3",
+                  central_lat: "90.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -825,21 +832,22 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      },
-	      canada_wildfire: {
-		  start_time: "2023-06-01 00:00",
-		  stop_time: "2023-06-15 00:00",
-		  mlon: "-121.0",
-		  mlat: "54.0",
-		  mz: "1.0",
-		  sz: "0.3",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "regional",
-		  map_projection: "cartesian",
-		  central_lat: "0.0",
+              },
+              canada_wildfire: {
+                  start_time: "2023-06-01 00:00",
+                  stop_time: "2023-06-15 00:00",
+                  mlon: "-121.0",
+                  mlat: "54.0",
+                  mz: "1.0",
+                  sz: "0.3",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "regional",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -847,21 +855,22 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      },
-	      chernobyl: {
-		  start_time: "1986-04-26 00:00",
-		  stop_time: "1986-05-10 00:00",
-		  mlon: "30.1",
-		  mlat: "51.4",
-		  mz: "0.5",
-		  sz: "0.2",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "regional",
-		  map_projection: "cartesian",
-		  central_lat: "0.0",
+              },
+              chernobyl: {
+                  start_time: "1986-04-26 00:00",
+                  stop_time: "1986-05-10 00:00",
+                  mlon: "30.1",
+                  mlat: "51.4",
+                  mz: "0.5",
+                  sz: "0.2",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "regional",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -869,21 +878,22 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      },
-	      beirut: {
-		  start_time: "2020-08-04 00:00",
-		  stop_time: "2020-08-10 00:00",
-		  mlon: "35.4",
-		  mlat: "33.9",
-		  mz: "0.1",
-		  sz: "0.1",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "regional",
-		  map_projection: "cartesian",
-		  central_lat: "0.0",
+              },
+              beirut: {
+                  start_time: "2020-08-04 00:00",
+                  stop_time: "2020-08-10 00:00",
+                  mlon: "35.4",
+                  mlat: "33.9",
+                  mz: "0.1",
+                  sz: "0.1",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "regional",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -891,21 +901,22 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      },
-	      sai: {
-		  start_time: "2025-01-01 00:00",
-		  stop_time: "2025-01-07 00:00",
-		  mlon: "0.0",
-		  mlat: "0.0",
-		  mz: "20.0",
-		  sz: "1.5",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "global",
-		  map_projection: "cartesian",
-		  central_lat: "0.0",
+              },
+              sai: {
+                  start_time: "2025-01-01 00:00",
+                  stop_time: "2025-01-07 00:00",
+                  mlon: "0.0",
+                  mlat: "0.0",
+                  mz: "20.0",
+                  sz: "1.5",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "global",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -913,21 +924,22 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      },
-	      sahara_dust: {
-		  start_time: "2020-07-06 00:00",
-		  stop_time: "2020-07-12 00:00",
-		  mlon: "-15.0",
-		  mlat: "21.0",
-		  mz: "3.0",
-		  sz: "1.0",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "regional",
-		  map_projection: "cartesian",
-		  central_lat: "0.0",
+              },
+              sahara_dust: {
+                  start_time: "2020-07-06 00:00",
+                  stop_time: "2020-07-12 00:00",
+                  mlon: "-15.0",
+                  mlat: "21.0",
+                  mz: "3.0",
+                  sz: "1.0",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "regional",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -935,21 +947,22 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      },
-	      beijing_haze: {
-		  start_time: "2018-12-10 00:00",
-		  stop_time: "2018-12-17 00:00",
-		  mlon: "116.4",
-		  mlat: "39.9",
-		  mz: "0.5",
-		  sz: "0.3",
-		  uz: "0.0",
-		  ulon: "0.0",
-		  ulat: "0.0",
-		  met_source: "era5low_6h",
-		  plot_region: "regional",
-		  map_projection: "cartesian",
-		  central_lat: "0.0",
+              },
+              beijing_haze: {
+                  start_time: "2018-12-10 00:00",
+                  stop_time: "2018-12-17 00:00",
+                  mlon: "116.4",
+                  mlat: "39.9",
+                  mz: "0.5",
+                  sz: "0.3",
+                  uz: "0.0",
+                  ulon: "0.0",
+                  ulat: "0.0",
+                  met_source: "era5low_6h",
+                  plot_region: "regional",
+                  map_projection: "cartesian",
+                  central_lon: "0.0",
+                  central_lat: "0.0",
                   lon_min: "-180.0",
                   lon_max: "180.0",
                   lat_min: "-90.0",
@@ -957,36 +970,38 @@
                   z_min: "-999",
                   z_max: "-999",
                   atm_dt_out: "21600"
-	      }
-	  };
-	  
-	  const s = examples[example];
-	  if (!s) return;
-	  
-	  // Populate basic fields
-	  ['start_time', 'stop_time', 'mlon', 'mlat', 'mz', 'sz', 'uz', 'ulon', 'ulat', 'central_lat', 'lon_min', 'lon_max', 'lat_min', 'lat_max', 'z_min', 'z_max'].forEach(name => {
-              const el = document.querySelector(`[name="${name}"]`);
-              if (el && s[name] !== undefined) el.value = s[name];
-	  });
-	  
-	  // Set radio buttons for met_source
-	  const ms = document.querySelector(`[name="met_source"][value="${s.met_source}"]`);
-	  if (ms) ms.checked = true;
-	  
-	  // Set radio buttons for plot_region
-	  const pr = document.querySelector(`[name="plot_region"][value="${s.plot_region}"]`);
-	  if (pr) pr.checked = true;
-	  
-	  // Set map_projection (assuming it's a select dropdown or radio buttons)
-	  const mp = document.querySelector(`[name="map_projection"][value="${s.map_projection}"]`);
-	  if (mp) mp.checked = true;  // for radio buttons
-	  else {
-              const mpSelect = document.querySelector(`[name="map_projection"]`);
-              if (mpSelect && s.map_projection !== undefined) mpSelect.value = s.map_projection;
-	  }
+              }
+          };
 
-	  const ado = document.querySelector(`[name="atm_dt_out"][value="${s.atm_dt_out}"]`);
-	  if (ado) ado.checked = true;
+          const preset = examples[example];
+          if (!preset) return;
+
+          form.reset();
+
+          const exampleRadio = document.querySelector(`[name="example"][value="${example}"]`);
+          if (exampleRadio) {
+              exampleRadio.checked = true;
+          }
+
+          Object.entries(preset).forEach(([name, value]) => {
+              const elements = document.querySelectorAll(`[name="${name}"]`);
+              if (!elements.length) return;
+
+              if (elements[0].type === "checkbox") {
+                  const values = Array.isArray(value) ? value.map(String) : [String(value)];
+                  elements.forEach(el => {
+                      el.checked = values.includes(String(el.value));
+                  });
+              } else if (elements[0].type === "radio") {
+                  elements.forEach(el => {
+                      el.checked = String(el.value) === String(value);
+                  });
+              } else {
+                  elements.forEach(el => {
+                      el.value = value;
+                  });
+              }
+          });
       }
     </script>
     

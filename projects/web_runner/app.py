@@ -190,33 +190,6 @@ ALLOWED_OUTPUT_QUANTITIES = {
     for quantity in group['quantities']
 }
 
-# Availability rules for meteorological datasets used by the web runner.
-MET_TIME_LIMITS = {
-    'erai_6h': {
-        'min_time': '1979-01-01 00:00',
-        'max_time': '2019-08-31 18:00',
-    },
-    'jra55_6h': {
-        'min_time': '1958-01-01 00:00',
-        'max_time': '2023-12-31 18:00',
-    },
-    'era5low_6h': {
-        'min_time': '1978-12-01 00:00',
-    },
-    'merra2_3h': {
-        'min_time': '1980-01-01 00:00',
-    },
-    'jra3q_6h': {
-        'min_time': '1948-01-01 00:00',
-    },
-    'ncep_6h': {
-        'min_time': '1948-01-01 00:00',
-    },
-    'ncep2_6h': {
-        'min_time': '1979-01-01 00:00',
-    },
-}
-
 # Run external processes with timeout handling and logging.
 def run_command(cmd, timeout, run_id):
     # Actual subprocess invocation.
@@ -228,6 +201,9 @@ def run_command(cmd, timeout, run_id):
     except subprocess.TimeoutExpired as e:
         logger.warning(f"[EXEC] [{run_id}] Command timed out after {timeout} seconds.")
         return -1, (e.stdout or "") + f"\n❌ Command timed out after {timeout} seconds."
+    except Exception as e:
+        logger.exception(f"[EXEC] [{run_id}] Command failed before completion: {' '.join(cmd)}")
+        return -1, f"❌ Command failed before completion: {' '.join(cmd)}\n{e}"
 
 # Convert a UTC timestamp into MPTRAC seconds.
 def seconds_since_2000(time_str):
@@ -387,30 +363,6 @@ def validation_error(message, run_id):
     logger.error(f"[VALIDATE] [{run_id}] Validation failed: {message}")
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
-# Validate the requested time window against dataset-specific availability rules.
-def validate_met_time_range(met_source, start_dt, stop_dt):
-    limits = MET_TIME_LIMITS.get(met_source)
-    if not limits:
-        return None
-
-    requested_min = min(start_dt, stop_dt)
-    requested_max = max(start_dt, stop_dt)
-
-    min_time = parse_form_datetime(limits['min_time']) if 'min_time' in limits else None
-    max_time = parse_form_datetime(limits['max_time']) if 'max_time' in limits else None
-
-    if min_time and requested_min < min_time:
-        return (
-            f"{MET_OPTIONS[met_source]['MET_NAME']} data are only available from "
-            f"{limits['min_time']} UTC."
-        )
-    if max_time and requested_max > max_time:
-        return (
-            f"{MET_OPTIONS[met_source]['MET_NAME']} data are only available until "
-            f"{limits['max_time']} UTC."
-        )
-    return None
-
 # Render the main form with defaults and UI metadata.
 @app.route('/')
 def index():
@@ -510,11 +462,6 @@ def run():
                     f"Meteorological data directory is not reachable: {met_access_path} ({met_access_error})",
                     run_id=run_id
                 )
-
-        # Apply dataset-specific time-range checks where the archive bounds are stable enough.
-        met_time_error = validate_met_time_range(met_source, start_dt, stop_dt)
-        if met_time_error:
-            return validation_error(met_time_error, run_id=run_id)
 
         mlon, mlat, mz = to_f('mlon'), to_f('mlat'), to_f('mz')
         ulon, ulat, uz = to_f('ulon'), to_f('ulat'), to_f('uz')
