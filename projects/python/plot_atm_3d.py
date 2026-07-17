@@ -47,11 +47,12 @@ for FILE in filelist:
   print('Plot '+FILE+' ...')
 
   # Set time...
-  minute = FILE.split('_')[-1][:2]
-  hour = FILE.split('_')[-2]
-  day = FILE.split('_')[-3]
-  month = FILE.split('_')[-4]
-  year = FILE.split('_')[-5]
+  second = FILE.split('_')[-1].split('.')[0]
+  minute = FILE.split('_')[-2]
+  hour = FILE.split('_')[-3]
+  day = FILE.split('_')[-4]
+  month = FILE.split('_')[-5]
+  year = FILE.split('_')[-6]
 
   # Read data...
   data = pd.read_csv(FILE, comment='#', sep=' ', header=None).values
@@ -78,5 +79,5 @@ for FILE in filelist:
   ax.plot([vlon,vlon],[vlat,vlat],[alt0,alt1], c='r',alpha=1)
   ax.tick_params(labelsize=10)
   fig.colorbar(c,ax=ax,shrink=0.75,pad=0.12).set_label('Mass [kg]',fontsize=10  )
-  plt.savefig(f'{plotdir}/atm3d_{year}_{month}_{day}_{hour}_{minute}.png', bbox_inches='tight')
+  plt.savefig(f'{plotdir}/atm3d_{year}_{month}_{day}_{hour}_{minute}_{second}.png', bbox_inches='tight')
   plt.close(fig)

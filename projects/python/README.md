@@ -32,12 +32,12 @@ The following images show example results generated using
 `plot_atm_3d.py`, illustrating the spatial distribution of air parcels
 at different times:
 
-<p align="center"><img src="plots.ref/atm3d_2011_06_06_00_00.png" width="45%"/> &emsp; <img src="plots.ref/atm3d_2011_06_08_00_00.png" width="45%"/></p>
+<p align="center"><img src="plots.ref/atm3d_2011_06_06_00_00_00.png" width="45%"/> &emsp; <img src="plots.ref/atm3d_2011_06_08_00_00_00.png" width="45%"/></p>
 
 ## Plotting of trajectories and meteo map output of MPTRAC
 
 To plot the trajectory data files created with `atm_select`, call the
-Python script `atm_traj.py`:
+Python script `plot_traj.py`:
 
 ```
     python3 plot_traj.py
