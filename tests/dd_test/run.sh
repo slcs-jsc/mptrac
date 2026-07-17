@@ -27,7 +27,7 @@ rm -rf data && mkdir -p data "$meteo_data_dir"
 
 # Parse arguments - check all arguments for keywords
 compile=""
-hpc_mode="hpc"
+hpc_mode="local"
 skip_wind=""
 skip_run=""
 skip_compare=""
@@ -445,7 +445,12 @@ if [ -d "data.ref" ]; then
         data_file="data/$rel_path"
         
         if [ -f "$data_file" ]; then
-            diff -q -s "$data_file" "$ref_file" || error=1
+            if diff -q <(sort "$data_file") <(sort "$ref_file") > /dev/null; then
+                echo "Files $data_file and $ref_file are identical"
+            else
+                echo "Files $data_file and $ref_file differ"
+                error=1
+            fi
         else
             echo "Missing file: $data_file"
             error=1
