@@ -32,7 +32,7 @@ The `run.sh` script automates a basic MPTRAC workflow, executing the following k
 
 The `run.sh` script generates a `trac.ctl` file that configures the MPTRAC simulation using a simple key-value syntax (`KEY = VALUE`). This file defines essential model settings.
 
-You can edit `trac.ctl` directly to customize the simulation. However, some key parameters (such as `INIT_LON0`, `INIT_LAT0`, etc.) are also passed via command-line arguments in `run.sh` for convenience.
+Because `trac.ctl` is regenerated on each run, persistent changes should be made in `run.sh` rather than by editing `data/trac.ctl` after the script has finished.
 
 To fully understand how the simulation is configured, review the `run.sh` script. It shows how parameters are set and how the MPTRAC applications (`atm_init`, `atm_split`, `trac`) are executed in sequence.
 
@@ -46,13 +46,13 @@ For a complete list of available control parameters and their descriptions, refe
 
 After running the simulation, you will find:
 
-- **Simulation results**: `projects/example/data/` — particle trajectories, grid output files, and diagnostics.
+- **Simulation results**: `data/` — particle trajectories, grid output files, and diagnostics.
 
-- **Reference output for comparison**: `projects/example/data.ref/`
+- **Reference output for comparison**: `data.ref/`
 
-- **Visualized output plots**: `projects/example/plots/` — PNG maps showing volcanic plume dispersion over time.
+- **Visualized output plots**: `plots/` — PNG maps showing volcanic plume dispersion over time.
 
-Example outputs include global maps such as:
+Example outputs include regional maps such as:
 
 <p align="center"><img src="plots.ref/atm_2011_06_06_00_00_00.tab.png" width="45%"/> &emsp; <img src="plots.ref/grid_2011_06_06_00_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="plots.ref/atm_2011_06_08_00_00_00.tab.png" width="45%"/> &emsp; <img src="plots.ref/grid_2011_06_08_00_00_00.tab.png" width="45%"/></p>
