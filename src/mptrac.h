@@ -4144,16 +4144,14 @@ void compress_log_levels_3d(
 /**
  * @brief Compresses or decompresses a 3-D meteorological field using cmultiscale.
  *
- * This routine operates on a longitude/latitude regular grid of size @p nx × @p ny and @p np vertical levels.
- * The grid coordinates are generated internally.
+ * This routine compresses or decompresses a meteorological field described
+ * by the metadata in @p met. Compression thresholds are selected from
+ * @p ctl based on @p varname.
  *
  * @param[in] ctl Control/settings structure providing CMS parameters.
+ * @param[in] met Meteorological metadata describing the field layout.
  * @param[in] varname Variable name used for selecting the CMS epsilon threshold.
  * @param[in,out] array Field data buffer (decompress: output, compress: input).
- * @param[in] nx Number of longitude grid points (>=2).
- * @param[in] ny Number of latitude grid points (>=2).
- * @param[in] np Number of vertical levels.
- * @param[in] plev Pressure levels array of length @p np (used for logging).
  * @param[in] decompress Non-zero to decompress; zero to compress.
  * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable.
  * @param[in,out] inout Binary stream used for CMS I/O (decompress: read, compress: write).
@@ -6102,6 +6100,7 @@ void module_convection(
  * After the communication step, the atmospheric particle arrays are
  * updated to contain only the particles owned by the current MPI rank.
  *
+ * @param[in]     t     Current simulation time in seconds since 2000-01-01.
  * @param[in]     ctl   Control structure containing simulation settings
  *                      and quantity indices.
  * @param[in,out] cache Cache structure used for temporary particle data
