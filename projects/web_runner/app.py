@@ -444,7 +444,6 @@ def run():
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = parse_form_datetime(f['start_time'])
-        stop_dt = parse_form_datetime(f['stop_time'])
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         if met_source == 'aifs_6h':
             METBASE = f"/mnt/slmet_mnt/met_data/ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"
