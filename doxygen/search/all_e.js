@@ -1,14 +1,23 @@
 var searchData=
 [
   ['o1d_0',['o1d',['../structclim__t.html#a9a7486ab639da63d6ac55d6cbacdcf0e',1,'clim_t']]],
-  ['o2_1',['o2',['../structclim__photo__t.html#a517ac04a5fef45c6562e9b4e3de2c41e',1,'clim_photo_t']]],
-  ['o3_2',['o3',['../structmet__t.html#a5ce0fb589ddc187ab1191a9fd081a376',1,'met_t']]],
-  ['o3_5f1_3',['o3_1',['../structclim__photo__t.html#a0a15b9cf6e988e941224f2b7037c75ef',1,'clim_photo_t']]],
-  ['o3_5f2_4',['o3_2',['../structclim__photo__t.html#ab95f9b3414775d1436ddbc7cb7d2ea8a',1,'clim_photo_t']]],
-  ['o3c_5',['o3c',['../structclim__photo__t.html#ac0271c879928d27622665e275d535bc1',1,'clim_photo_t::o3c()'],['../structmet__t.html#a0ab0cfbc1e5fe1a5c9ce3412cc4400a8',1,'met_t::o3c()']]],
-  ['obs_5ftype_6',['obs_type',['../structctl__t.html#a874cf53d903cea2e96423bacd2fafdab',1,'ctl_t']]],
-  ['oh_7',['oh',['../structclim__t.html#ac67a2bf753276e20cc577a0134b29252',1,'clim_t']]],
-  ['oh_5fchem_8',['oh_chem',['../structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f',1,'ctl_t']]],
-  ['oh_5fchem_5fbeta_9',['oh_chem_beta',['../structctl__t.html#a572e117f02cbfced576c216d366d1a89',1,'ctl_t']]],
-  ['oh_5fchem_5freaction_10',['oh_chem_reaction',['../structctl__t.html#a81cc25ede9c434e2ac0d7e341f3113e1',1,'ctl_t']]]
+  ['o1d_5frate_5fccl4_5fa_1',['O1D_RATE_CCL4_A',['../mptrac_8h.html#a9c9c5114e177eb8d51bfd131ca7f2f09',1,'mptrac.h']]],
+  ['o1d_5frate_5fccl4_5fb_2',['O1D_RATE_CCL4_B',['../mptrac_8h.html#a78280d56f9a3fe0ad0e4957101c95a4f',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc11_5fa_3',['O1D_RATE_CFC11_A',['../mptrac_8h.html#a886e031afa292fb18e5a2924a0c9f981',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc11_5fb_4',['O1D_RATE_CFC11_B',['../mptrac_8h.html#af97ee33c81cb99e30caf9d7053bcbff5',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc12_5fa_5',['O1D_RATE_CFC12_A',['../mptrac_8h.html#a6c23cf4cc74f3dd2b008e3b1b597e43c',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc12_5fb_6',['O1D_RATE_CFC12_B',['../mptrac_8h.html#a3c684b3dfae9c87af60d0d66bd186574',1,'mptrac.h']]],
+  ['o1d_5frate_5fn2o_5fa_7',['O1D_RATE_N2O_A',['../mptrac_8h.html#a41383a957534c2ee593ff8aaa06978eb',1,'mptrac.h']]],
+  ['o1d_5frate_5fn2o_5fb_8',['O1D_RATE_N2O_B',['../mptrac_8h.html#a7129afc681db38c085a029c8f8bbeea7',1,'mptrac.h']]],
+  ['o2_9',['o2',['../structclim__photo__t.html#a517ac04a5fef45c6562e9b4e3de2c41e',1,'clim_photo_t']]],
+  ['o3_10',['o3',['../structmet__t.html#a5ce0fb589ddc187ab1191a9fd081a376',1,'met_t']]],
+  ['o3_5f1_11',['o3_1',['../structclim__photo__t.html#a0a15b9cf6e988e941224f2b7037c75ef',1,'clim_photo_t']]],
+  ['o3_5f2_12',['o3_2',['../structclim__photo__t.html#ab95f9b3414775d1436ddbc7cb7d2ea8a',1,'clim_photo_t']]],
+  ['o3c_13',['o3c',['../structmet__t.html#a0ab0cfbc1e5fe1a5c9ce3412cc4400a8',1,'met_t::o3c()'],['../structclim__photo__t.html#ac0271c879928d27622665e275d535bc1',1,'clim_photo_t::o3c()']]],
+  ['obs_5ftype_14',['obs_type',['../structctl__t.html#a874cf53d903cea2e96423bacd2fafdab',1,'ctl_t']]],
+  ['oh_15',['oh',['../structclim__t.html#ac67a2bf753276e20cc577a0134b29252',1,'clim_t']]],
+  ['oh_5fchem_16',['oh_chem',['../structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f',1,'ctl_t']]],
+  ['oh_5fchem_5fbeta_17',['oh_chem_beta',['../structctl__t.html#a572e117f02cbfced576c216d366d1a89',1,'ctl_t']]],
+  ['oh_5fchem_5freaction_18',['oh_chem_reaction',['../structctl__t.html#a81cc25ede9c434e2ac0d7e341f3113e1',1,'ctl_t']]],
+  ['omega_5fearth_19',['OMEGA_EARTH',['../mptrac_8h.html#aa190ae020a1ec102f09bd4d9741a19e1',1,'mptrac.h']]]
 ];

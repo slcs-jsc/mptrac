@@ -1,11 +1,12 @@
 var searchData=
 [
-  ['p_0',['P',['../mptrac_8h.html#a5e1d0f42ad38aba63907665ccdd43b86',1,'mptrac.h']]],
-  ['p0_1',['P0',['../mptrac_8h.html#a1583b00a62bc1138f99bbfcd8ef81a6a',1,'mptrac.h']]],
-  ['particle_5floop_2',['PARTICLE_LOOP',['../mptrac_8h.html#a11241b8a58cfbbe8cc92e1db4aff45ab',1,'mptrac.h']]],
-  ['print_3',['PRINT',['../mptrac_8h.html#a19e6b556dec9bcdb4e422d57633ce731',1,'mptrac.h']]],
-  ['print_5ftimers_4',['PRINT_TIMERS',['../mptrac_8h.html#ab84d08f557a59406c2b0969300937769',1,'mptrac.h']]],
-  ['psat_5',['PSAT',['../mptrac_8h.html#adc5ae7e10b1b021fb68397df5bad0a64',1,'mptrac.h']]],
-  ['psice_6',['PSICE',['../mptrac_8h.html#a70eb939aa0b84d808a49a4a18111ae9f',1,'mptrac.h']]],
-  ['pw_7',['PW',['../mptrac_8h.html#a1f71059c62f3f9c3db1f6eb5f94dd7a8',1,'mptrac.h']]]
+  ['o1d_5frate_5fccl4_5fa_0',['O1D_RATE_CCL4_A',['../mptrac_8h.html#a9c9c5114e177eb8d51bfd131ca7f2f09',1,'mptrac.h']]],
+  ['o1d_5frate_5fccl4_5fb_1',['O1D_RATE_CCL4_B',['../mptrac_8h.html#a78280d56f9a3fe0ad0e4957101c95a4f',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc11_5fa_2',['O1D_RATE_CFC11_A',['../mptrac_8h.html#a886e031afa292fb18e5a2924a0c9f981',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc11_5fb_3',['O1D_RATE_CFC11_B',['../mptrac_8h.html#af97ee33c81cb99e30caf9d7053bcbff5',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc12_5fa_4',['O1D_RATE_CFC12_A',['../mptrac_8h.html#a6c23cf4cc74f3dd2b008e3b1b597e43c',1,'mptrac.h']]],
+  ['o1d_5frate_5fcfc12_5fb_5',['O1D_RATE_CFC12_B',['../mptrac_8h.html#a3c684b3dfae9c87af60d0d66bd186574',1,'mptrac.h']]],
+  ['o1d_5frate_5fn2o_5fa_6',['O1D_RATE_N2O_A',['../mptrac_8h.html#a41383a957534c2ee593ff8aaa06978eb',1,'mptrac.h']]],
+  ['o1d_5frate_5fn2o_5fb_7',['O1D_RATE_N2O_B',['../mptrac_8h.html#a7129afc681db38c085a029c8f8bbeea7',1,'mptrac.h']]],
+  ['omega_5fearth_8',['OMEGA_EARTH',['../mptrac_8h.html#aa190ae020a1ec102f09bd4d9741a19e1',1,'mptrac.h']]]
 ];
