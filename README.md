@@ -220,8 +220,8 @@ visualized using the gnuplot plotting tool.
 For example, particle positions and grid outputs at different time
 steps (June 6th and June 8th, 2011) are shown below:
 
-<p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00_00.tab.png" width="45%"/></p>
 
 ### Additional project subdirectories
 
