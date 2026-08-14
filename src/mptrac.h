@@ -320,6 +320,146 @@
 #define RI 8.3144598
 #endif
 
+/*! Exponent used for potential-temperature calculations [1]. */
+#ifndef KAPPA
+#define KAPPA 0.286
+#endif
+
+/*! Angular velocity of Earth [s^-1]. */
+#ifndef OMEGA_EARTH
+#define OMEGA_EARTH 7.2921e-5
+#endif
+
+/*! Ozone column mass corresponding to one Dobson unit [kg/m^2]. */
+#ifndef DOBSON_UNIT
+#define DOBSON_UNIT 2.1415e-5
+#endif
+
+/*! Mean mass of an air molecule [kg]. */
+#ifndef M_AIR_MOLECULE
+#define M_AIR_MOLECULE 4.8096e-26
+#endif
+
+/*! Reference temperature for chemical equilibrium constants [K]. */
+#ifndef CHEM_REF_TEMP
+#define CHEM_REF_TEMP 298.15
+#endif
+
+/*! Reference rate for aqueous H2O2-SO2 chemistry [L^2/(mol^2 s)]. */
+#ifndef H2O2_SO2_RATE_REF
+#define H2O2_SO2_RATE_REF 9.1e7
+#endif
+
+/*! Temperature parameter for the aqueous H2O2-SO2 rate [K]. */
+#ifndef H2O2_SO2_RATE_TEMP
+#define H2O2_SO2_RATE_TEMP 29700.
+#endif
+
+/*! Henry constant of SO2 at CHEM_REF_TEMP [mol/(L atm)]. */
+#ifndef SO2_HENRY_REF
+#define SO2_HENRY_REF 1.3e-2
+#endif
+
+/*! Temperature dependence of the SO2 Henry constant [K]. */
+#ifndef SO2_HENRY_TEMP
+#define SO2_HENRY_TEMP 2900.
+#endif
+
+/*! Henry constant of H2O2 at CHEM_REF_TEMP [mol/(L atm)]. */
+#ifndef H2O2_HENRY_REF
+#define H2O2_HENRY_REF 8.3e2
+#endif
+
+/*! Temperature dependence of the H2O2 Henry constant [K]. */
+#ifndef H2O2_HENRY_TEMP
+#define H2O2_HENRY_TEMP 7600.
+#endif
+
+/*! Scale factor of the high-SO2 correction [1]. */
+#ifndef SO2_CORR_A
+#define SO2_CORR_A 3.12541941e-06
+#endif
+
+/*! Exponent of the high-SO2 correction [1]. */
+#ifndef SO2_CORR_B
+#define SO2_CORR_B -5.72532259e-01
+#endif
+
+/*! O(1D) reaction pre-factor for CCl4 [cm^3/s]. */
+#ifndef O1D_RATE_CCL4_A
+#define O1D_RATE_CCL4_A 3.30e-10
+#endif
+
+/*! O(1D) reaction temperature parameter for CCl4 [K]. */
+#ifndef O1D_RATE_CCL4_B
+#define O1D_RATE_CCL4_B 0.
+#endif
+
+/*! O(1D) reaction pre-factor for CFC-11 [cm^3/s]. */
+#ifndef O1D_RATE_CFC11_A
+#define O1D_RATE_CFC11_A 2.30e-10
+#endif
+
+/*! O(1D) reaction temperature parameter for CFC-11 [K]. */
+#ifndef O1D_RATE_CFC11_B
+#define O1D_RATE_CFC11_B 0.
+#endif
+
+/*! O(1D) reaction pre-factor for CFC-12 [cm^3/s]. */
+#ifndef O1D_RATE_CFC12_A
+#define O1D_RATE_CFC12_A 1.40e-10
+#endif
+
+/*! O(1D) reaction temperature parameter for CFC-12 [K]. */
+#ifndef O1D_RATE_CFC12_B
+#define O1D_RATE_CFC12_B -25.
+#endif
+
+/*! O(1D) reaction pre-factor for N2O [cm^3/s]. */
+#ifndef O1D_RATE_N2O_A
+#define O1D_RATE_N2O_A 1.19e-10
+#endif
+
+/*! O(1D) reaction temperature parameter for N2O [K]. */
+#ifndef O1D_RATE_N2O_B
+#define O1D_RATE_N2O_B -20.
+#endif
+
+/*! First SO2 dissociation constant at CHEM_REF_TEMP [mol/L]. */
+#ifndef SO2_DISS_K1_REF
+#define SO2_DISS_K1_REF 1.23e-2
+#endif
+
+/*! Temperature dependence of the first SO2 dissociation constant [K]. */
+#ifndef SO2_DISS_K1_TEMP
+#define SO2_DISS_K1_TEMP 2.01e3
+#endif
+
+/*! Second SO2 dissociation constant at CHEM_REF_TEMP [mol/L]. */
+#ifndef SO2_DISS_K2_REF
+#define SO2_DISS_K2_REF 6e-8
+#endif
+
+/*! Temperature dependence of the second SO2 dissociation constant [K]. */
+#ifndef SO2_DISS_K2_TEMP
+#define SO2_DISS_K2_TEMP 1.12e3
+#endif
+
+/*! Upper temperature of the ice-cloud retention transition [K]. */
+#ifndef WET_DEPO_T_LIQUID
+#define WET_DEPO_T_LIQUID T0
+#endif
+
+/*! Lower temperature of the ice-cloud retention transition [K]. */
+#ifndef WET_DEPO_T_ICE
+#define WET_DEPO_T_ICE 238.15
+#endif
+
+/*! Temperature threshold for below-cloud retention [K]. */
+#ifndef WET_DEPO_T_LIQUID_BC
+#define WET_DEPO_T_LIQUID_BC 270.
+#endif
+
 /*! Half-life of Rn-222 [s]. */
 #ifndef RADIO_HALF_LIFE_RN222
 #define RADIO_HALF_LIFE_RN222 (3.8235 * 86400.0)
@@ -1972,7 +2112,7 @@
  *
  * Formula:
  *
- * \f[ \theta = T \left( \frac{1000}{P} \right)^{0.286} \f]
+ * \f[ \theta = T \left( \frac{1000}{P} \right)^{\kappa} \f]
  *
  * where:
  * - \f$ \theta \f$ is the potential temperature.
@@ -1982,7 +2122,7 @@
  * @author Lars Hoffmann
  */
 #define THETA(p, t)				\
-  ((t) * pow(1000. / (p), 0.286))
+  ((t) * pow(1000. / (p), KAPPA))
 
 /**
  * @brief Compute virtual potential temperature.

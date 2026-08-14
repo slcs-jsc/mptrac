@@ -4817,9 +4817,7 @@ void module_h2o2_chem(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Parameter of SO2 correction... */
-  const double a = 3.12541941e-06;
-  const double b = -5.72532259e-01;
-  const double low = pow(1. / a, 1. / b);
+  const double low = pow(1. / SO2_CORR_A, 1. / SO2_CORR_B);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
@@ -4840,23 +4838,29 @@ void module_h2o2_chem(
     const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reaction rate (Berglen et al., 2004)... */
-    const double k = 9.1e7 * exp(-29700. / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
+    const double k = H2O2_SO2_RATE_REF
+      * exp(-H2O2_SO2_RATE_TEMP / RI
+            * (1. / t - 1. / CHEM_REF_TEMP));	/* Maass (1999), M^(-2) */
 
     /* Henry constant of SO2... */
     const double H_SO2 =
-      1.3e-2 * exp(2900. * (1. / t - 1. / 298.15)) * RI * t;
-    const double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
+      SO2_HENRY_REF * exp(SO2_HENRY_TEMP
+                           * (1. / t - 1. / CHEM_REF_TEMP)) * RI * t;
+    const double K_1S = SO2_DISS_K1_REF
+      * exp(SO2_DISS_K1_TEMP
+            * (1. / t - 1. / CHEM_REF_TEMP));	/* unit: mol/L */
 
     /* Henry constant of H2O2... */
     const double H_h2o2 =
-      8.3e2 * exp(7600. * (1. / t - 1. / 298.15)) * RI * t;
+      H2O2_HENRY_REF * exp(H2O2_HENRY_TEMP
+                            * (1. / t - 1. / CHEM_REF_TEMP)) * RI * t;
 
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
     double cor = 1.0;
     if (ctl->qnt_Cx >= 0)
       cor = atm->q[ctl->qnt_Cx][ip] >
-	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
+	low ? SO2_CORR_A * pow(atm->q[ctl->qnt_Cx][ip], SO2_CORR_B) : 1;
 
     const double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
@@ -4983,7 +4987,7 @@ void module_isosurf(
     /* Restore potential temperature... */
     else if (ctl->isosurf == 3) {
       INTPOL_3D(t, 1);
-      atm->p[ip] = 1000. * pow(cache->iso_var[ip] / t, -1. / 0.286);
+      atm->p[ip] = 1000. * pow(cache->iso_var[ip] / t, -1. / KAPPA);
     }
 
     /* Interpolate pressure... */
@@ -5615,15 +5619,15 @@ void module_radio_depo(
           const int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
           double eta;
           if (inside) {
-            if (t > 273.15)
+            if (t > WET_DEPO_T_LIQUID)
               eta = 1;
-            else if (t <= 238.15)
+            else if (t <= WET_DEPO_T_ICE)
               eta = ctl->wet_depo_ic_ret_ratio;
             else
-              eta = LIN(273.15, 1, 238.15,
+              eta = LIN(WET_DEPO_T_LIQUID, 1, WET_DEPO_T_ICE,
                         ctl->wet_depo_ic_ret_ratio, t);
           } else
-            eta = (t > 270 ? 1 : ctl->wet_depo_bc_ret_ratio);
+            eta = (t > WET_DEPO_T_LIQUID_BC ? 1 : ctl->wet_depo_bc_ret_ratio);
           wet_pb210 = RADIO_WET_COEFF_PB210 * Is * eta;
           wet_be7 = RADIO_WET_COEFF_BE7 * Is * eta;
           wet_cs137 = RADIO_WET_COEFF_CS137 * Is * eta;
@@ -6111,7 +6115,7 @@ void module_tracer_chem(
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
-      const double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
+      const double K_o1d = ARRHENIUS(O1D_RATE_CCL4_A, O1D_RATE_CCL4_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
 				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
@@ -6119,7 +6123,7 @@ void module_tracer_chem(
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
-      const double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
+      const double K_o1d = ARRHENIUS(O1D_RATE_CFC11_A, O1D_RATE_CFC11_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
 				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
@@ -6127,7 +6131,7 @@ void module_tracer_chem(
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
-      const double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
+      const double K_o1d = ARRHENIUS(O1D_RATE_CFC12_A, O1D_RATE_CFC12_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
 				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
@@ -6135,7 +6139,7 @@ void module_tracer_chem(
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
-      const double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
+      const double K_o1d = ARRHENIUS(O1D_RATE_N2O_A, O1D_RATE_N2O_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
 				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
@@ -6199,12 +6203,12 @@ void module_wet_depo(
 
       /* Calculate retention factor... */
       double eta;
-      if (t > 273.15)
+      if (t > WET_DEPO_T_LIQUID)
 	eta = 1;
-      else if (t <= 238.15)
+      else if (t <= WET_DEPO_T_ICE)
 	eta = ctl->wet_depo_ic_ret_ratio;
       else
-	eta = LIN(273.15, 1, 238.15, ctl->wet_depo_ic_ret_ratio, t);
+	eta = LIN(WET_DEPO_T_LIQUID, 1, WET_DEPO_T_ICE, ctl->wet_depo_ic_ret_ratio, t);
 
       /* Use exponential dependency for particles (Bakels et al., 2024)... */
       if (ctl->wet_depo_ic_a > 0)
@@ -6215,14 +6219,18 @@ void module_wet_depo(
 
 	/* Get Henry's constant (Burkholder et al., 2019; Sander, 2023)... */
 	double h = ctl->wet_depo_ic_h[0]
-	  * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / 298.15));
+	  * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / CHEM_REF_TEMP));
 
 	/* Use effective Henry's constant for SO2
 	   (Berglen, 2004; Simpson, 2012)... */
 	if (ctl->wet_depo_so2_ph > 0) {
 	  const double H_ion = pow(10., -ctl->wet_depo_so2_ph);
-	  const double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
-	  const double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
+	  const double K_1 = SO2_DISS_K1_REF
+	    * exp(SO2_DISS_K1_TEMP
+		  * (1. / t - 1. / CHEM_REF_TEMP));
+	  const double K_2 = SO2_DISS_K2_REF
+	    * exp(SO2_DISS_K2_TEMP
+		  * (1. / t - 1. / CHEM_REF_TEMP));
 	  h *= (1. + K_1 / H_ion + K_1 * K_2 / SQR(H_ion));
 	}
 
@@ -6239,7 +6247,7 @@ void module_wet_depo(
 
       /* Calculate retention factor... */
       double eta;
-      if (t > 270)
+      if (t > WET_DEPO_T_LIQUID_BC)
 	eta = 1;
       else
 	eta = ctl->wet_depo_bc_ret_ratio;
@@ -6253,7 +6261,7 @@ void module_wet_depo(
 
 	/* Get Henry's constant (Burkholder et al., 2019; Sander, 2023)... */
 	const double h = ctl->wet_depo_bc_h[0]
-	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
+	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / CHEM_REF_TEMP));
 
 	/* Estimate depth of cloud layer... */
 	const double dz = 1e3 * (Z(pct) - Z(pcb));
@@ -7310,8 +7318,8 @@ void mptrac_read_ctl(
     ctl->oh_chem[1] = 4.1;
     ctl->oh_chem[2] = 1.7e-12;
     ctl->oh_chem[3] = -0.2;
-    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.3e-2;
-    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2900.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = SO2_HENRY_REF;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = SO2_HENRY_TEMP;
   }
 
   /* Molar mass... */
@@ -9177,7 +9185,7 @@ void read_met_cape(
       pbot = met->ps[ix][iy];
       do {
 	met->plcl[ix][iy] = (float) (0.5 * (pbot + ptop));
-	t = theta / pow(1000. / met->plcl[ix][iy], 0.286);
+	t = theta / pow(1000. / met->plcl[ix][iy], KAPPA);
 	if (RH(met->plcl[ix][iy], t, h2o) > 100.)
 	  ptop = met->plcl[ix][iy];
 	else
@@ -9192,7 +9200,7 @@ void read_met_cape(
       do {
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
-	t = theta / pow(1000. / p, 0.286);
+	t = theta / pow(1000. / p, KAPPA);
 	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
 			    &t_env, ci, cw, 1);
 	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
@@ -9207,7 +9215,7 @@ void read_met_cape(
          and convective available potential energy (CAPE)... */
       dcape = 0;
       p = met->plcl[ix][iy];
-      t = theta / pow(1000. / p, 0.286);
+      t = theta / pow(1000. / p, KAPPA);
       ptop = 0.75 * clim_tropo(clim, met->time,
 			       ctl->met_coord_type ==
 			       0 ? met->lat[iy] : ctl->met_utm_ref_lat);
@@ -11785,7 +11793,7 @@ void read_met_pv(
   /* Set powers... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < met->np; ip++)
-    pows[ip] = pow(1000. / met->p[ip], 0.286);
+    pows[ip] = pow(1000. / met->p[ip], KAPPA);
 
   /* Loop over grid points... */
 #pragma omp parallel for default(shared)
@@ -11813,7 +11821,7 @@ void read_met_pv(
 	c0 = cos(DEG2RAD(met->lat[iy0]));
 	c1 = cos(DEG2RAD(met->lat[iy1]));
 	cr = cos(DEG2RAD(latr));
-	vort = 2 * 7.2921e-5 * sin(DEG2RAD(latr));
+	vort = 2 * OMEGA_EARTH * sin(DEG2RAD(latr));
       } else {			// coords are in meters
 	dx = met->lon[ix1] - met->lon[ix0];
 	dy = met->lat[iy1] - met->lat[iy0];
@@ -11822,7 +11830,7 @@ void read_met_pv(
 	c1 = 1.0;
 	cr = 1.0;
 
-	vort = 2 * 7.2921e-5 * sin(latr / (RE * 1000));
+	vort = 2 * OMEGA_EARTH * sin(latr / (RE * 1000));
       }
 
       /* Loop over grid points... */
@@ -11916,7 +11924,7 @@ void read_met_ozone(
 	}
 
       /* Convert to Dobson units... */
-      met->o3c[ix][iy] = (float) (cd / 2.1415e-5);
+      met->o3c[ix][iy] = (float) (cd / DOBSON_UNIT);
     }
 }
 
@@ -12458,7 +12466,7 @@ double sedi(
   const double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Thermal velocity of an air molecule [m / s]... */
-  const double v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
+  const double v = sqrt(8. * KB * T / (M_PI * M_AIR_MOLECULE));
 
   /* Mean free path of an air molecule [m]... */
   const double lambda = 2. * eta / (rho * v);
