@@ -50,11 +50,27 @@ $trac/met_conv - data/ei_2011_06_05_00.sz3_scaled 7 data/sz3_scaled2bin_2011_06_
 	       MET_LOSSY_SCALE 1
 $trac/met_conv - data/ei_2011_06_05_00.lz4 8 data/lz42bin_2011_06_05_00.bin 1
 
-# Compare files...
+# Compare checksums...
 echo -e "\nCompare results..."
 error=0
-for f in data.ref/*.bin ; do
-    [ -s data/"$(basename "$f")" ] || continue
-    diff -q -s data/"$(basename "$f")" "$f" || error=1
-done
+while read -r expected file ; do
+    case "$file" in
+        ei_2011_06_05_00.bin|nc2bin_2011_06_05_00.bin|pck2bin_2011_06_05_00.bin) ;;
+        *)
+            if [ ! -s "data/$file" ] ; then
+                echo "Checksum skipped (optional output unavailable): data/$file"
+                continue
+            fi
+            ;;
+    esac
+    actual=$(sha256sum "data/$file" | awk '{print $1}')
+    if [ "$actual" = "$expected" ] ; then
+        echo "Checksum matches: data/$file"
+    else
+        echo "Checksum mismatch: data/$file"
+        echo "  expected: $expected"
+        echo "  actual:   $actual"
+        error=1
+    fi
+done < data.ref/sha256sums
 exit $error

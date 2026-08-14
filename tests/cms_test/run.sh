@@ -19,7 +19,16 @@ $trac/met_map - data/map.tab data/ei_2011_06_05_00.cms MET_TYPE 5 MAP_DLON 3 MAP
 # Compare files...
 echo -e "\nCompare results..."
 error=0
-for f in $(ls data.ref/*) ; do
-    diff -q -s data/"$(basename "$f")" "$f" || error=1
-done
+diff -q -s data/map.tab data.ref/map.tab || error=1
+while read -r expected file ; do
+    actual=$(sha256sum "data/$file" | awk '{print $1}')
+    if [ "$actual" = "$expected" ] ; then
+        echo "Checksum matches: data/$file"
+    else
+        echo "Checksum mismatch: data/$file"
+        echo "  expected: $expected"
+        echo "  actual:   $actual"
+        error=1
+    fi
+done < data.ref/sha256sums
 exit $error

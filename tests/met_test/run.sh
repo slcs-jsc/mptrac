@@ -41,11 +41,12 @@ for metfile in ../data/ei_2011_06_05_00.nc ../data/era5ml_2011_06_05_00.nc ; do
     $trac/met_spec - data/spec_${base}.tab $metfile $metparam \
 		   SPEC_WAVEMAX 3
     
-    $trac/met_subgrid - data/subgrid_${base}.tab \
-		      ../data/ei_2011_06_05_00.nc \
-		      ../data/ei_2011_06_06_00.nc
-
 done
+
+# Calculate subgrid-scale variability...
+$trac/met_subgrid - data/subgrid_ei_2011_06_05_00.tab \
+		  ../data/ei_2011_06_05_00.nc \
+		  ../data/ei_2011_06_06_00.nc
 
 # Create init file for sampling...
 tm=$($trac/time2jsec 2011 6 5 12 0 0 0)
