@@ -1182,13 +1182,17 @@ $ ./trac_fortran data/dirlist trac.ctl atm_split.tab ATM_BASENAME atm_diff GRID_
 <p>To ensure the interoperability between Fortran and C an interface is
 needed. This interface includes some general dimension variables, the
 structures <code>atm_t</code>, <code>cache_t</code>, <code>clim_photo_t</code>, <code>clim_t</code>, <code>clim_ts_t</code>,
-<code>clim_zm_t</code>, <code>ctl_t</code>, <code>dd_t</code>, <code>met_t</code> and the functions
+<code>clim_zm_t</code>, <code>ctl_t</code>, <code>depo_t</code>, <code>dd_t</code>, <code>met_t</code> and the functions
 <code>mptrac_alloc</code>, <code>mptrac_free</code>, <code>mptrac_get_met</code>, <code>mptrac_init</code>,
 <code>mptrac_read_atm</code>, <code>mptrac_read_clim</code>, <code>mptrac_read_ctl</code>,
 <code>mptrac_read_met</code>, <code>mptrac_run_timestep</code>, <code>mptrac_write_atm</code>,
 <code>mptrac_write_met</code>, <code>mptrac_write_output</code>, <code>mptrac_update_device</code>, and
 <code>mptrac_update_host</code>. The functions have the prefix <code>mptrac</code> to
 indicate that they are interfaces to the original MPTRAC functions.</p>
+<p>The Fortran <code>depo_t</code> mirrors the four cumulative ground-inventory arrays used
+by the C interface. <code>trac_fortran</code> allocates it, passes it through model
+initialization and each time step, writes deposition output through
+<code>mptrac_write_output</code>, and frees it together with the other model structures.</p>
 <h3 id="checking-order-and-array-sizes">Checking order and array sizes</h3>
 <p>It is crucial that the order and array sizes in the Fortran interface
 match those in the original C structure. The structures in MPTRAC

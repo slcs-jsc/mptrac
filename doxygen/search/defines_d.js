@@ -2,9 +2,23 @@ var searchData=
 [
   ['ra_0',['RA',['../mptrac_8h.html#a30a3f049b718d26a32f16ed72716d588',1,'mptrac.h']]],
   ['rad2deg_1',['RAD2DEG',['../mptrac_8h.html#aacc958134b53425ec947541bb72ac8b1',1,'mptrac.h']]],
-  ['re_2',['RE',['../mptrac_8h.html#a0600e3f227b6e9a3ae26f4d6e2a0581e',1,'mptrac.h']]],
-  ['rh_3',['RH',['../mptrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2',1,'mptrac.h']]],
-  ['rhice_4',['RHICE',['../mptrac_8h.html#a9431567784929c9e462e16f393e04088',1,'mptrac.h']]],
-  ['rho_5',['RHO',['../mptrac_8h.html#ae088e183d18a16fd6ab469d48ce3f06a',1,'mptrac.h']]],
-  ['ri_6',['RI',['../mptrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e',1,'mptrac.h']]]
+  ['radio_5fdry_5fvdep_5fbe7_2',['RADIO_DRY_VDEP_BE7',['../mptrac_8h.html#aadeef7a625edd64a0218859a23414b6d',1,'mptrac.h']]],
+  ['radio_5fdry_5fvdep_5fcs137_3',['RADIO_DRY_VDEP_CS137',['../mptrac_8h.html#a2c3037e3d3192b832d4c40846711b4d6',1,'mptrac.h']]],
+  ['radio_5fdry_5fvdep_5fi131_4',['RADIO_DRY_VDEP_I131',['../mptrac_8h.html#a296ecf4be49f2ba9a5eb5eed96add6f6',1,'mptrac.h']]],
+  ['radio_5fdry_5fvdep_5fpb210_5',['RADIO_DRY_VDEP_PB210',['../mptrac_8h.html#a47447ac4f8f7e5d68f25b3dd89b3fa37',1,'mptrac.h']]],
+  ['radio_5fhalf_5flife_5fbe7_6',['RADIO_HALF_LIFE_BE7',['../mptrac_8h.html#a63778bf72860e879ad413233e325e59a',1,'mptrac.h']]],
+  ['radio_5fhalf_5flife_5fcs137_7',['RADIO_HALF_LIFE_CS137',['../mptrac_8h.html#a13d15695a3344c41289df0ece36d8080',1,'mptrac.h']]],
+  ['radio_5fhalf_5flife_5fi131_8',['RADIO_HALF_LIFE_I131',['../mptrac_8h.html#a60b48bfd4efd7f2ef88a4a5e7cbd0561',1,'mptrac.h']]],
+  ['radio_5fhalf_5flife_5fpb210_9',['RADIO_HALF_LIFE_PB210',['../mptrac_8h.html#ae1c8c4f2d26bf59995850e635366b61a',1,'mptrac.h']]],
+  ['radio_5fhalf_5flife_5frn222_10',['RADIO_HALF_LIFE_RN222',['../mptrac_8h.html#acbc6427cb481f804aba3e76ece3f1da8',1,'mptrac.h']]],
+  ['radio_5fhalf_5flife_5fxe133_11',['RADIO_HALF_LIFE_XE133',['../mptrac_8h.html#afc6778445ca3510c102f6a186586ecc5',1,'mptrac.h']]],
+  ['radio_5fwet_5fcoeff_5fbe7_12',['RADIO_WET_COEFF_BE7',['../mptrac_8h.html#a8389350f38063a655edcca2dd843a0fe',1,'mptrac.h']]],
+  ['radio_5fwet_5fcoeff_5fcs137_13',['RADIO_WET_COEFF_CS137',['../mptrac_8h.html#a895f35297a4effe13fe0c1d78c5b8f1b',1,'mptrac.h']]],
+  ['radio_5fwet_5fcoeff_5fi131_14',['RADIO_WET_COEFF_I131',['../mptrac_8h.html#aaa4f91c79988470f9b836876ef7dea4a',1,'mptrac.h']]],
+  ['radio_5fwet_5fcoeff_5fpb210_15',['RADIO_WET_COEFF_PB210',['../mptrac_8h.html#afe947e65f5480c31fb558a70563bd902',1,'mptrac.h']]],
+  ['re_16',['RE',['../mptrac_8h.html#a0600e3f227b6e9a3ae26f4d6e2a0581e',1,'mptrac.h']]],
+  ['rh_17',['RH',['../mptrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2',1,'mptrac.h']]],
+  ['rhice_18',['RHICE',['../mptrac_8h.html#a9431567784929c9e462e16f393e04088',1,'mptrac.h']]],
+  ['rho_19',['RHO',['../mptrac_8h.html#ae088e183d18a16fd6ab469d48ce3f06a',1,'mptrac.h']]],
+  ['ri_20',['RI',['../mptrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e',1,'mptrac.h']]]
 ];

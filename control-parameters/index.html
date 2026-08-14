@@ -461,6 +461,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#radionuclide-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Radionuclide deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -969,6 +980,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#radionuclide-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Radionuclide deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1038,6 +1060,73 @@ control parameter file.</p>
 <pre><code>./atm_init trac.ctl data/atm_init.tab \
                INIT_T0 360547200 INIT_T1 360547200 \
                INIT_RELZ0 0.0 INIT_RELZ1 1.2 INIT_DRELZ 0.2
+</code></pre>
+<h2 id="radionuclide-deposition">Radionuclide deposition</h2>
+<p>Radionuclide decay and deposition require the activity quantities to be part
+of the air-parcel data. The recognized quantity names are <code>Apb210</code>, <code>Abe7</code>,
+<code>Acs137</code>, and <code>Ai131</code>; their values are activities in Bq per air parcel.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Meaning</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RADIO_DECAY</code></td>
+<td>Apply radioactive decay to airborne and deposited activity</td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><code>RADIO_DEPO</code></td>
+<td>Apply dry and wet radionuclide deposition</td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><code>DEPO_BASENAME</code></td>
+<td>Basename of cumulative ground-inventory files; <code>-</code> disables output</td>
+<td><code>-</code></td>
+</tr>
+<tr>
+<td><code>DEPO_DT_OUT</code></td>
+<td>Deposition output interval in seconds</td>
+<td><code>86400</code></td>
+</tr>
+<tr>
+<td><code>DEPO_TYPE</code></td>
+<td>Output format: <code>0</code> for ASCII, <code>1</code> for netCDF</td>
+<td><code>0</code></td>
+</tr>
+</tbody>
+</table>
+<p>The horizontal deposition grid is configured with <code>GRID_LON0</code>, <code>GRID_LON1</code>,
+<code>GRID_NX</code>, <code>GRID_LAT0</code>, <code>GRID_LAT1</code>, and <code>GRID_NY</code>. <code>GRID_BASENAME</code> does not
+need to be enabled. <code>GRID_NC_LEVEL</code> controls netCDF compression for deposition
+files as it does for regular grid output.</p>
+<p><code>RADIO_DEPO</code> currently requires <code>MET_COORD_TYPE=0</code> and is not supported in
+domain-decomposition (DD) builds. Invalid combinations are rejected while
+reading the control parameters.</p>
+<p>Example:</p>
+<pre><code class="language-text">NQ = 4
+QNT_NAME[0] = Apb210
+QNT_NAME[1] = Abe7
+QNT_NAME[2] = Acs137
+QNT_NAME[3] = Ai131
+
+RADIO_DECAY = 1
+RADIO_DEPO = 1
+DEPO_BASENAME = depo
+DEPO_DT_OUT = 43200
+DEPO_TYPE = 1
+
+GRID_LON0 = -90
+GRID_LON1 = -50
+GRID_NX = 80
+GRID_LAT0 = -55
+GRID_LAT1 = -25
+GRID_NY = 60
 </code></pre>
 
 

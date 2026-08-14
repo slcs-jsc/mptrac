@@ -1,15 +1,15 @@
 <map id="main" name="main">
 <area shape="rect" id="node1" title=" " alt="" coords="5,309,56,336"/>
 <area shape="rect" id="node2" href="$mptrac_8h.html#a045ffa06d9f954b6a558e19a46388049" title="Initialize the domain decomposition infrastructure." alt="" coords="146,56,206,83"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a05eca328a1d7b6ea06252dca2f83961d" title="Allocates and initializes memory resources for MPTRAC." alt="" coords="128,107,224,133"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#adba57d9fe55a3a455520de070702f8e1" title="Frees memory resources allocated for MPTRAC." alt="" coords="131,157,221,184"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#aa2d277d4dd8ef1eb8226aa9ab93ebb04" title="Allocates and initializes memory resources for MPTRAC." alt="" coords="128,107,224,133"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef" title="Frees memory resources allocated for MPTRAC." alt="" coords="131,157,221,184"/>
 <area shape="rect" id="node5" href="$mptrac_8c.html#a8435d2ccfa5de00f6d8080d363737cd6" title="Retrieves meteorological data for the specified time." alt="" coords="118,208,234,235"/>
-<area shape="rect" id="node9" href="$mptrac_8c.html#a57d693a955f788f652b4d961ee5a29a7" title="Initializes the MPTRAC model and its associated components." alt="" coords="133,259,219,285"/>
+<area shape="rect" id="node9" href="$mptrac_8c.html#a9542b15309186309adb34ff5d2a84f45" title="Initializes the MPTRAC model and its associated components." alt="" coords="133,259,219,285"/>
 <area shape="rect" id="node12" href="$mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633" title="Reads air parcel data from a specified file into the given atmospheric structure." alt="" coords="115,360,237,387"/>
 <area shape="rect" id="node17" href="$mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766" title="Reads various climatological data and populates the given climatology structure." alt="" coords="113,588,239,615"/>
 <area shape="rect" id="node23" href="$mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="119,765,233,792"/>
-<area shape="rect" id="node26" href="$mptrac_8c.html#a3d7054e72e7ad37c35592d7469664f0a" title="Executes a single timestep of the MPTRAC model simulation." alt="" coords="104,1373,248,1400"/>
-<area shape="rect" id="node50" href="$mptrac_8c.html#a9abd7a8f35bf3b0c211d8212675d09b1" title="Writes various types of output data to files in a specified directory." alt="" coords="106,1424,246,1451"/>
+<area shape="rect" id="node26" href="$mptrac_8c.html#ad9a159fc7594660d89a2b68398b12d3a" title="Executes a single timestep of the MPTRAC model simulation." alt="" coords="104,1373,248,1400"/>
+<area shape="rect" id="node50" href="$mptrac_8c.html#a5769fad7f901bbf350b2605919eb0685" title="Writes various types of output data to files in a specified directory." alt="" coords="106,1424,246,1451"/>
 <area shape="rect" id="node6" href="$mptrac_8c.html#a5caa73fb12fc17fed6b61b9176f8d87d" title="Generates a formatted filename for meteorological data files based on the input parameters." alt="" coords="322,5,446,32"/>
 <area shape="rect" id="node7" href="$mptrac_8c.html#ad761ca965e59ad9246ab5825a3730058" title="Reads meteorological data from a file, supporting multiple formats and MPI broadcasting." alt="" coords="323,56,445,83"/>
 <area shape="rect" id="node8" href="$mptrac_8c.html#a55562b13a38a124b0abc09ce8511dde9" title="Updates device memory for specified data structures." alt="" coords="520,157,673,184"/>
@@ -47,6 +47,6 @@
 <area shape="rect" id="node45" href="$mptrac_8c.html#ae27eb9636b812ae9155ac23c86856d1b" title="Perform hydroxyl chemistry calculations for atmospheric particles." alt="" coords="322,1779,446,1805"/>
 <area shape="rect" id="node46" href="$mptrac_8c.html#ab8f2e9219b39e8eb46e7d5c9d8398e53" title="Update the positions and pressure levels of atmospheric particles." alt="" coords="326,1829,442,1856"/>
 <area shape="rect" id="node47" href="$mptrac_8c.html#a82b45268d35f33a047e9f38d04c8a7a5" title="Apply radioactive decay to atmospheric tracer species." alt="" coords="314,1880,454,1907"/>
-<area shape="rect" id="node48" href="$mptrac_8c.html#a6cdd8f72190aa0901f08f48afc240ee1" title="Simulate sedimentation of particles in the atmosphere." alt="" coords="337,1931,431,1957"/>
-<area shape="rect" id="node49" href="$mptrac_8c.html#a745b4aaa2f48daf3e82ddff6f31ea1ba" title="Sort particles according to box index." alt="" coords="337,1981,431,2008"/>
+<area shape="rect" id="node48" href="$mptrac_8c.html#afb4acdb76be66110d36077ac19036a42" title="Deposit supported radionuclides from air parcels onto the ground grid." alt="" coords="317,1931,451,1957"/>
+<area shape="rect" id="node49" href="$mptrac_8c.html#a6cdd8f72190aa0901f08f48afc240ee1" title="Simulate sedimentation of particles in the atmosphere." alt="" coords="337,1981,431,2008"/>
 </map>

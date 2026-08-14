@@ -1,0 +1,5 @@
+<map id="write_depo" name="write_depo">
+<area shape="rect" id="node1" title="Convert cumulative ground inventories to Bq m^&#45;2 and write them." alt="" coords="5,31,91,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a2a023c3af1433054ddd85578ab0803d4" title="Write radioactive deposition densities as a gnuplot&#45;compatible table." alt="" coords="139,5,252,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#ad5658bf46d3988dd7ecab254fd60ddee" title="Write radioactive deposition densities as a CF&#45;style netCDF file." alt="" coords="142,56,249,83"/>
+</map>

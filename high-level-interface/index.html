@@ -1315,7 +1315,7 @@ demonstrates their usage with an example workflow.</p>
 <h3 id="1-memory-management">1. Memory Management</h3>
 <ul>
 <li>
-<p><strong><code>void mptrac_alloc(...)</code></strong>: Allocates memory for control, cache, climatology, meteorology, and atmospheric data structures on the CPU and GPU.</p>
+<p><strong><code>void mptrac_alloc(...)</code></strong>: Allocates memory for control, cache, climatology, meteorology, atmospheric, deposition, and domain-decomposition data structures on the CPU and GPU.</p>
 </li>
 <li>
 <p><strong><code>void mptrac_free(...)</code></strong>: Frees memory allocated for these structures.</p>
@@ -1324,7 +1324,7 @@ demonstrates their usage with an example workflow.</p>
 <h3 id="2-initialization-and-memory-updates">2. Initialization and memory updates</h3>
 <ul>
 <li>
-<p><strong><code>void mptrac_init(...)</code></strong>: Initializes the MPTRAC model with control, cache, climatology, and atmospheric data. It adjusts the time range of the simulation and initializes the random number generator.</p>
+<p><strong><code>void mptrac_init(...)</code></strong>: Initializes model timesteps and the random number generator and transfers the deposition inventories allocated and zero-initialized by <code>mptrac_alloc</code> to the GPU.</p>
 </li>
 <li>
 <p><strong><code>void mptrac_update_device(...)</code></strong>: Updates device memory with the latest data from CPU memory.</p>
@@ -1351,7 +1351,7 @@ demonstrates their usage with an example workflow.</p>
 <h3 id="4-data-output">4. Data output</h3>
 <ul>
 <li>
-<p><strong><code>void mptrac_write_output(...)</code></strong>: Writes simulation results in various output types.</p>
+<p><strong><code>void mptrac_write_output(...)</code></strong>: Writes simulation results, including cumulative radionuclide deposition when enabled.</p>
 </li>
 <li>
 <p><strong><code>void mptrac_write_met(...)</code></strong>: Writes meteorological data to a file.</p>
@@ -1373,22 +1373,22 @@ demonstrates their usage with an example workflow.</p>
 typical simulation. Please see <a href="https://github.com/slcs-jsc/mptrac/blob/master/src/trac.c"><code>trac.c</code></a>
 for the full code.</p>
 <h3 id="1-allocate-memory">1. Allocate memory</h3>
-<pre><code>mptrac_alloc(&amp;ctl, &amp;cache, &amp;clim, &amp;met0, &amp;met1, &amp;atm);
+<pre><code>mptrac_alloc(&amp;ctl, &amp;cache, &amp;clim, &amp;met0, &amp;met1, &amp;atm, &amp;depo, &amp;dd);
 </code></pre>
 <h3 id="2-initialize-the-model">2. Initialize the model</h3>
 <pre><code>mptrac_read_ctl(filename, argc, argv, ctl);
 mptrac_read_clim(ctl, clim);
 mptrac_read_atm(filename, ctl, atm);
-mptrac_init(ctl, cache, clim, atm, ntask);
+mptrac_init(ctl, cache, clim, atm, depo, ntask);
 </code></pre>
 <h3 id="3-run-the-simulation">3. Run the simulation</h3>
 <p>Within the time loop of the model, repeatedly call:</p>
-<pre><code>mptrac_get_met(ctl, clim, t, &amp;met0, &amp;met1);
-mptrac_run_timestep(ctl, cache, clim, &amp;met0, &amp;met1, atm, t);
-mptrac_write_output(dirname, ctl, met0, met1, atm, t);
+<pre><code>mptrac_get_met(ctl, clim, t, &amp;met0, &amp;met1, dd);
+mptrac_run_timestep(ctl, cache, clim, &amp;met0, &amp;met1, atm, depo, t, dd);
+mptrac_write_output(dirname, ctl, met0, met1, atm, depo, t);
 </code></pre>
 <h3 id="4-free-memory">4. Free memory</h3>
-<pre><code>mptrac_free(ctl, cache, clim, met0, met1, atm);
+<pre><code>mptrac_free(ctl, cache, clim, met0, met1, atm, depo, dd);
 </code></pre>
 <h2 id="notes">Notes</h2>
 <ul>

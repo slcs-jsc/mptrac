@@ -5,12 +5,15 @@ var searchData=
   ['dd_5fsort_5fdt_2',['dd_sort_dt',['../structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e',1,'ctl_t']]],
   ['dd_5fsubdomains_5fmeridional_3',['dd_subdomains_meridional',['../structctl__t.html#afb2ac81596bfa49f6f53da327bdac0bd',1,'ctl_t']]],
   ['dd_5fsubdomains_5fzonal_4',['dd_subdomains_zonal',['../structctl__t.html#aea21f5b459b5068ca0ec982074cb4dc2',1,'ctl_t']]],
-  ['diffusion_5',['diffusion',['../structctl__t.html#a727a42a9f7c8b7e01c713d5300767213',1,'ctl_t']]],
-  ['direction_6',['direction',['../structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6',1,'ctl_t']]],
-  ['dry_5fdepo_5fdp_7',['dry_depo_dp',['../structctl__t.html#a60da7ce4a7b610712585fde03773bf7f',1,'ctl_t']]],
-  ['dry_5fdepo_5fvdep_8',['dry_depo_vdep',['../structctl__t.html#acadcfbb95971c47b377fbd4443c68723',1,'ctl_t']]],
-  ['dt_9',['dt',['../structcache__t.html#a2ea05d5c51e9149cac55020d5c1b8c92',1,'cache_t']]],
-  ['dt_5fkpp_10',['dt_kpp',['../structctl__t.html#a603d7f5e599d149b57a67fea612ecb04',1,'ctl_t']]],
-  ['dt_5fmet_11',['dt_met',['../structctl__t.html#a2d7b8100a2949004420841d81bcc6ab4',1,'ctl_t']]],
-  ['dt_5fmod_12',['dt_mod',['../structctl__t.html#a718d3200f867d9018369f12f66464807',1,'ctl_t']]]
+  ['depo_5fbasename_5',['depo_basename',['../structctl__t.html#a6dc85b13e655ce738ffdbb3bef287acc',1,'ctl_t']]],
+  ['depo_5fdt_5fout_6',['depo_dt_out',['../structctl__t.html#a4b83bcd4aeb4febe9fe192b4273edd78',1,'ctl_t']]],
+  ['depo_5ftype_7',['depo_type',['../structctl__t.html#a8ab079a9b2ebd0b1677e5c75033fa824',1,'ctl_t']]],
+  ['diffusion_8',['diffusion',['../structctl__t.html#a727a42a9f7c8b7e01c713d5300767213',1,'ctl_t']]],
+  ['direction_9',['direction',['../structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6',1,'ctl_t']]],
+  ['dry_5fdepo_5fdp_10',['dry_depo_dp',['../structctl__t.html#a60da7ce4a7b610712585fde03773bf7f',1,'ctl_t']]],
+  ['dry_5fdepo_5fvdep_11',['dry_depo_vdep',['../structctl__t.html#acadcfbb95971c47b377fbd4443c68723',1,'ctl_t']]],
+  ['dt_12',['dt',['../structcache__t.html#a2ea05d5c51e9149cac55020d5c1b8c92',1,'cache_t']]],
+  ['dt_5fkpp_13',['dt_kpp',['../structctl__t.html#a603d7f5e599d149b57a67fea612ecb04',1,'ctl_t']]],
+  ['dt_5fmet_14',['dt_met',['../structctl__t.html#a2d7b8100a2949004420841d81bcc6ab4',1,'ctl_t']]],
+  ['dt_5fmod_15',['dt_mod',['../structctl__t.html#a718d3200f867d9018369f12f66464807',1,'ctl_t']]]
 ];

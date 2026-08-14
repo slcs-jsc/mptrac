@@ -518,6 +518,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#radionuclide-deposition-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Radionuclide deposition data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#csi-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1036,6 +1047,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#radionuclide-deposition-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Radionuclide deposition data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#csi-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1122,8 +1144,8 @@
 
 
 <h1 id="model-output-data">Model output data</h1>
-<p>MPTRAC currently supports eight different types of model output:
-particle output, grid output, CSI output, ensemble output, profile
+<p>MPTRAC currently supports nine different types of model output:
+particle output, grid output, radionuclide deposition output, CSI output, ensemble output, profile
 output, sample output, station output, and VTK output. By default,
 these output functions generate data in ASCII table format, which is
 human-readable and compatible with various data analysis and
@@ -1223,6 +1245,96 @@ pattern <code>&lt;GRID_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="radionuclide-deposition-data">Radionuclide deposition data</h2>
+<p>The radionuclide deposition output contains cumulative ground inventories for
+Pb-210, Be-7, Cs-137, and aerosol-bound I-131. Values are activity densities
+in Bq m<span class="arithmatex">\(^{-2}\)</span> at the output validity time. When <code>RADIO_DECAY=1</code>, both airborne
+and deposited activities use the same radionuclide half-lives. The horizontal
+grid is defined by the <code>GRID_*</code> parameters; it has no vertical dimension.</p>
+<p>Output is enabled with <code>DEPO_BASENAME</code> and written every <code>DEPO_DT_OUT</code> seconds
+and additionally at <code>T_STOP</code>. Files follow the pattern
+<code>&lt;DEPO_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>DEPO_TYPE</th>
+<th>Output format</th>
+<th>Extension</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>ASCII</td>
+<td><code>.tab</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>netCDF</td>
+<td><code>.nc</code></td>
+</tr>
+</tbody>
+</table>
+<p>ASCII files contain time, longitude, latitude, grid-cell area, and the four
+activity-density fields. Blank lines separate longitude scans so that the
+tables can be plotted directly with gnuplot <code>pm3d</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Content</th>
+<th>Unit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Time</td>
+<td>s since 2000-01-01 00:00 UTC</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Longitude</td>
+<td>degree east</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Latitude</td>
+<td>degree north</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Grid-cell area</td>
+<td>m<span class="arithmatex">\(^2\)</span></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Deposited Pb-210</td>
+<td>Bq m<span class="arithmatex">\(^{-2}\)</span></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Deposited Be-7</td>
+<td>Bq m<span class="arithmatex">\(^{-2}\)</span></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Deposited Cs-137</td>
+<td>Bq m<span class="arithmatex">\(^{-2}\)</span></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Deposited aerosol-bound I-131</td>
+<td>Bq m<span class="arithmatex">\(^{-2}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>NetCDF files use dimensions <code>time</code>, <code>lat</code>, and <code>lon</code>. The activity variables
+are <code>depo_pb210</code>, <code>depo_be7</code>, <code>depo_cs137</code>, and <code>depo_i131</code>; <code>area</code> contains
+the latitude-dependent cell area. <code>GRID_NC_LEVEL</code> selects netCDF compression.</p>
+<p>Deposited inventories are not stored in atmospheric restart files. After a
+restart, deposition output begins again from zero and represents only activity
+deposited during the restarted segment.</p>
 <h2 id="csi-data">CSI data</h2>
 <p>Another type of output that we used in several studies (Hoffmann et
 al., 2016; Heng et al., 2016) is the critical success index (CSI)
