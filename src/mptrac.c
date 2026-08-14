@@ -3955,12 +3955,20 @@ void module_chem_grid(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
+    const double zpart = Z(atm->p[ip]);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| atm->lon[ip] < ctl->chemgrid_lon0
+	|| atm->lon[ip] >= ctl->chemgrid_lon1
+	|| atm->lat[ip] < ctl->chemgrid_lat0
+	|| atm->lat[ip] >= ctl->chemgrid_lat1
+	|| zpart < ctl->chemgrid_z0 || zpart >= ctl->chemgrid_z1) {
+      izs[ip] = -1;
+      continue;
+    }
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
-    if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= nx
-	|| iys[ip] < 0 || iys[ip] >= ny || izs[ip] < 0 || izs[ip] >= nz)
+    izs[ip] = (int) ((zpart - ctl->chemgrid_z0) / dz);
+    if (ixs[ip] >= nx || iys[ip] >= ny || izs[ip] >= nz)
       izs[ip] = -1;
   }
 
@@ -5191,13 +5199,21 @@ void module_mixing(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
+    const double zpart = Z(atm->p[ip]);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| atm->lon[ip] < ctl->mixing_lon0
+	|| atm->lon[ip] >= ctl->mixing_lon1
+	|| atm->lat[ip] < ctl->mixing_lat0
+	|| atm->lat[ip] >= ctl->mixing_lat1
+	|| zpart < ctl->mixing_z0 || zpart >= ctl->mixing_z1) {
+      izs[ip] = -1;
+      continue;
+    }
     ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
-    if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->mixing_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->mixing_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->mixing_nz)
+    izs[ip] = (int) ((zpart - ctl->mixing_z0) / dz);
+    if (ixs[ip] >= ctl->mixing_nx || iys[ip] >= ctl->mixing_ny
+	|| izs[ip] >= ctl->mixing_nz)
       izs[ip] = -1;
   }
 
@@ -5483,12 +5499,12 @@ void module_radio_decay(
   SELECT_TIMER("MODULE_RADIO_DECAY", "PHYSICS");
 
   /* Set decay constants of radioactive species [s^-1]... */
-  const double lambda_rn222 = log(2.0) / (3.8235 * 86400.0);
-  const double lambda_pb210 = log(2.0) / (22.3 * 365.25 * 86400.0);
-  const double lambda_be7 = log(2.0) / (53.22 * 86400.0);
-  const double lambda_cs137 = log(2.0) / (30.05 * 365.25 * 86400.0);
-  const double lambda_i131 = log(2.0) / (8.02 * 86400.0);
-  const double lambda_xe133 = log(2.0) / (5.2474 * 86400.0);
+  const double lambda_rn222 = log(2.0) / RADIO_HALF_LIFE_RN222;
+  const double lambda_pb210 = log(2.0) / RADIO_HALF_LIFE_PB210;
+  const double lambda_be7 = log(2.0) / RADIO_HALF_LIFE_BE7;
+  const double lambda_cs137 = log(2.0) / RADIO_HALF_LIFE_CS137;
+  const double lambda_i131 = log(2.0) / RADIO_HALF_LIFE_I131;
+  const double lambda_xe133 = log(2.0) / RADIO_HALF_LIFE_XE133;
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,atm)") {
@@ -5527,6 +5543,175 @@ void module_radio_decay(
     /* Loss for Xe-133... */
     if (ctl->qnt_Axe133 >= 0)
       atm->q[ctl->qnt_Axe133][ip] *= exp(-dt * lambda_xe133);
+  }
+}
+
+/*****************************************************************************/
+
+void module_radio_depo(
+  const ctl_t *ctl,
+  const cache_t *cache,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  depo_t *depo) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_RADIO_DEPO", "PHYSICS");
+
+  /* Decay constants of deposited radionuclides [s^-1]... */
+  const double lambda_pb210 = log(2.0) / RADIO_HALF_LIFE_PB210;
+  const double lambda_be7 = log(2.0) / RADIO_HALF_LIFE_BE7;
+  const double lambda_cs137 = log(2.0) / RADIO_HALF_LIFE_CS137;
+  const double lambda_i131 = log(2.0) / RADIO_HALF_LIFE_I131;
+
+  /* Set horizontal grid increments... */
+  const double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
+  const double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1,
+                "acc data present(ctl,cache,met0,met1,atm,depo)") {
+
+    /* Deposition is only defined for forward integration... */
+    const double dt = cache->dt[ip];
+    if (dt <= 0)
+      continue;
+
+    /* Get surface pressure... */
+    double ps;
+    INTPOL_INIT;
+    INTPOL_2D(ps, 1);
+
+    /* Calculate dry deposition rate [s^-1]... */
+    double dry_pb210 = 0, dry_be7 = 0, dry_cs137 = 0, dry_i131 = 0;
+    if (atm->p[ip] >= ps - ctl->dry_depo_dp) {
+      const double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
+      if (dz > 0) {
+        dry_pb210 = RADIO_DRY_VDEP_PB210 / dz;
+        dry_be7 = RADIO_DRY_VDEP_BE7 / dz;
+        dry_cs137 = RADIO_DRY_VDEP_CS137 / dz;
+        dry_i131 = RADIO_DRY_VDEP_I131 / dz;
+      }
+    }
+
+    /* Calculate wet deposition rate [s^-1]... */
+    double wet_pb210 = 0, wet_be7 = 0, wet_cs137 = 0, wet_i131 = 0;
+    double pct;
+    INTPOL_2D(pct, 1);
+    if (isfinite(pct) && atm->p[ip] > pct) {
+      double cl;
+      INTPOL_2D(cl, 0);
+      if (cl > 0) {
+        const double Is =
+          pow(cl / ctl->wet_depo_pre[0], 1. / ctl->wet_depo_pre[1]);
+        if (Is >= 0.01) {
+          double lwc, rwc, iwc, swc, t;
+          INTPOL_3D(lwc, 1);
+          INTPOL_3D(rwc, 0);
+          INTPOL_3D(iwc, 0);
+          INTPOL_3D(swc, 0);
+          INTPOL_3D(t, 0);
+          const int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
+          double eta;
+          if (inside) {
+            if (t > 273.15)
+              eta = 1;
+            else if (t <= 238.15)
+              eta = ctl->wet_depo_ic_ret_ratio;
+            else
+              eta = LIN(273.15, 1, 238.15,
+                        ctl->wet_depo_ic_ret_ratio, t);
+          } else
+            eta = (t > 270 ? 1 : ctl->wet_depo_bc_ret_ratio);
+          wet_pb210 = RADIO_WET_COEFF_PB210 * Is * eta;
+          wet_be7 = RADIO_WET_COEFF_BE7 * Is * eta;
+          wet_cs137 = RADIO_WET_COEFF_CS137 * Is * eta;
+          wet_i131 = RADIO_WET_COEFF_I131 * Is * eta;
+        }
+      }
+    }
+
+    /* Get deposition grid index... */
+    const int ingrid =
+      (atm->lon[ip] >= ctl->grid_lon0
+       && atm->lon[ip] < ctl->grid_lon1
+       && atm->lat[ip] >= ctl->grid_lat0
+       && atm->lat[ip] < ctl->grid_lat1);
+    const int ix = ingrid
+      ? (int) ((atm->lon[ip] - ctl->grid_lon0) / dlon) : 0;
+    const int iy = ingrid
+      ? (int) ((atm->lat[ip] - ctl->grid_lat0) / dlat) : 0;
+    const int idx = (ingrid ? ARRAY_2D(ix, iy, ctl->grid_ny) : 0);
+    const double tref = atm->time[ip] - ctl->t_start;
+
+    /* Deposit Pb-210... */
+    if (ctl->qnt_Apb210 >= 0) {
+      const double old = atm->q[ctl->qnt_Apb210][ip];
+      const double aux = exp(-dt * (dry_pb210 + wet_pb210));
+      const double lost = old * (1. - aux);
+      atm->q[ctl->qnt_Apb210][ip] = old * aux;
+      if (ingrid && lost > 0) {
+#ifdef _OPENACC
+#pragma acc atomic update
+#else
+#pragma omp atomic update
+#endif
+        depo->Apb210[idx] += lost
+          * (ctl->radio_decay ? exp(lambda_pb210 * tref) : 1.0);
+      }
+    }
+
+    /* Deposit Be-7... */
+    if (ctl->qnt_Abe7 >= 0) {
+      const double old = atm->q[ctl->qnt_Abe7][ip];
+      const double aux = exp(-dt * (dry_be7 + wet_be7));
+      const double lost = old * (1. - aux);
+      atm->q[ctl->qnt_Abe7][ip] = old * aux;
+      if (ingrid && lost > 0) {
+#ifdef _OPENACC
+#pragma acc atomic update
+#else
+#pragma omp atomic update
+#endif
+        depo->Abe7[idx] += lost
+          * (ctl->radio_decay ? exp(lambda_be7 * tref) : 1.0);
+      }
+    }
+
+    /* Deposit Cs-137... */
+    if (ctl->qnt_Acs137 >= 0) {
+      const double old = atm->q[ctl->qnt_Acs137][ip];
+      const double aux = exp(-dt * (dry_cs137 + wet_cs137));
+      const double lost = old * (1. - aux);
+      atm->q[ctl->qnt_Acs137][ip] = old * aux;
+      if (ingrid && lost > 0) {
+#ifdef _OPENACC
+#pragma acc atomic update
+#else
+#pragma omp atomic update
+#endif
+        depo->Acs137[idx] += lost
+          * (ctl->radio_decay ? exp(lambda_cs137 * tref) : 1.0);
+      }
+    }
+
+    /* Deposit aerosol-bound I-131... */
+    if (ctl->qnt_Ai131 >= 0) {
+      const double old = atm->q[ctl->qnt_Ai131][ip];
+      const double aux = exp(-dt * (dry_i131 + wet_i131));
+      const double lost = old * (1. - aux);
+      atm->q[ctl->qnt_Ai131][ip] = old * aux;
+      if (ingrid && lost > 0) {
+#ifdef _OPENACC
+#pragma acc atomic update
+#else
+#pragma omp atomic update
+#endif
+        depo->Ai131[idx] += lost
+          * (ctl->radio_decay ? exp(lambda_i131 * tref) : 1.0);
+      }
+    }
   }
 }
 
@@ -6102,6 +6287,7 @@ void mptrac_alloc(
   met_t **met0,
   met_t **met1,
   atm_t **atm,
+  depo_t **depo,
   dd_t **dd) {
 
   /* Initialize GPU... */
@@ -6127,6 +6313,7 @@ void mptrac_alloc(
   ALLOC(*met0, met_t, 1);
   ALLOC(*met1, met_t, 1);
   ALLOC(*atm, atm_t, 1);
+  ALLOC(*depo, depo_t, 1);
   ALLOC(*dd, dd_t, 1);
 
   /* Create data region on GPU... */
@@ -6138,7 +6325,8 @@ void mptrac_alloc(
   met_t *met0up = *met0;
   met_t *met1up = *met1;
   atm_t *atmup = *atm;
-#pragma acc enter data create(ctlup[:1],cacheup[:1],climup[:1],met0up[:1],met1up[:1],atmup[:1])
+  depo_t *depoup = *depo;
+#pragma acc enter data create(ctlup[:1],cacheup[:1],climup[:1],met0up[:1],met1up[:1],atmup[:1],depoup[:1])
 #ifdef DD
   dd_t *ddup = *dd;
 #pragma acc enter data create(ddup[:1])
@@ -6155,12 +6343,13 @@ void mptrac_free(
   met_t *met0,
   met_t *met1,
   atm_t *atm,
+  depo_t *depo,
   dd_t *dd) {
 
   /* Delete data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("DELETE_DATA_REGION", "MEMORY");
-#pragma acc exit data delete(ctl,cache,clim,met0,met1,atm)
+#pragma acc exit data delete(ctl,cache,clim,met0,met1,atm,depo)
 #ifdef DD
 #pragma acc exit data delete(dd)
 #endif
@@ -6169,6 +6358,7 @@ void mptrac_free(
   /* Free... */
   SELECT_TIMER("FREE", "MEMORY");
   free(atm);
+  free(depo);
   free(ctl);
   free(cache);
   free(clim);
@@ -6314,6 +6504,7 @@ void mptrac_init(
   cache_t *cache,
   clim_t *clim,
   atm_t *atm,
+  depo_t *depo,
   const int ntask) {
 
   /* Initialize timesteps... */
@@ -6324,6 +6515,11 @@ void mptrac_init(
 
   /* Update GPU memory... */
   mptrac_update_device(ctl, cache, clim, NULL, NULL, atm);
+#ifdef _OPENACC
+#pragma acc update device(depo[:1])
+#else
+  (void) depo;
+#endif
 }
 
 /*****************************************************************************/
@@ -7152,6 +7348,14 @@ void mptrac_read_ctl(
   /* Radioactive decay... */
   ctl->radio_decay =
     (int) scan_ctl(filename, argc, argv, "RADIO_DECAY", -1, "0", NULL);
+  ctl->radio_depo =
+    (int) scan_ctl(filename, argc, argv, "RADIO_DEPO", -1, "0", NULL);
+  if (ctl->radio_depo && ctl->met_coord_type != 0)
+    ERRMSG("Radioactive deposition requires a lat/lon meteorological grid!");
+#ifdef DD
+  if (ctl->radio_depo)
+    ERRMSG("Radioactive deposition is not supported with domain decomposition!");
+#endif
 
   /* Wet deposition... */
   for (int ip = 0; ip < 2; ip++) {
@@ -7238,6 +7442,12 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "MIXING_LAT1", -1, "90", NULL);
   ctl->mixing_ny =
     (int) scan_ctl(filename, argc, argv, "MIXING_NY", -1, "180", NULL);
+  if (ctl->mixing_nx < 1 || ctl->mixing_ny < 1 || ctl->mixing_nz < 1
+      || ctl->mixing_lon0 >= ctl->mixing_lon1
+      || ctl->mixing_lat0 >= ctl->mixing_lat1
+      || ctl->mixing_z0 >= ctl->mixing_z1
+      || ctl->mixing_lat0 < -90 || ctl->mixing_lat1 > 90)
+    ERRMSG("Invalid mixing grid!");
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
@@ -7258,6 +7468,12 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
+  if (ctl->chemgrid_nx < 1 || ctl->chemgrid_ny < 1 || ctl->chemgrid_nz < 1
+      || ctl->chemgrid_lon0 >= ctl->chemgrid_lon1
+      || ctl->chemgrid_lat0 >= ctl->chemgrid_lat1
+      || ctl->chemgrid_z0 >= ctl->chemgrid_z1
+      || ctl->chemgrid_lat0 < -90 || ctl->chemgrid_lat1 > 90)
+    ERRMSG("Invalid chemistry grid!");
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
@@ -7292,6 +7508,14 @@ void mptrac_read_ctl(
   ctl->obs_type =
     (int) scan_ctl(filename, argc, argv, "OBS_TYPE", -1, "0", NULL);
 
+  /* Output of radioactive deposition data... */
+  scan_ctl(filename, argc, argv, "DEPO_BASENAME", -1, "-",
+           ctl->depo_basename);
+  ctl->depo_dt_out =
+    scan_ctl(filename, argc, argv, "DEPO_DT_OUT", -1, "86400", NULL);
+  ctl->depo_type =
+    (int) scan_ctl(filename, argc, argv, "DEPO_TYPE", -1, "0", NULL);
+
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
@@ -7314,6 +7538,11 @@ void mptrac_read_ctl(
   ctl->csi_lat1 = scan_ctl(filename, argc, argv, "CSI_LAT1", -1, "90", NULL);
   ctl->csi_ny =
     (int) scan_ctl(filename, argc, argv, "CSI_NY", -1, "180", NULL);
+  if (ctl->csi_nx < 1 || ctl->csi_ny < 1 || ctl->csi_nz < 1
+      || ctl->csi_lon0 >= ctl->csi_lon1
+      || ctl->csi_lat0 >= ctl->csi_lat1 || ctl->csi_z0 >= ctl->csi_z1
+      || ctl->csi_lat0 < -90 || ctl->csi_lat1 > 90)
+    ERRMSG("Invalid CSI grid!");
 
   /* Output of ensemble data... */
   ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
@@ -7355,6 +7584,17 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "GRID_NY", -1, "180", NULL);
   ctl->grid_type =
     (int) scan_ctl(filename, argc, argv, "GRID_TYPE", -1, "0", NULL);
+  if (ctl->grid_nx < 1 || ctl->grid_nx > EX
+      || ctl->grid_ny < 1 || ctl->grid_ny > EY || ctl->grid_nz < 1)
+    ERRMSG("Invalid output grid dimensions!");
+  if (ctl->grid_lon0 >= ctl->grid_lon1
+      || ctl->grid_lat0 >= ctl->grid_lat1 || ctl->grid_z0 >= ctl->grid_z1
+      || ctl->grid_lat0 < -90 || ctl->grid_lat1 > 90)
+    ERRMSG("Invalid output grid boundaries!");
+  if (ctl->depo_basename[0] != '-'
+      && (ctl->depo_dt_out <= 0
+          || ctl->depo_type < 0 || ctl->depo_type > 1))
+    ERRMSG("Invalid radioactive deposition output settings!");
 
   /* Output of profile data... */
   scan_ctl(filename, argc, argv, "PROF_BASENAME", -1, "-",
@@ -7376,6 +7616,11 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "PROF_LAT1", -1, "90", NULL);
   ctl->prof_ny =
     (int) scan_ctl(filename, argc, argv, "PROF_NY", -1, "180", NULL);
+  if (ctl->prof_nx < 1 || ctl->prof_ny < 1 || ctl->prof_nz < 1
+      || ctl->prof_lon0 >= ctl->prof_lon1
+      || ctl->prof_lat0 >= ctl->prof_lat1 || ctl->prof_z0 >= ctl->prof_z1
+      || ctl->prof_lat0 < -90 || ctl->prof_lat1 > 90)
+    ERRMSG("Invalid profile grid!");
 
   /* Output of sample data... */
   scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
@@ -7549,6 +7794,7 @@ void mptrac_run_timestep(
   met_t **met0,
   met_t **met1,
   atm_t *atm,
+  depo_t *depo,
   double t,
   dd_t *dd) {
 
@@ -7664,6 +7910,10 @@ void mptrac_run_timestep(
 #else
   (void) dd;
 #endif
+
+  /* Radioactive deposition... */
+  if (ctl->radio_depo)
+    module_radio_depo(ctl, cache, *met0, *met1, atm, depo);
 
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
@@ -7922,6 +8172,7 @@ void mptrac_write_output(
   met_t *met0,
   met_t *met1,
   atm_t *atm,
+  depo_t *depo,
   const double t) {
 
   char ext[10], filename[2 * LEN];
@@ -7962,6 +8213,18 @@ void mptrac_write_output(
 	    dirname, ctl->grid_basename, year, mon, day, hour, min, sec,
 	    ctl->grid_type == 0 ? "tab" : "nc");
     write_grid(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write radioactive deposition data... */
+  if (ctl->depo_basename[0] != '-'
+      && (fmod(t, ctl->depo_dt_out) == 0 || t == ctl->t_stop)) {
+#ifdef _OPENACC
+#pragma acc update host(depo[:1])
+#endif
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
+            dirname, ctl->depo_basename, year, mon, day, hour, min, sec,
+            ctl->depo_type == 0 ? "tab" : "nc");
+    write_depo(filename, ctl, depo, t);
   }
 
   /* Write CSI data... */
@@ -12981,12 +13244,15 @@ void write_csi(
     if (rt[i] < t0 || rt[i] >= t1 || !isfinite(robs[i]))
       continue;
 
-    /* Calculate indices... */
+    /* Check grid boundaries and calculate indices... */
+    if (rlon[i] < ctl->csi_lon0 || rlon[i] >= ctl->csi_lon1
+	|| rlat[i] < ctl->csi_lat0 || rlat[i] >= ctl->csi_lat1
+	|| rz[i] < ctl->csi_z0 || rz[i] >= ctl->csi_z1)
+      continue;
     const int ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
     const int iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
     const int iz = (int) ((rz[i] - ctl->csi_z0) / dz);
-    if (ix < 0 || ix >= ctl->csi_nx || iy < 0 || iy >= ctl->csi_ny || iz < 0
-	|| iz >= ctl->csi_nz)
+    if (ix >= ctl->csi_nx || iy >= ctl->csi_ny || iz >= ctl->csi_nz)
       continue;
 
     /* Get mean observation index... */
@@ -13008,12 +13274,18 @@ void write_csi(
     if (ens_id < 0 || ens_id >= (ensemble ? ctl->nens : 1))
       ERRMSG("Ensemble ID out of range!");
 
-    /* Get indices... */
+    /* Check grid boundaries and get indices... */
+    const double zpart = Z(atm->p[ip]);
+    if (atm->lon[ip] < ctl->csi_lon0
+	|| atm->lon[ip] >= ctl->csi_lon1
+	|| atm->lat[ip] < ctl->csi_lat0
+	|| atm->lat[ip] >= ctl->csi_lat1
+	|| zpart < ctl->csi_z0 || zpart >= ctl->csi_z1)
+      continue;
     const int ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
     const int iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
-    const int iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
-    if (ix < 0 || ix >= ctl->csi_nx || iy < 0 || iy >= ctl->csi_ny || iz < 0
-	|| iz >= ctl->csi_nz)
+    const int iz = (int) ((zpart - ctl->csi_z0) / dz);
+    if (ix >= ctl->csi_nx || iy >= ctl->csi_ny || iz >= ctl->csi_nz)
       continue;
 
     /* Get total mass in grid cell... */
@@ -13239,6 +13511,182 @@ void write_ens(
 
 /*****************************************************************************/
 
+void write_depo(
+  const char *filename,
+  const ctl_t *ctl,
+  const depo_t *depo,
+  const double t) {
+
+  double *area, *data, *lat, *lon;
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_DEPO", "OUTPUT");
+  LOG(1, "Write radioactive deposition data: %s", filename);
+
+  /* Allocate output arrays... */
+  const int nxy = ctl->grid_nx * ctl->grid_ny;
+  ALLOC(area, double, ctl->grid_ny);
+  ALLOC(data, double, 4 * nxy);
+  ALLOC(lat, double, ctl->grid_ny);
+  ALLOC(lon, double, ctl->grid_nx);
+
+  /* Set horizontal coordinates and grid-cell areas... */
+  const double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
+  const double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    lon[ix] = ctl->grid_lon0 + dlon * (ix + 0.5);
+  for (int iy = 0; iy < ctl->grid_ny; iy++) {
+    lat[iy] = ctl->grid_lat0 + dlat * (iy + 0.5);
+    area[iy] = 1e6 * dlat * dlon * SQR(RE * M_PI / 180.)
+      * cos(DEG2RAD(lat[iy]));
+  }
+
+  /* Convert inventories to activity densities at output time... */
+  const double lambda[4] = {
+    log(2.0) / RADIO_HALF_LIFE_PB210,
+    log(2.0) / RADIO_HALF_LIFE_BE7,
+    log(2.0) / RADIO_HALF_LIFE_CS137,
+    log(2.0) / RADIO_HALF_LIFE_I131
+  };
+  const double *inventory[4] = {
+    depo->Apb210, depo->Abe7, depo->Acs137, depo->Ai131
+  };
+  for (int iq = 0; iq < 4; iq++) {
+    const double decay = ctl->radio_decay
+      ? exp(-lambda[iq] * (t - ctl->t_start)) : 1.0;
+    for (int ix = 0; ix < ctl->grid_nx; ix++)
+      for (int iy = 0; iy < ctl->grid_ny; iy++) {
+        const int idx = ARRAY_2D(ix, iy, ctl->grid_ny);
+        data[iq * nxy + idx] = inventory[iq][idx] * decay / area[iy];
+      }
+  }
+
+  /* Write output... */
+  if (ctl->depo_type == 0)
+    write_depo_asc(filename, ctl, data, t, lon, lat, area);
+  else if (ctl->depo_type == 1)
+    write_depo_nc(filename, ctl, data, t, lon, lat, area);
+  else
+    ERRMSG("Radioactive deposition output type unknown!");
+
+  /* Free... */
+  free(area);
+  free(data);
+  free(lat);
+  free(lon);
+}
+
+/*****************************************************************************/
+
+void write_depo_asc(
+  const char *filename,
+  const ctl_t *ctl,
+  const double *data,
+  const double t,
+  const double *lon,
+  const double *lat,
+  const double *area) {
+
+  FILE *out;
+  if (!(out = fopen(filename, "w")))
+    ERRMSG("Cannot create file!");
+
+  fprintf(out,
+          "# $1 = time [s]\n"
+          "# $2 = longitude [deg]\n"
+          "# $3 = latitude [deg]\n"
+          "# $4 = area [m^2]\n"
+          "# $5 = deposited Pb-210 activity [Bq/m^2]\n"
+          "# $6 = deposited Be-7 activity [Bq/m^2]\n"
+          "# $7 = deposited Cs-137 activity [Bq/m^2]\n"
+          "# $8 = deposited I-131 activity [Bq/m^2]\n\n");
+
+  const int nxy = ctl->grid_nx * ctl->grid_ny;
+  for (int ix = 0; ix < ctl->grid_nx; ix++) {
+    for (int iy = 0; iy < ctl->grid_ny; iy++) {
+      const int idx = ARRAY_2D(ix, iy, ctl->grid_ny);
+      fprintf(out, "%.2f %g %g %g %g %g %g %g\n",
+              t, lon[ix], lat[iy], area[iy],
+              data[idx], data[nxy + idx],
+              data[2 * nxy + idx], data[3 * nxy + idx]);
+    }
+    fprintf(out, "\n");
+  }
+
+  fclose(out);
+}
+
+/*****************************************************************************/
+
+void write_depo_nc(
+  const char *filename,
+  const ctl_t *ctl,
+  const double *data,
+  const double t,
+  const double *lon,
+  const double *lat,
+  const double *area) {
+
+  double *help;
+  int ncid, dimid[3], varid;
+  size_t start[2], count[2];
+
+  const int nxy = ctl->grid_nx * ctl->grid_ny;
+  ALLOC(help, double, nxy);
+
+  /* Create file and dimensions... */
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
+  NC(nc_def_dim(ncid, "time", 1, &dimid[0]));
+  NC(nc_def_dim(ncid, "lat", (size_t) ctl->grid_ny, &dimid[1]));
+  NC(nc_def_dim(ncid, "lon", (size_t) ctl->grid_nx, &dimid[2]));
+
+  /* Define variables... */
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &dimid[0], "time",
+             "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[1], "latitude",
+             "degrees_north", 0, 0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[2], "longitude",
+             "degrees_east", 0, 0);
+  NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[1], "surface area", "m**2",
+             0, 0);
+  NC_DEF_VAR("depo_pb210", NC_DOUBLE, 3, dimid,
+             "ground inventory of Pb-210", "Bq m**-2",
+             ctl->grid_nc_level, 0);
+  NC_DEF_VAR("depo_be7", NC_DOUBLE, 3, dimid,
+             "ground inventory of Be-7", "Bq m**-2",
+             ctl->grid_nc_level, 0);
+  NC_DEF_VAR("depo_cs137", NC_DOUBLE, 3, dimid,
+             "ground inventory of Cs-137", "Bq m**-2",
+             ctl->grid_nc_level, 0);
+  NC_DEF_VAR("depo_i131", NC_DOUBLE, 3, dimid,
+             "ground inventory of aerosol-bound I-131", "Bq m**-2",
+             ctl->grid_nc_level, 0);
+  NC(nc_enddef(ncid));
+
+  /* Write coordinates... */
+  NC_PUT_DOUBLE("time", &t, 0);
+  NC_PUT_DOUBLE("lon", lon, 0);
+  NC_PUT_DOUBLE("lat", lat, 0);
+  NC_PUT_DOUBLE("area", area, 0);
+
+  /* Write fields in netCDF dimension order... */
+  const char *varname[4] = {
+    "depo_pb210", "depo_be7", "depo_cs137", "depo_i131"
+  };
+  for (int iq = 0; iq < 4; iq++) {
+    for (int ix = 0; ix < ctl->grid_nx; ix++)
+      for (int iy = 0; iy < ctl->grid_ny; iy++)
+        help[ARRAY_2D(iy, ix, ctl->grid_nx)] =
+          data[iq * nxy + ARRAY_2D(ix, iy, ctl->grid_ny)];
+    NC_PUT_DOUBLE(varname[iq], help, 0);
+  }
+
+  NC(nc_close(ncid));
+  free(help);
+}
+
+/*****************************************************************************/
+
 void write_grid(
   const char *filename,
   const ctl_t *ctl,
@@ -13330,13 +13778,21 @@ void write_grid(
   /* Get grid box indices... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
+    const double zpart = Z(atm->p[ip]);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| atm->lon[ip] < ctl->grid_lon0
+	|| atm->lon[ip] >= ctl->grid_lon1
+	|| atm->lat[ip] < ctl->grid_lat0
+	|| atm->lat[ip] >= ctl->grid_lat1
+	|| zpart < ctl->grid_z0 || zpart >= ctl->grid_z1) {
+      izs[ip] = -1;
+      continue;
+    }
     ixs[ip] = (int) ((atm->lon[ip] - ctl->grid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->grid_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->grid_z0) / dz);
-    if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->grid_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->grid_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->grid_nz)
+    izs[ip] = (int) ((zpart - ctl->grid_z0) / dz);
+    if (ixs[ip] >= ctl->grid_nx || iys[ip] >= ctl->grid_ny
+	|| izs[ip] >= ctl->grid_nz)
       izs[ip] = -1;
   }
 
@@ -14283,12 +14739,13 @@ void write_prof(
     if (!isfinite(robs[i]))
       continue;
 
-    /* Calculate indices... */
+    /* Check grid boundaries and calculate indices... */
+    if (rlon[i] < ctl->prof_lon0 || rlon[i] >= ctl->prof_lon1
+	|| rlat[i] < ctl->prof_lat0 || rlat[i] >= ctl->prof_lat1)
+      continue;
     const int ix = (int) ((rlon[i] - ctl->prof_lon0) / dlon);
     const int iy = (int) ((rlat[i] - ctl->prof_lat0) / dlat);
-
-    /* Check indices... */
-    if (ix < 0 || ix >= ctl->prof_nx || iy < 0 || iy >= ctl->prof_ny)
+    if (ix >= ctl->prof_nx || iy >= ctl->prof_ny)
       continue;
 
     /* Get mean observation index... */
@@ -14304,14 +14761,18 @@ void write_prof(
     if (atm->time[ip] < t0 || atm->time[ip] > t1)
       continue;
 
-    /* Get indices... */
+    /* Check grid boundaries and get indices... */
+    const double zpart = Z(atm->p[ip]);
+    if (atm->lon[ip] < ctl->prof_lon0
+	|| atm->lon[ip] >= ctl->prof_lon1
+	|| atm->lat[ip] < ctl->prof_lat0
+	|| atm->lat[ip] >= ctl->prof_lat1
+	|| zpart < ctl->prof_z0 || zpart >= ctl->prof_z1)
+      continue;
     const int ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
     const int iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
-    const int iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
-
-    /* Check indices... */
-    if (ix < 0 || ix >= ctl->prof_nx ||
-	iy < 0 || iy >= ctl->prof_ny || iz < 0 || iz >= ctl->prof_nz)
+    const int iz = (int) ((zpart - ctl->prof_z0) / dz);
+    if (ix >= ctl->prof_nx || iy >= ctl->prof_ny || iz >= ctl->prof_nz)
       continue;
 
     /* Get total mass in grid cell... */

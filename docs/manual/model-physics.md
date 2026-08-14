@@ -507,6 +507,62 @@ stratosphere. A smooth transition between the tropospheric and
 stratospheric lifetime is created within a 1 km log-pressure altitude
 range around the tropopause.
 
+### Radionuclide decay and deposition
+
+For the explicitly supported radionuclides, `RADIO_DECAY` controls decay in
+both airborne activity and deposited ground inventories. The half-lives used
+for both phases are 22.3 years for Pb-210, 53.22 days for Be-7, 30.05 years
+for Cs-137, and 8.02 days for I-131.
+
+The activity $A$ of a parcel is reduced over a model time step according to
+
+$$
+A(t+\Delta t)=A(t)\exp[-(k_\mathrm{dry}+k_\mathrm{wet})\Delta t].
+$$
+
+This equation describes deposition loss only. Radioactive decay is applied
+separately when `RADIO_DECAY=1`, using the half-lives defined in `mptrac.h`.
+Rn-222 and Xe-133 undergo airborne decay but are not included in the
+deposition inventories.
+
+Dry deposition is applied to parcels within `DRY_DEPO_DP` hPa of the surface.
+For the corresponding layer thickness $\Delta z$, the rate is
+$k_\mathrm{dry}=v_\mathrm{d}/\Delta z$. The fixed deposition velocities are
+0.002 m s$^{-1}$ for Pb-210 and Cs-137, 0.001 m s$^{-1}$ for Be-7, and
+0.0005 m s$^{-1}$ for aerosol-bound I-131.
+
+Wet deposition is applied below the diagnosed cloud top when the precipitation
+proxy
+
+$$
+I_s=\left(\frac{c_l}{p_0}\right)^{1/p_1}
+$$
+
+is at least 0.01. Here, $c_l$ is total column cloud water and $p_0$ and $p_1$
+are `WET_DEPO_PRE[0]` and `WET_DEPO_PRE[1]`. The wet rates are
+$10^{-4} I_s \eta$ s$^{-1}$ for Pb-210 and Cs-137 and
+$5\times10^{-5} I_s \eta$ s$^{-1}$ for Be-7 and I-131. The retention factor
+$\eta$ uses `WET_DEPO_IC_RET_RATIO` in cold in-cloud conditions and
+`WET_DEPO_BC_RET_RATIO` below cold clouds, with temperature interpolation for
+mixed-phase clouds.
+
+The half-lives, dry deposition velocities, and wet deposition coefficients are
+defined as `RADIO_HALF_LIFE_*`, `RADIO_DRY_VDEP_*`, and
+`RADIO_WET_COEFF_*` macros in `mptrac.h`. Each definition is guarded by
+`#ifndef` and can be replaced at compile time, for example with
+`make DEFINES="-DRADIO_DRY_VDEP_CS137=0.0015"`.
+
+Deposited activities are accumulated on the grid selected by the `GRID_*`
+parameters and can be written with the `DEPO_*` output parameters. Deposited
+ground inventories are not contained in atmospheric restart files. A run
+started from such a restart therefore begins with zero ground inventory; only
+deposition occurring after the restart is reported.
+
+The radionuclide deposition module currently requires a latitude/longitude
+meteorological grid (`MET_COORD_TYPE=0`). Domain-decomposed simulations are
+not yet supported; enabling `RADIO_DEPO` in a DD build terminates with an
+error rather than producing incomplete ground inventories.
+
 ## Boundary conditions
 
 When an air parcels reach the upper and lower boundary layer two

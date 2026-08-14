@@ -37,3 +37,9 @@ parameters. A full field-by-field reference is available in the
 Practical examples, file syntax, and precedence rules are documented in
 the [control parameters](../control-parameters.md) section of the user
 manual.
+
+For forward radionuclide simulations, `trac` can accumulate dry and wet
+deposition of `Apb210`, `Abe7`, `Acs137`, and `Ai131` on the configured
+horizontal grid. See [model physics](../model-physics.md#radionuclide-decay-and-deposition)
+for the parameterization and [model output data](../model-output-data.md#radionuclide-deposition-data)
+for the ASCII and netCDF formats.

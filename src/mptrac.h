@@ -320,6 +320,76 @@
 #define RI 8.3144598
 #endif
 
+/*! Half-life of Rn-222 [s]. */
+#ifndef RADIO_HALF_LIFE_RN222
+#define RADIO_HALF_LIFE_RN222 (3.8235 * 86400.0)
+#endif
+
+/*! Half-life of Pb-210 [s]. */
+#ifndef RADIO_HALF_LIFE_PB210
+#define RADIO_HALF_LIFE_PB210 (22.3 * 365.25 * 86400.0)
+#endif
+
+/*! Half-life of Be-7 [s]. */
+#ifndef RADIO_HALF_LIFE_BE7
+#define RADIO_HALF_LIFE_BE7 (53.22 * 86400.0)
+#endif
+
+/*! Half-life of Cs-137 [s]. */
+#ifndef RADIO_HALF_LIFE_CS137
+#define RADIO_HALF_LIFE_CS137 (30.05 * 365.25 * 86400.0)
+#endif
+
+/*! Half-life of I-131 [s]. */
+#ifndef RADIO_HALF_LIFE_I131
+#define RADIO_HALF_LIFE_I131 (8.02 * 86400.0)
+#endif
+
+/*! Half-life of Xe-133 [s]. */
+#ifndef RADIO_HALF_LIFE_XE133
+#define RADIO_HALF_LIFE_XE133 (5.2474 * 86400.0)
+#endif
+
+/*! Dry deposition velocity of Pb-210 [m/s]. */
+#ifndef RADIO_DRY_VDEP_PB210
+#define RADIO_DRY_VDEP_PB210 0.002
+#endif
+
+/*! Dry deposition velocity of Be-7 [m/s]. */
+#ifndef RADIO_DRY_VDEP_BE7
+#define RADIO_DRY_VDEP_BE7 0.001
+#endif
+
+/*! Dry deposition velocity of Cs-137 [m/s]. */
+#ifndef RADIO_DRY_VDEP_CS137
+#define RADIO_DRY_VDEP_CS137 0.002
+#endif
+
+/*! Dry deposition velocity of aerosol-bound I-131 [m/s]. */
+#ifndef RADIO_DRY_VDEP_I131
+#define RADIO_DRY_VDEP_I131 0.0005
+#endif
+
+/*! Wet deposition coefficient of Pb-210 [s^-1]. */
+#ifndef RADIO_WET_COEFF_PB210
+#define RADIO_WET_COEFF_PB210 1e-4
+#endif
+
+/*! Wet deposition coefficient of Be-7 [s^-1]. */
+#ifndef RADIO_WET_COEFF_BE7
+#define RADIO_WET_COEFF_BE7 5e-5
+#endif
+
+/*! Wet deposition coefficient of Cs-137 [s^-1]. */
+#ifndef RADIO_WET_COEFF_CS137
+#define RADIO_WET_COEFF_CS137 1e-4
+#endif
+
+/*! Wet deposition coefficient of aerosol-bound I-131 [s^-1]. */
+#ifndef RADIO_WET_COEFF_I131
+#define RADIO_WET_COEFF_I131 5e-5
+#endif
+
 /*! Standard temperature [K]. */
 #ifndef T0
 #define T0 273.15
@@ -3035,8 +3105,11 @@ typedef struct {
   /*! Switch for first order tracer chemistry module (0=off, 1=on). */
   int tracer_chem;
 
-  /*! Switch for radioactive decay module (0=off, 1=on). */
+  /*! RADIO_DECAY switch for airborne and deposited activity (0=off, 1=on, default: 0). */
   int radio_decay;
+
+  /*! RADIO_DEPO switch for radionuclide deposition (0=off, 1=on, default: 0). */
+  int radio_depo;
 
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
@@ -3083,6 +3156,15 @@ typedef struct {
   /* ------------------------------------------------------------
      Output parameters...
      ------------------------------------------------------------ */
+
+  /*! DEPO_BASENAME for radioactive deposition files (default: disabled with "-"). */
+  char depo_basename[LEN];
+
+  /*! DEPO_DT_OUT time interval for radioactive deposition output [s] (default: 86400). */
+  double depo_dt_out;
+
+  /*! DEPO_TYPE of deposition files (0=ASCII, 1=netCDF, default: 0). */
+  int depo_type;
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];
@@ -3417,6 +3499,33 @@ typedef struct {
   double dt[NP];
 
 } cache_t;
+
+/**
+ * @brief Ground inventories of deposited radionuclides.
+ *
+ * The arrays contain cumulative activities in units of Bq per grid cell.
+ * With RADIO_DECAY enabled, values are internally referenced to the
+ * simulation start time so that output can be decayed to its valid time.
+ * With RADIO_DECAY disabled, values are accumulated without decay. Only
+ * the active part of each array, as defined by GRID_NX and GRID_NY, is
+ * used. Ground inventories are not stored in atmospheric restart files
+ * and therefore start from zero when a simulation is restarted.
+ */
+typedef struct {
+
+  /*! Deposited Pb-210 activity [Bq]. */
+  double Apb210[EX * EY];
+
+  /*! Deposited Be-7 activity [Bq]. */
+  double Abe7[EX * EY];
+
+  /*! Deposited Cs-137 activity [Bq]. */
+  double Acs137[EX * EY];
+
+  /*! Deposited I-131 activity [Bq]. */
+  double Ai131[EX * EY];
+
+} depo_t;
 
 /**
  * @brief Climatological data in the form of photolysis rates.
@@ -6722,6 +6831,34 @@ void module_radio_decay(
   atm_t * atm);
 
 /**
+ * @brief Deposit supported radionuclides from air parcels onto the ground grid.
+ *
+ * Applies fixed dry-deposition velocities in the surface layer and
+ * precipitation-dependent wet scavenging to Apb210, Abe7, Acs137, and Ai131.
+ * Air-parcel activities are reduced exponentially and the removed activity is
+ * accumulated in @p depo. When RADIO_DECAY is enabled, ground inventories are
+ * referenced to the simulation start for decay-correct output. Backward or
+ * zero-length particle timesteps are ignored.
+ *
+ * @note This module requires a latitude/longitude meteorological grid and is
+ * not currently supported with domain decomposition (DD).
+ *
+ * @param[in] ctl Control parameters, quantity indices, and deposition grid.
+ * @param[in] cache Per-particle model timesteps.
+ * @param[in] met0 Meteorological field at the earlier bracketing time.
+ * @param[in] met1 Meteorological field at the later bracketing time.
+ * @param[in,out] atm Air-parcel positions and activities [Bq].
+ * @param[in,out] depo Cumulative ground inventories [Bq per grid cell].
+ */
+void module_radio_depo(
+  const ctl_t * ctl,
+  const cache_t * cache,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  depo_t * depo);
+
+/**
  * @brief Simulate sedimentation of particles in the atmosphere.
  *
  * This function calculates the sedimentation velocity of particles
@@ -6945,6 +7082,7 @@ void module_wet_depo(
  * @param[out] met0 Pointer to the first meteorology structure (met_t).
  * @param[out] met1 Pointer to the second meteorology structure (met_t).
  * @param[out] atm Pointer to the atmospheric structure (atm_t).
+ * @param[out] depo Pointer to the radionuclide ground-inventory structure (depo_t).
  * @param[out] dd  pointer to an `dd_t` structure containing MPI information, including rank and neighbours.
  *
  * @note This function uses OpenACC for GPU initialization and memory
@@ -6970,6 +7108,7 @@ void mptrac_alloc(
   met_t ** met0,
   met_t ** met1,
   atm_t ** atm,
+  depo_t ** depo,
   dd_t ** dd);
 
 /**
@@ -6985,6 +7124,7 @@ void mptrac_alloc(
  * @param[in] met0 Pointer to the first meteorology structure (met_t) to be freed.
  * @param[in] met1 Pointer to the second meteorology structure (met_t) to be freed.
  * @param[in] atm Pointer to the atmospheric structure (atm_t) to be freed.
+ * @param[in] depo Pointer to the radionuclide ground-inventory structure (depo_t) to be freed.
  * @param[in] dd Pointer to an `dd_t` structure containing MPI information, including rank and neighbours.
  *
  * @note This function uses OpenACC for GPU memory management. If
@@ -7009,6 +7149,7 @@ void mptrac_free(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  depo_t * depo,
   dd_t * dd);
 
 /**
@@ -7064,6 +7205,7 @@ void mptrac_get_met(
  * @param cache Pointer to the cache structure used for data storage and retrieval.
  * @param clim  Pointer to the climatology structure containing climate-related data.
  * @param atm   Pointer to the atmospheric structure containing atmospheric state data.
+ * @param depo  Pointer to inventories allocated and zero-initialized by mptrac_alloc().
  * @param ntask Number of tasks or threads to initialize for the random number generator.
  *
  * The function performs the following operations:
@@ -7078,6 +7220,7 @@ void mptrac_init(
   cache_t * cache,
   clim_t * clim,
   atm_t * atm,
+  depo_t * depo,
   const int ntask);
 
 /**
@@ -7242,6 +7385,7 @@ int mptrac_read_met(
  * @param met0  Pointer to the current meteorological data structure.
  * @param met1  Pointer to the next meteorological data structure.
  * @param atm   Pointer to the atmosphere structure containing air parcel data.
+ * @param depo  Pointer to cumulative radionuclide ground inventories.
  * @param t     Current simulation time in seconds.
  * @param dd MPI information required for the domain decomposition.
  *
@@ -7254,6 +7398,7 @@ void mptrac_run_timestep(
   met_t ** met0,
   met_t ** met1,
   atm_t * atm,
+  depo_t * depo,
   double t,
   dd_t * dd);
 
@@ -7350,6 +7495,7 @@ void mptrac_write_met(
  * @param met0 A pointer to a `met_t` structure representing the first set of meteorological data.
  * @param met1 A pointer to a `met_t` structure representing the second set of meteorological data.
  * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param depo A pointer to the cumulative radionuclide ground inventories.
  * @param t A double value representing the time at which the output is being written.
  *
  * The function performs the following steps:
@@ -7357,6 +7503,7 @@ void mptrac_write_met(
  * - Updates host memory if necessary based on control parameters.
  * - Writes atmospheric data to files if specified by control parameters.
  * - Writes gridded data to files if specified by control parameters.
+ * - Writes cumulative radionuclide deposition if specified by control parameters.
  * - Writes CSI (Critical Success Index) data to files if specified by control parameters.
  * - Writes ensemble data to files if specified by control parameters.
  * - Writes profile data to files if specified by control parameters.
@@ -7375,6 +7522,7 @@ void mptrac_write_output(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  depo_t * depo,
   const double t);
 
 /**
@@ -9327,6 +9475,64 @@ void write_ens(
   const ctl_t * ctl,
   const atm_t * atm,
   const double t);
+
+/**
+ * @brief Convert cumulative ground inventories to Bq m^-2 and write them.
+ *
+ * Cell centers and areas are derived from GRID_LON*, GRID_LAT*, GRID_NX, and
+ * GRID_NY. If RADIO_DECAY is enabled, inventories are decayed to @p t. Output
+ * format is selected by DEPO_TYPE.
+ *
+ * @param[in] filename Output filename.
+ * @param[in] ctl Grid, format, compression, and decay settings.
+ * @param[in] depo Cumulative radionuclide inventories.
+ * @param[in] t Output validity time [s since 2000-01-01 00:00 UTC].
+ */
+void write_depo(
+  const char *filename,
+  const ctl_t * ctl,
+  const depo_t * depo,
+  const double t);
+
+/**
+ * @brief Write radioactive deposition densities as a gnuplot-compatible table.
+ *
+ * @param[in] filename Output filename.
+ * @param[in] ctl Deposition grid dimensions.
+ * @param[in] data Four consecutive fields in Bq m^-2.
+ * @param[in] t Output validity time [s since 2000-01-01 00:00 UTC].
+ * @param[in] lon Grid-cell center longitudes [deg].
+ * @param[in] lat Grid-cell center latitudes [deg].
+ * @param[in] area Grid-cell areas by latitude [m^2].
+ */
+void write_depo_asc(
+  const char *filename,
+  const ctl_t * ctl,
+  const double *data,
+  const double t,
+  const double *lon,
+  const double *lat,
+  const double *area);
+
+/**
+ * @brief Write radioactive deposition densities as a CF-style netCDF file.
+ *
+ * @param[in] filename Output filename.
+ * @param[in] ctl Deposition grid dimensions and netCDF compression setting.
+ * @param[in] data Four consecutive fields in Bq m^-2.
+ * @param[in] t Output validity time [s since 2000-01-01 00:00 UTC].
+ * @param[in] lon Grid-cell center longitudes [deg].
+ * @param[in] lat Grid-cell center latitudes [deg].
+ * @param[in] area Grid-cell areas by latitude [m^2].
+ */
+void write_depo_nc(
+  const char *filename,
+  const ctl_t * ctl,
+  const double *data,
+  const double t,
+  const double *lon,
+  const double *lat,
+  const double *area);
 
 /**
  * @brief Writes grid data to a file in ASCII or netCDF format.

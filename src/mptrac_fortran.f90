@@ -139,6 +139,14 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(3 * npp + 1) :: rs
      REAL(c_double), DIMENSION(npp) :: dt
   END TYPE cache_t
+
+  ! Ground inventories of deposited radionuclides...
+  TYPE, bind(c) :: depo_t
+     REAL(c_double), DIMENSION(ey,ex) :: Apb210
+     REAL(c_double), DIMENSION(ey,ex) :: Abe7
+     REAL(c_double), DIMENSION(ey,ex) :: Acs137
+     REAL(c_double), DIMENSION(ey,ex) :: Ai131
+  END TYPE depo_t
   
   ! Photolysis rate data...
   TYPE, bind(c) :: clim_photo_t
@@ -445,6 +453,7 @@ MODULE mptrac_struct
      REAL(c_double) :: dt_kpp
      INTEGER(c_int) :: tracer_chem
      INTEGER(c_int) :: radio_decay
+     INTEGER(c_int) :: radio_depo
      REAL(c_double), DIMENSION(2) :: wet_depo_pre
      REAL(c_double) :: wet_depo_bc_a
      REAL(c_double) :: wet_depo_bc_b
@@ -459,6 +468,9 @@ MODULE mptrac_struct
      REAL(c_double) :: dry_depo_vdep
      REAL(c_double) :: psc_h2o
      REAL(c_double) :: psc_hno3
+     CHARACTER(c_char), DIMENSION(length) :: depo_basename
+     REAL(c_double) :: depo_dt_out
+     INTEGER(c_int) :: depo_type
      CHARACTER(c_char), DIMENSION(length) :: atm_basename
      CHARACTER(c_char), DIMENSION(length) :: atm_gpfile
      REAL(c_double) :: atm_dt_out
@@ -628,30 +640,32 @@ MODULE mptrac_func
   INTERFACE
      
      ! Allocate data structures...
-     SUBROUTINE mptrac_alloc(ctl, cache, clim, met0, met1, atm, dd) &
+     SUBROUTINE mptrac_alloc(ctl, cache, clim, met0, met1, atm, depo, dd) &
           bind(c,name='mptrac_alloc')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, dd_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, depo_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), POINTER :: ctl
        TYPE(cache_t), INTENT(inout), POINTER :: cache
        TYPE(clim_t), INTENT(inout), POINTER :: clim
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
        TYPE(atm_t), INTENT(inout), POINTER :: atm
+       TYPE(depo_t), INTENT(inout), POINTER :: depo
        TYPE(dd_t), INTENT(inout), POINTER :: dd
      END SUBROUTINE mptrac_alloc
 
      ! Free data structures...
-     SUBROUTINE mptrac_free(ctl, cache, clim, met0, met1, atm, dd) &
+     SUBROUTINE mptrac_free(ctl, cache, clim, met0, met1, atm, depo, dd) &
           bind(c,name='mptrac_free')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, dd_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, depo_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), TARGET :: ctl
        TYPE(cache_t), INTENT(inout), TARGET :: cache
        TYPE(clim_t), INTENT(inout), TARGET :: clim
        TYPE(met_t), INTENT(inout), TARGET :: met0, met1
        TYPE(atm_t), INTENT(inout), TARGET :: atm
+       TYPE(depo_t), INTENT(inout), TARGET :: depo
        TYPE(dd_t), INTENT(inout), TARGET :: dd
      END SUBROUTINE mptrac_free
 
@@ -669,15 +683,16 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_get_met
 
      ! Initialize model run...
-     SUBROUTINE mptrac_init(ctl, cache, clim, atm, ntask) &
+     SUBROUTINE mptrac_init(ctl, cache, clim, atm, depo, ntask) &
           bind(c,name='mptrac_init')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, atm_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, atm_t, depo_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), TARGET :: ctl
        TYPE(cache_t), INTENT(inout), TARGET :: cache
        TYPE(clim_t), INTENT(inout), TARGET :: clim
        TYPE(atm_t), INTENT(inout), TARGET :: atm
+       TYPE(depo_t), INTENT(inout), TARGET :: depo
        INTEGER(c_int), INTENT(in), VALUE :: ntask
      END SUBROUTINE mptrac_init
 
@@ -730,16 +745,17 @@ MODULE mptrac_func
      END FUNCTION mptrac_read_met
 
      ! Run model time step...
-     SUBROUTINE mptrac_run_timestep(ctl, cache, clim, met0, met1, atm, t, dd) &
+     SUBROUTINE mptrac_run_timestep(ctl, cache, clim, met0, met1, atm, depo, t, dd) &
           bind(c,name='mptrac_run_timestep')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, dd_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, depo_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), TARGET :: ctl
        TYPE(cache_t), INTENT(inout), TARGET :: cache
        TYPE(clim_t), INTENT(inout), TARGET :: clim
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
        TYPE(atm_t), INTENT(inout), TARGET :: atm
+       TYPE(depo_t), INTENT(inout), TARGET :: depo
        REAL(c_double), INTENT(in), VALUE :: t
        TYPE(dd_t), INTENT(inout), TARGET :: dd
      END SUBROUTINE mptrac_run_timestep
@@ -768,14 +784,15 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_write_met
 
      ! Write model output...
-     SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, t) &
+     SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, depo, t) &
           bind(c,name='mptrac_write_output')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, met_t, atm_t
+       USE mptrac_struct, ONLY : ctl_t, met_t, atm_t, depo_t
        CHARACTER(c_char), INTENT(in) :: dirname
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(met_t), INTENT(in), TARGET :: met0, met1
        TYPE(atm_t), INTENT(in), TARGET :: atm
+       TYPE(depo_t), INTENT(in), TARGET :: depo
        REAL(c_double), INTENT(in), VALUE :: t
      END SUBROUTINE mptrac_write_output
 

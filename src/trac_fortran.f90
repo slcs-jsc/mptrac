@@ -29,6 +29,7 @@ PROGRAM trac_fortran
   TYPE(ctl_t), POINTER :: ctlp
   TYPE(cache_t), POINTER :: cachep
   TYPE(atm_t), POINTER :: atmp
+  TYPE(depo_t), POINTER :: depop
   TYPE(clim_t), POINTER :: climp
   TYPE(met_t), POINTER :: met0p, met1p
   TYPE(dd_t), POINTER :: ddp
@@ -62,7 +63,7 @@ PROGRAM trac_fortran
      CALL EXIT
   ENDIF
 
-  NULLIFY(ctlp, cachep, climp, met0p, met1p, atmp, ddp)
+  NULLIFY(ctlp, cachep, climp, met0p, met1p, atmp, depop, ddp)
   
   ! Endless loop...
   DO WHILE (1 .eq. 1)
@@ -72,7 +73,7 @@ PROGRAM trac_fortran
      filename_atm = TRIM(dirname)//"/"//tmp(3)
      
      ! Allocate memory...
-     CALL mptrac_alloc(ctlp, cachep, climp, met0p, met1p, atmp, ddp)
+     CALL mptrac_alloc(ctlp, cachep, climp, met0p, met1p, atmp, depop, ddp)
      
      ! Read control parameters...
      CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc + 1, argv_ptrs, ctlp)
@@ -88,7 +89,7 @@ PROGRAM trac_fortran
      ENDIF
      
      ! Initialize MPTRAC...
-     CALL mptrac_init(ctlp, cachep, climp, atmp, ntask)
+     CALL mptrac_init(ctlp, cachep, climp, atmp, depop, ntask)
 
      ! Set start time...
      t = ctlp%t_start
@@ -110,10 +111,10 @@ PROGRAM trac_fortran
         ENDIF
         
         ! Run a single time step..."
-        CALL mptrac_run_timestep(ctlp, cachep, climp, met0p, met1p, atmp, t, ddp)
+        CALL mptrac_run_timestep(ctlp, cachep, climp, met0p, met1p, atmp, depop, t, ddp)
         
         ! Write output...
-        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctlp, met0p, met1p, atmp, t)
+        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctlp, met0p, met1p, atmp, depop, t)
 
         ! Set time...
         t = t + ctlp%direction * ctlp%dt_mod
@@ -121,7 +122,7 @@ PROGRAM trac_fortran
      END DO
      
      ! Free memory...
-     CALL mptrac_free(ctlp, cachep, climp, met0p, met1p, atmp, ddp)
+     CALL mptrac_free(ctlp, cachep, climp, met0p, met1p, atmp, depop, ddp)
      
   END DO
 200 CONTINUE

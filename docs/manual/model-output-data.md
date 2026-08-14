@@ -1,7 +1,7 @@
 # Model output data
 
-MPTRAC currently supports eight different types of model output:
-particle output, grid output, CSI output, ensemble output, profile
+MPTRAC currently supports nine different types of model output:
+particle output, grid output, radionuclide deposition output, CSI output, ensemble output, profile
 output, sample output, station output, and VTK output. By default,
 these output functions generate data in ASCII table format, which is
 human-readable and compatible with various data analysis and
@@ -75,6 +75,46 @@ pattern `<GRID_BASENAME>_YYYY_MM_DD_HH_MM_SS.<ext>`.
 |-----------|-----------------|
 | 0         | ASCII (default) |
 | 1         | netcdf          |
+
+## Radionuclide deposition data
+
+The radionuclide deposition output contains cumulative ground inventories for
+Pb-210, Be-7, Cs-137, and aerosol-bound I-131. Values are activity densities
+in Bq m$^{-2}$ at the output validity time. When `RADIO_DECAY=1`, both airborne
+and deposited activities use the same radionuclide half-lives. The horizontal
+grid is defined by the `GRID_*` parameters; it has no vertical dimension.
+
+Output is enabled with `DEPO_BASENAME` and written every `DEPO_DT_OUT` seconds
+and additionally at `T_STOP`. Files follow the pattern
+`<DEPO_BASENAME>_YYYY_MM_DD_HH_MM_SS.<ext>`.
+
+| DEPO_TYPE | Output format | Extension |
+|-----------|---------------|-----------|
+| 0 | ASCII | `.tab` |
+| 1 | netCDF | `.nc` |
+
+ASCII files contain time, longitude, latitude, grid-cell area, and the four
+activity-density fields. Blank lines separate longitude scans so that the
+tables can be plotted directly with gnuplot `pm3d`.
+
+| Column | Content | Unit |
+|--------|---------|------|
+| 1 | Time | s since 2000-01-01 00:00 UTC |
+| 2 | Longitude | degree east |
+| 3 | Latitude | degree north |
+| 4 | Grid-cell area | m$^2$ |
+| 5 | Deposited Pb-210 | Bq m$^{-2}$ |
+| 6 | Deposited Be-7 | Bq m$^{-2}$ |
+| 7 | Deposited Cs-137 | Bq m$^{-2}$ |
+| 8 | Deposited aerosol-bound I-131 | Bq m$^{-2}$ |
+
+NetCDF files use dimensions `time`, `lat`, and `lon`. The activity variables
+are `depo_pb210`, `depo_be7`, `depo_cs137`, and `depo_i131`; `area` contains
+the latitude-dependent cell area. `GRID_NC_LEVEL` selects netCDF compression.
+
+Deposited inventories are not stored in atmospheric restart files. After a
+restart, deposition output begins again from zero and represents only activity
+deposited during the restarted segment.
 
 ## CSI data
 

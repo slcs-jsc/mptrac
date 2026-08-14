@@ -19,13 +19,13 @@ demonstrates their usage with an example workflow.
 
 ### 1. Memory Management
 
-- **`void mptrac_alloc(...)`**: Allocates memory for control, cache, climatology, meteorology, and atmospheric data structures on the CPU and GPU.
+- **`void mptrac_alloc(...)`**: Allocates memory for control, cache, climatology, meteorology, atmospheric, deposition, and domain-decomposition data structures on the CPU and GPU.
 
 - **`void mptrac_free(...)`**: Frees memory allocated for these structures.
 
 ### 2. Initialization and memory updates
 
-- **`void mptrac_init(...)`**: Initializes the MPTRAC model with control, cache, climatology, and atmospheric data. It adjusts the time range of the simulation and initializes the random number generator.
+- **`void mptrac_init(...)`**: Initializes model timesteps and the random number generator and transfers the deposition inventories allocated and zero-initialized by `mptrac_alloc` to the GPU.
 
 - **`void mptrac_update_device(...)`**: Updates device memory with the latest data from CPU memory.
 
@@ -43,7 +43,7 @@ demonstrates their usage with an example workflow.
 
 ### 4. Data output
 
-- **`void mptrac_write_output(...)`**: Writes simulation results in various output types.
+- **`void mptrac_write_output(...)`**: Writes simulation results, including cumulative radionuclide deposition when enabled.
 
 - **`void mptrac_write_met(...)`**: Writes meteorological data to a file.
 
@@ -66,7 +66,7 @@ for the full code.
 ### 1. Allocate memory
 
 ```
-mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm);
+mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &depo, &dd);
 ```
 
 ### 2. Initialize the model
@@ -75,7 +75,7 @@ mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm);
 mptrac_read_ctl(filename, argc, argv, ctl);
 mptrac_read_clim(ctl, clim);
 mptrac_read_atm(filename, ctl, atm);
-mptrac_init(ctl, cache, clim, atm, ntask);
+mptrac_init(ctl, cache, clim, atm, depo, ntask);
 ```
 
 ### 3. Run the simulation
@@ -83,15 +83,15 @@ mptrac_init(ctl, cache, clim, atm, ntask);
 Within the time loop of the model, repeatedly call:
 
 ```
-mptrac_get_met(ctl, clim, t, &met0, &met1);
-mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
-mptrac_write_output(dirname, ctl, met0, met1, atm, t);
+mptrac_get_met(ctl, clim, t, &met0, &met1, dd);
+mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, depo, t, dd);
+mptrac_write_output(dirname, ctl, met0, met1, atm, depo, t);
 ```
 
 ### 4. Free memory
 
 ```
-mptrac_free(ctl, cache, clim, met0, met1, atm);
+mptrac_free(ctl, cache, clim, met0, met1, atm, depo, dd);
 ```
 
 ## Notes

@@ -52,6 +52,8 @@ int main(
 
   clim_t *clim;
 
+  depo_t *depo;
+
   met_t *met0, *met1;
 
   dd_t *dd;
@@ -98,7 +100,7 @@ int main(
        ------------------------------------------------------------ */
 
     /* Allocate memory... */
-    mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &dd);
+    mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &depo, &dd);
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
@@ -113,7 +115,7 @@ int main(
       ERRMSG("Cannot open file!");
 
     /* Initialize MPTRAC... */
-    mptrac_init(ctl, cache, clim, atm, ntask);
+    mptrac_init(ctl, cache, clim, atm, depo, ntask);
 
     /* ------------------------------------------------------------
        Loop over timesteps...
@@ -148,10 +150,10 @@ int main(
 #endif
 
       /* Run a single time step... */
-      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, dd);
+      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, depo, t, dd);
 
       /* Write output... */
-      mptrac_write_output(dirname, ctl, met0, met1, atm, t);
+      mptrac_write_output(dirname, ctl, met0, met1, atm, depo, t);
     }
 
     /* ------------------------------------------------------------
@@ -169,11 +171,12 @@ int main(
     /* Report memory usage... */
     LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
+    LOG(1, "MEMORY_DEPO = %g MByte", sizeof(depo_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CLIM = %g MByte", sizeof(clim_t) / 1024. / 1024.);
     LOG(1, "MEMORY_METEO = %g MByte", sizeof(met_t) / 1024. / 1024.);
 
     /* Free memory... */
-    mptrac_free(ctl, cache, clim, met0, met1, atm, dd);
+    mptrac_free(ctl, cache, clim, met0, met1, atm, depo, dd);
 
     /* Report timers... */
     PRINT_TIMERS;
