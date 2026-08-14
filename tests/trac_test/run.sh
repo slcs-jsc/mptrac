@@ -61,9 +61,11 @@ GRID_LAT0 = -60
 GRID_LAT1 = -15
 GRID_NX = 300
 GRID_NY = 90
+GRID_SPARSE = 1
 SAMPLE_DZ = 100
 STAT_LON = -22
 STAT_LAT = -40
+VTK_STRIDE = 100
 EOF
 
 # Create observation file...
@@ -78,20 +80,18 @@ echo | awk -v tobs="$($trac/time2jsec 2011 6 7 0 0 0 0)" '{
     }
 }' > data/obs.tab
 
-# Set initial air parcel positions...
+# Initialize globally distributed, well-mixed air parcels...
 $trac/atm_init data/trac.ctl data/atm_init.tab \
 	       INIT_T0 "$t0" INIT_T1 "$t0" \
-	       INIT_Z0 10.0 INIT_Z1 10.0 \
-	       INIT_LON0 -72.117 INIT_LON1 -72.117 \
-	       INIT_LAT0 -40.59 INIT_LAT1 -40.59
-
-# Split air parcels...
-$trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 5.0
+	       INIT_Z0 0.0 INIT_Z1 0.0 \
+	       INIT_LON0 0.0 INIT_LON1 0.0 INIT_ULON 360.0 \
+	       INIT_LAT0 0.0 INIT_LAT1 0.0 INIT_ULAT 180.0 \
+	       INIT_COL_MASS 1 INIT_WELL_MIXED 1 INIT_EVENLY 1 \
+	       INIT_NP 10000 INIT_MASS 1e9
 
 # Calculate trajectories on model levels...
 echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab \
+$trac/trac data/dirlist trac.ctl atm_init.tab \
 	   METBASE ../data/era5ml MET_PRESS_LEVEL_DEF 6 \
 	   MET_VERT_COORD 1 ADVECT_VERT_COORD 2 \
 	   ATM_BASENAME atm_ml GRID_BASENAME grid_ml \
@@ -102,7 +102,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 	   VTK_BASENAME atm_ml
 
 # Calculate trajectories on pressure levels...
-$trac/trac data/dirlist trac.ctl atm_split.tab \
+$trac/trac data/dirlist trac.ctl atm_init.tab \
 	   ATM_BASENAME atm_pl GRID_BASENAME grid_pl \
 	   ENS_BASENAME ens_pl STAT_BASENAME station_pl \
 	   CSI_BASENAME csi_pl CSI_OBSFILE data/obs.tab \
