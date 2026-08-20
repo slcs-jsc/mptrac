@@ -7214,7 +7214,9 @@ void module_wet_depo(
  *
  * This function handles memory allocation for various data structures
  * and sets up GPU resources if available. It also creates the
- * necessary data regions on GPUs for OpenACC-enabled execution.
+ * necessary data regions on GPUs for OpenACC-enabled execution. Each
+ * output parameter is optional; pass NULL for structures that are not
+ * needed.
  *
  * @param[out] ctl Pointer to the control structure (ctl_t).
  * @param[out] cache Pointer to the cache structure (cache_t).
@@ -7256,7 +7258,7 @@ void mptrac_alloc(
  *
  * This function releases the memory allocated for various data
  * structures and deletes any associated data regions on GPUs if
- * OpenACC is enabled.
+ * OpenACC is enabled. Every argument may be NULL.
  *
  * @param[in] ctl Pointer to the control structure (ctl_t) to be freed.
  * @param[in] cache Pointer to the cache structure (cache_t) to be freed.
@@ -7270,9 +7272,8 @@ void mptrac_alloc(
  * @note This function uses OpenACC for GPU memory management. If
  *       OpenACC is not enabled, the GPU-specific code is ignored.
  *
- * @pre All input pointers must point to valid allocated memory. The
- *      function assumes that the memory was allocated using
- *      compatible allocation methods.
+ * @pre Non-NULL input pointers must have been returned through the
+ *      corresponding argument of mptrac_alloc().
  *
  * @post All input pointers are freed, and the associated data regions
  *       on GPUs are deleted if OpenACC is enabled.

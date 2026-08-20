@@ -70,9 +70,7 @@ int main(
     nhist_max, nhist_min, nhist_mean, nhist_sig, np;
 
   /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(met, met_t, 1);
-  ALLOC(dd, dd_t, 1);
+  mptrac_alloc(NULL, NULL, &clim, &met, NULL, NULL, NULL, &dd);
 
   /* Print usage information... */
   USAGE;
@@ -241,9 +239,7 @@ int main(
   fclose(out);
 
   /* Free... */
-  free(clim);
-  free(met);
-  free(dd);
+  mptrac_free(NULL, NULL, clim, met, NULL, NULL, NULL, dd);
 
   return EXIT_SUCCESS;
 }

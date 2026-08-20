@@ -57,10 +57,7 @@ int main(
   static int n[EP][EY];
 
   /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(met0, met_t, 1);
-  ALLOC(met1, met_t, 1);
-  ALLOC(dd, dd_t, 1);
+  mptrac_alloc(NULL, NULL, &clim, &met0, &met1, NULL, NULL, &dd);
 
   /* Print usage information... */
   USAGE;
@@ -212,10 +209,7 @@ int main(
   fclose(out);
 
   /* Free... */
-  free(clim);
-  free(met0);
-  free(met1);
-  free(dd);
+  mptrac_free(NULL, NULL, clim, met0, met1, NULL, NULL, dd);
 
   return EXIT_SUCCESS;
 }

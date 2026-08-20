@@ -40,11 +40,15 @@ int main(
   int argc,
   char *argv[]) {
 
-  ctl_t ctl;
+  ctl_t *ctl;
+
+  cache_t *cache;
 
   clim_t *clim;
 
   atm_t *atm;
+
+  depo_t *depo;
 
   met_t *met0, *met1;
 
@@ -67,14 +71,10 @@ int main(
 	   "Use -h for full help.");
 
   /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(atm, atm_t, 1);
-  ALLOC(met0, met_t, 1);
-  ALLOC(met1, met_t, 1);
-  ALLOC(dd, dd_t, 1);
+  mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &depo, &dd);
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, ctl);
   const int geopot =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GEOPOT", -1, "0", NULL);
   const int grid_time =
@@ -87,10 +87,10 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LAT", -1, "0", NULL);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  mptrac_read_clim(ctl, clim);
 
   /* Read atmospheric data... */
-  if (!mptrac_read_atm(argv[3], &ctl, atm))
+  if (!mptrac_read_atm(argv[3], ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Create output file... */
@@ -105,7 +105,7 @@ int main(
   for (int ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    mptrac_get_met(&ctl, clim, atm->time[ip], &met0, &met1, dd);
+    mptrac_get_met(ctl, clim, atm->time[ip], &met0, &met1, dd);
 
     /* Set reference pressure for interpolation... */
     INTPOL_INIT;
@@ -158,7 +158,7 @@ int main(
 							  atm->time[ip],
 							  atm->lat[ip],
 							  atm->p[ip]),
-	    clim_oh(&ctl, clim, atm->time[ip], atm->lon[ip], atm->lat[ip],
+	    clim_oh(ctl, clim, atm->time[ip], atm->lon[ip], atm->lat[ip],
 		    atm->p[ip]), clim_zm(&clim->h2o2, atm->time[ip],
 					 atm->lat[ip], atm->p[ip]),
 	    clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]),
@@ -170,11 +170,7 @@ int main(
   fclose(out);
 
   /* Free... */
-  free(clim);
-  free(atm);
-  free(met0);
-  free(met1);
-  free(dd);
+  mptrac_free(ctl, cache, clim, met0, met1, atm, depo, dd);
 
   return EXIT_SUCCESS;
 }

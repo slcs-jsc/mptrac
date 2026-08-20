@@ -6303,44 +6303,77 @@ void mptrac_alloc(
 
   /* Initialize GPU... */
 #ifdef _OPENACC
-  SELECT_TIMER("ACC_INIT", "INIT");
-  int rank = 0;
+  if (ctl != NULL || cache != NULL || clim != NULL || met0 != NULL
+      || met1 != NULL || atm != NULL || depo != NULL || dd != NULL) {
+    SELECT_TIMER("ACC_INIT", "INIT");
+    int rank = 0;
 #ifdef MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-  if (acc_get_num_devices(acc_device_nvidia) <= 0)
-    ERRMSG("Not running on a GPU device!");
-  acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
-		     acc_device_nvidia);
-  acc_device_t device_type = acc_get_device_type();
-  acc_init(device_type);
+    if (acc_get_num_devices(acc_device_nvidia) <= 0)
+      ERRMSG("Not running on a GPU device!");
+    acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
+		       acc_device_nvidia);
+    acc_device_t device_type = acc_get_device_type();
+    acc_init(device_type);
+  }
 #endif
 
   /* Allocate... */
   SELECT_TIMER("ALLOC", "MEMORY");
-  ALLOC(*ctl, ctl_t, 1);
-  ALLOC(*cache, cache_t, 1);
-  ALLOC(*clim, clim_t, 1);
-  ALLOC(*met0, met_t, 1);
-  ALLOC(*met1, met_t, 1);
-  ALLOC(*atm, atm_t, 1);
-  ALLOC(*depo, depo_t, 1);
-  ALLOC(*dd, dd_t, 1);
+  if (ctl != NULL)
+    ALLOC(*ctl, ctl_t, 1);
+  if (cache != NULL)
+    ALLOC(*cache, cache_t, 1);
+  if (clim != NULL)
+    ALLOC(*clim, clim_t, 1);
+  if (met0 != NULL)
+    ALLOC(*met0, met_t, 1);
+  if (met1 != NULL)
+    ALLOC(*met1, met_t, 1);
+  if (atm != NULL)
+    ALLOC(*atm, atm_t, 1);
+  if (depo != NULL)
+    ALLOC(*depo, depo_t, 1);
+  if (dd != NULL)
+    ALLOC(*dd, dd_t, 1);
 
   /* Create data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("CREATE_DATA_REGION", "MEMORY");
-  ctl_t *ctlup = *ctl;
-  cache_t *cacheup = *cache;
-  clim_t *climup = *clim;
-  met_t *met0up = *met0;
-  met_t *met1up = *met1;
-  atm_t *atmup = *atm;
-  depo_t *depoup = *depo;
-#pragma acc enter data create(ctlup[:1],cacheup[:1],climup[:1],met0up[:1],met1up[:1],atmup[:1],depoup[:1])
+  if (ctl != NULL) {
+    ctl_t *ctlup = *ctl;
+#pragma acc enter data create(ctlup[:1])
+  }
+  if (cache != NULL) {
+    cache_t *cacheup = *cache;
+#pragma acc enter data create(cacheup[:1])
+  }
+  if (clim != NULL) {
+    clim_t *climup = *clim;
+#pragma acc enter data create(climup[:1])
+  }
+  if (met0 != NULL) {
+    met_t *met0up = *met0;
+#pragma acc enter data create(met0up[:1])
+  }
+  if (met1 != NULL) {
+    met_t *met1up = *met1;
+#pragma acc enter data create(met1up[:1])
+  }
+  if (atm != NULL) {
+    atm_t *atmup = *atm;
+#pragma acc enter data create(atmup[:1])
+  }
+  if (depo != NULL) {
+    depo_t *depoup = *depo;
+#pragma acc enter data create(depoup[:1])
+  }
 #ifdef DD
-  dd_t *ddup = *dd;
+  if (dd != NULL) {
+    dd_t *ddup = *dd;
 #pragma acc enter data create(ddup[:1])
+  }
 #endif
 #endif
 }
@@ -6360,9 +6393,31 @@ void mptrac_free(
   /* Delete data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("DELETE_DATA_REGION", "MEMORY");
-#pragma acc exit data delete(ctl,cache,clim,met0,met1,atm,depo)
+  if (ctl != NULL) {
+#pragma acc exit data delete(ctl[:1])
+  }
+  if (cache != NULL) {
+#pragma acc exit data delete(cache[:1])
+  }
+  if (clim != NULL) {
+#pragma acc exit data delete(clim[:1])
+  }
+  if (met0 != NULL) {
+#pragma acc exit data delete(met0[:1])
+  }
+  if (met1 != NULL) {
+#pragma acc exit data delete(met1[:1])
+  }
+  if (atm != NULL) {
+#pragma acc exit data delete(atm[:1])
+  }
+  if (depo != NULL) {
+#pragma acc exit data delete(depo[:1])
+  }
 #ifdef DD
-#pragma acc exit data delete(dd)
+  if (dd != NULL) {
+#pragma acc exit data delete(dd[:1])
+  }
 #endif
 #endif
 
@@ -6378,7 +6433,8 @@ void mptrac_free(
 
   /* Free MPI datatype... */
 #ifdef DD
-  MPI_Type_free(&dd->MPI_Particle);
+  if (dd != NULL)
+    MPI_Type_free(&dd->MPI_Particle);
 #endif
   free(dd);
 }

@@ -40,11 +40,15 @@ int main(
   int argc,
   char *argv[]) {
 
-  ctl_t ctl;
+  ctl_t *ctl;
+
+  cache_t *cache;
 
   clim_t *clim;
 
   atm_t *atm;
+
+  depo_t *depo;
 
   met_t *met0, *met1;
 
@@ -60,14 +64,10 @@ int main(
 	   "Use -h for full help.");
 
   /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(atm, atm_t, 1);
-  ALLOC(met0, met_t, 1);
-  ALLOC(met1, met_t, 1);
-  ALLOC(dd, dd_t, 1);
+  mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &depo, &dd);
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, ctl);
   const int ens =
     (int) scan_ctl(argv[1], argc, argv, "INIT_ENS", -1, "0", NULL);
   const double t0 = scan_ctl(argv[1], argc, argv, "INIT_T0", -1, "0", NULL);
@@ -128,15 +128,15 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "INIT_IDX_OFFSET", -1, "0", NULL);
 
   /* Check arguments... */
-  if (ctl.met_coord_type != 0 && even)
+  if (ctl->met_coord_type != 0 && even)
     ERRMSG("INIT_EVENLY is only supported for lat/lon grids");
-  if (ctl.met_coord_type != 0 && bellrad > 0)
+  if (ctl->met_coord_type != 0 && bellrad > 0)
     ERRMSG("INIT_BELLRAD is only supported for lat/lon grids");
   if (rep <= 0)
     ERRMSG("INIT_REP must be positive!");
   if (init_np < 0 || init_np > NP)
     ERRMSG("INIT_NP must be between 0 and NP!");
-  if (well_mixed && ctl.met_coord_type != 0)
+  if (well_mixed && ctl->met_coord_type != 0)
     ERRMSG("INIT_WELL_MIXED is only supported for lat/lon grids!");
   if (well_mixed && !even)
     ERRMSG("INIT_WELL_MIXED requires INIT_EVENLY=1!");
@@ -162,7 +162,7 @@ int main(
     ERRMSG("INIT_DZ must be positive!");
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  mptrac_read_clim(ctl, clim);
 
   /* Initialize random number generator... */
   gsl_rng_env_setup();
@@ -171,7 +171,7 @@ int main(
   /* Get meteorological data for column-mass, well-mixed, and relative-PBL initialization... */
   double ptop = 0, dpcolmax = 0;
   if (col_mass || use_relz) {
-    mptrac_get_met(&ctl, clim, t0, &met0, &met1, dd);
+    mptrac_get_met(ctl, clim, t0, &met0, &met1, dd);
     ptop = gsl_stats_min(met0->p, 1, (size_t) met0->np);
     double psmax = -1;
     for (int ix = 0; ix < met0->nx; ix++)
@@ -222,20 +222,20 @@ int main(
 	      /* Set horizontal position... */
 	      rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
 	      const double sx_coord =
-		ctl.met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
+		ctl->met_coord_type == 0 ? DX2DEG(sx, lat) : sx;
 	      double rx = gsl_ran_gaussian_ziggurat(rng, sx_coord / 2.3548);
 	      ru = ulon * (gsl_rng_uniform(rng) - 0.5);
 	      atm->lon[atm->np] = (lon + rg + rx + ru);
 
 	      /* Set ensemble index... */
-	      if (ctl.qnt_ens >= 0)
-		atm->q[ctl.qnt_ens][atm->np] = ens;
+	      if (ctl->qnt_ens >= 0)
+		atm->q[ctl->qnt_ens][atm->np] = ens;
 
 	      /* Apply cosine-latitude weighting... */
 	      do {
 		rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
 		const double sy_coord =
-		  ctl.met_coord_type == 0 ? DY2DEG(sx) : sx;
+		  ctl->met_coord_type == 0 ? DY2DEG(sx) : sx;
 		rx = gsl_ran_gaussian_ziggurat(rng, sy_coord / 2.3548);
 		ru = ulat * (gsl_rng_uniform(rng) - 0.5);
 		atm->lat[atm->np] = (lat + rg + rx + ru);
@@ -257,10 +257,10 @@ int main(
 		intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl,
 				   atm->time[atm->np], atm->lon[atm->np],
 				   atm->lat[atm->np], &pbl, ci, cw, 1);
-		if (ctl.qnt_ps >= 0)
-		  atm->q[ctl.qnt_ps][atm->np] = ps;
-		if (ctl.qnt_pbl >= 0)
-		  atm->q[ctl.qnt_pbl][atm->np] = pbl;
+		if (ctl->qnt_ps >= 0)
+		  atm->q[ctl->qnt_ps][atm->np] = ps;
+		if (ctl->qnt_pbl >= 0)
+		  atm->q[ctl->qnt_pbl][atm->np] = pbl;
 		const double zsurf = Z(ps);
 		const double zpbl = Z(pbl);
 		const double depth = zpbl - zsurf;
@@ -279,11 +279,11 @@ int main(
 			    sqrt(DOTP(x1, x1)));
 		if (rad > bellrad)
 		  continue;
-		if (ctl.qnt_m >= 0)
-		  atm->q[ctl.qnt_m][atm->np] =
+		if (ctl->qnt_m >= 0)
+		  atm->q[ctl->qnt_m][atm->np] =
 		    0.5 * (1. + cos(M_PI * rad / bellrad));
-		if (ctl.qnt_vmr >= 0)
-		  atm->q[ctl.qnt_vmr][atm->np] =
+		if (ctl->qnt_vmr >= 0)
+		  atm->q[ctl->qnt_vmr][atm->np] =
 		    0.5 * (1. + cos(M_PI * rad / bellrad));
 	      }
 
@@ -313,35 +313,31 @@ int main(
     ERRMSG("Did not create any air parcels!");
 
   /* Initialize mass... */
-  if (ctl.qnt_m >= 0 && bellrad <= 0)
+  if (ctl->qnt_m >= 0 && bellrad <= 0)
     for (int ip = 0; ip < atm->np; ip++)
-      atm->q[ctl.qnt_m][ip] = m / atm->np;
+      atm->q[ctl->qnt_m][ip] = m / atm->np;
 
   /* Initialize volume mixing ratio... */
-  if (ctl.qnt_vmr >= 0 && bellrad <= 0)
+  if (ctl->qnt_vmr >= 0 && bellrad <= 0)
     for (int ip = 0; ip < atm->np; ip++)
-      atm->q[ctl.qnt_vmr][ip] = vmr;
+      atm->q[ctl->qnt_vmr][ip] = vmr;
 
   /* Initialize air parcel index... */
-  if (ctl.qnt_idx >= 0)
+  if (ctl->qnt_idx >= 0)
     for (int ip = 0; ip < atm->np; ip++)
-      atm->q[ctl.qnt_idx][ip] = idx_offset + ip;
+      atm->q[ctl->qnt_idx][ip] = idx_offset + ip;
 
   /* Initialize age of air... */
-  if (ctl.qnt_aoa >= 0)
+  if (ctl->qnt_aoa >= 0)
     for (int ip = 0; ip < atm->np; ip++)
-      atm->q[ctl.qnt_aoa][ip] = atm->time[ip];
+      atm->q[ctl->qnt_aoa][ip] = atm->time[ip];
 
   /* Save data... */
-  mptrac_write_atm(argv[2], &ctl, atm, 0);
+  mptrac_write_atm(argv[2], ctl, atm, 0);
 
   /* Free... */
   gsl_rng_free(rng);
-  free(clim);
-  free(atm);
-  free(met0);
-  free(met1);
-  free(dd);
+  mptrac_free(ctl, cache, clim, met0, met1, atm, depo, dd);
 
   return EXIT_SUCCESS;
 }

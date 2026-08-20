@@ -65,9 +65,7 @@ int main(
 	   "Usage: cape <ctl> <met.nc>\n\n" "Use -h for full help.");
 
   /* Allocate... */
-  ALLOC(clim, clim_t, 1);
-  ALLOC(met, met_t, 1);
-  ALLOC(dd, dd_t, 1);
+  mptrac_alloc(NULL, NULL, &clim, &met, NULL, NULL, NULL, &dd);
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -157,9 +155,7 @@ int main(
   NC(nc_close(ncid));
 
   /* Free... */
-  free(clim);
-  free(met);
-  free(dd);
+  mptrac_free(NULL, NULL, clim, met, NULL, NULL, NULL, dd);
 
   return EXIT_SUCCESS;
 }
