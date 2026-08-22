@@ -6306,14 +6306,8 @@ void mptrac_alloc(
   if (ctl != NULL || cache != NULL || clim != NULL || met0 != NULL
       || met1 != NULL || atm != NULL || depo != NULL || dd != NULL) {
     SELECT_TIMER("ACC_INIT", "INIT");
-    int rank = 0;
-#ifdef MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
     if (acc_get_num_devices(acc_device_nvidia) <= 0)
       ERRMSG("Not running on a GPU device!");
-    acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
-		       acc_device_nvidia);
     acc_device_t device_type = acc_get_device_type();
     acc_init(device_type);
   }

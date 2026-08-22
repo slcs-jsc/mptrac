@@ -72,6 +72,12 @@ int main(
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+#ifdef _OPENACC
+  const int num_devices = acc_get_num_devices(acc_device_nvidia);
+  if (num_devices <= 0)
+    ERRMSG("Not running on a GPU device!");
+  acc_set_device_num(rank % num_devices, acc_device_nvidia);
+#endif
 #endif
 
   /* Check arguments... */
