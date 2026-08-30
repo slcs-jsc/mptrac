@@ -5455,7 +5455,8 @@ void module_position(
   const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const int reflect) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS");
@@ -5498,11 +5499,11 @@ void module_position(
     /* Check pressure... */
     const double ptop = met0->p[met0->np - 1];
     if (atm->p[ip] < ptop) {
-      atm->p[ip] = ptop * ptop / atm->p[ip];
+      atm->p[ip] = reflect ? ptop * ptop / atm->p[ip] : ptop;
     } else if (atm->p[ip] > 300.) {
       INTPOL_2D(ps, 1);
       if (atm->p[ip] > ps)
-	atm->p[ip] = ps * ps / atm->p[ip];
+	atm->p[ip] = reflect ? ps * ps / atm->p[ip] : ps;
     }
   }
 }
@@ -7905,7 +7906,7 @@ void mptrac_run_timestep(
     module_sort(ctl, *met0, atm);
 
   /* Check positions (initial)... */
-  module_position(cache, *met0, *met1, atm);
+  module_position(cache, *met0, *met1, atm, 0);
 
   /* Advection... */
   if (ctl->advect > 0)
@@ -7940,7 +7941,7 @@ void mptrac_run_timestep(
     module_isosurf(ctl, cache, *met0, *met1, atm);
 
   /* Check positions (final)... */
-  module_position(cache, *met0, *met1, atm);
+  module_position(cache, *met0, *met1, atm, 1);
 
   /* Interpolate meteo data... */
   if (ctl->met_dt_out > 0

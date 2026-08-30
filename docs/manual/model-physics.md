@@ -96,6 +96,13 @@ diffusion below).  MPTRAC allows a coupled mode, where advection is
 performed in hybrid coordinates ($\zeta$) but other modules can be
 employed in pressure coordinates.
 
+At the beginning of each active particle time step, MPTRAC clamps positions
+outside the meteorological vertical domain to the model top or the local
+surface pressure. This prevents invalid initial positions from being mirrored
+deep into the model domain. After advection and all position-changing physics
+modules, boundary overshoots are reflected at the model top and local surface.
+Particles with a zero individual time step are not modified.
+
 ## Turbulent diffusion
 
 Rather complex parameterizations of atmospheric diffusivity are

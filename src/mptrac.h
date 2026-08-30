@@ -6853,20 +6853,17 @@ void module_oh_chem(
  * - Calculates modulo for longitude and latitude to ensure they remain within valid ranges.
  * - Adjusts latitude if it exceeds the range [-90, 90] degrees.
  * - Adjusts longitude if it exceeds the range [-180, 180] degrees.
- * - Checks and adjusts pressure levels:
- *   - Reflects pressure levels if they are below the minimum pressure in meteorological data.
- *   - Clamps pressure levels to the maximum pressure in meteorological data if they exceed a
- *     predefined threshold (300 hPa).
+ * - Clamps or reflects pressure at the model top and local surface, as selected by `reflect`.
  *
  * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param reflect Select reflection (1) or clamping (0) at vertical boundaries.
  *
  * @note The function initializes a timer to measure the execution time of the position update process.
  * @note Position and pressure updates are performed for each particle using linear interpolation.
  * @note Longitude and latitude are adjusted to ensure they remain within valid ranges.
- * @note Pressure levels are adjusted based on meteorological data and a predefined threshold.
  *
  * @author Lars Hoffmann
  */
@@ -6874,7 +6871,8 @@ void module_position(
   const cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  const int reflect);
 
 /**
  * @brief Initialize random number generators for parallel tasks.
