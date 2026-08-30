@@ -255,7 +255,7 @@ int main(
 	const double q2 = atm2->q[iq][ip];
 	const double denom = fabs(q1) + fabs(q2);
 	if (denom <= rel_min[iq])
-	  rqtd[iq * NP + np] = GSL_NAN;
+	  rqtd[iq * NP + np] = NAN;
 	else
 	  rqtd[iq * NP + np] = 200. * (q1 - q2) / denom;
       }
@@ -471,7 +471,7 @@ double finite_stat(
       work[n++] = data[i];
 
   if (n <= 0)
-    return GSL_NAN;
+    return NAN;
 
   if (strcasecmp(param, "mean") == 0)
     return gsl_stats_mean(work, 1, (size_t) n);
@@ -493,5 +493,5 @@ double finite_stat(
     return gsl_stats_mad0(work, 1, (size_t) n, work);
 
   ERRMSG("Unknown parameter!");
-  return GSL_NAN;
+  return NAN;
 }

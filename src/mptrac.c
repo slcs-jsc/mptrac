@@ -4146,7 +4146,7 @@ void module_convection(
       /* Set pressure range... */
       if (isfinite(cape) && cape >= ctl->conv_cape
 	  && (ctl->conv_cin <= 0 || (isfinite(cin) && cin >= ctl->conv_cin)))
-	ptop = GSL_MIN(ptop, pel);
+	ptop = MIN(ptop, pel);
     }
 
     /* Apply vertical mixing... */

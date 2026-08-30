@@ -172,7 +172,6 @@
 
 #include <ctype.h>
 #include <gsl/gsl_fft_complex.h>
-#include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_sort.h>

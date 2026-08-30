@@ -118,7 +118,7 @@ int main(
 	lx[ix] = DEG2DX(met->lon[met->nx - 1] - met->lon[0], met->lat[iy])
 	  / ((ix < met->nx / 2) ? (double) ix : -(double) (met->nx - ix));
 	A[ix] = (ix == 0 ? 1.0 : 2.0) / (met->nx)
-	  * sqrt(gsl_pow_2(cutReal[ix]) + gsl_pow_2(cutImag[ix]));
+	  * sqrt(SQR(cutReal[ix]) + SQR(cutImag[ix]));
 	phi[ix] = RAD2DEG(atan2(cutImag[ix], cutReal[ix]));
       }
 
