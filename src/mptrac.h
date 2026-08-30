@@ -6455,8 +6455,8 @@ void module_decay(
 void module_diff_meso(
   const ctl_t * ctl,
   cache_t * cache,
-  met_t * met0,
-  met_t * met1,
+  const met_t * met0,
+  const met_t * met1,
   atm_t * atm);
 
 /**
@@ -7105,7 +7105,7 @@ void module_sort_help(
 void module_timesteps(
   const ctl_t * ctl,
   cache_t * cache,
-  met_t * met0,
+  const met_t * met0,
   atm_t * atm,
   const double t);
 
