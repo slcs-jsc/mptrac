@@ -27,6 +27,38 @@ NQ = 1
 QNT_NAME[0] = zeta
 ```
 
+## Eta-coordinate transport
+
+MPTRAC can also advect parcels with the model-level eta tendency
+$\dot{\eta}=d\eta/dt$. The eta coordinate is calculated from the full-level
+hybrid coefficients as
+
+$$
+\eta = \frac{A}{p_0} + B,
+\qquad p_0 = 101325\,\mathrm{Pa} = 1013.25\,\mathrm{hPa}.
+$$
+
+Set `MET_VERT_COORD = 3`, provide the full-level A and B coefficients via
+`MET_NLEV`, `MET_LEV_HYAM`, and `MET_LEV_HYBM`, and include an `etadot` or
+`ETADOT` field in each meteorological netCDF file. Eta-coordinate advection
+also requires the prognostic parcel quantity `eta`:
+
+```
+MET_VERT_COORD = 3
+ADVECT_VERT_COORD = 3
+NQ = 3
+QNT_NAME[0] = eta
+QNT_NAME[1] = eta_dot
+QNT_NAME[2] = eta_d
+```
+
+Here, `eta` is the prognostic coordinate used by the advection scheme,
+`eta_dot` is the meteorological eta tendency interpolated to the parcel
+position, and `eta_d` is eta diagnosed independently from parcel pressure on
+the native model levels. The diagnostic `eta_d` is available with
+`MET_VERT_COORD = 2` or `3`. Missing `etadot` or `ZETA_DOT` input is treated
+as an error when the corresponding vertical-advection mode is enabled.
+
 ## Predefined pressure level sets
 
 The `MET_PRESS_LEVEL_DEF` parameter allows selection from several

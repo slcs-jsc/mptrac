@@ -5081,11 +5081,26 @@ void module_meteo(
 
     double ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl, pt, pct, pcb,
       cl, plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot,
-      o3, lwc, rwc, iwc, swc, cc, z, zt;
+      o3, lwc, rwc, iwc, swc, cc, z, zt, eta_d = 0, wdot = 0;
 
     /* Interpolate meteo data... */
     INTPOL_INIT;
     INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
+
+    /* Diagnose eta coordinate on native model levels... */
+    if (ctl->qnt_eta_d >= 0)
+      intpol_met_4d_zeta(met0, met0->pl, met0->zetal,
+			 met1, met1->pl, met1->zetal,
+			 atm->time[ip], atm->p[ip], atm->lon[ip],
+			 atm->lat[ip], &eta_d, ci, cw, 1);
+
+    /* Interpolate vertical velocity on native model levels... */
+    if ((ctl->advect_vert_coord == 1 && ctl->qnt_zeta_dot >= 0)
+	|| (ctl->advect_vert_coord == 3 && ctl->qnt_eta_dot >= 0))
+      intpol_met_4d_zeta(met0, met0->pl, met0->zeta_dotl,
+			 met1, met1->pl, met1->zeta_dotl,
+			 atm->time[ip], atm->p[ip], atm->lon[ip],
+			 atm->lat[ip], &wdot, ci, cw, 1);
 
     /* Set quantities... */
     SET_ATM(qnt_ps, ps);
@@ -5147,9 +5162,13 @@ void module_meteo(
     SET_ATM(qnt_theta, THETA(atm->p[ip], t));
     SET_ATM(qnt_zeta, atm->q[ctl->qnt_zeta][ip]);
     SET_ATM(qnt_zeta_d, ZETA(ps, atm->p[ip], t));
-    SET_ATM(qnt_zeta_dot, atm->q[ctl->qnt_zeta_dot][ip]);
     SET_ATM(qnt_eta, atm->q[ctl->qnt_eta][ip]);
-    SET_ATM(qnt_eta_dot, atm->q[ctl->qnt_eta_dot][ip]);
+    SET_ATM(qnt_eta_d, eta_d);
+    if (ctl->advect_vert_coord == 1) {
+      SET_ATM(qnt_zeta_dot, wdot);
+    } else if (ctl->advect_vert_coord == 3) {
+      SET_ATM(qnt_eta_dot, wdot);
+    }
     SET_ATM(qnt_tvirt, TVIRT(t, h2o));
     SET_ATM(qnt_lapse, lapse_rate(t, h2o));
     SET_ATM(qnt_pv, pv);
@@ -5481,7 +5500,7 @@ void module_position(
     if (atm->p[ip] < ptop) {
       atm->p[ip] = ptop * ptop / atm->p[ip];
     } else if (atm->p[ip] > 300.) {
-      INTPOL_2D(ps, 0);
+      INTPOL_2D(ps, 1);
       if (atm->p[ip] > ps)
 	atm->p[ip] = ps * ps / atm->p[ip];
     }
@@ -6803,6 +6822,7 @@ void mptrac_read_ctl(
   ctl->qnt_zeta_d = -1;
   ctl->qnt_zeta_dot = -1;
   ctl->qnt_eta = -1;
+  ctl->qnt_eta_d = -1;
   ctl->qnt_eta_dot = -1;
   ctl->qnt_tvirt = -1;
   ctl->qnt_lapse = -1;
@@ -6929,6 +6949,7 @@ void mptrac_read_ctl(
       SET_QNT(qnt_zeta_dot, "zeta_dot", "velocity of zeta coordinate",
 	      "K/day")
       SET_QNT(qnt_eta, "eta", "eta coordinate", "1")
+      SET_QNT(qnt_eta_d, "eta_d", "diagnosed eta coordinate", "1")
       SET_QNT(qnt_eta_dot, "eta_dot", "velocity of eta coordinate", "1/s")
       SET_QNT(qnt_tvirt, "tvirt", "virtual temperature", "K")
       SET_QNT(qnt_lapse, "lapse", "temperature lapse rate", "K/km")
@@ -6998,6 +7019,9 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
   if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 4)
     ERRMSG("MET_VERT_COORD must be 0, 1, 2, 3, or 4!");
+  if (ctl->qnt_eta_d >= 0
+      && ctl->met_vert_coord != 2 && ctl->met_vert_coord != 3)
+    ERRMSG("Quantity eta_d requires full-level A and B coefficients!");
 
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
     ERRMSG
@@ -9800,7 +9824,7 @@ void read_met_nc_grid(
 
   /* Calculate eta levels... */
   for (int k = 0; k < MAX(met->np, ctl->met_nlev); ++k) {
-    met->eta[k] = met->hyam[k] / 100000.0 + met->hybm[k];
+    met->eta[k] = met->hyam[k] / (100.0 * P0) + met->hybm[k];
     if (ctl->met_vert_coord >= 2 && k > 0 && met->eta[k] <= met->eta[k - 1])
       ERRMSG("Eta levels must be ascending!");
   }
@@ -10035,22 +10059,25 @@ void read_met_nc_levels(
     if (!read_met_nc_3d
 	(ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
 	 NULL, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
-      WARN("Cannot read ZETA_DOT!");
+      ERRMSG("Cannot read ZETA_DOT!");
   }
 
-  /* Read eta and eta_dot... */
-  else if (ctl->advect_vert_coord == 3) {
+  /* Set eta coordinate on native model levels... */
+  if (ctl->advect_vert_coord == 3 || ctl->qnt_eta_d >= 0) {
 #pragma omp parallel for default(shared)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++)
 	  met->zetal[ix][iy][ip] =
-	    (float) (met->hyam[ip] / 100000.0 + met->hybm[ip]);
+	    (float) (met->hyam[ip] / (100.0 * P0) + met->hybm[ip]);
+  }
+
+  /* Read eta_dot... */
+  if (ctl->advect_vert_coord == 3)
     if (!read_met_nc_3d
 	(ncid, "etadot", "ETADOT", NULL, NULL, ctl, met, dd, met->zeta_dotl,
 	 1.0))
-      WARN("Cannot read eta vertical velocity!");
-  }
+      ERRMSG("Cannot read eta vertical velocity!");
 
   /* Store velocities on model levels... */
   if (ctl->met_vert_coord != 0) {

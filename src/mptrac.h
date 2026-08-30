@@ -2716,6 +2716,9 @@ typedef struct {
   /*! Quantity array index for eta vertical coordinate. */
   int qnt_eta;
 
+  /*! Quantity array index for diagnosed eta vertical coordinate. */
+  int qnt_eta_d;
+
   /*! Quantity array index for velocity of eta vertical coordinate. */
   int qnt_eta_dot;
 

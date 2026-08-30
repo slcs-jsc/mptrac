@@ -280,6 +280,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_zeta_d
      INTEGER(c_int) :: qnt_zeta_dot
      INTEGER(c_int) :: qnt_eta
+     INTEGER(c_int) :: qnt_eta_d
      INTEGER(c_int) :: qnt_eta_dot
      INTEGER(c_int) :: qnt_tvirt
      INTEGER(c_int) :: qnt_lapse
