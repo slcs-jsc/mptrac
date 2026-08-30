@@ -559,6 +559,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#eta-coordinate-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Eta-coordinate transport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#predefined-pressure-level-sets" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -953,6 +964,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#eta-coordinate-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Eta-coordinate transport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#predefined-pressure-level-sets" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1006,6 +1028,31 @@ atmospheric quantity:</p>
 NQ = 1
 QNT_NAME[0] = zeta
 </code></pre>
+<h2 id="eta-coordinate-transport">Eta-coordinate transport</h2>
+<p>MPTRAC can also advect parcels with the model-level eta tendency
+<span class="arithmatex">\(\dot{\eta}=d\eta/dt\)</span>. The eta coordinate is calculated from the full-level
+hybrid coefficients as</p>
+<div class="arithmatex">\[
+\eta = \frac{A}{p_0} + B,
+\qquad p_0 = 101325\,\mathrm{Pa} = 1013.25\,\mathrm{hPa}.
+\]</div>
+<p>Set <code>MET_VERT_COORD = 3</code>, provide the full-level A and B coefficients via
+<code>MET_NLEV</code>, <code>MET_LEV_HYAM</code>, and <code>MET_LEV_HYBM</code>, and include an <code>etadot</code> or
+<code>ETADOT</code> field in each meteorological netCDF file. Eta-coordinate advection
+also requires the prognostic parcel quantity <code>eta</code>:</p>
+<pre><code>MET_VERT_COORD = 3
+ADVECT_VERT_COORD = 3
+NQ = 3
+QNT_NAME[0] = eta
+QNT_NAME[1] = eta_dot
+QNT_NAME[2] = eta_d
+</code></pre>
+<p>Here, <code>eta</code> is the prognostic coordinate used by the advection scheme,
+<code>eta_dot</code> is the meteorological eta tendency interpolated to the parcel
+position, and <code>eta_d</code> is eta diagnosed independently from parcel pressure on
+the native model levels. The diagnostic <code>eta_d</code> is available with
+<code>MET_VERT_COORD = 2</code> or <code>3</code>. Missing <code>etadot</code> or <code>ZETA_DOT</code> input is treated
+as an error when the corresponding vertical-advection mode is enabled.</p>
 <h2 id="predefined-pressure-level-sets">Predefined pressure level sets</h2>
 <p>The <code>MET_PRESS_LEVEL_DEF</code> parameter allows selection from several
 predefined vertical pressure level sets, based on <a href="https://confluence.ecmwf.int/display/UDOC/Model+level+definitions">ECMWF model level
