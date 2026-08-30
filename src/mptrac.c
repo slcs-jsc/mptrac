@@ -2200,7 +2200,7 @@ void dd_init(
       (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional == 1))
     ERRMSG("Please provide zonal and meridional subdomain numbers!");
   if (!ctl->dd)
-    ERRMSG("Activate controle flag DD!");
+    ERRMSG("Activate control flag DD!");
 
   /* Check if enough tasks are requested... */
   int size;
@@ -8698,7 +8698,7 @@ void read_clim_photo_help(
   ALLOC(help, double,
 	photo->np * photo->nsza * photo->no3c);
 
-  /* Read varible... */
+  /* Read variable... */
   int varid;
   NC_GET_DOUBLE(varname, help, 1);
 
@@ -9936,7 +9936,7 @@ void read_met_nc_surface(
   if (!read_met_nc_2d
       (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, dd, met->nss,
        1.0, 1))
-    WARN("Cannot read nothward turbulent surface stress!");
+    WARN("Cannot read northward turbulent surface stress!");
 
   /* Read surface sensible heat flux... */
   if (!read_met_nc_2d

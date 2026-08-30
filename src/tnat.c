@@ -48,7 +48,7 @@ int main(
     ERRMSG("Missing or invalid command-line arguments.\n\n"
 	   "Usage: tnat <p> <h2o> <hno3>\n\n" "Use -h for full help.");
 
-  /* Get varibles... */
+  /* Get variables... */
   const double p = atof(argv[1]);
   const double h2o = atof(argv[2]);
   const double hno3 = atof(argv[3]);

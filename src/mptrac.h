@@ -3232,7 +3232,7 @@ typedef struct {
   /*! Coefficients for OH reaction rate (A, E/R or k0, n, kinf, m). */
   double oh_chem[4];
 
-  /*! Beta parameter for diurnal variablity of OH. */
+  /*! Beta parameter for diurnal variability of OH. */
   double oh_chem_beta;
 
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
@@ -5450,7 +5450,7 @@ void get_met_filename(
  * `repl`. It performs the replacement operation up to three times to
  * ensure multiple occurrences are replaced.
  *
- * @note We use this function to repace the strings `YYYY`, `MM`, and `DD` by year,
+ * @note We use this function to replace the strings `YYYY`, `MM`, and `DD` by year,
  *       month, and day in filenames.
  * @note Ensure that `orig`, `search`, and `repl` are properly initialized
  *       and have sufficient memory allocated before calling this function.

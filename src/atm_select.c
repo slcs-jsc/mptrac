@@ -166,7 +166,7 @@ int main(
 	    || (lat1 < lat0 && (atm->lat[ip] < lat0 && atm->lat[ip] > lat1)))
 	  continue;
 
-      /* Check horizontal distace... */
+      /* Check horizontal distance... */
       if (r0 != r1) {
 	geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
 	double r = DIST(x0, x1);
