@@ -8677,12 +8677,8 @@ void read_met_nc_surface(
  * the meteorological data layout to ensure correct data copying.
  *
  * @param ncid The NetCDF file ID.
- * @param varname The name of the variable to read.
- * @param varname2 An alternative name of the variable to read (in case varname is not found).
- * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
- * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
- * @param varname5 An alternative name of the variable to read (in case varname4 is not found).
- * @param varname6 An alternative name of the variable to read (in case varname5 is not found).
+ * @param varnames Array of variable names in order of preference.
+ * @param nvarnames Number of entries in varnames.
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  * @param dd  A pointer to an `dd_t` structure containing MPI information, including rank and neighbours.
@@ -8701,12 +8697,8 @@ void read_met_nc_surface(
  */
 int read_met_nc_2d(
   const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
-  const char *varname5,
-  const char *varname6,
+  const char *const varnames[],
+  const size_t nvarnames,
   const ctl_t * ctl,
   const met_t * met,
   dd_t * dd,
@@ -8724,10 +8716,8 @@ int read_met_nc_2d(
  * the meteorological data layout to ensure correct data copying.
  *
  * @param ncid The NetCDF file ID.
- * @param varname The name of the variable to read.
- * @param varname2 An alternative name of the variable to read (in case varname is not found).
- * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
- * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param varnames Array of variable names in order of preference.
+ * @param nvarnames Number of entries in varnames.
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  * @param dd A pointer to an `dd_t` structure containing MPI information, including rank and neighbours.
@@ -8745,10 +8735,8 @@ int read_met_nc_2d(
  */
 int read_met_nc_3d(
   const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
+  const char *const varnames[],
+  const size_t nvarnames,
   const ctl_t * ctl,
   const met_t * met,
   dd_t * dd,

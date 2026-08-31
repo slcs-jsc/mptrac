@@ -9876,14 +9876,16 @@ void read_met_nc_surface(
 
   /* Read surface pressure... */
   if (read_met_nc_2d
-      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, dd, met->ps,
+      (ncid, (const char *const[]) { "lnsp", "LNSP" }, 2, ctl, met, dd,
+       met->ps,
        1.0f, 1)) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
   } else
     if (!read_met_nc_2d
-	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, dd, met->ps,
+	(ncid, (const char *const[]) { "ps", "PS", "sp", "SP" }, 4, ctl, met,
+	 dd, met->ps,
 	 0.01f, 1)) {
     WARN("Cannot not read surface pressure data (use lowest level)!");
     for (int ix = 0; ix < met->nx; ix++)
@@ -9897,12 +9899,13 @@ void read_met_nc_surface(
 
     /* Read geopotential height at the surface... */
     if (!read_met_nc_2d
-	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
+	(ncid, (const char *const[]) { "z", "Z" }, 2, ctl, met, dd, met->zs,
 	 (float) (1. / (1000. * G0)), 1))
       if (!read_met_nc_2d
-	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
+	  (ncid, (const char *const[]) { "zm", "ZM" }, 2, ctl, met, dd,
+	   met->zs,
 	   (ctl->met_gp2z ? (float) (1e-3 / G0) : (float) (1. / 1000.)), 1))
-	WARN("Cannot read surface geopotential height!");
+      WARN("Cannot read surface geopotential height!");
   }
 
   /* CLaMS meteo data... */
@@ -9915,7 +9918,8 @@ void read_met_nc_surface(
 	  EX * EY * EP);
     memcpy(help, met->pl, sizeof(met->pl));
     if (!read_met_nc_3d
-	(ncid, "gph", "GPH", NULL, NULL, ctl, met, dd, met->pl,
+	(ncid, (const char *const[]) { "gph", "GPH" }, 2, ctl, met, dd,
+	 met->pl,
 	 (float) (1e-3 / G0)))
       ERRMSG("Cannot read geopotential height!");
     for (int ix = 0; ix < met->nx; ix++)
@@ -9927,77 +9931,90 @@ void read_met_nc_surface(
 
   /* Read temperature at the surface... */
   if (!read_met_nc_2d
-      (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, dd, met->ts, 1.0,
+      (ncid, (const char *const[]) { "t2m", "T2M", "2t", "2T", "t2", "T2" },
+       6, ctl, met, dd, met->ts, 1.0,
        1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
   if (!read_met_nc_2d
-      (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, dd,
+      (ncid, (const char *const[]) { "u10m", "U10M", "10u", "10U", "u10",
+       "U10"
+       }, 6, ctl, met, dd,
        met->us, 1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
   if (!read_met_nc_2d
-      (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, dd,
+      (ncid, (const char *const[]) { "v10m", "V10M", "10v", "10V", "v10",
+       "V10"
+       }, 6, ctl, met, dd,
        met->vs, 1.0, 1))
     WARN("Cannot read surface meridional wind!");
 
   /* Read eastward turbulent surface stress... */
   if (!read_met_nc_2d
-      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, dd, met->ess,
+      (ncid, (const char *const[]) { "iews", "IEWS" }, 2, ctl, met, dd,
+       met->ess,
        1.0, 1))
     WARN("Cannot read eastward turbulent surface stress!");
 
   /* Read northward turbulent surface stress... */
   if (!read_met_nc_2d
-      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, dd, met->nss,
+      (ncid, (const char *const[]) { "inss", "INSS" }, 2, ctl, met, dd,
+       met->nss,
        1.0, 1))
     WARN("Cannot read northward turbulent surface stress!");
 
   /* Read surface sensible heat flux... */
   if (!read_met_nc_2d
-      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, dd, met->shf,
+      (ncid, (const char *const[]) { "ishf", "ISHF" }, 2, ctl, met, dd,
+       met->shf,
        1.0, 1))
     WARN("Cannot read surface sensible heat flux!");
 
   /* Read land-sea mask... */
   if (!read_met_nc_2d
-      (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, dd, met->lsm,
+      (ncid, (const char *const[]) { "lsm", "LSM" }, 2, ctl, met, dd,
+       met->lsm,
        1.0, 1))
     WARN("Cannot read land-sea mask!");
 
   /* Read sea surface temperature... */
   if (!read_met_nc_2d
-      (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, dd, met->sst,
+      (ncid, (const char *const[]) { "sstk", "SSTK", "sst", "SST" }, 4, ctl,
+       met, dd, met->sst,
        1.0, 1))
     WARN("Cannot read sea surface temperature!");
 
   /* Read PBL... */
   if (ctl->met_pbl == 0)
     if (!read_met_nc_2d
-	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, dd, met->pbl,
+	(ncid, (const char *const[]) { "blp", "BLP" }, 2, ctl, met, dd,
+	 met->pbl,
 	 0.01f, 1))
-      WARN("Cannot read planetary boundary layer pressure!");
+    WARN("Cannot read planetary boundary layer pressure!");
   if (ctl->met_pbl == 1)
     if (!read_met_nc_2d
-	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, dd, met->pbl,
+	(ncid, (const char *const[]) { "blh", "BLH" }, 2, ctl, met, dd,
+	 met->pbl,
 	 0.001f, 1))
-      WARN("Cannot read planetary boundary layer height!");
+    WARN("Cannot read planetary boundary layer height!");
 
   /* Read CAPE... */
   if (ctl->met_cape == 0)
     if (!read_met_nc_2d
-	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, dd,
+	(ncid, (const char *const[]) { "cape", "CAPE" }, 2, ctl, met, dd,
 	 met->cape, 1.0, 1))
-      WARN("Cannot read CAPE!");
+    WARN("Cannot read CAPE!");
 
   /* Read CIN... */
   if (ctl->met_cape == 0)
     if (!read_met_nc_2d
-	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, dd, met->cin,
+	(ncid, (const char *const[]) { "cin", "CIN" }, 2, ctl, met, dd,
+	 met->cin,
 	 1.0, 1))
-      WARN("Cannot read convective inhibition!");
+    WARN("Cannot read convective inhibition!");
 }
 
 /*****************************************************************************/
@@ -10014,27 +10031,35 @@ void read_met_nc_levels(
 
   /* Read temperature... */
   if (!read_met_nc_3d
-      (ncid, "t", "T", "temp", "TEMP", ctl, met, dd, met->t, 1.0))
+      (ncid, (const char *const[]) { "t", "T", "temp", "TEMP" }, 4, ctl, met,
+       dd, met->t, 1.0))
     ERRMSG("Cannot read temperature!");
 
   /* Read horizontal wind and vertical velocity... */
-  if (!read_met_nc_3d(ncid, "u", "U", NULL, NULL, ctl, met, dd, met->u, 1.0))
+  if (!read_met_nc_3d
+      (ncid, (const char *const[]) { "u", "U" }, 2, ctl, met, dd, met->u,
+       1.0))
     ERRMSG("Cannot read zonal wind!");
-  if (!read_met_nc_3d(ncid, "v", "V", NULL, NULL, ctl, met, dd, met->v, 1.0))
+  if (!read_met_nc_3d
+      (ncid, (const char *const[]) { "v", "V" }, 2, ctl, met, dd, met->v,
+       1.0))
     ERRMSG("Cannot read meridional wind!");
   if (!read_met_nc_3d
-      (ncid, "w", "W", "omega", "OMEGA", ctl, met, dd, met->w, 0.01f))
+      (ncid, (const char *const[]) { "w", "W", "omega", "OMEGA" }, 4, ctl,
+       met, dd, met->w, 0.01f))
     WARN("Cannot read vertical velocity!");
 
   /* Read water vapor... */
   if (!ctl->met_relhum) {
     if (!read_met_nc_3d
-	(ncid, "q", "Q", "sh", "SH", ctl, met, dd, met->h2o,
+	(ncid, (const char *const[]) { "q", "Q", "sh", "SH" }, 4, ctl, met,
+	 dd, met->h2o,
 	 (float) (MA / MH2O)))
       WARN("Cannot read specific humidity!");
   } else {
     if (!read_met_nc_3d
-	(ncid, "rh", "RH", NULL, NULL, ctl, met, dd, met->h2o, 0.01f))
+	(ncid, (const char *const[]) { "rh", "RH" }, 2, ctl, met, dd,
+	 met->h2o, 0.01f))
       WARN("Cannot read relative humidity!");
 #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
@@ -10048,35 +10073,42 @@ void read_met_nc_levels(
 
   /* Read ozone... */
   if (!read_met_nc_3d
-      (ncid, "o3", "O3", NULL, NULL, ctl, met, dd, met->o3,
+      (ncid, (const char *const[]) { "o3", "O3" }, 2, ctl, met, dd, met->o3,
        (float) (MA / MO3)))
     WARN("Cannot read ozone data!");
 
   /* Read cloud data... */
   if (!read_met_nc_3d
-      (ncid, "clwc", "CLWC", NULL, NULL, ctl, met, dd, met->lwc, 1.0))
+      (ncid, (const char *const[]) { "clwc", "CLWC" }, 2, ctl, met, dd,
+       met->lwc, 1.0))
     WARN("Cannot read cloud liquid water content!");
   if (!read_met_nc_3d
-      (ncid, "crwc", "CRWC", NULL, NULL, ctl, met, dd, met->rwc, 1.0))
+      (ncid, (const char *const[]) { "crwc", "CRWC" }, 2, ctl, met, dd,
+       met->rwc, 1.0))
     WARN("Cannot read cloud rain water content!");
   if (!read_met_nc_3d
-      (ncid, "ciwc", "CIWC", NULL, NULL, ctl, met, dd, met->iwc, 1.0))
+      (ncid, (const char *const[]) { "ciwc", "CIWC" }, 2, ctl, met, dd,
+       met->iwc, 1.0))
     WARN("Cannot read cloud ice water content!");
   if (!read_met_nc_3d
-      (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, dd, met->swc, 1.0))
+      (ncid, (const char *const[]) { "cswc", "CSWC" }, 2, ctl, met, dd,
+       met->swc, 1.0))
     WARN("Cannot read cloud snow water content!");
   if (!read_met_nc_3d
-      (ncid, "cc", "CC", NULL, NULL, ctl, met, dd, met->cc, 1.0))
+      (ncid, (const char *const[]) { "cc", "CC" }, 2, ctl, met, dd, met->cc,
+       1.0))
     WARN("Cannot read cloud cover!");
 
   /* Read zeta and zeta_dot... */
   if (ctl->advect_vert_coord == 1) {
     if (!read_met_nc_3d
-	(ncid, "ZETA", "zeta", NULL, NULL, ctl, met, dd, met->zetal, 1.0))
+	(ncid, (const char *const[]) { "ZETA", "zeta" }, 2, ctl, met, dd,
+	 met->zetal, 1.0))
       WARN("Cannot read ZETA!");
     if (!read_met_nc_3d
-	(ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
-	 NULL, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
+	(ncid, (const char *const[]) { "ZETA_DOT_TOT", "ZETA_DOT_clr",
+	 "zeta_dot_clr"
+	 }, 3, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
       ERRMSG("Cannot read ZETA_DOT!");
   }
 
@@ -10093,9 +10125,10 @@ void read_met_nc_levels(
   /* Read eta_dot... */
   if (ctl->advect_vert_coord == 3)
     if (!read_met_nc_3d
-	(ncid, "etadot", "ETADOT", NULL, NULL, ctl, met, dd, met->zeta_dotl,
+	(ncid, (const char *const[]) { "etadot", "ETADOT" }, 2, ctl, met, dd,
+	 met->zeta_dotl,
 	 1.0))
-      ERRMSG("Cannot read eta vertical velocity!");
+    ERRMSG("Cannot read eta vertical velocity!");
 
   /* Store velocities on model levels... */
   if (ctl->met_vert_coord != 0) {
@@ -10118,11 +10151,13 @@ void read_met_nc_levels(
     /* Read 3-D pressure field... */
     if (ctl->met_vert_coord == 1) {
       if (!read_met_nc_3d
-	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, dd, met->pl,
+	  (ncid, (const char *const[]) { "pl", "PL", "pressure", "PRESSURE" },
+	   4, ctl, met, dd, met->pl,
 	   0.01f))
 	if (!read_met_nc_3d
-	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, dd, met->pl, 1.0))
-	  ERRMSG("Cannot read pressure on model levels!");
+	    (ncid, (const char *const[]) { "press", "PRESS" }, 2, ctl, met,
+	     dd, met->pl, 1.0))
+	ERRMSG("Cannot read pressure on model levels!");
     }
 
     /* Use a and b coefficients for full levels (at layer midpoints)... */
@@ -10204,12 +10239,8 @@ void read_met_nc_levels(
 
 int read_met_nc_2d(
   const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
-  const char *varname5,
-  const char *varname6,
+  const char *const varnames[],
+  const size_t nvarnames,
   const ctl_t *ctl,
   const met_t *met,
   dd_t *dd,
@@ -10217,31 +10248,19 @@ int read_met_nc_2d(
   const float scl,
   const int init) {
 
-  char varsel[LEN];
+  const char *varsel = NULL;
 
   float offset, scalfac;
 
   int varid;
 
   /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname);
-  else if (varname2 != NULL
-	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname2);
-  else if (varname3 != NULL
-	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname3);
-  else if (varname4 != NULL
-	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname4);
-  else if (varname5 != NULL
-	   && nc_inq_varid(ncid, varname5, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname5);
-  else if (varname6 != NULL
-	   && nc_inq_varid(ncid, varname6, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname6);
-  else
+  for (size_t i = 0; i < nvarnames; i++)
+    if (nc_inq_varid(ncid, varnames[i], &varid) == NC_NOERR) {
+      varsel = varnames[i];
+      break;
+    }
+  if (varsel == NULL)
     return 0;
 
   /* Read packed data... */
@@ -10526,35 +10545,27 @@ int read_met_nc_2d(
 
 int read_met_nc_3d(
   const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
+  const char *const varnames[],
+  const size_t nvarnames,
   const ctl_t *ctl,
   const met_t *met,
   dd_t *dd,
   float dest[EX][EY][EP],
   const float scl) {
 
-  char varsel[LEN];
+  const char *varsel = NULL;
 
   float offset, scalfac;
 
   int varid;
 
   /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname);
-  else if (varname2 != NULL
-	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname2);
-  else if (varname3 != NULL
-	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname3);
-  else if (varname4 != NULL
-	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname4);
-  else
+  for (size_t i = 0; i < nvarnames; i++)
+    if (nc_inq_varid(ncid, varnames[i], &varid) == NC_NOERR) {
+      varsel = varnames[i];
+      break;
+    }
+  if (varsel == NULL)
     return 0;
 
   /* Read packed data... */
