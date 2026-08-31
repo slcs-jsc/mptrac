@@ -3341,6 +3341,12 @@ typedef struct {
   /*! Type of observation data files (0=ASCII, 1=netCDF). */
   int obs_type;
 
+  /*! Basename of mass budget data file. */
+  char budget_basename[LEN];
+
+  /*! Time step for mass budget output [s]. */
+  double budget_dt_out;
+
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
@@ -9503,6 +9509,28 @@ void write_atm_nc(
   const char *filename,
   const ctl_t * ctl,
   const atm_t * atm);
+
+/**
+ * @brief Writes a time series of the atmospheric tracer mass budget.
+ *
+ * The output contains the number of active air parcels, their total mass,
+ * and sums of the configured cumulative mass-loss quantities. If ensembles
+ * are enabled, one row per ensemble and an additional total row are written.
+ * Domain-decomposed runs sum the budget globally across all MPI ranks.
+ * Missing mass-loss quantities are reported as NaN.
+ *
+ * @param filename Path to the budget output file.
+ * @param ctl Pointer to the control structure.
+ * @param atm Pointer to the atmospheric data structure.
+ * @param t Current model time [s].
+ *
+ * @author Lars Hoffmann
+ */
+void write_budget(
+  const char *filename,
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes Critical Success Index (CSI) data to a file.

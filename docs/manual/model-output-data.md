@@ -1,7 +1,7 @@
 # Model output data
 
-MPTRAC currently supports nine different types of model output:
-particle output, grid output, radionuclide deposition output, CSI output, ensemble output, profile
+MPTRAC currently supports ten different types of model output:
+particle output, grid output, mass budget output, radionuclide deposition output, CSI output, ensemble output, profile
 output, sample output, station output, and VTK output. By default,
 these output functions generate data in ASCII table format, which is
 human-readable and compatible with various data analysis and
@@ -75,6 +75,24 @@ pattern `<GRID_BASENAME>_YYYY_MM_DD_HH_MM_SS.<ext>`.
 |-----------|-----------------|
 | 0         | ASCII (default) |
 | 1         | netcdf          |
+
+## Mass budget data
+
+The mass budget output provides a compact time series of the tracer mass in
+the active air parcels and the cumulative mass losses tracked by the chemistry,
+deposition, and decay modules. It is enabled with `BUDGET_BASENAME`;
+`BUDGET_DT_OUT` controls the output interval in seconds and defaults to 86400.
+All time steps are appended to `<BUDGET_BASENAME>.tab`. The output requires the
+particle quantity `m`.
+
+Each row contains time, ensemble ID, number of active air parcels, total mass,
+the six optional `mloss_*` sums, total tracked mass loss, and accounted mass.
+Unavailable `mloss_*` quantities are written as `NaN`; total tracked mass loss
+sums the loss quantities that are available. Accounted mass is the sum of the
+current mass and total tracked mass loss. With `NENS > 0`, the file contains an
+additional row for each ensemble; ensemble ID -999 denotes the total over all
+active air parcels. Domain-decomposed runs sum these values globally across all
+MPI ranks.
 
 ## Radionuclide deposition data
 

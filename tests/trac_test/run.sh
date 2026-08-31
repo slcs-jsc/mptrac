@@ -99,7 +99,7 @@ echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_init.tab \
 	   METBASE ../data/era5ml MET_PRESS_LEVEL_DEF 6 \
 	   MET_VERT_COORD 1 ADVECT_VERT_COORD 2 \
-	   ATM_BASENAME atm_ml GRID_BASENAME grid_ml \
+	   ATM_BASENAME atm_ml BUDGET_BASENAME budget_ml GRID_BASENAME grid_ml \
 	   ENS_BASENAME ens_ml STAT_BASENAME station_ml \
 	   CSI_BASENAME csi_ml CSI_OBSFILE data/obs.tab \
 	   PROF_BASENAME prof_ml PROF_OBSFILE data/obs.tab \
@@ -108,7 +108,7 @@ $trac/trac data/dirlist trac.ctl atm_init.tab \
 
 # Calculate trajectories on pressure levels...
 $trac/trac data/dirlist trac.ctl atm_init.tab \
-	   ATM_BASENAME atm_pl GRID_BASENAME grid_pl \
+	   ATM_BASENAME atm_pl BUDGET_BASENAME budget_pl GRID_BASENAME grid_pl \
 	   ENS_BASENAME ens_pl STAT_BASENAME station_pl \
 	   CSI_BASENAME csi_pl CSI_OBSFILE data/obs.tab \
 	   PROF_BASENAME prof_pl PROF_OBSFILE data/obs.tab \

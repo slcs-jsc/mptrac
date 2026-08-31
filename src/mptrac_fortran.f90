@@ -482,6 +482,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: atm_nc_level
      INTEGER(c_int), DIMENSION(nqq) :: atm_nc_quant
      INTEGER(c_int) :: obs_type
+     CHARACTER(c_char), DIMENSION(length) :: budget_basename
+     REAL(c_double) :: budget_dt_out
      CHARACTER(c_char), DIMENSION(length) :: csi_basename
      CHARACTER(c_char), DIMENSION(length) :: csi_kernel
      REAL(c_double) :: csi_dt_out

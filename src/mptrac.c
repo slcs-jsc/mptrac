@@ -7595,6 +7595,14 @@ void mptrac_read_ctl(
   ctl->obs_type =
     (int) scan_ctl(filename, argc, argv, "OBS_TYPE", -1, "0", NULL);
 
+  /* Output of mass budget data... */
+  scan_ctl(filename, argc, argv, "BUDGET_BASENAME", -1, "-",
+	   ctl->budget_basename);
+  ctl->budget_dt_out =
+    scan_ctl(filename, argc, argv, "BUDGET_DT_OUT", -1, "86400", NULL);
+  if (ctl->budget_basename[0] != '-' && ctl->budget_dt_out <= 0)
+    ERRMSG("Invalid mass budget output settings!");
+
   /* Output of radioactive deposition data... */
   scan_ctl(filename, argc, argv, "DEPO_BASENAME", -1, "-",
 	   ctl->depo_basename);
@@ -8272,6 +8280,8 @@ void mptrac_write_output(
 
   /* Update host... */
   if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
+      || (ctl->budget_basename[0] != '-'
+	  && (fmod(t, ctl->budget_dt_out) == 0 || t == ctl->t_stop))
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
       || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
       || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
@@ -8299,6 +8309,13 @@ void mptrac_write_output(
 	    dirname, ctl->grid_basename, year, mon, day, hour, min, sec,
 	    ctl->grid_type == 0 ? "tab" : "nc");
     write_grid(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write mass budget data... */
+  if (ctl->budget_basename[0] != '-'
+      && (fmod(t, ctl->budget_dt_out) == 0 || t == ctl->t_stop)) {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->budget_basename);
+    write_budget(filename, ctl, atm, t);
   }
 
   /* Write radioactive deposition data... */
@@ -13209,6 +13226,107 @@ void write_atm_nc(
 
   /* Close file... */
   NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
+void write_budget(
+  const char *filename,
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
+
+  static FILE *out;
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_BUDGET", "OUTPUT");
+
+  /* Check quantities... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Need quantity mass!");
+  const int ensemble = (ctl->nens > 0);
+  if (ensemble && ctl->qnt_ens < 0)
+    ERRMSG("Missing ensemble IDs!");
+  if (ctl->nens > NENS)
+    ERRMSG("Too many ensembles!");
+
+  /* Initialize output file... */
+  if (out == NULL) {
+    LOG(1, "Write mass budget data: %s", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = ensemble ID (-999=total)\n"
+	    "# $3 = number of active air parcels [1]\n"
+	    "# $4 = total mass [kg]\n"
+	    "# $5 = mass loss due to OH chemistry [kg]\n"
+	    "# $6 = mass loss due to H2O2 chemistry [kg]\n"
+	    "# $7 = mass loss due to KPP chemistry [kg]\n"
+	    "# $8 = mass loss due to wet deposition [kg]\n"
+	    "# $9 = mass loss due to dry deposition [kg]\n"
+	    "# $10 = mass loss due to exponential decay [kg]\n"
+	    "# $11 = total tracked mass loss [kg]\n"
+	    "# $12 = accounted mass [kg]\n\n");
+  }
+
+  /* Calculate mass budget... */
+  const int nq = 7;
+  const int qnt[7] = {
+    ctl->qnt_m, ctl->qnt_mloss_oh, ctl->qnt_mloss_h2o2,
+    ctl->qnt_mloss_kpp, ctl->qnt_mloss_wet, ctl->qnt_mloss_dry,
+    ctl->qnt_mloss_decay
+  };
+  double sum[NENS + 1][7] = { {0} };
+  int np[NENS + 1] = { 0 };
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Sum active air parcels... */
+  for (int ip = 0; ip < atm->np; ip++) {
+    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
+    int e = 0;
+    if (ensemble) {
+      e = (int) atm->q[ctl->qnt_ens][ip];
+      if (e < 0 || e >= ctl->nens)
+	ERRMSG("Ensemble ID out of range!");
+    }
+    np[e]++;
+    np[NENS]++;
+    for (int iq = 0; iq < nq; iq++)
+      if (qnt[iq] >= 0) {
+	sum[e][iq] += atm->q[qnt[iq]][ip];
+	sum[NENS][iq] += atm->q[qnt[iq]][ip];
+      }
+  }
+
+#ifdef DD
+  /* Sum mass budgets across subdomains... */
+  MPI_Allreduce(MPI_IN_PLACE, sum, (NENS + 1) * nq, MPI_DOUBLE, MPI_SUM,
+		MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, np, NENS + 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
+  /* Write total and ensemble budgets... */
+  for (int ie = -1; ie < (ensemble ? ctl->nens : 0); ie++) {
+    const int e = (ie < 0 ? NENS : ie);
+    double mloss = 0;
+    for (int iq = 1; iq < nq; iq++)
+      if (qnt[iq] >= 0)
+	mloss += sum[e][iq];
+    fprintf(out, "%.2f %d %d %g", t, ie < 0 ? -999 : ie, np[e], sum[e][0]);
+    for (int iq = 1; iq < nq; iq++)
+      fprintf(out, " %g", qnt[iq] >= 0 ? sum[e][iq] : NAN);
+    fprintf(out, " %g %g\n", mloss, sum[e][0] + mloss);
+  }
+  fflush(out);
+
+  /* Finalize... */
+  if (t == ctl->t_stop) {
+    fclose(out);
+    out = NULL;
+  }
 }
 
 /*****************************************************************************/

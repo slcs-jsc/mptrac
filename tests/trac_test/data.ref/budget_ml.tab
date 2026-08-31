@@ -1,0 +1,17 @@
+# $1 = time [s]
+# $2 = ensemble ID (-999=total)
+# $3 = number of active air parcels [1]
+# $4 = total mass [kg]
+# $5 = mass loss due to OH chemistry [kg]
+# $6 = mass loss due to H2O2 chemistry [kg]
+# $7 = mass loss due to KPP chemistry [kg]
+# $8 = mass loss due to wet deposition [kg]
+# $9 = mass loss due to dry deposition [kg]
+# $10 = mass loss due to exponential decay [kg]
+# $11 = total tracked mass loss [kg]
+# $12 = accounted mass [kg]
+
+360547200.00 -999 10000 1e+09 nan nan nan nan nan nan 0 1e+09
+360633600.00 -999 10000 3.03917e+08 nan nan nan nan nan nan 0 3.03917e+08
+360720000.00 -999 10000 1.84024e+08 nan nan nan nan nan nan 0 1.84024e+08
+360806400.00 -999 10000 1.14694e+08 nan nan nan nan nan nan 0 1.14694e+08
