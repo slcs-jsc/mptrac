@@ -518,6 +518,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mass-budget-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mass budget data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#radionuclide-deposition-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1047,6 +1058,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mass-budget-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mass budget data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#radionuclide-deposition-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1144,8 +1166,8 @@
 
 
 <h1 id="model-output-data">Model output data</h1>
-<p>MPTRAC currently supports nine different types of model output:
-particle output, grid output, radionuclide deposition output, CSI output, ensemble output, profile
+<p>MPTRAC currently supports ten different types of model output:
+particle output, grid output, mass budget output, radionuclide deposition output, CSI output, ensemble output, profile
 output, sample output, station output, and VTK output. By default,
 these output functions generate data in ASCII table format, which is
 human-readable and compatible with various data analysis and
@@ -1245,6 +1267,22 @@ pattern <code>&lt;GRID_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="mass-budget-data">Mass budget data</h2>
+<p>The mass budget output provides a compact time series of the tracer mass in
+the active air parcels and the cumulative mass losses tracked by the chemistry,
+deposition, and decay modules. It is enabled with <code>BUDGET_BASENAME</code>;
+<code>BUDGET_DT_OUT</code> controls the output interval in seconds and defaults to 86400.
+All time steps are appended to <code>&lt;BUDGET_BASENAME&gt;.tab</code>. The output requires the
+particle quantity <code>m</code>.</p>
+<p>Each row contains time, ensemble ID, number of active air parcels, total mass,
+the six optional <code>mloss_*</code> sums, total tracked mass loss, and accounted mass.
+Unavailable <code>mloss_*</code> quantities are written as <code>NaN</code>; total tracked mass loss
+sums the loss quantities that are available. Accounted mass is the sum of the
+current mass and total tracked mass loss. With <code>NENS &gt; 0</code>, the file contains an
+additional row for each ensemble; ensemble ID -999 denotes the total over all
+active air parcels. Domain-decomposed runs write the local budget of each
+subdomain. Global budgets can be obtained by summing the corresponding columns
+across subdomain files.</p>
 <h2 id="radionuclide-deposition-data">Radionuclide deposition data</h2>
 <p>The radionuclide deposition output contains cumulative ground inventories for
 Pb-210, Be-7, Cs-137, and aerosol-bound I-131. Values are activity densities

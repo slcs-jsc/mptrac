@@ -13,5 +13,7 @@ var searchData=
   ['bound_5fvmr_10',['bound_vmr',['../structctl__t.html#a4f7014dad580e4e745c910187468807c',1,'ctl_t']]],
   ['bound_5fvmr_5ftrend_11',['bound_vmr_trend',['../structctl__t.html#a7a4b2ae4a45234a74df45b5adbe513cd',1,'ctl_t']]],
   ['bound_5fzetas_12',['bound_zetas',['../structctl__t.html#ae7b26fcc7af034afe6144631986213ea',1,'ctl_t']]],
-  ['broadcast_5flarge_5fdata_13',['broadcast_large_data',['../mptrac_8h.html#aa4b5f89a098befae2a864decab80f133',1,'mptrac.h']]]
+  ['broadcast_5flarge_5fdata_13',['broadcast_large_data',['../mptrac_8h.html#aa4b5f89a098befae2a864decab80f133',1,'mptrac.h']]],
+  ['budget_5fbasename_14',['budget_basename',['../structctl__t.html#a8ac6f840dabdd43997a17b0a04ae9ca9',1,'ctl_t']]],
+  ['budget_5fdt_5fout_15',['budget_dt_out',['../structctl__t.html#a782c00bf131dec89beb014b53a1da933',1,'ctl_t']]]
 ];
