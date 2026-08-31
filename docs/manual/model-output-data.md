@@ -41,6 +41,19 @@ The default MPTRAC output filename pattern for time-resolved particle
 output is `<ATM_BASENAME>_YYYY_MM_DD_HH_MM_SS.<ext>`, i.e. output file
 names include seconds explicitly.
 
+For ASCII particle data, the second column contains the log-pressure altitude
+
+\[
+z = H_0 \ln\left(\frac{P_0}{p}\right),
+\]
+
+where \(p\) is pressure, \(H_0 = 7.0\,\mathrm{km}\) is a fixed scale
+height, and \(P_0 = 1013.25\,\mathrm{hPa}\) is a fixed reference
+pressure. Conversely, ASCII input is converted to the internal pressure
+coordinate using \(p = P_0 \exp(-z / H_0)\). This log-pressure altitude
+is derived from pressure and is not a geometric or geopotential height. Binary
+and netCDF particle files store pressure directly.
+
 | ATM_TYPE | output format                                |
 |----------|----------------------------------------------|
 | 0        | ASCII (default)                              |
