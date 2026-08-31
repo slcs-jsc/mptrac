@@ -9516,7 +9516,7 @@ void write_atm_nc(
  * The output contains the number of active air parcels, their total mass,
  * and sums of the configured cumulative mass-loss quantities. If ensembles
  * are enabled, one row per ensemble and an additional total row are written.
- * Domain-decomposed runs sum the budget globally across all MPI ranks.
+ * Domain-decomposed runs report the local budget of each subdomain.
  * Missing mass-loss quantities are reported as NaN.
  *
  * @param filename Path to the budget output file.

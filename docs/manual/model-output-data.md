@@ -91,8 +91,9 @@ Unavailable `mloss_*` quantities are written as `NaN`; total tracked mass loss
 sums the loss quantities that are available. Accounted mass is the sum of the
 current mass and total tracked mass loss. With `NENS > 0`, the file contains an
 additional row for each ensemble; ensemble ID -999 denotes the total over all
-active air parcels. Domain-decomposed runs sum these values globally across all
-MPI ranks.
+active air parcels. Domain-decomposed runs write the local budget of each
+subdomain. Global budgets can be obtained by summing the corresponding columns
+across subdomain files.
 
 ## Radionuclide deposition data
 

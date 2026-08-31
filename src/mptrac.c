@@ -13301,13 +13301,6 @@ void write_budget(
       }
   }
 
-#ifdef DD
-  /* Sum mass budgets across subdomains... */
-  MPI_Allreduce(MPI_IN_PLACE, sum, (NENS + 1) * nq, MPI_DOUBLE, MPI_SUM,
-		MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, np, NENS + 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-#endif
-
   /* Write total and ensemble budgets... */
   for (int ie = -1; ie < (ensemble ? ctl->nens : 0); ie++) {
     const int e = (ie < 0 ? NENS : ie);
