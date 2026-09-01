@@ -5206,6 +5206,10 @@ void module_mixing(
   int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
   int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
   int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
+  double *restrict const mixparam =
+    (double *) malloc((size_t) np * sizeof(double));
+  if (ixs == NULL || iys == NULL || izs == NULL || mixparam == NULL)
+    ERRMSG("Out of memory!");
 
   /* Set grid box size... */
   const double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
@@ -5218,8 +5222,8 @@ void module_mixing(
 
   /* Get indices... */
 #ifdef _OPENACC
-#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np])
-#pragma acc data present(ctl,clim,atm,ixs,iys,izs)
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],mixparam[0:np])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs,mixparam)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -5239,8 +5243,12 @@ void module_mixing(
     iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
     izs[ip] = (int) ((zpart - ctl->mixing_z0) / dz);
     if (ixs[ip] >= ctl->mixing_nx || iys[ip] >= ctl->mixing_ny
-	|| izs[ip] >= ctl->mixing_nz)
+	|| izs[ip] >= ctl->mixing_nz) {
       izs[ip] = -1;
+      continue;
+    }
+    const double w = tropo_weight(ctl, clim, atm, ip);
+    mixparam[ip] = w * ctl->mixing_trop + (1.0 - w) * ctl->mixing_strat;
   }
 
   /* Calculate interparcel mixing... */
@@ -5258,27 +5266,28 @@ void module_mixing(
 
   for (int i = 0; i < n_qnt; i++)
     if (quantities[i] >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, quantities[i],
+      module_mixing_help(ctl, atm, ixs, iys, izs, mixparam, quantities[i],
 			 use_ensemble);
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete(ixs,iys,izs)
+#pragma acc exit data delete(ixs,iys,izs,mixparam)
 #endif
   free(ixs);
   free(iys);
   free(izs);
+  free(mixparam);
 }
 
 /*****************************************************************************/
 
 void module_mixing_help(
   const ctl_t *ctl,
-  const clim_t *clim,
   atm_t *atm,
   const int *ixs,
   const int *iys,
   const int *izs,
+  const double *mixparam,
   const int qnt_idx,
   const int use_ensemble) {
 
@@ -5289,13 +5298,15 @@ void module_mixing_help(
 
   double *restrict const cmean =
     (double *) malloc((size_t) total_grid * sizeof(double));
-  int *restrict const count =
-    (int *) malloc((size_t) total_grid * sizeof(int));
+  double *restrict const cweight =
+    (double *) malloc((size_t) total_grid * sizeof(double));
+  if (cmean == NULL || cweight == NULL)
+    ERRMSG("Out of memory!");
 
   /* Init... */
 #ifdef _OPENACC
-#pragma acc enter data create(cmean[0:total_grid],count[0:total_grid])
-#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
+#pragma acc enter data create(cmean[0:total_grid],cweight[0:total_grid])
+#pragma acc data present(ctl,atm,ixs,iys,izs,mixparam,cmean,cweight)
 #pragma acc parallel loop independent gang vector
 #else
 #ifdef __NVCOMPILER
@@ -5304,8 +5315,8 @@ void module_mixing_help(
 #pragma omp parallel for
 #endif
   for (int i = 0; i < total_grid; i++) {
-    count[i] = 0;
     cmean[i] = 0.0;
+    cweight[i] = 0.0;
   }
 
   /* Loop over particles... */
@@ -5315,17 +5326,19 @@ void module_mixing_help(
   for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
       const int ens = use_ensemble ? (int) atm->q[ctl->qnt_ens][ip] : 0;
+      if (ens < 0 || ens >= nens)
+	continue;
       const int idx =
 	ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip],
 			       ctl->mixing_nz);
 #ifdef _OPENACC
 #pragma acc atomic update
 #endif
-      cmean[idx] += atm->q[qnt_idx][ip];
+      cmean[idx] += mixparam[ip] * atm->q[qnt_idx][ip];
 #ifdef _OPENACC
 #pragma acc atomic update
 #endif
-      count[idx]++;
+      cweight[idx] += mixparam[ip];
     }
 
   /* Compute means... */
@@ -5338,8 +5351,8 @@ void module_mixing_help(
 #pragma omp parallel for
 #endif
   for (int i = 0; i < total_grid; i++)
-    if (count[i] > 0)
-      cmean[i] /= count[i];
+    if (cweight[i] > 0)
+      cmean[i] /= cweight[i];
 
   /* Interparcel mixing... */
 #ifdef _OPENACC
@@ -5351,25 +5364,22 @@ void module_mixing_help(
     if (izs[ip] >= 0) {
       const int ens = use_ensemble ? (int) atm->q[ctl->qnt_ens][ip] : 0;
 
-      double mixparam = 1.0;
-      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
-	const double w = tropo_weight(ctl, clim, atm, ip);
-	mixparam = w * ctl->mixing_trop + (1.0 - w) * ctl->mixing_strat;
-      }
-
+      if (ens < 0 || ens >= nens)
+	continue;
       const int idx =
 	ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip],
 			       ctl->mixing_nz);
-      atm->q[qnt_idx][ip] += (cmean[idx] - atm->q[qnt_idx][ip]) * mixparam;
+      atm->q[qnt_idx][ip] +=
+	(cmean[idx] - atm->q[qnt_idx][ip]) * mixparam[ip];
     }
   }
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete(cmean,count)
+#pragma acc exit data delete(cmean,cweight)
 #endif
   free(cmean);
-  free(count);
+  free(cweight);
 }
 
 /*****************************************************************************/
@@ -7542,6 +7552,8 @@ void mptrac_read_ctl(
       || ctl->mixing_z0 >= ctl->mixing_z1
       || ctl->mixing_lat0 < -90 || ctl->mixing_lat1 > 90)
     ERRMSG("Invalid mixing grid!");
+  if (ctl->mixing_trop > 1 || ctl->mixing_strat > 1)
+    ERRMSG("Mixing parameters must not exceed one!");
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
@@ -7648,6 +7660,10 @@ void mptrac_read_ctl(
 
   /* Output of ensemble data... */
   ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
+  if (ctl->nens < 0)
+    ERRMSG("NENS must not be negative!");
+  if (ctl->nens > 0 && ctl->qnt_ens < 0)
+    ERRMSG("Add quantity ens for ensemble calculations!");
   scan_ctl(filename, argc, argv, "ENS_BASENAME", -1, "-", ctl->ens_basename);
   ctl->ens_dt_out =
     scan_ctl(filename, argc, argv, "ENS_DT_OUT", -1, "86400", NULL);

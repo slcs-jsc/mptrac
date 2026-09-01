@@ -6774,20 +6774,22 @@ void module_mixing(
 /**
  * @brief Perform subgrid-scale interparcel mixing of a given quantity.
  *
- * This function computes the average of a specified quantity within each
- * subgrid box (and optionally for each ensemble member) and applies a 
- * mixing adjustment to particle values based on the computed local mean.
- * 
- * The mixing accounts for differences in tropopause and stratosphere mixing
+ * This function computes the mixing-parameter-weighted mean of a specified
+ * quantity within each subgrid box (and optionally for each ensemble member)
+ * and applies a mixing adjustment to particle values based on the computed
+ * local mean. The weighted mean conserves the sum of the quantity when the
+ * mixing parameter varies between particles.
+ *
+ * The mixing accounts for differences in tropospheric and stratospheric mixing
  * via a weighted parameterization. It supports both ensemble and non-ensemble
  * modes using the `use_ensemble` flag.
  *
  * @param[in] ctl            Pointer to control/configuration structure.
- * @param[in] clim           Pointer to climatological data structure.
  * @param[in,out] atm        Pointer to atmospheric state (includes particles).
  * @param[in] ixs            Array of x-grid indices for each particle.
  * @param[in] iys            Array of y-grid indices for each particle.
  * @param[in] izs            Array of z-grid indices for each particle (-1 for invalid).
+ * @param[in] mixparam       Mixing parameter for each particle.
  * @param[in] qnt_idx        Index of the quantity in atm->q to be mixed.
  * @param[in] use_ensemble   Flag indicating whether to use ensemble-aware logic (0 = no, 1 = yes).
  *
@@ -6800,11 +6802,11 @@ void module_mixing(
  */
 void module_mixing_help(
   const ctl_t * ctl,
-  const clim_t * clim,
   atm_t * atm,
   const int *ixs,
   const int *iys,
   const int *izs,
+  const double *mixparam,
   const int qnt_idx,
   const int use_ensemble);
 
