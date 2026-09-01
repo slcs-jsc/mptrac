@@ -3166,11 +3166,11 @@ typedef struct {
   /*! Time interval for mixing [s]. */
   double mixing_dt;
 
-  /*! Interparcel exchange parameter for mixing in the troposphere. */
-  double mixing_trop;
+  /*! E-folding time for interparcel mixing in the troposphere [s]. */
+  double mixing_tau_trop;
 
-  /*! Interparcel exchange parameter for mixing in the stratosphere. */
-  double mixing_strat;
+  /*! E-folding time for interparcel mixing in the stratosphere [s]. */
+  double mixing_tau_strat;
 
   /*! Number of altitudes of mixing grid. */
   int mixing_nz;

@@ -426,8 +426,8 @@ MODULE mptrac_struct
      CHARACTER(c_char), DIMENSION(length) :: clim_n2o_timeseries
      CHARACTER(c_char), DIMENSION(length) :: clim_sf6_timeseries
      REAL(c_double) :: mixing_dt
-     REAL(c_double) :: mixing_trop
-     REAL(c_double) :: mixing_strat
+     REAL(c_double) :: mixing_tau_trop
+     REAL(c_double) :: mixing_tau_strat
      INTEGER(c_int) :: mixing_nz
      REAL(c_double) :: mixing_z0
      REAL(c_double) :: mixing_z1

@@ -5219,6 +5219,7 @@ void module_mixing(
   /* Set time interval... */
   const double t0 = t - 0.5 * ctl->dt_mod;
   const double t1 = t + 0.5 * ctl->dt_mod;
+  const double dt_mix = ctl->mixing_dt > 0 ? ctl->mixing_dt : ctl->dt_mod;
 
   /* Get indices... */
 #ifdef _OPENACC
@@ -5248,7 +5249,9 @@ void module_mixing(
       continue;
     }
     const double w = tropo_weight(ctl, clim, atm, ip);
-    mixparam[ip] = w * ctl->mixing_trop + (1.0 - w) * ctl->mixing_strat;
+    const double rate =
+      w / ctl->mixing_tau_trop + (1.0 - w) / ctl->mixing_tau_strat;
+    mixparam[ip] = -expm1(-dt_mix * rate);
   }
 
   /* Calculate interparcel mixing... */
@@ -7524,10 +7527,10 @@ void mptrac_read_ctl(
   /* Mixing... */
   ctl->mixing_dt =
     scan_ctl(filename, argc, argv, "MIXING_DT", -1, "3600.", NULL);
-  ctl->mixing_trop =
-    scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "-999", NULL);
-  ctl->mixing_strat =
-    scan_ctl(filename, argc, argv, "MIXING_STRAT", -1, "-999", NULL);
+  ctl->mixing_tau_trop =
+    scan_ctl(filename, argc, argv, "MIXING_TAU_TROP", -1, "-999", NULL);
+  ctl->mixing_tau_strat =
+    scan_ctl(filename, argc, argv, "MIXING_TAU_STRAT", -1, "-999", NULL);
   ctl->mixing_z0 =
     scan_ctl(filename, argc, argv, "MIXING_Z0", -1, "-5", NULL);
   ctl->mixing_z1 =
@@ -7552,8 +7555,9 @@ void mptrac_read_ctl(
       || ctl->mixing_z0 >= ctl->mixing_z1
       || ctl->mixing_lat0 < -90 || ctl->mixing_lat1 > 90)
     ERRMSG("Invalid mixing grid!");
-  if (ctl->mixing_trop > 1 || ctl->mixing_strat > 1)
-    ERRMSG("Mixing parameters must not exceed one!");
+  if ((ctl->mixing_tau_trop > 0) != (ctl->mixing_tau_strat > 0)
+      || ctl->mixing_tau_trop == 0 || ctl->mixing_tau_strat == 0)
+    ERRMSG("Mixing times must either both be positive or both be disabled!");
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
@@ -7996,7 +8000,7 @@ void mptrac_run_timestep(
     module_decay(ctl, cache, clim, atm);
 
   /* Interparcel mixing... */
-  if (ctl->mixing_trop >= 0 && ctl->mixing_strat >= 0
+  if (ctl->mixing_tau_trop > 0 && ctl->mixing_tau_strat > 0
       && (ctl->mixing_dt <= 0 || fmod(t, ctl->mixing_dt) == 0))
     module_mixing(ctl, clim, atm, t);
 

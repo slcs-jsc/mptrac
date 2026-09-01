@@ -198,6 +198,65 @@ calculated from the neighbouring eight grid boxes and two time steps of
 the meteorological data. As before, $\vec{\xi}$ is a vector of random
 variates drawn from the standard normal distribution.
 
+## Inter-parcel mixing
+
+Lagrangian air parcels do not exchange their carried quantities unless an
+explicit mixing process is applied. The inter-parcel mixing module groups
+active particles into configurable longitude, latitude, and altitude boxes
+and relaxes each supported quantity towards its local box mean. The update
+for particle $i$ is
+
+$$
+q_i^\prime = q_i + \alpha_i (\overline{q}_\alpha-q_i),
+$$
+
+where the mixing-parameter-weighted target mean
+
+$$
+\overline{q}_\alpha =
+\frac{\sum_i \alpha_i q_i}{\sum_i \alpha_i}
+$$
+
+conserves the sum of the mixed quantity within each box. Boxes containing
+only one particle are unaffected. Consequently, the effective mixing also
+depends on particle density and box size.
+
+Users specify e-folding times rather than per-call exchange fractions. The
+tropospheric weight $w_i$ is used to interpolate the mixing rates,
+
+$$
+k_i = \frac{w_i}{\tau_\mathrm{trop}} +
+      \frac{1-w_i}{\tau_\mathrm{strat}},
+\qquad
+\alpha_i = 1-\exp(-k_i\,\Delta t_\mathrm{mix}).
+$$
+
+For a fixed box mean, a tracer anomaly is reduced to $1/e$ (about 36.8 %)
+of its initial value after one e-folding time; about 63.2 % of the anomaly
+has then been removed. Mixing is enabled only when both
+`MIXING_TAU_TROP` and `MIXING_TAU_STRAT` are positive. Both values are
+given in seconds. Their defaults are `-999`, so inter-parcel mixing is
+disabled by default. `MIXING_DT` controls the invocation interval and
+defaults to 3600 s. If it is non-positive, mixing is applied every model
+time step and `DT_MOD` is used as the interval in the exponential update. A
+positive `MIXING_DT` should be aligned with, and normally be an integer
+multiple of, `DT_MOD`.
+
+The default mixing grid covers the globe from -5 to 85 km with
+$1^\circ \times 1^\circ \times 1$ km boxes. A useful starting point for
+sensitivity studies on this grid is
+
+```text
+MIXING_DT = 3600
+MIXING_TAU_TROP = 2592000    # 30 days
+MIXING_TAU_STRAT = 31557600  # 1 year
+```
+
+These are example values rather than universal atmospheric constants. Shorter
+e-folding times produce faster relaxation, whereas larger boxes mix particles
+over larger spatial scales. The mixing times, box dimensions, and particle
+density should therefore be varied together in sensitivity studies.
+
 ## Convection
 
 The convection parameterization implemented in MPTRAC introduces the
