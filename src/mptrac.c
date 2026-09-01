@@ -3944,6 +3944,13 @@ void module_chem_grid(
     press[iz] = P(z[iz]);
   }
 
+  /* Initialize mass grid... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int i = 0; i < ngrid * nens; i++)
+    mass[i] = 0;
+
   /* Set time interval for output... */
   const double t0 = tt - 0.5 * ctl->dt_mod;
   const double t1 = tt + 0.5 * ctl->dt_mod;
