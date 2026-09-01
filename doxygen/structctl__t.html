@@ -740,12 +740,12 @@ Data Fields</h2></td></tr>
 <tr class="memitem:acf37a9e8e3b1a013d6106f83e14aedb3"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#acf37a9e8e3b1a013d6106f83e14aedb3">mixing_dt</a></td></tr>
 <tr class="memdesc:acf37a9e8e3b1a013d6106f83e14aedb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time interval for mixing [s].  <a href="structctl__t.html#acf37a9e8e3b1a013d6106f83e14aedb3">More...</a><br /></td></tr>
 <tr class="separator:acf37a9e8e3b1a013d6106f83e14aedb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a11a33decd5490249e5251aaec901bd4c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a11a33decd5490249e5251aaec901bd4c">mixing_trop</a></td></tr>
-<tr class="memdesc:a11a33decd5490249e5251aaec901bd4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interparcel exchange parameter for mixing in the troposphere.  <a href="structctl__t.html#a11a33decd5490249e5251aaec901bd4c">More...</a><br /></td></tr>
-<tr class="separator:a11a33decd5490249e5251aaec901bd4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54e8203aaa728ca33e8db070896eec5a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a54e8203aaa728ca33e8db070896eec5a">mixing_strat</a></td></tr>
-<tr class="memdesc:a54e8203aaa728ca33e8db070896eec5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interparcel exchange parameter for mixing in the stratosphere.  <a href="structctl__t.html#a54e8203aaa728ca33e8db070896eec5a">More...</a><br /></td></tr>
-<tr class="separator:a54e8203aaa728ca33e8db070896eec5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9758b0120c88e3cd6f1b6537d1efdb06"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a9758b0120c88e3cd6f1b6537d1efdb06">mixing_tau_trop</a></td></tr>
+<tr class="memdesc:a9758b0120c88e3cd6f1b6537d1efdb06"><td class="mdescLeft">&#160;</td><td class="mdescRight">E-folding time for interparcel mixing in the troposphere [s].  <a href="structctl__t.html#a9758b0120c88e3cd6f1b6537d1efdb06">More...</a><br /></td></tr>
+<tr class="separator:a9758b0120c88e3cd6f1b6537d1efdb06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad011ea486ee009506dfd97316fa0fff9"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#ad011ea486ee009506dfd97316fa0fff9">mixing_tau_strat</a></td></tr>
+<tr class="memdesc:ad011ea486ee009506dfd97316fa0fff9"><td class="mdescLeft">&#160;</td><td class="mdescRight">E-folding time for interparcel mixing in the stratosphere [s].  <a href="structctl__t.html#ad011ea486ee009506dfd97316fa0fff9">More...</a><br /></td></tr>
+<tr class="separator:ad011ea486ee009506dfd97316fa0fff9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa027a38882f39332262de958c1e8880b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#aa027a38882f39332262de958c1e8880b">mixing_nz</a></td></tr>
 <tr class="memdesc:aa027a38882f39332262de958c1e8880b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of altitudes of mixing grid.  <a href="structctl__t.html#aa027a38882f39332262de958c1e8880b">More...</a><br /></td></tr>
 <tr class="separator:aa027a38882f39332262de958c1e8880b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -5070,37 +5070,37 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a id="a11a33decd5490249e5251aaec901bd4c" name="a11a33decd5490249e5251aaec901bd4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a11a33decd5490249e5251aaec901bd4c">&#9670;&nbsp;</a></span>mixing_trop</h2>
+<a id="a9758b0120c88e3cd6f1b6537d1efdb06" name="a9758b0120c88e3cd6f1b6537d1efdb06"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9758b0120c88e3cd6f1b6537d1efdb06">&#9670;&nbsp;</a></span>mixing_tau_trop</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double ctl_t::mixing_trop</td>
+          <td class="memname">double ctl_t::mixing_tau_trop</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Interparcel exchange parameter for mixing in the troposphere. </p>
+<p>E-folding time for interparcel mixing in the troposphere [s]. </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03170">3170</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
-<a id="a54e8203aaa728ca33e8db070896eec5a" name="a54e8203aaa728ca33e8db070896eec5a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a54e8203aaa728ca33e8db070896eec5a">&#9670;&nbsp;</a></span>mixing_strat</h2>
+<a id="ad011ea486ee009506dfd97316fa0fff9" name="ad011ea486ee009506dfd97316fa0fff9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad011ea486ee009506dfd97316fa0fff9">&#9670;&nbsp;</a></span>mixing_tau_strat</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double ctl_t::mixing_strat</td>
+          <td class="memname">double ctl_t::mixing_tau_strat</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Interparcel exchange parameter for mixing in the stratosphere. </p>
+<p>E-folding time for interparcel mixing in the stratosphere [s]. </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03173">3173</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 

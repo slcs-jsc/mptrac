@@ -585,6 +585,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#inter-parcel-mixing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inter-parcel mixing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#convection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1142,6 +1153,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#inter-parcel-mixing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inter-parcel mixing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#convection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1478,6 +1500,52 @@ al., 2005). For each air parcel, the grid-scale standard deviation is
 calculated from the neighbouring eight grid boxes and two time steps of
 the meteorological data. As before, <span class="arithmatex">\(\vec{\xi}\)</span> is a vector of random
 variates drawn from the standard normal distribution.</p>
+<h2 id="inter-parcel-mixing">Inter-parcel mixing</h2>
+<p>Lagrangian air parcels do not exchange their carried quantities unless an
+explicit mixing process is applied. The inter-parcel mixing module groups
+active particles into configurable longitude, latitude, and altitude boxes
+and relaxes each supported quantity towards its local box mean. The update
+for particle <span class="arithmatex">\(i\)</span> is</p>
+<div class="arithmatex">\[
+q_i^\prime = q_i + \alpha_i (\overline{q}_\alpha-q_i),
+\]</div>
+<p>where the mixing-parameter-weighted target mean</p>
+<div class="arithmatex">\[
+\overline{q}_\alpha =
+\frac{\sum_i \alpha_i q_i}{\sum_i \alpha_i}
+\]</div>
+<p>conserves the sum of the mixed quantity within each box. Boxes containing
+only one particle are unaffected. Consequently, the effective mixing also
+depends on particle density and box size.</p>
+<p>Users specify e-folding times rather than per-call exchange fractions. The
+tropospheric weight <span class="arithmatex">\(w_i\)</span> is used to interpolate the mixing rates,</p>
+<div class="arithmatex">\[
+k_i = \frac{w_i}{\tau_\mathrm{trop}} +
+      \frac{1-w_i}{\tau_\mathrm{strat}},
+\qquad
+\alpha_i = 1-\exp(-k_i\,\Delta t_\mathrm{mix}).
+\]</div>
+<p>For a fixed box mean, a tracer anomaly is reduced to <span class="arithmatex">\(1/e\)</span> (about 36.8 %)
+of its initial value after one e-folding time; about 63.2 % of the anomaly
+has then been removed. Mixing is enabled only when both
+<code>MIXING_TAU_TROP</code> and <code>MIXING_TAU_STRAT</code> are positive. Both values are
+given in seconds. Their defaults are <code>-999</code>, so inter-parcel mixing is
+disabled by default. <code>MIXING_DT</code> controls the invocation interval and
+defaults to 3600 s. If it is non-positive, mixing is applied every model
+time step and <code>DT_MOD</code> is used as the interval in the exponential update. A
+positive <code>MIXING_DT</code> should be aligned with, and normally be an integer
+multiple of, <code>DT_MOD</code>.</p>
+<p>The default mixing grid covers the globe from -5 to 85 km with
+<span class="arithmatex">\(1^\circ \times 1^\circ \times 1\)</span> km boxes. A useful starting point for
+sensitivity studies on this grid is</p>
+<pre><code class="language-text">MIXING_DT = 3600
+MIXING_TAU_TROP = 2592000    # 30 days
+MIXING_TAU_STRAT = 31557600  # 1 year
+</code></pre>
+<p>These are example values rather than universal atmospheric constants. Shorter
+e-folding times produce faster relaxation, whereas larger boxes mix particles
+over larger spatial scales. The mixing times, box dimensions, and particle
+density should therefore be varied together in sensitivity studies.</p>
 <h2 id="convection">Convection</h2>
 <p>The convection parameterization implemented in MPTRAC introduces the
 concept of the Extreme Convection Parametrization (ECP) to efficiently

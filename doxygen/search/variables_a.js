@@ -63,8 +63,8 @@ var searchData=
   ['mixing_5fnx_60',['mixing_nx',['../structctl__t.html#a073b97a29712daaee8212c8a673418bf',1,'ctl_t']]],
   ['mixing_5fny_61',['mixing_ny',['../structctl__t.html#a6cc8f7e22a69a8fec9e11c2cd4a84644',1,'ctl_t']]],
   ['mixing_5fnz_62',['mixing_nz',['../structctl__t.html#aa027a38882f39332262de958c1e8880b',1,'ctl_t']]],
-  ['mixing_5fstrat_63',['mixing_strat',['../structctl__t.html#a54e8203aaa728ca33e8db070896eec5a',1,'ctl_t']]],
-  ['mixing_5ftrop_64',['mixing_trop',['../structctl__t.html#a11a33decd5490249e5251aaec901bd4c',1,'ctl_t']]],
+  ['mixing_5ftau_5fstrat_63',['mixing_tau_strat',['../structctl__t.html#ad011ea486ee009506dfd97316fa0fff9',1,'ctl_t']]],
+  ['mixing_5ftau_5ftrop_64',['mixing_tau_trop',['../structctl__t.html#a9758b0120c88e3cd6f1b6537d1efdb06',1,'ctl_t']]],
   ['mixing_5fz0_65',['mixing_z0',['../structctl__t.html#a5b956c530addc8d909afaf00f5bf9fb4',1,'ctl_t']]],
   ['mixing_5fz1_66',['mixing_z1',['../structctl__t.html#a12d69b44d99afb975f0df6fe5486f896',1,'ctl_t']]],
   ['molmass_67',['molmass',['../structctl__t.html#a0522c3f4f840a3fabbfa786c2dfba4b0',1,'ctl_t']]]
