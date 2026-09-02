@@ -76,25 +76,25 @@ app.config['TEST_MODE'] = False
 
 # Available meteorological data sources and their metadata.
 MET_OPTIONS = {
-    'aifs_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ecmwf/open_data/data/aifs-single_YYYY_MM_DD/aifs-single',
+    'aifs_6h': dict(METBASE=f'{MET_ACCESS_PATH}ecmwf/open_data/data/aifs-single_YYYY_MM_DD/aifs-single',
                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ECMWF AIFS'),
-    'ifs_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ecmwf/open_data/data/ifs_YYYY_MM_DD/ifs',
+    'ifs_6h': dict(METBASE=f'{MET_ACCESS_PATH}ecmwf/open_data/data/ifs_YYYY_MM_DD/ifs',
                    DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ECMWF IFS'),
-    'gfs_3h': dict(METBASE='/mnt/slmet_mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
+    'gfs_3h': dict(METBASE=f'{MET_ACCESS_PATH}ncep/gfs/data_YYYY_MM_DD/gfs',
                    DT_MET=10800, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP GFS'),
-    'era5low_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
+    'era5low_6h': dict(METBASE=f'{MET_ACCESS_PATH}ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
                        DT_MET=21600, MET_VERT_COORD=1, MET_PRESS_LEVEL_DEF=6, MET_NAME='ERA5'),
-    'erai_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
+    'erai_6h': dict(METBASE=f'{MET_ACCESS_PATH}ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ERA-Interim'),
-    'jra3q_6h': dict(METBASE='/mnt/slmet_mnt/met_data/jma/jra3q/nc/YYYY/jra3q',
+    'jra3q_6h': dict(METBASE=f'{MET_ACCESS_PATH}jma/jra3q/nc/YYYY/jra3q',
                      DT_MET=21600, MET_VERT_COORD=2, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-3Q'),
-    'jra55_6h': dict(METBASE='/mnt/slmet_mnt/met_data/jma/jra55/nc/YYYY/jra55',
+    'jra55_6h': dict(METBASE=f'{MET_ACCESS_PATH}jma/jra55/nc/YYYY/jra55',
                      DT_MET=21600, MET_VERT_COORD=4, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-55'),
-    'merra2_3h': dict(METBASE='/mnt/slmet_mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
+    'merra2_3h': dict(METBASE=f'{MET_ACCESS_PATH}nasa/merra-2/hybrid/YYYY/merra2',
                       DT_MET=10800, MET_VERT_COORD=1, MET_PRESS_LEVEL_DEF=6, MET_NAME='MERRA-2'),
-    'ncep_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
+    'ncep_6h': dict(METBASE=f'{MET_ACCESS_PATH}ncep/reanalysis/nc/YYYY/ncep',
                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-NCAR Reanalysis 1'),
-    'ncep2_6h': dict(METBASE='/mnt/slmet_mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
+    'ncep2_6h': dict(METBASE=f'{MET_ACCESS_PATH}ncep/reanalysis2/nc/YYYY/ncep2',
                      DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2')
 }
 
@@ -446,11 +446,11 @@ def run():
         start_dt = parse_form_datetime(f['start_time'])
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         if met_source == 'aifs_6h':
-            METBASE = f"/mnt/slmet_mnt/met_data/ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"
+            METBASE = f"{MET_ACCESS_PATH}ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"
         if met_source == 'ifs_6h':
-            METBASE = f"/mnt/slmet_mnt/met_data/ecmwf/open_data/data/ifs_{start_dt.strftime('%Y_%m_%d')}/ifs"
+            METBASE = f"{MET_ACCESS_PATH}ecmwf/open_data/data/ifs_{start_dt.strftime('%Y_%m_%d')}/ifs"
         if met_source == 'gfs_3h':
-            METBASE = f"/mnt/slmet_mnt/met_data/ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"
+            METBASE = f"{MET_ACCESS_PATH}ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"
 
         # Early reachability check of the meteo mount.
         if not app.config.get('TEST_MODE', False):
