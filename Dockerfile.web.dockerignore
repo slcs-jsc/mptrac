@@ -1,0 +1,16 @@
+# Allow only the files used by Dockerfile.web into the build context.
+**
+!src/
+!src/atm_init
+!src/trac
+!src/atm_conv
+!data/
+!data/**
+!projects/
+!projects/web_runner/
+!projects/web_runner/requirements.txt
+!projects/web_runner/app.py
+!projects/web_runner/templates/
+!projects/web_runner/templates/**
+!projects/web_runner/static/
+!projects/web_runner/static/**
