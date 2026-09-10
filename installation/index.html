@@ -378,6 +378,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#precompiled-development-binaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precompiled development binaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#building-the-libraries" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1003,6 +1014,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#precompiled-development-binaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precompiled development binaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#building-the-libraries" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1090,6 +1112,32 @@ repository:</p>
 the latest changes:</p>
 <pre><code>git pull https://github.com/slcs-jsc/mptrac.git
 </code></pre>
+<hr />
+<h2 id="precompiled-development-binaries">Precompiled development binaries</h2>
+<p>Successful runs of the
+<a href="https://github.com/slcs-jsc/mptrac/actions/workflows/binaries.yml">binaries workflow</a>
+provide working artifacts for Linux x86_64. These packages allow MPTRAC to
+be used without installing a compiler or the GSL, netCDF, and HDF5 libraries.</p>
+<p>To download a package:</p>
+<ol>
+<li>Open the binaries workflow and select the latest successful run for the
+   <code>master</code> branch.</li>
+<li>In the <strong>Artifacts</strong> section, download the
+   <code>mptrac-linux-x86_64-&lt;commit&gt;</code> artifact. A GitHub login may be required.</li>
+<li>Extract the downloaded ZIP file. It contains a <code>.tar.gz</code> archive and its
+   SHA-256 checksum.</li>
+<li>Verify and extract the archive:</li>
+</ol>
+<pre><code class="language-bash">sha256sum -c mptrac-linux-x86_64-&lt;commit&gt;.tar.gz.sha256
+tar -xzf mptrac-linux-x86_64-&lt;commit&gt;.tar.gz
+./mptrac-linux-x86_64-&lt;commit&gt;/bin/trac --help
+</code></pre>
+<p>The binaries are built on Ubuntu 22.04 in CPU/OpenMP configuration without
+MPI, GPU, compression extensions, ecCodes, KPP, or CMS support. They are
+intended for Ubuntu 22.04 or newer and may work on other Linux x86_64 systems
+with a compatible glibc. Each package is a development snapshot identified
+by its Git commit, not a versioned release, and is retained by GitHub for 30
+days.</p>
 <h2 id="building-the-libraries">Building the libraries</h2>
 <p>MPTRAC includes several libraries that can be compiled and installed
 using a build script:</p>
