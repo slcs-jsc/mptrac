@@ -1,0 +1,53 @@
+name: binaries
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev libnetcdf-dev libhdf5-dev patchelf
+
+      - name: Build
+        run: make -C src -j2
+
+      - name: Test
+        run: make -C src check
+
+      - name: Package
+        id: package
+        run: .github/scripts/package-linux-binaries.sh create "${RUNNER_TEMP}"
+
+      - name: Verify package
+        run: .github/scripts/package-linux-binaries.sh verify "${{ steps.package.outputs.archive }}"
+
+      - name: Test package in clean container
+        run: |
+          archive="${{ steps.package.outputs.archive }}"
+          docker run --rm \
+            --env ARCHIVE="$(basename "${archive}")" \
+            --volume "$(dirname "${archive}"):/artifacts:ro" \
+            ubuntu:22.04 \
+            bash -c 'mkdir /tmp/mptrac && tar -xzf "/artifacts/${ARCHIVE}" -C /tmp/mptrac && /tmp/mptrac/*/bin/trac --help'
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.package.outputs.package }}
+          path: |
+            ${{ steps.package.outputs.archive }}
+            ${{ steps.package.outputs.archive }}.sha256
+          retention-days: 30
+          if-no-files-found: error

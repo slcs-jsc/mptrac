@@ -42,6 +42,8 @@ Links to external resources:
 
 * [Nightly Builds](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds)
 
+* [Precompiled development binaries](https://github.com/slcs-jsc/mptrac/actions/workflows/binaries.yml)
+
 * [ESM Buildbot](https://esm-buildbot.fz-juelich.de) (internal)
 
 * [exacb integration](https://gitlab.jsc.fz-juelich.de/jureap/projects/mptrac) (internal)

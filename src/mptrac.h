@@ -1537,14 +1537,25 @@
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
     NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
     NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
-    if((quant) > 0)							\
-      NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_GRANULARBR, quant)); \
+    NC_DEF_VAR_QUANTIZE(quant); \
     if((level) != 0) {							\
       NC(nc_def_var_deflate(ncid, varid, 1, 1, level));			\
       /* unsigned int ulevel = (unsigned int)level; */			\
       /* NC(nc_def_var_filter(ncid, varid, 32015, 1, (unsigned int[]){ulevel})); */ \
     }									\
   }
+
+#ifdef NC_QUANTIZE_GRANULARBR
+#define NC_DEF_VAR_QUANTIZE(quant) do { \
+    if((quant) > 0) \
+      NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_GRANULARBR, quant)); \
+  } while(0)
+#else
+#define NC_DEF_VAR_QUANTIZE(quant) do { \
+    if((quant) > 0) \
+      ERRMSG("NetCDF quantization is not supported by this NetCDF version"); \
+  } while(0)
+#endif
 
 /**
  * @brief Retrieve a double-precision variable from a NetCDF file.

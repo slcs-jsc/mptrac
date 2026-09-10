@@ -122,6 +122,13 @@ Alternatively, to get the latest development version, clone the GitHub repositor
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
+Precompiled Linux x86_64 binaries for development versions are available
+from successful runs of the
+[binaries workflow](https://github.com/slcs-jsc/mptrac/actions/workflows/binaries.yml).
+These working artifacts are intended for testing and expire after 30 days;
+see the [installation manual](https://slcs-jsc.github.io/mptrac/installation/)
+for download instructions and platform limitations.
+
 **2. Install required libraries**
 
 The MPTRAC git repository includes several libraries that can be
