@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+# Build from ~/mptrac, where src/, data/, and projects/ are available.
+# The copied MPTRAC executables require linux/amd64 and a compatible CPU.
+FROM python:3.12-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    MPLBACKEND=Agg \
+    MPLCONFIGDIR=/tmp/matplotlib \
+    XDG_DATA_HOME=/home/appuser/.local/share
+
+WORKDIR /opt/mptrac/projects/web_runner
+
+# Gunicorn is installed explicitly because the current requirements omit it.
+# Require binary wheels so this first image needs no compilation toolchain.
+COPY projects/web_runner/requirements.txt ./requirements.txt
+RUN python -m pip install --no-cache-dir --only-binary=:all: \
+        -r requirements.txt gunicorn \
+    && python -m pip check
+
+COPY --chmod=755 src/atm_init src/trac src/atm_conv /opt/mptrac/src/
+# Keep the supplied model data for initial runtime validation.
+COPY data/ /opt/mptrac/data/
+COPY projects/web_runner/app.py ./app.py
+COPY projects/web_runner/templates/ ./templates/
+COPY projects/web_runner/static/ ./static/
+
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p runs/working runs/zips runs/logs \
+    && chown -R appuser:appuser runs
+
+USER appuser
+
+# Download the map data now, using the same cache and user as at runtime.
+# BORDERS automatically selects 110m, 50m, or 10m for different map extents.
+RUN python - <<'PY'
+from cartopy.io import shapereader
+shapereader.natural_earth(
+    resolution='10m', category='physical', name='coastline'
+)
+for resolution in ('110m', '50m', '10m'):
+    shapereader.natural_earth(
+        resolution=resolution,
+        category='cultural',
+        name='admin_0_boundary_lines_land',
+    )
+PY
+
+# Match the host service's worker count and timeouts.
+# Publishing a host port is a separate step when starting the container.
+EXPOSE 80
+CMD ["gunicorn", "--workers", "4", "--timeout", "900", "--graceful-timeout", "30", "--bind", "0.0.0.0:80", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
