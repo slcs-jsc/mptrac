@@ -1,0 +1,50 @@
+services:
+  mptrac-web-https:
+    image: amirnikfal/mptrac-web:${MPTRAC_WEB_VERSION:-0.1}
+    container_name: mptrac-web-https
+    restart: unless-stopped
+
+    environment:
+      MET_ACCESS_PATH: ${MET_ACCESS_PATH:?MET_ACCESS_PATH must be set}
+
+    volumes:
+      - type: bind
+        source: ${DATA_HOST_PATH:?DATA_HOST_PATH must be set}
+        target: ${DATA_HOST_PATH:?DATA_HOST_PATH must be set}
+        read_only: true
+        bind:
+          create_host_path: false
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-mptrac-https
+    restart: unless-stopped
+
+    ports:
+      - "${MPTRAC_PORT:-443}:443"
+
+    environment:
+      MPTRAC_PUBLIC_HOSTNAME: ${MPTRAC_PUBLIC_HOSTNAME:?MPTRAC_PUBLIC_HOSTNAME must be set}
+
+    volumes:
+      - type: bind
+        source: ./nginx/templates
+        target: /etc/nginx/templates
+        read_only: true
+
+      - type: bind
+        source: ${TLS_FULLCHAIN_CERT_PATH:?TLS_FULLCHAIN_CERT_PATH must be set}
+        target: /etc/nginx/tls/certificate.pem
+        read_only: true
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: ${TLS_PRIVATE_KEY_PATH:?TLS_PRIVATE_KEY_PATH must be set}
+        target: /etc/nginx/tls/privatekey.pem
+        read_only: true
+        bind:
+          create_host_path: false
+
+    depends_on:
+      - mptrac-web-https
