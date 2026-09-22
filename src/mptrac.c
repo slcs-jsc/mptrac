@@ -12331,7 +12331,7 @@ void read_met_tropo(
 	}
 
 	/* Find 2nd tropopause... */
-	if (ctl->met_tropo == 4) {
+	if (ctl->met_tropo == 4 && isfinite(met->pt[ix][iy])) {
 	  met->pt[ix][iy] = NAN;
 	  for (; iz <= 170; iz++) {
 	    int found = 1;
