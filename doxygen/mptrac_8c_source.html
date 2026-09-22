@@ -12402,7 +12402,7 @@ $(function() {
 <div class="line"><a id="l12331" name="l12331"></a><span class="lineno">12331</span>        }</div>
 <div class="line"><a id="l12332" name="l12332"></a><span class="lineno">12332</span> </div>
 <div class="line"><a id="l12333" name="l12333"></a><span class="lineno">12333</span>        <span class="comment">/* Find 2nd tropopause... */</span></div>
-<div class="line"><a id="l12334" name="l12334"></a><span class="lineno">12334</span>        <span class="keywordflow">if</span> (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a5303a68a713ead5d3e144ec4183a9a86">met_tropo</a> == 4) {</div>
+<div class="line"><a id="l12334" name="l12334"></a><span class="lineno">12334</span>        <span class="keywordflow">if</span> (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a5303a68a713ead5d3e144ec4183a9a86">met_tropo</a> == 4 &amp;&amp; isfinite(met-&gt;<a class="code hl_variable" href="structmet__t.html#a86578dd751b3d5bcb696265f4a1ac47d">pt</a>[ix][iy])) {</div>
 <div class="line"><a id="l12335" name="l12335"></a><span class="lineno">12335</span>          met-&gt;<a class="code hl_variable" href="structmet__t.html#a86578dd751b3d5bcb696265f4a1ac47d">pt</a>[ix][iy] = NAN;</div>
 <div class="line"><a id="l12336" name="l12336"></a><span class="lineno">12336</span>          <span class="keywordflow">for</span> (; iz &lt;= 170; iz++) {</div>
 <div class="line"><a id="l12337" name="l12337"></a><span class="lineno">12337</span>            <span class="keywordtype">int</span> found = 1;</div>
