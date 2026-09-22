@@ -40,7 +40,7 @@ Example:
 
 ```dotenv
 MPTRAC_WEB_VERSION=0.1
-MPTRAC_DOMAIN=example.org
+MPTRAC_PUBLIC_HOSTNAME=example.org
 MPTRAC_PORT=443
 
 DATA_HOST_PATH=/path/to/data
@@ -52,7 +52,7 @@ TLS_PRIVATE_KEY_PATH=/path/to/privatekey.pem
 
 `MPTRAC_WEB_VERSION` specifies the MPTRAC Web Runner Docker image version.
 
-`MPTRAC_DOMAIN` is the hostname served by Nginx and must correspond to the TLS certificate.
+`MPTRAC_PUBLIC_HOSTNAME` is the hostname served by Nginx and must correspond to the TLS certificate.
 
 `MPTRAC_PORT` specifies the public HTTPS port. Port `443` is recommended for a standard HTTPS deployment.
 
@@ -97,13 +97,13 @@ docker exec nginx-mptrac-https nginx -t
 The service should then be available at:
 
 ```text
-https://<MPTRAC_DOMAIN>/
+https://<MPTRAC_PUBLIC_HOSTNAME>/
 ```
 
 If a non-standard `MPTRAC_PORT` is configured, include it explicitly:
 
 ```text
-https://<MPTRAC_DOMAIN>:<MPTRAC_PORT>/
+https://<MPTRAC_PUBLIC_HOSTNAME>:<MPTRAC_PORT>/
 ```
 
 ## Stop the service
