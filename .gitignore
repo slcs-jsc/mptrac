@@ -4,6 +4,7 @@ docs/docs/
 docs/site/
 libs/build/
 projects/*
+!projects/containers/
 !projects/benchmarking/
 projects/benchmarking/data/
 projects/benchmarking/logs/

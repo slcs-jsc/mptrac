@@ -1,0 +1,14 @@
+services:
+  mptrac-web:
+    image: amirnikfal/mptrac-web:${MPTRAC_VERSION:-0.1}
+    container_name: mptrac-web
+    restart: unless-stopped
+
+    ports:
+      - "${MPTRAC_PORT:-80}:80"
+
+    environment:
+      MET_ACCESS_PATH: ${MET_ACCESS_PATH}
+
+    volumes:
+      - ${DATA_HOST_PATH}:${DATA_HOST_PATH}:ro
