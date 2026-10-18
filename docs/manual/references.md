@@ -32,6 +32,17 @@ scientific publications:
 
 This is a list of papers and theses in which MPTRAC was applied:
 
+- Smoydzin, L., Bense, V., Bozem, H., Joppe, P., Kunkel, D., Lachnitt,
+  H.-C., Tost, H., Zahn, A., Ziereis, H., Riese, M., and Hoor, P.:
+  Impact of South American biomass burning emissions on elevated
+  South Atlantic upper tropospheric ozone, Atmos. Chem. Phys., 26,
+  11857–11874, <https://doi.org/10.5194/acp-26-11857-2026>, 2026.
+
+- Srinivasan Prasanth, Narayana Sarma Anand, Sreedharan K. Satheesh,
+  Krishnaswamy Krishna Moorthy: Short-term atmospheric impacts of the
+  Hayli Gubbi volcanic eruption 2025, Atmospheric Environment, 387,
+  122406, <https://doi.org/10.1016/j.atmosenv.2026.122406>, 2026.
+
 - Huang, M. and Heng, Y.: Supercomputing-based inverse identification
   of high-resolution atmospheric pollutant source intensity
   distributions in High-Performance Computing and Artificial
@@ -53,12 +64,6 @@ This is a list of papers and theses in which MPTRAC was applied:
   attribution tool for hydrometeorological extremes, Journal of
   Geophysical Research: Atmospheres, 130, e2025JD043314,
   <https://doi.org/10.1029/2025JD043314>, 2025.
-
-- Smoydzin, L., Bense, V., Bozem, H., Joppe, P., Kunkel, D., Lachnitt,
-  H.-C., Tost, H., Zahn, A., Ziereis, H., Riese, M., and Hoor, P.:
-  Impact of South American biomass burning emissions on elevated South
-  Atlantic upper tropospheric ozone, EGUsphere [preprint],
-  <https://doi.org/10.5194/egusphere-2025-5372>, 2025.
 
 - Clemens, J. H., Multi-scenario, high-resolution Lagrangian transport
   modeling for the analysis of the Asian tropopause aerosol layer,
