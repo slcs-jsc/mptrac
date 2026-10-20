@@ -657,15 +657,17 @@
  * @author Lars Hoffmann
  */
 #ifdef _OPENACC
-#define ALLOC(ptr, type, n)				\
-  if(acc_get_num_devices(acc_device_nvidia) <= 0)	\
-    ERRMSG("Not running on a GPU device!");		\
-  if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)	\
-    ERRMSG("Out of memory!");
+#define ALLOC(ptr, type, n) do {                                       \
+    if (acc_get_num_devices(acc_device_nvidia) <= 0)                    \
+      ERRMSG("Not running on a GPU device!");                          \
+    if (((ptr) = calloc((size_t)(n), sizeof(type))) == NULL)            \
+      ERRMSG("Out of memory!");                                        \
+  } while (0)
 #else
-#define ALLOC(ptr, type, n)				 \
-  if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
-    ERRMSG("Out of memory!");
+#define ALLOC(ptr, type, n) do {                                       \
+    if (((ptr) = calloc((size_t)(n), sizeof(type))) == NULL)            \
+      ERRMSG("Out of memory!");                                        \
+  } while (0)
 #endif
 
 /**
