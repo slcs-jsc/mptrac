@@ -1144,6 +1144,16 @@ using a build script:</p>
 <pre><code>cd [mptrac_directory]/libs
 ./build.sh -a
 </code></pre>
+<p>For domain decomposition with parallel netCDF input, build HDF5 and netCDF
+with the same MPI implementation used to compile MPTRAC. If the other
+libraries are already installed locally, rebuild just these two. For example,
+when MPTRAC uses <code>/usr/bin/mpicc</code>:</p>
+<pre><code>cd [mptrac_directory]/libs
+PATH=/usr/bin:$PATH ./build.sh -d -n -l -p 4
+./build/bin/nc-config --has-parallel4
+</code></pre>
+<p>The last command should print <code>yes</code>. For dynamically linked binaries, put
+<code>[mptrac_directory]/libs/build/lib</code> on <code>LD_LIBRARY_PATH</code> when running MPTRAC.</p>
 <p>The build process of the libraries can take considerable time. If your
 system already has compatible versions of the libraries, consider
 using those instead.</p>
