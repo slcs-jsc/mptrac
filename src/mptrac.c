@@ -6064,10 +6064,12 @@ void module_timesteps(
       cache->dt[ip] = 0.0;
 
     /* Check horizontal boundaries of local meteo data... */
-#ifndef DD
-    int dd = 1;
+#ifdef DD
+    /* With domain decomposition, the subdomain rather than the meteo grid
+       defines the boundaries of a trajectory... */
+    int dd = (ctl->dd) ? 0 : 1;
 #else
-    int dd = 0;
+    int dd = 1;
 #endif
     if (dd) {
       if (local && (atm->lon[ip] <= met0->lon[0]
@@ -6369,8 +6371,15 @@ void mptrac_alloc(
     ALLOC(*atm, atm_t, 1);
   if (depo != NULL)
     ALLOC(*depo, depo_t, 1);
-  if (dd != NULL)
+  if (dd != NULL) {
     ALLOC(*dd, dd_t, 1);
+
+    /* Initialize the MPI datatype such that mptrac_free() knows whether
+       dd_init() has created it... */
+#ifdef DD
+    (*dd)->MPI_Particle = MPI_DATATYPE_NULL;
+#endif
+  }
 
   /* Create data region on GPU... */
 #ifdef _OPENACC
@@ -6467,7 +6476,7 @@ void mptrac_free(
 
   /* Free MPI datatype... */
 #ifdef DD
-  if (dd != NULL)
+  if (dd != NULL && dd->MPI_Particle != MPI_DATATYPE_NULL)
     MPI_Type_free(&dd->MPI_Particle);
 #endif
   free(dd);
@@ -7458,11 +7467,6 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "RADIO_DEPO", -1, "0", NULL);
   if (ctl->radio_depo && ctl->met_coord_type != 0)
     ERRMSG("Radioactive deposition requires a lat/lon meteorological grid!");
-#ifdef DD
-  if (ctl->radio_depo)
-    ERRMSG
-      ("Radioactive deposition is not supported with domain decomposition!");
-#endif
 
   /* Wet deposition... */
   for (int ip = 0; ip < 2; ip++) {
@@ -7779,8 +7783,22 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
 
   /* Domain decomposition... */
+
+  /* Only the trac tool sets this flag after reading the control parameters... */
+  ctl->dd_supported = 0;
 #ifdef DD
-  ctl->dd = (int) scan_ctl(filename, argc, argv, "DD", -1, "1", NULL);
+  /* Domain decomposition is only implemented by the trac tool and only works
+     if the executable was started with one task per subdomain. Therefore, use
+     it by default only if MPI has been initialized by the calling tool and if
+     more than one task is running; otherwise, stay in serial mode. */
+  int mpi_initialized = 0;
+  int mpi_size = 1;
+  MPI_Initialized(&mpi_initialized);
+  if (mpi_initialized)
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  ctl->dd =
+    (int) scan_ctl(filename, argc, argv, "DD", -1,
+		   (mpi_initialized && mpi_size > 1) ? "1" : "0", NULL);
 #else
   ctl->dd = (int) scan_ctl(filename, argc, argv, "DD", -1, "0", NULL);
 #endif
@@ -7795,6 +7813,30 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
   ctl->dd_sort_dt =
     (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "1800", NULL);
+
+#ifdef DD
+  /* Check the domain decomposition configuration... */
+  if (ctl->dd) {
+    if (!mpi_initialized)
+      ERRMSG
+	("Domain decomposition requires to start the executable with one task per subdomain!");
+    if (ctl->dd_subdomains_zonal < 1 || ctl->dd_subdomains_meridional < 1)
+      ERRMSG("The number of subdomains has to be positive!");
+    if (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional == 1)
+      ERRMSG("Please provide zonal and meridional subdomain numbers!");
+    if (mpi_size != ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional)
+      ERRMSG("Number of tasks and subdomains is not identical!");
+    if (ctl->qnt_current_subdomain < 0 || ctl->qnt_target_subdomain < 0)
+      ERRMSG
+	("Domain decomposition requires the quantities current_subdomain and target_subdomain!");
+    if (ctl->met_coord_type != 0)
+      ERRMSG
+	("Domain decomposition requires a lat/lon meteorological grid!");
+    if (ctl->radio_depo)
+      ERRMSG
+	("Radioactive deposition is not supported with domain decomposition!");
+  }
+#endif
 }
 
 /*****************************************************************************/
@@ -7809,15 +7851,35 @@ int mptrac_read_met(
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
 
+#ifdef DD
+  /* With domain decomposition, each task reads the meteo data of its own
+     subdomain only, which is not what the tools operating on the full meteo
+     grid expect... */
+  if (ctl->dd && !ctl->dd_supported)
+    ERRMSG("The domain decomposition is only implemented by the trac tool!");
+#endif
+
   /* Set rank... */
   int rank = 0;
+
+  /* Check whether the meteo data is shared between the tasks... */
+  int share = ctl->met_mpi_share;
 #ifdef MPI
-  if (ctl->met_mpi_share)
+  /* Sharing the meteo data between the tasks requires to start the executable
+     with a parallel launcher. If MPI has not been initialized, the meteo data
+     is read by the single task itself... */
+  int mpi_initialized = 0;
+  MPI_Initialized(&mpi_initialized);
+  if (share && !mpi_initialized) {
+    WARN("Cannot share meteo data because MPI has not been initialized!");
+    share = 0;
+  }
+  if (share)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
   /* Check rank... */
-  if (!ctl->met_mpi_share || rank == 0) {
+  if (!share || rank == 0) {
 
     /* Read netCDF data... */
     if (ctl->met_type == 0) {
@@ -7853,7 +7915,12 @@ int mptrac_read_met(
       read_met_polar_winds(met);
 
       /* Create periodic boundary conditions... */
-#ifndef DD
+#ifdef DD
+      /* With domain decomposition, the periodic boundaries are provided by the
+         halos of the subdomains... */
+      if (!ctl->dd)
+	read_met_periodic(met);
+#else
       read_met_periodic(met);
 #endif
 
@@ -7891,7 +7958,7 @@ int mptrac_read_met(
 
   /* Broadcast data via MPI... */
 #ifdef MPI
-  if (ctl->met_mpi_share) {
+  if (share) {
 
     /* Set timer... */
     SELECT_TIMER("READ_MET_MPI_BCAST", "COMM");
@@ -8027,7 +8094,8 @@ void mptrac_run_timestep(
 
   /* Domain decomposition... */
 #ifdef DD
-  module_dd(t, ctl, cache, dd, atm, met0);
+  if (ctl->dd)
+    module_dd(t, ctl, cache, dd, atm, met0);
 #else
   (void) dd;
 #endif
@@ -11444,21 +11512,25 @@ int read_met_nc(
   met_t *met,
   dd_t *dd) {
 
-  int ncid;
+  int ncid = 0;
+  int have_ncid = 0;
 
-  /* Open file... */
+  /* With domain decomposition, all tasks collectively open the file in
+     parallel mode and each task reads its own subdomain... */
 #ifdef DD
   if (ctl->dd) {
     NC(nc_open_par
        (filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL,
-	&ncid))
+	&ncid));
+    have_ncid = 1;
   }
-#else
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+#endif
+
+  /* Without domain decomposition, the file is opened in serial mode... */
+  if (!have_ncid && nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
     WARN("Cannot open file!");
     return 0;
   }
-#endif
 
   /* Set coordinate system of meteo data... */
   met->coord_type = ctl->met_coord_type;

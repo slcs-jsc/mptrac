@@ -3556,13 +3556,18 @@ typedef struct {
      Domain decomposition...
      ------------------------------------------------------------ */
 
-  /*! Domain decomposition (0=no, 1=yes, with 2x2 if not specified). */
+  /*! Domain decomposition (0=no, 1=yes). Only implemented by the trac tool.
+      Defaults to 1 if the executable has been started with more than one MPI
+      task, otherwise it defaults to 0. If enabled, the number of tasks has to
+      be identical to the number of subdomains. */
   int dd;
 
-  /*! Domain decomposition zonal subdomain number. */
+  /*! Domain decomposition zonal subdomain number (defaults to 2 if domain
+      decomposition is used, otherwise 1). */
   int dd_subdomains_zonal;
 
-  /*! Domain decomposition meridional subdomain number. */
+  /*! Domain decomposition meridional subdomain number (defaults to 2 if domain
+      decomposition is used, otherwise 1). */
   int dd_subdomains_meridional;
 
   /*! Domain decomposition size of halos given in grid-points. */
@@ -3570,6 +3575,11 @@ typedef struct {
 
   /*! Sorting time interval for the compactification. */
   double dd_sort_dt;
+
+  /*! Whether the executable implements the domain decomposition. This flag is
+      set by the trac tool; all other tools of MPTRAC always work on the full
+      meteorological grid and must not be used with domain decomposition. */
+  int dd_supported;
 
 } ctl_t;
 

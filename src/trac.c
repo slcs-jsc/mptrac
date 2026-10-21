@@ -112,6 +112,9 @@ int main(
     sprintf(filename, "%s/%s", dirname, argv[2]);
     mptrac_read_ctl(filename, argc, argv, ctl);
 
+    /* This tool implements the domain decomposition... */
+    ctl->dd_supported = 1;
+
     /* Read climatological data... */
     mptrac_read_clim(ctl, clim);
 
@@ -145,7 +148,7 @@ int main(
 
 #ifdef DD
       /* Set-up domain decomposition... */
-      if ((t == ctl->t_start))
+      if ((t == ctl->t_start) && ctl->dd)
 	dd_init(ctl, dd, atm);
 #else
       /* Catch misconfiguration... */
