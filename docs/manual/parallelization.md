@@ -38,6 +38,17 @@ compiler directives and additional functions.
 
 ## Parallelization strategy of MPTRAC
 
+For spatial domain decomposition, build the `trac` tool with `MPI=1 DD=1`
+and start one MPI rank per subdomain. `DD_EXCHANGE_MODE=0` (the default)
+keeps the existing sort/push exchange path, with sorting controlled by
+`DD_SORT_DT` (default: 1800 s). Set `DD_EXCHANGE_MODE=1` to pack outgoing
+particles directly into MPI buffers and compact the retained particles in a
+linear scan without sorting. Invalid particles are removed in the same scan.
+In mode 1, `DD_SORT_DT` and the general `SORT_DT` do not trigger sorting.
+Both modes use the same subdomain assignment and MPI communication. On OpenACC
+builds, mode 1 synchronizes the active particle and cache arrays with the host
+before exchange.
+
 In MPTRAC, the OpenMP parallelization is always enabled to exploit the
 multi-core compute capabilities of modern computing systems. The
 OpenMP parallelization is used to distribute the trajectory
