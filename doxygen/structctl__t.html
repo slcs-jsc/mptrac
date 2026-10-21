@@ -1107,13 +1107,13 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a17e569920568025af14e66d706651a18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Spherical projection for VTK data (0=no, 1=yes).  <a href="structctl__t.html#a17e569920568025af14e66d706651a18">More...</a><br /></td></tr>
 <tr class="separator:a17e569920568025af14e66d706651a18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a587663283cba9a4470dd7b753b5a1690"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">dd</a></td></tr>
-<tr class="memdesc:a587663283cba9a4470dd7b753b5a1690"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition (0=no, 1=yes, with 2x2 if not specified).  <a href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">More...</a><br /></td></tr>
+<tr class="memdesc:a587663283cba9a4470dd7b753b5a1690"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition (0=no, 1=yes).  <a href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">More...</a><br /></td></tr>
 <tr class="separator:a587663283cba9a4470dd7b753b5a1690"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea21f5b459b5068ca0ec982074cb4dc2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#aea21f5b459b5068ca0ec982074cb4dc2">dd_subdomains_zonal</a></td></tr>
-<tr class="memdesc:aea21f5b459b5068ca0ec982074cb4dc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition zonal subdomain number.  <a href="structctl__t.html#aea21f5b459b5068ca0ec982074cb4dc2">More...</a><br /></td></tr>
+<tr class="memdesc:aea21f5b459b5068ca0ec982074cb4dc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition zonal subdomain number (defaults to 2 if domain decomposition is used, otherwise 1).  <a href="structctl__t.html#aea21f5b459b5068ca0ec982074cb4dc2">More...</a><br /></td></tr>
 <tr class="separator:aea21f5b459b5068ca0ec982074cb4dc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb2ac81596bfa49f6f53da327bdac0bd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#afb2ac81596bfa49f6f53da327bdac0bd">dd_subdomains_meridional</a></td></tr>
-<tr class="memdesc:afb2ac81596bfa49f6f53da327bdac0bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition meridional subdomain number.  <a href="structctl__t.html#afb2ac81596bfa49f6f53da327bdac0bd">More...</a><br /></td></tr>
+<tr class="memdesc:afb2ac81596bfa49f6f53da327bdac0bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition meridional subdomain number (defaults to 2 if domain decomposition is used, otherwise 1).  <a href="structctl__t.html#afb2ac81596bfa49f6f53da327bdac0bd">More...</a><br /></td></tr>
 <tr class="separator:afb2ac81596bfa49f6f53da327bdac0bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a067596ae0db3d3518aab0787be59af02"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a067596ae0db3d3518aab0787be59af02">dd_halos_size</a></td></tr>
 <tr class="memdesc:a067596ae0db3d3518aab0787be59af02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition size of halos given in grid-points.  <a href="structctl__t.html#a067596ae0db3d3518aab0787be59af02">More...</a><br /></td></tr>
@@ -1121,6 +1121,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a50e87c0c4763d5c4703adf03fd588f0e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">dd_sort_dt</a></td></tr>
 <tr class="memdesc:a50e87c0c4763d5c4703adf03fd588f0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorting time interval for the compactification.  <a href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">More...</a><br /></td></tr>
 <tr class="separator:a50e87c0c4763d5c4703adf03fd588f0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50acc2f417055cf7d4590cf5e899fd42"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a50acc2f417055cf7d4590cf5e899fd42">dd_supported</a></td></tr>
+<tr class="memdesc:a50acc2f417055cf7d4590cf5e899fd42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the executable implements the domain decomposition.  <a href="structctl__t.html#a50acc2f417055cf7d4590cf5e899fd42">More...</a><br /></td></tr>
+<tr class="separator:a50acc2f417055cf7d4590cf5e899fd42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Control parameters. </p>
@@ -7278,9 +7281,10 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Domain decomposition (0=no, 1=yes, with 2x2 if not specified). </p>
+<p>Domain decomposition (0=no, 1=yes). </p>
+<p >Only implemented by the trac tool. Defaults to 1 if the executable has been started with more than one MPI task, otherwise it defaults to 0. If enabled, the number of tasks has to be identical to the number of subdomains. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03560">3560</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03563">3563</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7296,9 +7300,9 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Domain decomposition zonal subdomain number. </p>
+<p>Domain decomposition zonal subdomain number (defaults to 2 if domain decomposition is used, otherwise 1). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03563">3563</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03567">3567</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7314,9 +7318,9 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Domain decomposition meridional subdomain number. </p>
+<p>Domain decomposition meridional subdomain number (defaults to 2 if domain decomposition is used, otherwise 1). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03566">3566</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03571">3571</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7334,7 +7338,7 @@ Data Fields</h2></td></tr>
 
 <p>Domain decomposition size of halos given in grid-points. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03569">3569</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03574">3574</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7352,7 +7356,26 @@ Data Fields</h2></td></tr>
 
 <p>Sorting time interval for the compactification. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03572">3572</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03577">3577</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="a50acc2f417055cf7d4590cf5e899fd42" name="a50acc2f417055cf7d4590cf5e899fd42"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50acc2f417055cf7d4590cf5e899fd42">&#9670;&nbsp;</a></span>dd_supported</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ctl_t::dd_supported</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether the executable implements the domain decomposition. </p>
+<p >This flag is set by the trac tool; all other tools of MPTRAC always work on the full meteorological grid and must not be used with domain decomposition. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03582">3582</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
