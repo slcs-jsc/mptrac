@@ -390,7 +390,7 @@ EOF
         sed -i "s/^WIND_T0 = .*/WIND_T0 = $new_t0/" wind.ctl
         
         # Run the wind command
-        "$mptrac_dir"/src/wind wind.ctl wind >> "$work_dir"/data/wind_generation.log 2>&1
+        "${WIND_EXEC:-$mptrac_dir/src/wind}" wind.ctl wind >> "$work_dir"/data/wind_generation.log 2>&1
         
         echo "[INFO] Generated file $((i+1))/$ntimesteps with T0 = $new_t0"
     done

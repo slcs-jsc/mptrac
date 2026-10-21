@@ -32,6 +32,13 @@ awk '/Air parcel data./{f=1;next} /\} atm_t;/{f=0} f' < ../../src/mptrac.h > dat
 awk '/Cache data structure./{f=1;next} /\} cache_t;/{f=0} f' < ../../src/mptrac.h > data/test_cache_c.asc
 awk '/Domain decomposition data structure./{f=1;skip=0;next} /\} dd_t;/{f=0} f {if ($0 ~ /#ifdef DD/) {skip=1; next}; if ($0 ~ /#endif/) {skip=0; next}; if (!skip) print}' < ../../src/mptrac.h > data/test_dd_c.asc
 
+# Ignore semicolons in C comments when counting structure fields.
+for c_struct in data/test_*_c.asc; do
+    awk '{if ($0 ~ /\/\*/) comment=1; if (!comment) print; if ($0 ~ /\*\//) comment=0}' \
+        "$c_struct" > "$c_struct.tmp"
+    mv "$c_struct.tmp" "$c_struct"
+done
+
 # compare number of structure entries and variables inside 
 grep ";" data/test_ctl_c.asc | wc -l > x
 wc -l < data/test_ctl_f.asc > y

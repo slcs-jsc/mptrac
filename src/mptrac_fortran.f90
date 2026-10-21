@@ -554,6 +554,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: dd_halos_size
      REAL(c_double) :: dd_sort_dt
      INTEGER(c_int) :: dd_exchange_mode
+     INTEGER(c_int) :: dd_supported
   END TYPE ctl_t
 
   ! Meteorological data...
@@ -699,6 +700,15 @@ MODULE mptrac_func
        TYPE(depo_t), INTENT(inout), TARGET :: depo
        INTEGER(c_int), INTENT(in), VALUE :: ntask
      END SUBROUTINE mptrac_init
+
+     ! Initialize domain decomposition...
+     SUBROUTINE dd_init(ctl, dd, atm) bind(c,name='dd_init')
+       USE mptrac_struct, ONLY : ctl_t, dd_t, atm_t
+       IMPLICIT NONE
+       TYPE(ctl_t), INTENT(in), TARGET :: ctl
+       TYPE(dd_t), INTENT(inout), TARGET :: dd
+       TYPE(atm_t), INTENT(inout), TARGET :: atm
+     END SUBROUTINE dd_init
 
      ! Read air parcel data...
      FUNCTION mptrac_read_atm(filename, ctl, atm) &

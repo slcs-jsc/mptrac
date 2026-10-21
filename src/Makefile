@@ -29,6 +29,9 @@ MPI ?= 0
 # MPI C compiler wrapper...
 MPICC ?= mpicc
 
+# MPI Fortran compiler wrapper...
+MPIFC ?= mpifort
+
 # Compile for domain decomposition (experimental)...
 DD ?= 0
 
@@ -154,12 +157,17 @@ endif
 MPICC ?= mpicc
 ifeq ($(MPI),1)
   CC = $(MPICC)
+  FC = $(MPIFC)
   CFLAGS += -DMPI
+  FCFLAGS += -DMPI
+  FPPFLAGS += -DMPI
 endif
 
 # Compile for domain decomposition...
 ifeq ($(DD),1)
   CFLAGS += -DDD
+  FCFLAGS += -DDD
+  FPPFLAGS += -DDD
 endif
 
 # Optimization information...

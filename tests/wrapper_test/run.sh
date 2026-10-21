@@ -1,5 +1,9 @@
 #! /bin/bash
 
+if [[ ${DD:-0} == 1 ]]; then
+    exec ./run_dd.sh
+fi
+
 # Set environment...
 ulimit -s unlimited
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
