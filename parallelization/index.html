@@ -1076,6 +1076,15 @@ In mode 1, <code>DD_SORT_DT</code> and the general <code>SORT_DT</code> do not t
 Both modes use the same subdomain assignment and MPI communication. On OpenACC
 builds, mode 1 synchronizes the active particle and cache arrays with the host
 before exchange.</p>
+<p>The Fortran wrapper supports the same DD exchange modes when built with
+<code>MPI=1 DD=1</code> and a matching MPI Fortran compiler (<code>MPIFC</code>). The DD branch of
+<code>wrapper_test</code> compares <code>trac_fortran</code> with <code>trac</code> using mode 1. Build from
+<code>src/</code> with the DD test dimensions:</p>
+<pre><code class="language-bash">make clean
+make DD=1 MPI=1 MPIFC=mpifort \
+  DEFINES='-DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5' \
+  wrapper_test
+</code></pre>
 <p>In MPTRAC, the OpenMP parallelization is always enabled to exploit the
 multi-core compute capabilities of modern computing systems. The
 OpenMP parallelization is used to distribute the trajectory
