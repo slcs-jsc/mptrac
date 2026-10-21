@@ -15374,6 +15374,9 @@ void write_station(
   const double t0 = t - 0.5 * ctl->dt_mod;
   const double t1 = t + 0.5 * ctl->dt_mod;
 
+  /* Count number of newly set station flags... */
+  int nflag = 0;
+
   /* Loop over air parcels... */
   for (int ip = 0; ip < atm->np; ip++) {
 
@@ -15398,8 +15401,10 @@ void write_station(
       continue;
 
     /* Set station flag... */
-    if (ctl->qnt_stat >= 0)
+    if (ctl->qnt_stat >= 0) {
       atm->q[ctl->qnt_stat][ip] = 1;
+      nflag += 1;
+    }
 
     /* Write data... */
     fprintf(out, "%.2f %g %g %g",
@@ -15410,6 +15415,18 @@ void write_station(
     }
     fprintf(out, "\n");
   }
+
+  /* During the run, the parcel state lives on the GPU, see mptrac_init().
+     Therefore, push the station flags written above back to the device;
+     otherwise, they are invisible to the next timesteps and get discarded
+     by the next mptrac_update_host() within mptrac_write_output(). */
+#ifdef _OPENACC
+  if (nflag > 0) {
+#pragma acc update device(atm->q[ctl->qnt_stat][0:atm->np])
+  }
+#else
+  (void) nflag;
+#endif
 
   /* Close file... */
   if (t == ctl->t_stop)
