@@ -1119,8 +1119,11 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a067596ae0db3d3518aab0787be59af02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition size of halos given in grid-points.  <a href="structctl__t.html#a067596ae0db3d3518aab0787be59af02">More...</a><br /></td></tr>
 <tr class="separator:a067596ae0db3d3518aab0787be59af02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50e87c0c4763d5c4703adf03fd588f0e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">dd_sort_dt</a></td></tr>
-<tr class="memdesc:a50e87c0c4763d5c4703adf03fd588f0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorting time interval for the compactification.  <a href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">More...</a><br /></td></tr>
+<tr class="memdesc:a50e87c0c4763d5c4703adf03fd588f0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorting time interval for the compactification (DD_EXCHANGE_MODE=0).  <a href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">More...</a><br /></td></tr>
 <tr class="separator:a50e87c0c4763d5c4703adf03fd588f0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5d4a5ecdb70d73f8c4f4792a841b2e1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#ad5d4a5ecdb70d73f8c4f4792a841b2e1">dd_exchange_mode</a></td></tr>
+<tr class="memdesc:ad5d4a5ecdb70d73f8c4f4792a841b2e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Particle exchange: 0=sort/push (default), 1=direct pack/compact.  <a href="structctl__t.html#ad5d4a5ecdb70d73f8c4f4792a841b2e1">More...</a><br /></td></tr>
+<tr class="separator:ad5d4a5ecdb70d73f8c4f4792a841b2e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50acc2f417055cf7d4590cf5e899fd42"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a50acc2f417055cf7d4590cf5e899fd42">dd_supported</a></td></tr>
 <tr class="memdesc:a50acc2f417055cf7d4590cf5e899fd42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the executable implements the domain decomposition.  <a href="structctl__t.html#a50acc2f417055cf7d4590cf5e899fd42">More...</a><br /></td></tr>
 <tr class="separator:a50acc2f417055cf7d4590cf5e899fd42"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -7354,9 +7357,27 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sorting time interval for the compactification. </p>
+<p>Sorting time interval for the compactification (DD_EXCHANGE_MODE=0). </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03577">3577</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="ad5d4a5ecdb70d73f8c4f4792a841b2e1" name="ad5d4a5ecdb70d73f8c4f4792a841b2e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5d4a5ecdb70d73f8c4f4792a841b2e1">&#9670;&nbsp;</a></span>dd_exchange_mode</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ctl_t::dd_exchange_mode</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Particle exchange: 0=sort/push (default), 1=direct pack/compact. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03580">3580</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7375,7 +7396,7 @@ Data Fields</h2></td></tr>
 <p>Whether the executable implements the domain decomposition. </p>
 <p >This flag is set by the trac tool; all other tools of MPTRAC always work on the full meteorological grid and must not be used with domain decomposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03582">3582</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03585">3585</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>

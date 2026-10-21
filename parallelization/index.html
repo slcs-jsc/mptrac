@@ -1066,6 +1066,16 @@ systems. As in OpenMP, the programmer can annotate C, C++, and Fortran
 source code to identify the areas that should be accelerated using
 compiler directives and additional functions.</p>
 <h2 id="parallelization-strategy-of-mptrac">Parallelization strategy of MPTRAC</h2>
+<p>For spatial domain decomposition, build the <code>trac</code> tool with <code>MPI=1 DD=1</code>
+and start one MPI rank per subdomain. <code>DD_EXCHANGE_MODE=0</code> (the default)
+keeps the existing sort/push exchange path, with sorting controlled by
+<code>DD_SORT_DT</code> (default: 1800 s). Set <code>DD_EXCHANGE_MODE=1</code> to pack outgoing
+particles directly into MPI buffers and compact the retained particles in a
+linear scan without sorting. Invalid particles are removed in the same scan.
+In mode 1, <code>DD_SORT_DT</code> and the general <code>SORT_DT</code> do not trigger sorting.
+Both modes use the same subdomain assignment and MPI communication. On OpenACC
+builds, mode 1 synchronizes the active particle and cache arrays with the host
+before exchange.</p>
 <p>In MPTRAC, the OpenMP parallelization is always enabled to exploit the
 multi-core compute capabilities of modern computing systems. The
 OpenMP parallelization is used to distribute the trajectory
