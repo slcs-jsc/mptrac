@@ -553,6 +553,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: dd_subdomains_meridional
      INTEGER(c_int) :: dd_halos_size
      REAL(c_double) :: dd_sort_dt
+     INTEGER(c_int) :: dd_exchange_mode
   END TYPE ctl_t
 
   ! Meteorological data...

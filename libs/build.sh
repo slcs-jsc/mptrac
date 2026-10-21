@@ -96,7 +96,7 @@ unpack() {
 # --------------------------------------------------
 
 [[ $# -lt 1 ]] && print_help
-while getopts amcgtzijfshxnlkepd: flag ; do
+while getopts amcgtzijfshxnlkep:d flag ; do
     case "${flag}" in
         a) build[all]=true       ; echo "build all libraries      " ;;
         m) build[mandatory]=true ; echo "build mandatory libraries" ;;

@@ -3573,8 +3573,11 @@ typedef struct {
   /*! Domain decomposition size of halos given in grid-points. */
   int dd_halos_size;
 
-  /*! Sorting time interval for the compactification. */
+  /*! Sorting time interval for the compactification (DD_EXCHANGE_MODE=0). */
   double dd_sort_dt;
+
+  /*! Particle exchange: 0=sort/push (default), 1=direct pack/compact. */
+  int dd_exchange_mode;
 
   /*! Whether the executable implements the domain decomposition. This flag is
       set by the trac tool; all other tools of MPTRAC always work on the full
@@ -3648,13 +3651,13 @@ typedef struct {
  */
 typedef struct {
 
-  /*! Isosurface variables. */
+  /*! Particle-specific isosurface variables. */
   double iso_var[NP];
 
-  /*! Isosurface balloon pressure [hPa]. */
+  /*! Shared balloon pressure time series [hPa] for ISOSURF=4. */
   double iso_ps[NP];
 
-  /*! Isosurface balloon time [s]. */
+  /*! Shared balloon times [s] for ISOSURF=4. */
   double iso_ts[NP];
 
   /*! Isosurface balloon number of data points. */
@@ -4911,6 +4914,22 @@ void dd_atm2particles(
   particle_t * particles,
   const int npart);
 
+/**
+ * @brief Pack outgoing particles and compact local arrays without sorting.
+ *
+ * Copies outgoing particles into @p particles, removes them and invalid
+ * entries from the active atmosphere, and moves retained particles and
+ * their particle-specific cache data into consecutive local slots. Shared
+ * balloon time and pressure series remain unchanged. The caller must
+ * allocate space for @p npart outgoing particles.
+ */
+void dd_pack_compact(
+  const ctl_t * ctl,
+  cache_t * cache,
+  atm_t * atm,
+  particle_t * particles,
+  const int npart);
+
 /*!
  * @brief Determine MPI subdomain from particle coordinates.
  *
@@ -5191,6 +5210,14 @@ void dd_push(
   const ctl_t * ctl,
   atm_t * atm,
   cache_t * cache,
+  int *npart);
+
+/**
+ * @brief Count outgoing particles before direct packing and compaction.
+ */
+void dd_count_outgoing(
+  const ctl_t * ctl,
+  const atm_t * atm,
   int *npart);
 
 
@@ -6370,8 +6397,8 @@ void module_convection(
  *
  * The routine performs the following steps:
  * 1. Determine the destination subdomain for each particle.
- * 2. Sort particles so that locally retained particles appear first and
- *    particles that must be exported appear afterward.
+ * 2. With DD_EXCHANGE_MODE=0, use the original sort/push path; with mode 1,
+ *    pack outgoing particles and compact retained particles without sorting.
  * 3. Convert particle data from the atmospheric structure-of-arrays
  *    representation into a temporary particle buffer
  *    (array-of-structures).

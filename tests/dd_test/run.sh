@@ -8,6 +8,7 @@ set -e
 #   skip_wind: Skip wind data generation
 #   skip_run: Skip MPTRAC simulation run
 #   skip_compare: Skip result comparison
+# Set DD_EXCHANGE_MODE=0 or 1 to select the exchange path (default: 0).
 # Arguments can be provided in any order
 
 #################################################################################################################
@@ -77,6 +78,7 @@ cpus_per_task=1                     # number of CPUs per task
 
 domains_lon=3                       # number of subdomains in longitudinal direction
 domains_lat=3                       # number of subdomains in latitudinal direction
+dd_exchange_mode=${DD_EXCHANGE_MODE:-0}
 
 # Set parameters for atmospheric initialization
 use_evenly_distributed=0            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
@@ -124,8 +126,8 @@ subgrid_pos_lon_offset=$(echo "scale=6; $subgrid_pos_dlon / 2" | bc)
 subgrid_pos_lat_offset=$(echo "scale=6; $subgrid_pos_dlat / 2" | bc)
 dex=$((met_grid_nx/domains_lon + 10))
 dey=$((met_grid_ny/domains_lat + 10))
-grid_nx=$((met_grid_nx * grid_lon_size / 360))
-grid_ny=$((met_grid_ny * grid_lat_size / 180))
+grid_nx=$dex
+grid_ny=$dey
 
 #print parameters
 echo "[INFO] ntasks_per_node: $ntasks_per_node"
@@ -237,8 +239,8 @@ ATM_DT_OUT = ${met_dt_out}
 GRID_DT_OUT = 25920000
 GRID_LON0 = ${grid_lon_start}
 GRID_LON1 = $((grid_lon_start + grid_lon_size))
-GRID_LAT0 = ${grid_lat_start}
-GRID_LAT1 = $((grid_lat_start + grid_lat_size))
+GRID_LAT0 = $((grid_lat_start - grid_lat_size))
+GRID_LAT1 = ${grid_lat_start}
 GRID_NX = ${grid_nx}
 GRID_NY = ${grid_ny}
 ENSEMBLE = 1
@@ -251,6 +253,7 @@ QNT_NAME[4] = target_subdomain
 DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
+DD_EXCHANGE_MODE = ${dd_exchange_mode}
 NAP_MAX = ${npmax}
 EOF
 
@@ -336,8 +339,8 @@ ATM_DT_OUT = ${met_dt_out}
 GRID_DT_OUT = 25920000
 GRID_LON0 = ${grid_lon_start}
 GRID_LON1 = $((grid_lon_start + grid_lon_size))
-GRID_LAT0 = ${grid_lat_start}
-GRID_LAT1 = $((grid_lat_start + grid_lat_size))
+GRID_LAT0 = $((grid_lat_start - grid_lat_size))
+GRID_LAT1 = ${grid_lat_start}
 GRID_NX = ${grid_nx}
 GRID_NY = ${grid_ny}
 ENSEMBLE = 1
@@ -350,6 +353,7 @@ QNT_NAME[4] = target_subdomain
 DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
+DD_EXCHANGE_MODE = ${dd_exchange_mode}
 NAP_MAX = ${npmax}
 EOF
 done

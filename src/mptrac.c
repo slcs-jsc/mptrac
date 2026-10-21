@@ -2036,6 +2036,92 @@ void dd_atm2particles(
 /*****************************************************************************/
 
 #ifdef DD
+void dd_pack_compact(
+  const ctl_t *ctl,
+  cache_t *cache,
+  atm_t *atm,
+  particle_t *particles,
+  const int npart) {
+
+  /* Set timer... */
+  SELECT_TIMER("DD_PACK_COMPACT", "DD");
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  const int np = atm->np;
+#ifdef _OPENACC
+  if (np > 0) {
+#pragma acc update self(atm->time[0:np], atm->p[0:np], \
+                        atm->lon[0:np], atm->lat[0:np], \
+                        atm->q[0:ctl->nq][0:np], cache->dt[0:np], \
+                        cache->iso_var[0:np], cache->uvwp[0:np][0:3], \
+                        cache->rs[0:3*np])
+  }
+#endif
+
+  /* Pack outgoing particles and fill gaps with the remaining local ones... */
+  int nkeep = 0, nsend = 0, nlost = 0;
+  for (int ip = 0; ip < np; ip++) {
+    const int current = (int) atm->q[ctl->qnt_current_subdomain][ip];
+    const int target = (int) atm->q[ctl->qnt_target_subdomain][ip];
+    if (current < 0 || target < 0) {
+      nlost++;
+      continue;
+    }
+
+    if (target != rank) {
+      particles[nsend].time = atm->time[ip];
+      particles[nsend].p = atm->p[ip];
+      particles[nsend].lon = atm->lon[ip];
+      particles[nsend].lat = atm->lat[ip];
+      for (int iq = 0; iq < ctl->nq; iq++)
+	particles[nsend].q[iq] = atm->q[iq][ip];
+      nsend++;
+      continue;
+    }
+
+    if (nkeep != ip) {
+      atm->time[nkeep] = atm->time[ip];
+      atm->p[nkeep] = atm->p[ip];
+      atm->lon[nkeep] = atm->lon[ip];
+      atm->lat[nkeep] = atm->lat[ip];
+      for (int iq = 0; iq < ctl->nq; iq++)
+	atm->q[iq][nkeep] = atm->q[iq][ip];
+      cache->dt[nkeep] = cache->dt[ip];
+      cache->iso_var[nkeep] = cache->iso_var[ip];
+      for (int i = 0; i < 3; i++) {
+	cache->uvwp[nkeep][i] = cache->uvwp[ip][i];
+	cache->rs[3 * nkeep + i] = cache->rs[3 * ip + i];
+      }
+    }
+    nkeep++;
+  }
+
+  if (nsend != npart)
+    ERRMSG("Inconsistent number of outgoing particles!");
+  if (nlost > 0)
+    WARN("Rank %d: %d particles have invalid subdomain and will be lost",
+	 rank, nlost);
+  atm->np = nkeep;
+
+#ifdef _OPENACC
+  if (nkeep > 0) {
+#pragma acc update device(atm->time[0:nkeep], atm->p[0:nkeep], \
+                          atm->lon[0:nkeep], atm->lat[0:nkeep], \
+                          atm->q[0:ctl->nq][0:nkeep], cache->dt[0:nkeep], \
+                          cache->iso_var[0:nkeep], \
+                          cache->uvwp[0:nkeep][0:3], \
+                          cache->rs[0:3*nkeep])
+  }
+#pragma acc update device(atm->np)
+#endif
+}
+#endif
+
+/*****************************************************************************/
+
+#ifdef DD
 int dd_calc_subdomain_from_coords(
   const ctl_t *ctl,
   const dd_t *dd,
@@ -2524,6 +2610,35 @@ void dd_sort_help(
 #endif
   for (int ip = 0; ip < np; ip++)
     a[ip] = dd->tmp[ip];
+}
+#endif
+
+/*****************************************************************************/
+
+#ifdef DD
+void dd_count_outgoing(
+  const ctl_t *ctl,
+  const atm_t *atm,
+  int *npart) {
+
+  /* Count particles that must be sent to another rank... */
+  SELECT_TIMER("DD_COUNT_OUTGOING", "DD");
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  const int np = atm->np;
+#ifdef _OPENACC
+  if (np > 0) {
+#pragma acc update self(atm->q[ctl->qnt_current_subdomain][0:np], \
+                        atm->q[ctl->qnt_target_subdomain][0:np])
+  }
+#endif
+  int nsend = 0;
+  for (int ip = 0; ip < np; ip++)
+    if ((int) atm->q[ctl->qnt_current_subdomain][ip] >= 0
+        && (int) atm->q[ctl->qnt_target_subdomain][ip] >= 0
+        && (int) atm->q[ctl->qnt_target_subdomain][ip] != rank)
+      nsend++;
+  *npart = nsend;
 }
 #endif
 
@@ -4195,11 +4310,16 @@ void module_dd(
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
 
-  /* Sort particles according to location and target rank... */
-  if (fmod(t, ctl->dd_sort_dt) == 0)
-    dd_sort(ctl, *met, atm, dd, &npart);
-  else
-    dd_push(ctl, atm, cache, &npart);
+  if (ctl->dd_exchange_mode == 0) {
+    /* Original sort/push exchange path... */
+    if (fmod(t, ctl->dd_sort_dt) == 0)
+      dd_sort(ctl, *met, atm, dd, &npart);
+    else
+      dd_push(ctl, atm, cache, &npart);
+  } else {
+    /* Count outgoing particles for direct packing and compaction... */
+    dd_count_outgoing(ctl, atm, &npart);
+  }
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   if (npart > capacity) {
@@ -4213,7 +4333,10 @@ void module_dd(
   }
 
   /* Transform from struct of array to array of struct... */
-  dd_atm2particles(ctl, cache, atm, particles, npart);
+  if (ctl->dd_exchange_mode == 0)
+    dd_atm2particles(ctl, cache, atm, particles, npart);
+  else
+    dd_pack_compact(ctl, cache, atm, particles, npart);
 
   SELECT_TIMER("SYNC", "DD");
   MPI_Barrier(MPI_COMM_WORLD);
@@ -7813,6 +7936,10 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
   ctl->dd_sort_dt =
     (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "1800", NULL);
+  ctl->dd_exchange_mode =
+    (int) scan_ctl(filename, argc, argv, "DD_EXCHANGE_MODE", -1, "0", NULL);
+  if (ctl->dd_exchange_mode < 0 || ctl->dd_exchange_mode > 1)
+    ERRMSG("Set DD_EXCHANGE_MODE to 0 (sort/push) or 1 (no sort)!");
 
 #ifdef DD
   /* Check the domain decomposition configuration... */
@@ -8004,7 +8131,8 @@ void mptrac_run_timestep(
   module_timesteps(ctl, cache, *met0, atm, t);
 
   /* Sort particles... */
-  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
+  if (!(ctl->dd && ctl->dd_exchange_mode == 1)
+      && ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
     module_sort(ctl, *met0, atm);
 
   /* Check positions (initial)... */
