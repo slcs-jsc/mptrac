@@ -2040,7 +2040,9 @@ void dd_pack_compact(
   const ctl_t *ctl,
   cache_t *cache,
   atm_t *atm,
+  dd_t *dd,
   particle_t *particles,
+  const int nkeep,
   const int npart) {
 
   /* Set timer... */
@@ -2051,17 +2053,67 @@ void dd_pack_compact(
 
   const int np = atm->np;
 #ifdef _OPENACC
-  if (np > 0) {
-#pragma acc update self(atm->time[0:np], atm->p[0:np], \
-                        atm->lon[0:np], atm->lat[0:np], \
-                        atm->q[0:ctl->nq][0:np], cache->dt[0:np], \
-                        cache->iso_var[0:np], cache->uvwp[0:np][0:3], \
-                        cache->rs[0:3*np])
+  /* The permutation was built by dd_count_outgoing(): kept particles at
+     the front and outgoing particles at the back. Pack before compacting,
+     since the latter overwrites source slots. */
+  if (npart > 0) {
+    SELECT_TIMER("DD_GPU_PACK", "DD");
+#pragma acc enter data create(particles[0:npart])
+#pragma acc parallel loop present(ctl, atm, dd, particles)
+    for (int i = 0; i < npart; i++) {
+      const int ip = dd->perm[np - 1 - i];
+      particles[i].time = atm->time[ip];
+      particles[i].p = atm->p[ip];
+      particles[i].lon = atm->lon[ip];
+      particles[i].lat = atm->lat[ip];
+      for (int iq = 0; iq < ctl->nq; iq++)
+        particles[i].q[iq] = atm->q[iq][ip];
+    }
+    SELECT_TIMER("DD_GPU_SEND_D2H", "DD");
+#pragma acc update self(particles[0:npart])
+#pragma acc exit data delete(particles[0:npart])
   }
-#endif
+
+  /* dd_sort_help stages one double field in dd->tmp before writing it back.
+     Thus no parallel read can race with a write to the original field. */
+  if (nkeep > 0 && nkeep != np) {
+    SELECT_TIMER("DD_GPU_COMPACT", "DD");
+    dd_sort_help(atm->time, dd, nkeep);
+    dd_sort_help(atm->p, dd, nkeep);
+    dd_sort_help(atm->lon, dd, nkeep);
+    dd_sort_help(atm->lat, dd, nkeep);
+    for (int iq = 0; iq < ctl->nq; iq++)
+      dd_sort_help(atm->q[iq], dd, nkeep);
+    dd_sort_help(cache->dt, dd, nkeep);
+    dd_sort_help(cache->iso_var, dd, nkeep);
+    for (int j = 0; j < 3; j++) {
+#pragma acc parallel loop present(cache, dd)
+      for (int i = 0; i < nkeep; i++)
+        dd->tmp[i] = cache->uvwp[dd->perm[i]][j];
+#pragma acc parallel loop present(cache, dd)
+      for (int i = 0; i < nkeep; i++)
+        cache->uvwp[i][j] = (float) dd->tmp[i];
+#pragma acc parallel loop present(cache, dd)
+      for (int i = 0; i < nkeep; i++)
+        dd->tmp[i] = cache->rs[3 * dd->perm[i] + j];
+#pragma acc parallel loop present(cache, dd)
+      for (int i = 0; i < nkeep; i++)
+        cache->rs[3 * i + j] = dd->tmp[i];
+    }
+  }
+
+  const int nlost = np - nkeep - npart;
+  if (nlost > 0)
+    WARN("Rank %d: %d particles have invalid subdomain and will be lost",
+         rank, nlost);
+  atm->np = nkeep;
+#pragma acc update device(atm->np)
+#else
+  (void) dd;
+  (void) nkeep;
 
   /* Pack outgoing particles and fill gaps with the remaining local ones... */
-  int nkeep = 0, nsend = 0, nlost = 0;
+  int nkeep_cpu = 0, nsend = 0, nlost = 0;
   for (int ip = 0; ip < np; ip++) {
     const int current = (int) atm->q[ctl->qnt_current_subdomain][ip];
     const int target = (int) atm->q[ctl->qnt_target_subdomain][ip];
@@ -2081,21 +2133,21 @@ void dd_pack_compact(
       continue;
     }
 
-    if (nkeep != ip) {
-      atm->time[nkeep] = atm->time[ip];
-      atm->p[nkeep] = atm->p[ip];
-      atm->lon[nkeep] = atm->lon[ip];
-      atm->lat[nkeep] = atm->lat[ip];
+    if (nkeep_cpu != ip) {
+      atm->time[nkeep_cpu] = atm->time[ip];
+      atm->p[nkeep_cpu] = atm->p[ip];
+      atm->lon[nkeep_cpu] = atm->lon[ip];
+      atm->lat[nkeep_cpu] = atm->lat[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
-	atm->q[iq][nkeep] = atm->q[iq][ip];
-      cache->dt[nkeep] = cache->dt[ip];
-      cache->iso_var[nkeep] = cache->iso_var[ip];
+	atm->q[iq][nkeep_cpu] = atm->q[iq][ip];
+      cache->dt[nkeep_cpu] = cache->dt[ip];
+      cache->iso_var[nkeep_cpu] = cache->iso_var[ip];
       for (int i = 0; i < 3; i++) {
-	cache->uvwp[nkeep][i] = cache->uvwp[ip][i];
-	cache->rs[3 * nkeep + i] = cache->rs[3 * ip + i];
+	cache->uvwp[nkeep_cpu][i] = cache->uvwp[ip][i];
+	cache->rs[3 * nkeep_cpu + i] = cache->rs[3 * ip + i];
       }
     }
-    nkeep++;
+    nkeep_cpu++;
   }
 
   if (nsend != npart)
@@ -2103,18 +2155,7 @@ void dd_pack_compact(
   if (nlost > 0)
     WARN("Rank %d: %d particles have invalid subdomain and will be lost",
 	 rank, nlost);
-  atm->np = nkeep;
-
-#ifdef _OPENACC
-  if (nkeep > 0) {
-#pragma acc update device(atm->time[0:nkeep], atm->p[0:nkeep], \
-                          atm->lon[0:nkeep], atm->lat[0:nkeep], \
-                          atm->q[0:ctl->nq][0:nkeep], cache->dt[0:nkeep], \
-                          cache->iso_var[0:nkeep], \
-                          cache->uvwp[0:nkeep][0:3], \
-                          cache->rs[0:3*nkeep])
-  }
-#pragma acc update device(atm->np)
+  atm->np = nkeep_cpu;
 #endif
 }
 #endif
@@ -2619,6 +2660,8 @@ void dd_sort_help(
 void dd_count_outgoing(
   const ctl_t *ctl,
   const atm_t *atm,
+  dd_t *dd,
+  int *nkeep,
   int *npart) {
 
   /* Count particles that must be sent to another rank... */
@@ -2627,18 +2670,54 @@ void dd_count_outgoing(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   const int np = atm->np;
 #ifdef _OPENACC
+  int counts[2] = { 0, 0 };
   if (np > 0) {
-#pragma acc update self(atm->q[ctl->qnt_current_subdomain][0:np], \
-                        atm->q[ctl->qnt_target_subdomain][0:np])
+    SELECT_TIMER("DD_GPU_CLASSIFY", "DD");
+#pragma acc data copy(counts[0:2]) present(ctl, atm, dd)
+    {
+#pragma acc parallel loop
+      for (int ip = 0; ip < np; ip++) {
+        const int current = (int) atm->q[ctl->qnt_current_subdomain][ip];
+        const int target = (int) atm->q[ctl->qnt_target_subdomain][ip];
+        int i;
+        if (current < 0 || target < 0)
+          continue;
+        if (target == rank) {
+#pragma acc atomic capture
+          {
+            i = counts[0];
+            counts[0]++;
+          }
+          dd->perm[i] = ip;
+        } else {
+#pragma acc atomic capture
+          {
+            i = counts[1];
+            counts[1]++;
+          }
+          dd->perm[np - 1 - i] = ip;
+        }
+      }
+    }
   }
-#endif
+  *nkeep = counts[0];
+  *npart = counts[1];
+#else
+  (void) dd;
+  int kept = 0;
   int nsend = 0;
-  for (int ip = 0; ip < np; ip++)
-    if ((int) atm->q[ctl->qnt_current_subdomain][ip] >= 0
-        && (int) atm->q[ctl->qnt_target_subdomain][ip] >= 0
-        && (int) atm->q[ctl->qnt_target_subdomain][ip] != rank)
+  for (int ip = 0; ip < np; ip++) {
+    if ((int) atm->q[ctl->qnt_current_subdomain][ip] < 0
+        || (int) atm->q[ctl->qnt_target_subdomain][ip] < 0)
+      continue;
+    if ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank)
+      kept++;
+    else
       nsend++;
+  }
+  *nkeep = kept;
   *npart = nsend;
+#endif
 }
 #endif
 
@@ -4304,7 +4383,7 @@ void module_dd(
   met_t **met) {
 
   /* Initialize particles locally... */
-  int npart = 0, capacity = 0;
+  int npart = 0, nkeep = 0, capacity = 0;
   particle_t *particles = NULL;
 
   /* Assign particles to new subdomains... */
@@ -4318,7 +4397,7 @@ void module_dd(
       dd_push(ctl, atm, cache, &npart);
   } else {
     /* Count outgoing particles for direct packing and compaction... */
-    dd_count_outgoing(ctl, atm, &npart);
+    dd_count_outgoing(ctl, atm, dd, &nkeep, &npart);
   }
 
   /* Ensure particle buffer is large enough for outgoing particles... */
@@ -4336,7 +4415,7 @@ void module_dd(
   if (ctl->dd_exchange_mode == 0)
     dd_atm2particles(ctl, cache, atm, particles, npart);
   else
-    dd_pack_compact(ctl, cache, atm, particles, npart);
+    dd_pack_compact(ctl, cache, atm, dd, particles, nkeep, npart);
 
   SELECT_TIMER("SYNC", "DD");
   MPI_Barrier(MPI_COMM_WORLD);

@@ -4921,13 +4921,18 @@ void dd_atm2particles(
  * entries from the active atmosphere, and moves retained particles and
  * their particle-specific cache data into consecutive local slots. Shared
  * balloon time and pressure series remain unchanged. The caller must
- * allocate space for @p npart outgoing particles.
+ * allocate space for @p npart outgoing particles. With OpenACC,
+ * dd_count_outgoing() also fills @p dd with the source indices used for
+ * device packing and compaction. @p nkeep is the retained count returned
+ * by that classification step.
  */
 void dd_pack_compact(
   const ctl_t * ctl,
   cache_t * cache,
   atm_t * atm,
+  dd_t * dd,
   particle_t * particles,
+  const int nkeep,
   const int npart);
 
 /*!
@@ -5213,11 +5218,18 @@ void dd_push(
   int *npart);
 
 /**
- * @brief Count outgoing particles before direct packing and compaction.
+ * @brief Classify particles before direct packing and compaction.
+ *
+ * Returns the retained and outgoing counts. With OpenACC, also stores
+ * retained source indices at the front of dd->perm and outgoing source
+ * indices at the back; invalid particles have no index. Only the two
+ * counts are copied to the host.
  */
 void dd_count_outgoing(
   const ctl_t * ctl,
   const atm_t * atm,
+  dd_t * dd,
+  int *nkeep,
   int *npart);
 
 

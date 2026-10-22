@@ -9,6 +9,13 @@ set -e
 #   skip_run: Skip MPTRAC simulation run
 #   skip_compare: Skip result comparison
 # Set DD_EXCHANGE_MODE=0 or 1 to select the exchange path (default: 0).
+# Set DD_USE_GPU=1 for an OpenACC build on a GPU node (default: 0).
+# DD_COMPARE_DIR selects reference .tab files (default: data.ref).
+# DD_SAVE_DIR saves this run's .tab files for a later CPU/GPU comparison.
+# From tests/dd_test, for example:
+#   DD_EXCHANGE_MODE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
+#   DD_EXCHANGE_MODE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
+# Add "hpc" on a GPU node using the configured Slurm launcher.
 # Arguments can be provided in any order
 
 #################################################################################################################
@@ -24,7 +31,6 @@ echo "[INFO] Working directory: $work_dir"
 echo "[INFO] Meteo data directory: $meteo_data_dir"
 echo "[INFO] Meteo base path: $metbase"
 cd "$work_dir"
-rm -rf data && mkdir -p data "$meteo_data_dir"
 
 # Parse arguments - check all arguments for keywords
 compile=""
@@ -55,6 +61,13 @@ for arg in "$@"; do
     esac
 done
 
+# Keep generated wind fields when skip_wind is requested. This lets a CPU
+# baseline and a GPU run use the same meteorological input without rebuilding it.
+if [[ "$skip_wind" != "skip_wind" ]]; then
+    rm -rf data
+fi
+mkdir -p data "$meteo_data_dir"
+
 # Check if running on HPC system
 if [[ "$hpc_mode" == "hpc" ]]; then
     echo "[INFO] Running in HPC mode"
@@ -73,8 +86,10 @@ fi
 
 ntasks_per_node=9       # fixed number of tasks per node
 
-use_gpu=0                           # enable GPU support in MPTRAC compilation (0=off, 1=on)
+use_gpu=${DD_USE_GPU:-0}            # enable GPU support in MPTRAC compilation (0=off, 1=on)
 cpus_per_task=1                     # number of CPUs per task
+mpi_cc=${DD_MPICC:-mpicc}
+mpi_run=${DD_MPIRUN:-mpirun}
 
 domains_lon=3                       # number of subdomains in longitudinal direction
 domains_lat=3                       # number of subdomains in latitudinal direction
@@ -184,14 +199,10 @@ else
     cd "$mptrac_dir"/src
     make clean
     
-    # First compile all executables with GPU support (including trac)
-    echo "[INFO] Compiling all executables"
-    make -j DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
-    
-    # Then recompile atm_init without GPU support (atm_init doesn't work with GPU=1)
-    echo "[INFO] Recompiling atm_init without GPU support"
-    rm -f "$mptrac_dir"/src/atm_init "$mptrac_dir"/src/wind
-    make atm_init wind DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
+    # Build input generators on the CPU, then force a separate trac object
+    # build with the requested accelerator setting.
+    make -j atm_init wind time2jsec DD=1 MPI=1 STATIC=0 GPU=0 THRUST=0 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
+    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
 fi
 
 #################################################################################################################
@@ -423,13 +434,24 @@ else
                 "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
         fi
     else
-        mpirun --oversubscribe -np $ntasks "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > "$work_dir"/data/mpirun_output.log 2>&1
+        "$mpi_run" --oversubscribe -np $ntasks "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > "$work_dir"/data/mpirun_output.log 2>&1
     fi
 fi
 
 #################################################################################################################
 # Compare results
 #################################################################################################################
+
+cd "$work_dir"
+if [ -n "${DD_SAVE_DIR:-}" ]; then
+    mkdir -p "$DD_SAVE_DIR"
+    while IFS= read -r -d '' data_file; do
+        rel_path=${data_file#data/}
+        mkdir -p "$DD_SAVE_DIR/$(dirname "$rel_path")"
+        cp "$data_file" "$DD_SAVE_DIR/$rel_path"
+    done < <(find data -type f -name '*.tab' -print0)
+    echo "[INFO] Saved .tab files to $DD_SAVE_DIR"
+fi
 
 # Check if result comparison should be skipped
 if [[ "$skip_compare" == "skip_compare" ]]; then
@@ -438,49 +460,12 @@ if [[ "$skip_compare" == "skip_compare" ]]; then
     exit 0
 fi
 
-cd "$work_dir"
-echo -e "\nComparing .tab files recursively..."
-error=0
-if [ -d "data.ref" ]; then
-    # Compare sorted .tab contents because DD output ordering can vary across ranks.
-    # Find all .tab files in data.ref and compare with corresponding files in data
-    while IFS= read -r -d '' ref_file; do
-        # Get relative path from data.ref
-        rel_path="${ref_file#data.ref/}"
-        data_file="data/$rel_path"
-        
-        if [ -f "$data_file" ]; then
-            if diff -q <(sort "$data_file") <(sort "$ref_file") > /dev/null; then
-                echo "Files $data_file and $ref_file are identical"
-            else
-                echo "Files $data_file and $ref_file differ"
-                error=1
-            fi
-        else
-            echo "Missing file: $data_file"
-            error=1
-        fi
-    done < <(find data.ref -type f -name "*.tab" -print0)
-
-    # Also check for extra .tab files in data that don't exist in data.ref
-    while IFS= read -r -d '' data_file; do
-        # Get relative path from data
-        rel_path="${data_file#data/}"
-        ref_file="data.ref/$rel_path"
-        
-        if [ ! -f "$ref_file" ]; then
-            echo "Extra .tab file in data: $data_file"
-            error=1
-        fi
-    done < <(find data -type f -name "*.tab" -print0)
+compare_dir=${DD_COMPARE_DIR:-data.ref}
+if [ -d "$compare_dir" ]; then
+    bash check.sh data "$compare_dir"
 else
-    echo "Reference directory data.ref not found - skipping comparison"
+    echo "[ERROR] Reference directory $compare_dir not found"
+    exit 1
 fi
 
-if [ $error -eq 0 ]; then
-    echo "[INFO] Test completed successfully."
-else
-    echo "[ERROR] Some files do not match."
-fi
-
-exit $error
+echo "[INFO] Test completed successfully."
