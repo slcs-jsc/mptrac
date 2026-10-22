@@ -11872,9 +11872,7 @@ void dd_read_met_nc_grid(
 
     dd->halo_bnd_count[0] = 1;
     dd->halo_bnd_count[1] = (size_t) met->np;
-    dd->halo_bnd_count[2] =
-      (size_t) met->ny +
-      (size_t) ctl->dd_halos_size * ((top || bottom) ? 1 : 2);
+    dd->halo_bnd_count[2] = dd->subdomain_count[2];
     dd->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
 
     dd->halo_offset_start = left ? (int) dd->halo_bnd_count[3] : 0;
