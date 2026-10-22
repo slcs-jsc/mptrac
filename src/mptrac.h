@@ -3570,7 +3570,8 @@ typedef struct {
       decomposition is used, otherwise 1). */
   int dd_subdomains_meridional;
 
-  /*! Domain decomposition size of halos given in grid-points. */
+  /*! Domain decomposition halo size in grid points. Must be non-negative and
+      fit within the global grid and local EX/EY array capacities. */
   int dd_halos_size;
 
   /*! Sorting time interval for the compactification (DD_EXCHANGE_MODE=0). */

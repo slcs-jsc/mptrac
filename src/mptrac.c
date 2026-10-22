@@ -8021,6 +8021,8 @@ void mptrac_read_ctl(
     if (!mpi_initialized)
       ERRMSG
 	("Domain decomposition requires to start the executable with one task per subdomain!");
+    if (ctl->dd_halos_size < 0)
+      ERRMSG("DD_HALOS_SIZE must be non-negative!");
     if (ctl->dd_subdomains_zonal < 1 || ctl->dd_subdomains_meridional < 1)
       ERRMSG("The number of subdomains has to be positive!");
     if (ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional == 1)
@@ -11820,6 +11822,22 @@ void dd_read_met_nc_grid(
     nx_core += dd->nx_glob - ctl->dd_subdomains_zonal * nx_block;
   if (bottom)
     ny_core += dd->ny_glob - ctl->dd_subdomains_meridional * ny_block;
+
+  /* Check halo extents before converting grid indices to size_t... */
+  const int halo = ctl->dd_halos_size;
+  if ((!left && halo > ix0)
+      || (!right && halo > dd->nx_glob - ix0 - nx_core)
+      || (!top && halo > iy0)
+      || (!bottom && halo > dd->ny_glob - iy0 - ny_core))
+    ERRMSG("DD_HALOS_SIZE exceeds the available global grid!");
+
+  const int nx_local = nx_core
+    + (ctl->dd_subdomains_zonal > 1 ? 2 * halo : 0);
+  const int ny_local = ny_core + (!top ? halo : 0) + (!bottom ? halo : 0);
+  if (nx_local > EX || ny_local > EY)
+    ERRMSG("DD halo grid exceeds EX or EY. Increase the grid capacity!");
+  if (nx_local < 2 || ny_local < 2)
+    ERRMSG("DD halo grid needs at least two points in each direction!");
 
   /* Store core met size first... */
   met->nx = nx_core;
