@@ -2067,45 +2067,40 @@ void dd_pack_compact(
       particles[i].lon = atm->lon[ip];
       particles[i].lat = atm->lat[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
-        particles[i].q[iq] = atm->q[iq][ip];
+	particles[i].q[iq] = atm->q[iq][ip];
     }
     SELECT_TIMER("DD_GPU_SEND_D2H", "DD");
 #pragma acc update self(particles[0:npart])
 #pragma acc exit data delete(particles[0:npart])
   }
 
-  /* dd_sort_help stages one double field in dd->tmp before writing it back.
+  /* sort_array stages one field in dd->tmp before writing it back.
      Thus no parallel read can race with a write to the original field. */
   if (nkeep > 0 && nkeep != np) {
     SELECT_TIMER("DD_GPU_COMPACT", "DD");
-    dd_sort_help(atm->time, dd, nkeep);
-    dd_sort_help(atm->p, dd, nkeep);
-    dd_sort_help(atm->lon, dd, nkeep);
-    dd_sort_help(atm->lat, dd, nkeep);
+    sort_array(atm->time, dd->perm, dd->tmp, nkeep);
+    sort_array(atm->p, dd->perm, dd->tmp, nkeep);
+    sort_array(atm->lon, dd->perm, dd->tmp, nkeep);
+    sort_array(atm->lat, dd->perm, dd->tmp, nkeep);
     for (int iq = 0; iq < ctl->nq; iq++)
-      dd_sort_help(atm->q[iq], dd, nkeep);
-    dd_sort_help(cache->dt, dd, nkeep);
-    dd_sort_help(cache->iso_var, dd, nkeep);
+      sort_array(atm->q[iq], dd->perm, dd->tmp, nkeep);
+    sort_array(cache->dt, dd->perm, dd->tmp, nkeep);
+    sort_array(cache->iso_var, dd->perm, dd->tmp, nkeep);
+    sort_uvwp(cache, dd->perm, dd->tmp, nkeep);
     for (int j = 0; j < 3; j++) {
 #pragma acc parallel loop present(cache, dd)
       for (int i = 0; i < nkeep; i++)
-        dd->tmp[i] = cache->uvwp[dd->perm[i]][j];
+	dd->tmp[i] = cache->rs[3 * dd->perm[i] + j];
 #pragma acc parallel loop present(cache, dd)
       for (int i = 0; i < nkeep; i++)
-        cache->uvwp[i][j] = (float) dd->tmp[i];
-#pragma acc parallel loop present(cache, dd)
-      for (int i = 0; i < nkeep; i++)
-        dd->tmp[i] = cache->rs[3 * dd->perm[i] + j];
-#pragma acc parallel loop present(cache, dd)
-      for (int i = 0; i < nkeep; i++)
-        cache->rs[3 * i + j] = dd->tmp[i];
+	cache->rs[3 * i + j] = dd->tmp[i];
     }
   }
 
   const int nlost = np - nkeep - npart;
   if (nlost > 0)
     WARN("Rank %d: %d particles have invalid subdomain and will be lost",
-         rank, nlost);
+	 rank, nlost);
   atm->np = nkeep;
 #pragma acc update device(atm->np)
 #else
@@ -2436,6 +2431,85 @@ void dd_particles2atm(
 
 /*****************************************************************************/
 
+void sort_array(
+  double *array,
+  const int *perm,
+  double *tmp,
+  const int np) {
+
+  if (np == 0)
+    return;
+
+  /* The caller keeps all three buffers resident on the device. */
+#ifdef _OPENACC
+#pragma acc data present(array[0:np],perm[0:np],tmp[0:np])
+#endif
+  {
+
+  /* perm maps each destination index to its original source index. Gather
+     every source value before any destination can overwrite it. */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    tmp[ip] = array[perm[ip]];
+
+  /* The staging pass is complete, so writes to array are independent. */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    array[ip] = tmp[ip];
+  }
+}
+
+/*****************************************************************************/
+
+void sort_uvwp(
+  cache_t *cache,
+  const int *perm,
+  double *tmp,
+  const int np) {
+
+  if (np == 0)
+    return;
+
+  /* Reuse the caller's device-resident permutation and staging buffer. */
+#ifdef _OPENACC
+#pragma acc data present(cache,perm[0:np],tmp[0:np])
+#endif
+  {
+
+  /* The three float components share one double staging buffer. Finish
+     both passes for a component before reusing the buffer for the next. */
+  for (int j = 0; j < 3; j++) {
+    /* Gather first so in-place writes cannot race with source reads. */
+#ifdef _OPENACC
+#pragma acc parallel loop
+#else
+#pragma omp parallel for
+#endif
+    for (int ip = 0; ip < np; ip++)
+      tmp[ip] = cache->uvwp[perm[ip]][j];
+
+    /* Every float value is represented exactly while staged as double. */
+#ifdef _OPENACC
+#pragma acc parallel loop
+#else
+#pragma omp parallel for
+#endif
+    for (int ip = 0; ip < np; ip++)
+      cache->uvwp[ip][j] = (float) tmp[ip];
+  }
+  }
+}
+
+/*****************************************************************************/
+
 #ifdef DD
 void dd_push(
   const ctl_t *ctl,
@@ -2516,6 +2590,7 @@ void dd_push(
 void dd_sort(
   const ctl_t *ctl,
   const met_t *met0,
+  cache_t *cache,
   atm_t *atm,
   dd_t *dd,
   int *npart) {
@@ -2579,12 +2654,15 @@ void dd_sort(
 #endif
 
   /* Sort data... */
-  dd_sort_help(atm->time, dd, np);
-  dd_sort_help(atm->p, dd, np);
-  dd_sort_help(atm->lon, dd, np);
-  dd_sort_help(atm->lat, dd, np);
+  sort_array(atm->time, dd->perm, dd->tmp, np);
+  sort_array(atm->p, dd->perm, dd->tmp, np);
+  sort_array(atm->lon, dd->perm, dd->tmp, np);
+  sort_array(atm->lat, dd->perm, dd->tmp, np);
   for (int iq = 0; iq < ctl->nq; iq++)
-    dd_sort_help(atm->q[iq], dd, np);
+    sort_array(atm->q[iq], dd->perm, dd->tmp, np);
+  sort_array(cache->dt, dd->perm, dd->tmp, np);
+  sort_array(cache->iso_var, dd->perm, dd->tmp, np);
+  sort_uvwp(cache, dd->perm, dd->tmp, np);
 
   /* Count kept, outgoing, and invalid particles in one pass... */
   int nkeep = 0, nsend = 0, nlost = 0;
@@ -2625,33 +2703,6 @@ void dd_sort(
 /*****************************************************************************/
 
 #ifdef DD
-void dd_sort_help(
-  double *a,
-  dd_t *dd,
-  const int np) {
-
-  /* Reordering of array... */
-#ifdef _OPENACC
-#pragma acc data present(dd,a)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    dd->tmp[ip] = a[dd->perm[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    a[ip] = dd->tmp[ip];
-}
-#endif
-
-/*****************************************************************************/
-
-#ifdef DD
 void dd_count_outgoing(
   const ctl_t *ctl,
   const atm_t *atm,
@@ -2672,26 +2723,26 @@ void dd_count_outgoing(
     {
 #pragma acc parallel loop
       for (int ip = 0; ip < np; ip++) {
-        const int current = (int) atm->q[ctl->qnt_current_subdomain][ip];
-        const int target = (int) atm->q[ctl->qnt_target_subdomain][ip];
-        int i;
-        if (current < 0 || target < 0)
-          continue;
-        if (target == rank) {
+	const int current = (int) atm->q[ctl->qnt_current_subdomain][ip];
+	const int target = (int) atm->q[ctl->qnt_target_subdomain][ip];
+	int i;
+	if (current < 0 || target < 0)
+	  continue;
+	if (target == rank) {
 #pragma acc atomic capture
-          {
-            i = counts[0];
-            counts[0]++;
-          }
-          dd->perm[i] = ip;
-        } else {
+	  {
+	    i = counts[0];
+	    counts[0]++;
+	  }
+	  dd->perm[i] = ip;
+	} else {
 #pragma acc atomic capture
-          {
-            i = counts[1];
-            counts[1]++;
-          }
-          dd->perm[np - 1 - i] = ip;
-        }
+	  {
+	    i = counts[1];
+	    counts[1]++;
+	  }
+	  dd->perm[np - 1 - i] = ip;
+	}
       }
     }
   }
@@ -2703,7 +2754,7 @@ void dd_count_outgoing(
   int nsend = 0;
   for (int ip = 0; ip < np; ip++) {
     if ((int) atm->q[ctl->qnt_current_subdomain][ip] < 0
-        || (int) atm->q[ctl->qnt_target_subdomain][ip] < 0)
+	|| (int) atm->q[ctl->qnt_target_subdomain][ip] < 0)
       continue;
     if ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank)
       kept++;
@@ -4387,7 +4438,7 @@ void module_dd(
   if (ctl->dd_exchange_mode == 0) {
     /* Original sort/push exchange path... */
     if (fmod(t, ctl->dd_sort_dt) == 0)
-      dd_sort(ctl, *met, atm, dd, &npart);
+      dd_sort(ctl, *met, cache, atm, dd, &npart);
     else
       dd_push(ctl, atm, cache, &npart);
   } else {
@@ -6124,6 +6175,7 @@ void module_sedi(
 void module_sort(
   const ctl_t *ctl,
   const met_t *met0,
+  cache_t *cache,
   atm_t *atm) {
 
   /* Set timer... */
@@ -6138,7 +6190,7 @@ void module_sort(
 
 #ifdef _OPENACC
 #pragma acc enter data create(a[0:np],p[0:np])
-#pragma acc data present(ctl,met0,atm,a,p)
+#pragma acc data present(ctl,met0,cache,atm,a,p)
 #endif
 
   /* Get box index... */
@@ -6178,12 +6230,15 @@ void module_sort(
 #endif
 
   /* Sort data... */
-  module_sort_help(atm->time, p, np);
-  module_sort_help(atm->p, p, np);
-  module_sort_help(atm->lon, p, np);
-  module_sort_help(atm->lat, p, np);
+  sort_array(atm->time, p, a, np);
+  sort_array(atm->p, p, a, np);
+  sort_array(atm->lon, p, a, np);
+  sort_array(atm->lat, p, a, np);
   for (int iq = 0; iq < ctl->nq; iq++)
-    module_sort_help(atm->q[iq], p, np);
+    sort_array(atm->q[iq], p, a, np);
+  sort_array(cache->dt, p, a, np);
+  sort_array(cache->iso_var, p, a, np);
+  sort_uvwp(cache, p, a, np);
 
   /* Free... */
 #ifdef _OPENACC
@@ -6191,44 +6246,6 @@ void module_sort(
 #endif
   free(a);
   free(p);
-}
-
-/*****************************************************************************/
-
-void module_sort_help(
-  double *a,
-  const int *p,
-  const int np) {
-
-  /* Allocate... */
-  double *restrict const help =
-    (double *) malloc((size_t) np * sizeof(double));
-  if (help == NULL)
-    ERRMSG("Out of memory!");
-
-  /* Reordering of array... */
-#ifdef _OPENACC
-#pragma acc enter data create(help[0:np])
-#pragma acc data present(a,p,help)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = a[p[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    a[ip] = help[ip];
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete(help)
-#endif
-  free(help);
 }
 
 /*****************************************************************************/
@@ -8033,8 +8050,7 @@ void mptrac_read_ctl(
       ERRMSG
 	("Domain decomposition requires the quantities current_subdomain and target_subdomain!");
     if (ctl->met_coord_type != 0)
-      ERRMSG
-	("Domain decomposition requires a lat/lon meteorological grid!");
+      ERRMSG("Domain decomposition requires a lat/lon meteorological grid!");
     if (ctl->radio_depo)
       ERRMSG
 	("Radioactive deposition is not supported with domain decomposition!");
@@ -8209,7 +8225,7 @@ void mptrac_run_timestep(
   /* Sort particles... */
   if (!(ctl->dd && ctl->dd_exchange_mode == 1)
       && ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
-    module_sort(ctl, *met0, atm);
+    module_sort(ctl, *met0, cache, atm);
 
   /* Check positions (initial)... */
   module_position(cache, *met0, *met1, atm, 0);
