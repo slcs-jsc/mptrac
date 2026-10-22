@@ -9221,7 +9221,22 @@ Lars Hoffmann </dd></dl>
 </div><div class="memdoc">
 
 <p>Pack outgoing particles and compact local arrays without sorting. </p>
-<p >Copies outgoing particles into <code>particles</code>, removes them and invalid entries from the active atmosphere, and moves retained particles and their particle-specific cache data into consecutive local slots. Shared balloon time and pressure series remain unchanged. The caller must allocate space for <code>npart</code> outgoing particles. With OpenACC, <a class="el" href="mptrac_8h.html#a9f5414891f681d7d642d6f3178c5bf00" title="Classify particles before direct packing and compaction.">dd_count_outgoing()</a> also fills <code>dd</code> with the source indices used for device packing and compaction. <code>nkeep</code> is the retained count returned by that classification step. </p>
+<p >This routine writes particles assigned to another MPI rank into <code>particles</code>, removes those particles and invalid entries from the active atmosphere, and compacts the particles retained on the current rank into the first <code>nkeep</code> slots. It moves <code>time</code>, <code>p</code>, <code>lon</code>, <code>lat</code>, all quantities <code>q[iq]</code>, and the particle-specific cache values <code>dt</code>, <code>iso_var</code>, <code>uvwp</code>, and <code>rs</code> together. The shared <code>iso_ps</code> and <code>iso_ts</code> cache series are not changed.</p>
+<p >The caller must first call <a class="el" href="mptrac_8h.html#a9f5414891f681d7d642d6f3178c5bf00" title="Classify particles before direct packing and compaction.">dd_count_outgoing()</a> and provide space for <code>npart</code> outgoing particles. With OpenACC, that call also places source indices in <code>dd-&gt;perm</code>. This routine uses those indices to pack particles on the device before compacting the local arrays, then copies only the outgoing particle buffer to the host for MPI communication. On the CPU, packing and compaction proceed in one sequential pass.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctl</td><td>Control structure containing the subdomain quantity indices and the number of quantities. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">cache</td><td>Particle-specific cache values for retained particles are compacted with the atmosphere. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">atm</td><td>Atmospheric state. On return, <code>atm-&gt;np</code> equals the number of retained particles. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">dd</td><td>Source-index mapping produced by <a class="el" href="mptrac_8h.html#a9f5414891f681d7d642d6f3178c5bf00" title="Classify particles before direct packing and compaction.">dd_count_outgoing()</a> in OpenACC builds. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">particles</td><td>Buffer for <code>npart</code> outgoing particles, allocated by the caller. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">nkeep</td><td>Number of particles retained on this rank. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">npart</td><td>Number of particles sent to other ranks.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Particle-specific cache values are preserved for retained particles but are not included in the MPI particle buffer. Atomic index assignment in OpenACC builds may change particle order relative to the CPU implementation.</dd></dl>
+<dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
 </div>
 </div>
@@ -9655,7 +9670,20 @@ Lars Hoffmann </dd></dl>
 </div><div class="memdoc">
 
 <p>Classify particles before direct packing and compaction. </p>
-<p >Returns the retained and outgoing counts. With OpenACC, also stores retained source indices at the front of dd-&gt;perm and outgoing source indices at the back; invalid particles have no index. Only the two counts are copied to the host. </p>
+<p >For DD_EXCHANGE_MODE=1, classify each active particle by its current and target subdomain indices. Particles with either index negative are invalid. Valid particles targeting the current MPI rank are retained; the other valid particles are outgoing. The routine returns the two counts without changing the atmospheric state.</p>
+<p >With OpenACC, atomic counters also place retained source indices at the front of <code>dd-&gt;perm</code> and outgoing source indices at the back. Invalid particles receive no index. Only the two counts are copied to the host; particle data remain on the device. In CPU builds, the routine counts particles without filling <code>dd-&gt;perm</code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctl</td><td>Control structure containing the current and target subdomain quantity indices. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">atm</td><td>Atmospheric state containing particles to classify. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">dd</td><td>Source-index mapping in OpenACC builds; unused in CPU builds. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">nkeep</td><td>Number of valid particles retained on this rank. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">npart</td><td>Number of valid particles sent to other ranks.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>The local MPI rank is obtained from <code>MPI_COMM_WORLD</code>. The order of indices generated by atomic operations is not deterministic.</dd></dl>
+<dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
 </div>
 </div>
