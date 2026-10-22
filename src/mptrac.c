@@ -2581,34 +2581,24 @@ void dd_sort(
   for (int iq = 0; iq < ctl->nq; iq++)
     dd_sort_help(atm->q[iq], dd, np);
 
-  /* Reset the size... */
-  int nkeep = 0;
+  /* Count kept, outgoing, and invalid particles in one pass... */
+  int nkeep = 0, nsend = 0, nlost = 0;
 #ifdef _OPENACC
-#pragma acc parallel loop reduction(+:nkeep) present(atm, ctl)
+#pragma acc parallel loop reduction(+:nkeep,nsend,nlost) present(atm, ctl)
 #endif
-  for (int ip = 0; ip < np; ip++)
-    if (((int) atm->q[ctl->qnt_current_subdomain][ip] != -1)
-	&& ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank))
+  for (int ip = 0; ip < np; ip++) {
+    const int current = (int) atm->q[ctl->qnt_current_subdomain][ip];
+    const int target = (int) atm->q[ctl->qnt_target_subdomain][ip];
+    if (current == -1)
+      nlost++;
+    else if (target == rank)
       nkeep++;
-
-  /* Count number of particles to send... */
-  int nsend = 0;
-#ifdef _OPENACC
-#pragma acc parallel loop reduction(+:nsend) present(atm, ctl)
-#endif
-  for (int ip = nkeep; ip < np; ip++)
-    if (((int) atm->q[ctl->qnt_current_subdomain][ip] != -1)
-	&& ((int) atm->q[ctl->qnt_target_subdomain][ip] != rank))
+    else
       nsend++;
+  }
 
   /* Reset sizes... */
   *npart = nsend;
-
-  /* Count particles with -1 subdomain (these will be effectively lost) */
-  int nlost = 0;
-  for (int ip = 0; ip < np; ip++)
-    if ((int) atm->q[ctl->qnt_current_subdomain][ip] == -1)
-      nlost++;
 
   if (nlost > 0)
     WARN
