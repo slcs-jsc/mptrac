@@ -10,6 +10,10 @@ set -e
 #   skip_compare: Skip result comparison
 # Set DD_EXCHANGE_MODE=0 or 1 to select the exchange path (default: 0).
 # Set DD_USE_GPU=1 for an OpenACC build on a GPU node (default: 0).
+# DD_DOMAINS_LON/LAT, DD_PARTICLES_LON_STRIDE/LAT_STRIDE, and DD_NP_MAX
+# configure non-default layouts and particle counts for benchmark runs.
+# DD_SORT_DT, DD_SIMULATION_HOURS, DD_THRUST, DD_COMPILER, and DD_WIND_DIR
+# select the run duration, sorting backend, toolchain, and input wind fields.
 # DD_COMPARE_DIR selects reference .tab files (default: data.ref).
 # DD_SAVE_DIR saves this run's .tab files for a later CPU/GPU comparison.
 # From tests/dd_test, for example:
@@ -23,8 +27,9 @@ set -e
 #################################################################################################################
 
 work_dir=$(pwd)
-mptrac_dir=$(cd ../../ && pwd)
-meteo_data_dir=$work_dir/data/wind_data
+script_dir=$(cd "$(dirname "$0")" && pwd)
+mptrac_dir=$(cd "$script_dir/../.." && pwd)
+meteo_data_dir=${DD_WIND_DIR:-$work_dir/data/wind_data}
 metbase=$meteo_data_dir/wind    # path to meteo files
 echo "[INFO] MPTRAC directory: $mptrac_dir"
 echo "[INFO] Working directory: $work_dir"
@@ -84,21 +89,22 @@ fi
 # Define simulation parameters
 #################################################################################################################
 
-ntasks_per_node=9       # fixed number of tasks per node
+ntasks_per_node=${DD_TASKS_PER_NODE:-9}
 
 use_gpu=${DD_USE_GPU:-0}            # enable GPU support in MPTRAC compilation (0=off, 1=on)
 cpus_per_task=1                     # number of CPUs per task
 mpi_cc=${DD_MPICC:-mpicc}
 mpi_run=${DD_MPIRUN:-mpirun}
 
-domains_lon=3                       # number of subdomains in longitudinal direction
-domains_lat=3                       # number of subdomains in latitudinal direction
+domains_lon=${DD_DOMAINS_LON:-3}    # number of zonal subdomains
+domains_lat=${DD_DOMAINS_LAT:-3}    # number of meridional subdomains
 dd_exchange_mode=${DD_EXCHANGE_MODE:-0}
+use_thrust=${DD_THRUST:-1}
 
 # Set parameters for atmospheric initialization
 use_evenly_distributed=0            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
-particles_subdomain_lon_stride=4    # number of particles in longitudinal direction per subdomain
-particles_subdomain_lat_stride=4    # number of particles in latitudinal direction per subdomain
+particles_subdomain_lon_stride=${DD_PARTICLES_LON_STRIDE:-4}
+particles_subdomain_lat_stride=${DD_PARTICLES_LAT_STRIDE:-4}
 grid_lon_start=0                    # starting longitude of the grid for the atmospheric initialization
 grid_lon_d=1                        # longitude direction (1 or -1)
 grid_lon_size=360                   # size of the grid for the atmospheric initialization in longitudinal direction
@@ -115,7 +121,7 @@ dt_mod=600              # model time step
 met_dt_out=3600         # output time interval for meteo files
 
 # Set simulation time parameters
-simulation_hours=6      # duration of simulation in hours
+simulation_hours=${DD_SIMULATION_HOURS:-6}
 ntimesteps=$((simulation_hours * 3600 / dt_met + 1))  # number of time steps (including initial time)
 atm_type=3              # original atmospheric data type
 met_grid_nx=360         # number of grid points in longitudinal direction of meteo files
@@ -129,9 +135,12 @@ wind_speed=50           # wind speed in m/s
 
 # Calculate derived parameters
 ntasks=$((domains_lon * domains_lat))
+if (( ntasks_per_node > ntasks )); then
+    ntasks_per_node=$ntasks
+fi
 nnodes=$(( (ntasks + ntasks_per_node - 1) / ntasks_per_node ))
 particles_num_subdomain=$((particles_subdomain_lon_stride * particles_subdomain_lat_stride))
-npmax=$((particles_num_subdomain * 2))
+npmax=${DD_NP_MAX:-$((particles_num_subdomain * 2))}
 nparticles=$((particles_num_subdomain * ntasks))
 subgrid_lon_size=$(echo "scale=6; $grid_lon_size / $domains_lon" | bc)
 subgrid_lat_size=$(echo "scale=6; $grid_lat_size / $domains_lat" | bc)
@@ -184,11 +193,11 @@ echo "[INFO] LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
 
 # Set compiler based on mode
 if [[ "$hpc_mode" == "hpc" ]]; then
-    compiler="nvc"
-    echo "[INFO] Using nvc compiler (HPC mode)"
+    compiler=${DD_COMPILER:-nvc}
+    echo "[INFO] Using $compiler compiler (HPC mode)"
 else
-    compiler="gcc"
-    echo "[INFO] Using gcc compiler (non-HPC mode)"
+    compiler=${DD_COMPILER:-gcc}
+    echo "[INFO] Using $compiler compiler (non-HPC mode)"
 fi
 
 # Check if compilation should be skipped
@@ -202,7 +211,7 @@ else
     # Build input generators on the CPU, then force a separate trac object
     # build with the requested accelerator setting.
     make -j atm_init wind time2jsec DD=1 MPI=1 STATIC=0 GPU=0 THRUST=0 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
-    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
+    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=$use_thrust COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
 fi
 
 #################################################################################################################
@@ -265,6 +274,7 @@ DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
 DD_EXCHANGE_MODE = ${dd_exchange_mode}
+DD_SORT_DT = ${DD_SORT_DT:-1800}
 NAP_MAX = ${npmax}
 EOF
 
@@ -277,7 +287,7 @@ for i in $(seq 0 $((ntasks-1))); do
     mkdir -p data/"data.$i"
 
     ilat=$((i % domains_lat))
-    ilon=$((i / domains_lon))
+    ilon=$((i / domains_lat))
 
     # Calculate floating point coordinates
     init_lon0=$(echo "scale=6; $grid_lon_start + $grid_lon_d * ($ilon * $subgrid_lon_size + $subgrid_pos_lon_offset)" | bc)
@@ -298,6 +308,11 @@ for i in $(seq 0 $((ntasks-1))); do
         init_lat0=$init_lat1
         init_lat1=$tmp
     fi
+
+    # Leave a fraction of one grid step beyond the last point so rounding
+    # in the decimal step size cannot silently omit a whole particle row.
+    init_lon1=$(echo "scale=6; $init_lon1 + $subgrid_pos_dlon / 4" | bc)
+    init_lat1=$(echo "scale=6; $init_lat1 + $subgrid_pos_dlat / 4" | bc)
 
     # print initialization box
     echo "[INFO] Domain $i (ilon=$ilon, ilat=$ilat):"
@@ -365,6 +380,7 @@ DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
 DD_EXCHANGE_MODE = ${dd_exchange_mode}
+DD_SORT_DT = ${DD_SORT_DT:-1800}
 NAP_MAX = ${npmax}
 EOF
 done
@@ -462,7 +478,7 @@ fi
 
 compare_dir=${DD_COMPARE_DIR:-data.ref}
 if [ -d "$compare_dir" ]; then
-    bash check.sh data "$compare_dir"
+    bash "$script_dir/check.sh" data "$compare_dir"
 else
     echo "[ERROR] Reference directory $compare_dir not found"
     exit 1
