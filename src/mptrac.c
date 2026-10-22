@@ -2478,6 +2478,8 @@ void dd_push(
 	(*counter_ptr)++;
       }
       int global_index = atm->np + local_idx;
+      if (global_index >= NP)
+	continue;
       /* Copy time, pressure, longitude, and latitude... */
       atm->time[global_index] = atm->time[ip];
       atm->p[global_index] = atm->p[ip];
@@ -2502,6 +2504,9 @@ void dd_push(
 #else
   *npart = counter;
 #endif
+
+  if (atm->np + *npart > NP)
+    ERRMSG("Too many particles during DD push. Increase NP!");
 }
 #endif
 

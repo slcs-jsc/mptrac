@@ -5233,6 +5233,8 @@ void dd_particles2atm(
  *   [atm->np, atm->np + npart).
  * - When compiled with @c _OPENACC, the selection and copy operations
  *   execute on the accelerator using atomic operations for the counter.
+ * - The routine reports an error if the active particles and staged copies
+ *   exceed the compile-time capacity @c NP; no out-of-bounds copy is made.
  *
  * @author Jan Clemens
  * @author Lars Hoffmann
