@@ -1116,7 +1116,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:afb2ac81596bfa49f6f53da327bdac0bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition meridional subdomain number (defaults to 2 if domain decomposition is used, otherwise 1).  <a href="structctl__t.html#afb2ac81596bfa49f6f53da327bdac0bd">More...</a><br /></td></tr>
 <tr class="separator:afb2ac81596bfa49f6f53da327bdac0bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a067596ae0db3d3518aab0787be59af02"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a067596ae0db3d3518aab0787be59af02">dd_halos_size</a></td></tr>
-<tr class="memdesc:a067596ae0db3d3518aab0787be59af02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition size of halos given in grid-points.  <a href="structctl__t.html#a067596ae0db3d3518aab0787be59af02">More...</a><br /></td></tr>
+<tr class="memdesc:a067596ae0db3d3518aab0787be59af02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Domain decomposition halo size in grid points.  <a href="structctl__t.html#a067596ae0db3d3518aab0787be59af02">More...</a><br /></td></tr>
 <tr class="separator:a067596ae0db3d3518aab0787be59af02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50e87c0c4763d5c4703adf03fd588f0e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">dd_sort_dt</a></td></tr>
 <tr class="memdesc:a50e87c0c4763d5c4703adf03fd588f0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorting time interval for the compactification (DD_EXCHANGE_MODE=0).  <a href="structctl__t.html#a50e87c0c4763d5c4703adf03fd588f0e">More...</a><br /></td></tr>
@@ -7339,9 +7339,10 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Domain decomposition size of halos given in grid-points. </p>
+<p>Domain decomposition halo size in grid points. </p>
+<p >Must be non-negative and fit within the global grid and local EX/EY array capacities. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03574">3574</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03575">3575</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7359,7 +7360,7 @@ Data Fields</h2></td></tr>
 
 <p>Sorting time interval for the compactification (DD_EXCHANGE_MODE=0). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03577">3577</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03578">3578</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7377,7 +7378,7 @@ Data Fields</h2></td></tr>
 
 <p>Particle exchange: 0=sort/push (default), 1=direct pack/compact. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03580">3580</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03581">3581</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -7396,7 +7397,7 @@ Data Fields</h2></td></tr>
 <p>Whether the executable implements the domain decomposition. </p>
 <p >This flag is set by the trac tool; all other tools of MPTRAC always work on the full meteorological grid and must not be used with domain decomposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03585">3585</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03586">3586</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
