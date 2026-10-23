@@ -19,7 +19,8 @@ set -e
 # DD_ISOSURF=3 adds the iso_var quantity for the isosurface migration test.
 # DD_INIT_Z0/Z1/DZ and DD_INIT_IDX_STRIDE set its two heights and unique IDs;
 # DD_WIND_ALPHA=0 makes particles cross the zonal subdomain boundary.
-# DD_DIFFUSION=1 with DD_TURB_MESOX>0 enables a stochastic DD smoke run.
+# DD_DIFFUSION=1 with DD_TURB_MESOX/DD_TURB_MESOZ>0 enables mesoscale diffusion.
+# DD_WIND_PERT_U/V/W and DD_WIND_PERT_K control optional synthetic wind waves.
 # From tests/dd_test, for example:
 #   DD_EXCHANGE_MODE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
 #   DD_EXCHANGE_MODE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
@@ -259,7 +260,7 @@ TURB_DX_STRAT = 0
 TURB_DZ_TROP = 0
 TURB_DZ_STRAT = 0.0
 TURB_MESOX = ${DD_TURB_MESOX:-0.0}
-TURB_MESOZ = 0.0
+TURB_MESOZ = ${DD_TURB_MESOZ:-0.0}
 DIRECTION = 1
 METBASE = ${metbase}
 MET_TROPO = 3
@@ -369,7 +370,7 @@ TURB_DX_STRAT = 0
 TURB_DZ_TROP = 0
 TURB_DZ_STRAT = 0.0
 TURB_MESOX = ${DD_TURB_MESOX:-0.0}
-TURB_MESOZ = 0.0
+TURB_MESOZ = ${DD_TURB_MESOZ:-0.0}
 DIRECTION = 1
 METBASE = ${metbase}
 MET_TROPO = 3
@@ -426,6 +427,10 @@ WIND_Z1 = 60
 WIND_U0 = ${wind_speed}
 WIND_U1 = ${wind_speed}
 WIND_W0 = 0
+WIND_PERT_U = ${DD_WIND_PERT_U:-0}
+WIND_PERT_V = ${DD_WIND_PERT_V:-0}
+WIND_PERT_W = ${DD_WIND_PERT_W:-0}
+WIND_PERT_K = ${DD_WIND_PERT_K:-24}
 WIND_ALPHA = ${wind_alpha}
 WIND_LAT_REVERSE = 1
 EOF

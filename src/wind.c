@@ -23,6 +23,7 @@
 */
 
 #include "mptrac.h"
+#include <limits.h>
 
 /* ------------------------------------------------------------
    Functions...
@@ -73,6 +74,20 @@ int main(
   const double u1 =
     scan_ctl(argv[1], argc, argv, "WIND_U1", -1, "38.587660177302", NULL);
   const double w0 = scan_ctl(argv[1], argc, argv, "WIND_W0", -1, "0", NULL);
+  const double pert_u =
+    scan_ctl(argv[1], argc, argv, "WIND_PERT_U", -1, "0", NULL);
+  const double pert_v =
+    scan_ctl(argv[1], argc, argv, "WIND_PERT_V", -1, "0", NULL);
+  const double pert_w =
+    scan_ctl(argv[1], argc, argv, "WIND_PERT_W", -1, "0", NULL);
+  const double pert_k_raw =
+    scan_ctl(argv[1], argc, argv, "WIND_PERT_K", -1, "24", NULL);
+  const int perturb = (pert_u != 0 || pert_v != 0 || pert_w != 0);
+  if (!isfinite(pert_u) || !isfinite(pert_v) || !isfinite(pert_w)
+      || !isfinite(pert_k_raw) || pert_k_raw < 1 || pert_k_raw > INT_MAX
+      || pert_k_raw != floor(pert_k_raw))
+    ERRMSG("WIND_PERT amplitudes must be finite and WIND_PERT_K a positive integer!");
+  const int pert_k = (int) pert_k_raw;
   const double alpha =
     scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
   const int lat_reverse =
@@ -132,6 +147,17 @@ int main(
   /* Set meteo data... */
   for (int ix = 0; ix < nx; ix++)
     for (int iy = 0; iy < ny; iy++) {
+      double shape_u = 0, shape_v = 0, shape_w = 0;
+      if (perturb) {
+        /* Taper the waves to zero at the poles. */
+        const double lon_phase = pert_k * DEG2RAD(met->lon[ix]);
+        const double lat_phase = pert_k * DEG2RAD(met->lat[iy]);
+        const double taper = SQR(cos(DEG2RAD(met->lat[iy])));
+        shape_u = taper * sin(lon_phase) * cos(lat_phase);
+        shape_v = taper * cos(lon_phase) * cos(lat_phase + M_PI / 4);
+        shape_w = taper * sin(lon_phase + M_PI / 4)
+          * sin(lat_phase + M_PI / 4);
+      }
       const double usfc = u0
 	* (cos(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(alpha))
 	   + sin(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(met->lon[ix]))
@@ -142,8 +168,8 @@ int main(
       met->ps[ix][iy] = (float) ps;
       met->zs[ix][iy] = (float) zs;
       met->ts[ix][iy] = (float) t2m;
-      met->us[ix][iy] = (float) usfc;
-      met->vs[ix][iy] = (float) vsfc;
+      met->us[ix][iy] = (float) (perturb ? usfc + pert_u * shape_u : usfc);
+      met->vs[ix][iy] = (float) (perturb ? vsfc + pert_v * shape_v : vsfc);
       met->ess[ix][iy] = (float) iews;
       met->nss[ix][iy] = (float) inss;
       met->shf[ix][iy] = (float) ishf;
@@ -152,17 +178,25 @@ int main(
       met->pbl[ix][iy] = (float) P(zs + blh);
 
       for (int iz = 0; iz < nz; iz++) {
-	const double u = LIN(0.0, u0, nz - 1.0, u1, iz)
+	double u = LIN(0.0, u0, nz - 1.0, u1, iz)
 	  * (cos(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(alpha))
 	     + sin(DEG2RAD(met->lat[iy])) * cos(DEG2RAD(met->lon[ix]))
 	     * sin(DEG2RAD(alpha)));
-	const double v = -LIN(0.0, u0, nz - 1.0, u1, iz)
+	double v = -LIN(0.0, u0, nz - 1.0, u1, iz)
 	  * sin(DEG2RAD(met->lon[ix])) * sin(DEG2RAD(alpha));
+	double w = w0;
+	if (perturb) {
+	  const double height_factor =
+	    0.75 + 0.25 * cos(2 * M_PI * iz / (nz - 1.));
+	  u += pert_u * shape_u * height_factor;
+	  v += pert_v * shape_v * height_factor;
+	  w += pert_w * shape_w * height_factor;
+	}
 
 	met->t[ix][iy][iz] = (float) LIN(0.0, temp0, nz - 1.0, temp1, iz);
 	met->u[ix][iy][iz] = (float) u;
 	met->v[ix][iy][iz] = (float) v;
-	met->w[ix][iy][iz] = (float) DZ2DP(1e-3 * w0, met->p[iz]);
+	met->w[ix][iy][iz] = (float) DZ2DP(1e-3 * w, met->p[iz]);
 	met->h2o[ix][iy][iz] = (float) (q * MA / MH2O);
 	met->o3[ix][iy][iz] = (float) (o3 * MA / MO3);
       }
