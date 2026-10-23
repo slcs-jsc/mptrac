@@ -28,7 +28,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
 particle dispersion model for simulating atmospheric transport in the
 free troposphere and stratosphere. The model is designed to run on
 parallel computing systems and supports large ensembles of trajectory
-calculations.
+calculations as well as spatially decomposed simulations.
 
 MPTRAC uses meteorological input data to compute air parcel motion and
 includes parameterizations for processes such as advection, diffusion,
@@ -76,9 +76,9 @@ transport simulations, including:
   Visualization is supported through interfaces to Gnuplot and
   ParaView.
 
-- **Parallel execution**: MPTRAC supports hybrid parallelization using
-  MPI, OpenMP, and OpenACC, enabling execution on systems ranging from
-  single workstations to HPC clusters and GPU-enabled platforms.
+- **Parallel execution**: MPI can distribute independent simulations
+  or split one simulation into spatial subdomains. OpenMP and OpenACC
+  provide CPU and GPU parallelism within each MPI rank.
 
 - **Web-based access**: A browser-based interface, the MPTRAC Web
   Runner, is available for running simulations without local
@@ -161,11 +161,10 @@ Pay special attention to the following settings:
   static or dynamic linking may not be feasible or could cause
   specific issues.
 
-* To enable MPI parallelization in MPTRAC, you must set the `MPI`
-  flag. Additionally, an MPI library, such as OpenMPI, must be
-  installed on your system. To utilize OpenACC parallelization, enable
-  the `GPU` flag, and ensure the NVIDIA HPC SDK is installed to
-  compile the GPU code. OpenMP parallelization is always enabled.
+* Set `MPI=1` to enable MPI for independent simulations. Add `DD=1`
+  to build spatial domain decomposition. An MPI library, such as
+  OpenMPI, must be installed. To use OpenACC, set `GPU=1` and install
+  the NVIDIA HPC SDK. OpenMP parallelization is always enabled.
 
 * Some options in the Makefile are labeled as experimental. These
   features are still under development and may not be fully functional

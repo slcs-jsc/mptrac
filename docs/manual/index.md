@@ -39,9 +39,9 @@ transport simulations, including:
   data. Visualization is supported through interfaces to Gnuplot and
   ParaView.
 
-- **Parallel execution**: MPTRAC supports hybrid parallelization using
-  MPI, OpenMP, and OpenACC, enabling execution on systems ranging from
-  single workstations to HPC clusters and GPU-enabled platforms.
+- **Parallel execution**: MPI can run independent simulations or split
+  one simulation across spatial subdomains. OpenMP and OpenACC provide
+  CPU and GPU parallelism within each rank.
 
 - **Open-source development**: MPTRAC is distributed under the GNU
   General Public License (GPL) and developed in an open repository,

@@ -121,11 +121,12 @@ Pay special attention to the following settings:
   static or dynamic linking may not be feasible or could cause
   specific issues.
 
-* To enable MPI parallelization in MPTRAC, you must set the `MPI`
-  flag. Additionally, an MPI library, such as OpenMPI, must be
-  installed on your system. To utilize OpenACC parallelization, enable
-  the `GPU` flag, and ensure the NVIDIA HPC SDK is installed to
-  compile the GPU code. OpenMP parallelization is always enabled.
+* Set `MPI=1` to run independent simulations across MPI ranks. Add
+  `DD=1` to build spatial domain decomposition; both modes are
+  described under [parallelization](parallelization.md). An MPI
+  library, such as OpenMPI, must be installed. To use OpenACC, set
+  `GPU=1` and install the NVIDIA HPC SDK. OpenMP parallelization is
+  always enabled.
 
 * Some options in the Makefile are labeled as experimental. These
   features are still under development and may not be fully functional

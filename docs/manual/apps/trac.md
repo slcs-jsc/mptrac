@@ -17,6 +17,11 @@ Required arguments:
 Optional trailing arguments can be used to override control parameters
 on the command line as `KEY VALUE` pairs.
 
+With MPI, the directory list supplies separate runs in ensemble mode
+or one subdomain per rank in domain decomposition mode. The two
+configurations and their build flags are described under
+[parallelization](../parallelization.md).
+
 Example from the repository:
 
 ```bash
