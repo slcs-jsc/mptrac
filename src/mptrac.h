@@ -4923,8 +4923,9 @@ void dd_atm2particles(
  * active atmosphere, and compacts the particles retained on the current
  * rank into the first @p nkeep slots. It moves `time`, `p`, `lon`, `lat`,
  * all quantities `q[iq]`, and the particle-specific cache values `dt`,
- * `iso_var`, `uvwp`, and `rs` together. The shared `iso_ps` and `iso_ts`
- * cache series are not changed.
+ * `iso_var`, and `uvwp` together. Random values in `rs` are regenerated
+ * before their next use. The shared `iso_ps` and `iso_ts` cache series are
+ * not changed.
  *
  * The caller must first call ::dd_count_outgoing() and provide space for
  * @p npart outgoing particles. With OpenACC, that call also places source

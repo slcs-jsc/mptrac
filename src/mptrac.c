@@ -2087,14 +2087,6 @@ void dd_pack_compact(
     sort_array(cache->dt, dd->perm, dd->tmp, nkeep);
     sort_array(cache->iso_var, dd->perm, dd->tmp, nkeep);
     sort_uvwp(cache, dd->perm, dd->tmp, nkeep);
-    for (int j = 0; j < 3; j++) {
-#pragma acc parallel loop present(cache, dd)
-      for (int i = 0; i < nkeep; i++)
-	dd->tmp[i] = cache->rs[3 * dd->perm[i] + j];
-#pragma acc parallel loop present(cache, dd)
-      for (int i = 0; i < nkeep; i++)
-	cache->rs[3 * i + j] = dd->tmp[i];
-    }
   }
 
   const int nlost = np - nkeep - npart;
@@ -2137,10 +2129,8 @@ void dd_pack_compact(
 	atm->q[iq][nkeep_cpu] = atm->q[iq][ip];
       cache->dt[nkeep_cpu] = cache->dt[ip];
       cache->iso_var[nkeep_cpu] = cache->iso_var[ip];
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++)
 	cache->uvwp[nkeep_cpu][i] = cache->uvwp[ip][i];
-	cache->rs[3 * nkeep_cpu + i] = cache->rs[3 * ip + i];
-      }
     }
     nkeep_cpu++;
   }
