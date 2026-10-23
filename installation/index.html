@@ -1179,11 +1179,12 @@ emacs Makefile
   specific issues.</p>
 </li>
 <li>
-<p>To enable MPI parallelization in MPTRAC, you must set the <code>MPI</code>
-  flag. Additionally, an MPI library, such as OpenMPI, must be
-  installed on your system. To utilize OpenACC parallelization, enable
-  the <code>GPU</code> flag, and ensure the NVIDIA HPC SDK is installed to
-  compile the GPU code. OpenMP parallelization is always enabled.</p>
+<p>Set <code>MPI=1</code> to run independent simulations across MPI ranks. Add
+  <code>DD=1</code> to build spatial domain decomposition; both modes are
+  described under <a href="../parallelization/">parallelization</a>. An MPI
+  library, such as OpenMPI, must be installed. To use OpenACC, set
+  <code>GPU=1</code> and install the NVIDIA HPC SDK. OpenMP parallelization is
+  always enabled.</p>
 </li>
 <li>
 <p>Some options in the Makefile are labeled as experimental. These

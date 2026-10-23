@@ -898,6 +898,10 @@ and an atmospheric input file name:</p>
 </ul>
 <p>Optional trailing arguments can be used to override control parameters
 on the command line as <code>KEY VALUE</code> pairs.</p>
+<p>With MPI, the directory list supplies separate runs in ensemble mode
+or one subdomain per rank in domain decomposition mode. The two
+configurations and their build flags are described under
+<a href="../../parallelization/">parallelization</a>.</p>
 <p>Example from the repository:</p>
 <pre><code class="language-bash">./trac data/dirlist trac.ctl atm_split.tab
 </code></pre>
