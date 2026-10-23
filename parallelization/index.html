@@ -1160,10 +1160,11 @@ assignment and MPI particle communication.</p>
 compaction on the GPU. The active particle and cache arrays remain on
 the device; only outgoing particle records are copied to the host for
 the current MPI exchange, and received records are copied to the GPU.
-The MPI particle datatype does not include persistent particle-specific
-cache values such as <code>iso_var</code> and <code>uvwp</code>. These values follow particles
-during local sorting or compaction but are not transferred between
-ranks. This limits DD runs that depend on them after a rank change.</p>
+The <code>iso_var</code> quantity is part of the MPI particle datatype and follows
+particles between ranks. Persistent particle-specific cache values such as
+<code>uvwp</code> follow particles during local sorting or compaction but are not
+transferred between ranks. This limits DD runs that depend on them after a
+rank change.</p>
 <p>The Fortran wrapper supports both DD exchange modes when built with
 <code>MPI=1 DD=1</code> and a matching MPI Fortran compiler (<code>MPIFC</code>). The DD branch
 of <code>wrapper_test</code> compares <code>trac_fortran</code> with <code>trac</code> using mode 1. Build

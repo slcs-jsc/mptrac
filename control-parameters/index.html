@@ -1061,6 +1061,14 @@ control parameter file.</p>
                INIT_T0 360547200 INIT_T1 360547200 \
                INIT_RELZ0 0.0 INIT_RELZ1 1.2 INIT_DRELZ 0.2
 </code></pre>
+<p>For <code>ISOSURF=1</code>, <code>2</code>, or <code>3</code>, include <code>iso_var</code> among the configured
+quantities. It stores each particle's initial isosurface reference and is
+included in particle output and MPI domain-decomposition exchanges. Its
+units depend on <code>ISOSURF</code>: hPa for pressure (<code>1</code>), hPa/K for the
+pressure-to-temperature ratio (<code>2</code>), and K for potential temperature (<code>3</code>).
+Existing particle files without this quantity need a configuration that
+provides a free quantity slot; <code>NQ</code> and other quantity indices are not
+changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require it.</p>
 <h2 id="radionuclide-deposition">Radionuclide deposition</h2>
 <p>Radionuclide decay and deposition require the activity quantities to be part
 of the air-parcel data. The recognized quantity names are <code>Apb210</code>, <code>Abe7</code>,
