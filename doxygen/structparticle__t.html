@@ -98,10 +98,13 @@ Data Fields</h2></td></tr>
 <tr class="memitem:adabeda2e4d6dfb8b74685e488c5fb031"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparticle__t.html#adabeda2e4d6dfb8b74685e488c5fb031">q</a> [<a class="el" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>]</td></tr>
 <tr class="memdesc:adabeda2e4d6dfb8b74685e488c5fb031"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quantity data (for various, user-defined attributes).  <a href="structparticle__t.html#adabeda2e4d6dfb8b74685e488c5fb031">More...</a><br /></td></tr>
 <tr class="separator:adabeda2e4d6dfb8b74685e488c5fb031"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bd66caede752bfca69cf786450ac2ad"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparticle__t.html#a8bd66caede752bfca69cf786450ac2ad">uvwp</a> [3]</td></tr>
+<tr class="memdesc:a8bd66caede752bfca69cf786450ac2ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Temporally correlated turbulent velocity perturbations [m/s].  <a href="structparticle__t.html#a8bd66caede752bfca69cf786450ac2ad">More...</a><br /></td></tr>
+<tr class="separator:a8bd66caede752bfca69cf786450ac2ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Particle data. </p>
-<p >This structure contains information related to a single air parcel, including the air parcels time, pressure, longitude, latitude, and various user-defined attributes. </p>
+<p >This structure contains information related to a single air parcel, including time, pressure, position, quantities, and the turbulent velocity state needed when the particle migrates between MPI ranks. </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03630">3630</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 </div><h2 class="groupheader">Field Documentation</h2>
@@ -192,6 +195,24 @@ Data Fields</h2></td></tr>
 <p>Quantity data (for various, user-defined attributes). </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03645">3645</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="a8bd66caede752bfca69cf786450ac2ad" name="a8bd66caede752bfca69cf786450ac2ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8bd66caede752bfca69cf786450ac2ad">&#9670;&nbsp;</a></span>uvwp</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float particle_t::uvwp[3]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Temporally correlated turbulent velocity perturbations [m/s]. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03648">3648</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
