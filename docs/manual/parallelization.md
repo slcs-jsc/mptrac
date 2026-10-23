@@ -57,11 +57,10 @@ With OpenACC, mode 1 performs classification, packing, and local
 compaction on the GPU. The active particle and cache arrays remain on
 the device; only outgoing particle records are copied to the host for
 the current MPI exchange, and received records are copied to the GPU.
-The `iso_var` quantity is part of the MPI particle datatype and follows
-particles between ranks. Persistent particle-specific cache values such as
-`uvwp` follow particles during local sorting or compaction but are not
-transferred between ranks. This limits DD runs that depend on them after a
-rank change.
+The `iso_var` quantity and the three `uvwp` cache components follow particles
+between ranks. `uvwp` is included in the MPI particle datatype and restored
+to the cache after each exchange. Particle files remain unchanged; `uvwp`
+is an internal state variable.
 
 The Fortran wrapper supports both DD exchange modes when built with
 `MPI=1 DD=1` and a matching MPI Fortran compiler (`MPIFC`). The DD branch

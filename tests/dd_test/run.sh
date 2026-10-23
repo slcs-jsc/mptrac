@@ -19,6 +19,7 @@ set -e
 # DD_ISOSURF=3 adds the iso_var quantity for the isosurface migration test.
 # DD_INIT_Z0/Z1/DZ and DD_INIT_IDX_STRIDE set its two heights and unique IDs;
 # DD_WIND_ALPHA=0 makes particles cross the zonal subdomain boundary.
+# DD_DIFFUSION=1 with DD_TURB_MESOX>0 enables a stochastic DD smoke run.
 # From tests/dd_test, for example:
 #   DD_EXCHANGE_MODE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
 #   DD_EXCHANGE_MODE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
@@ -252,11 +253,12 @@ ATM_TYPE = ${atm_type}
 ATM_TYPE_OUT = 4
 ADVECT = 2
 ADVECT_VERT_COORD = 0
+DIFFUSION = ${DD_DIFFUSION:-0}
 TURB_DX_TROP = 0
 TURB_DX_STRAT = 0
 TURB_DZ_TROP = 0
 TURB_DZ_STRAT = 0.0
-TURB_MESOX = 0.0
+TURB_MESOX = ${DD_TURB_MESOX:-0.0}
 TURB_MESOZ = 0.0
 DIRECTION = 1
 METBASE = ${metbase}
@@ -361,11 +363,12 @@ ATM_TYPE = ${atm_type}
 ATM_TYPE_OUT = 0
 ADVECT = 2
 ADVECT_VERT_COORD = 0
+DIFFUSION = ${DD_DIFFUSION:-0}
 TURB_DX_TROP = 0
 TURB_DX_STRAT = 0
 TURB_DZ_TROP = 0
 TURB_DZ_STRAT = 0.0
-TURB_MESOX = 0.0
+TURB_MESOX = ${DD_TURB_MESOX:-0.0}
 TURB_MESOZ = 0.0
 DIRECTION = 1
 METBASE = ${metbase}

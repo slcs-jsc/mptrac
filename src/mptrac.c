@@ -2022,6 +2022,8 @@ void dd_atm2particles(
       particles[ip - atm->np].p = atm->p[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
+      for (int i = 0; i < 3; i++)
+	particles[ip - atm->np].uvwp[i] = cache->uvwp[ip][i];
 
       atm->q[ctl->qnt_current_subdomain][ip] = -1;
       cache->dt[ip] = 0;
@@ -2059,7 +2061,7 @@ void dd_pack_compact(
   if (npart > 0) {
     SELECT_TIMER("DD_GPU_PACK", "DD");
 #pragma acc enter data create(particles[0:npart])
-#pragma acc parallel loop present(ctl, atm, dd, particles)
+#pragma acc parallel loop present(ctl, atm, cache, dd, particles)
     for (int i = 0; i < npart; i++) {
       const int ip = dd->perm[np - 1 - i];
       particles[i].time = atm->time[ip];
@@ -2068,6 +2070,8 @@ void dd_pack_compact(
       particles[i].lat = atm->lat[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[i].q[iq] = atm->q[iq][ip];
+      for (int j = 0; j < 3; j++)
+	particles[i].uvwp[j] = cache->uvwp[ip][j];
     }
     SELECT_TIMER("DD_GPU_SEND_D2H", "DD");
 #pragma acc update self(particles[0:npart])
@@ -2115,6 +2119,8 @@ void dd_pack_compact(
       particles[nsend].lat = atm->lat[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[nsend].q[iq] = atm->q[iq][ip];
+      for (int i = 0; i < 3; i++)
+	particles[nsend].uvwp[i] = cache->uvwp[ip][i];
       nsend++;
       continue;
     }
@@ -2319,17 +2325,27 @@ void dd_init(
     ERRMSG("Number of tasks and subdomains is not identical!");
 
   /* Register the MPI_Particle data type... */
-  const MPI_Datatype types[5] =
-    { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
-  const int blocklengths[5] = { 1, 1, 1, 1, NQ };
-  const MPI_Aint displacements[5] =
+  const MPI_Datatype types[6] =
+    { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+    MPI_FLOAT };
+  const int blocklengths[6] = { 1, 1, 1, 1, NQ, 3 };
+  const MPI_Aint displacements[6] =
     { offsetof(particle_t, time), offsetof(particle_t, p),
     offsetof(particle_t, lon), offsetof(particle_t, lat),
-    offsetof(particle_t, q)
+    offsetof(particle_t, q), offsetof(particle_t, uvwp)
   };
-  MPI_Type_create_struct(5, blocklengths, displacements, types,
-			 &dd->MPI_Particle);
+  MPI_Datatype fields;
+  MPI_Type_create_struct(6, blocklengths, displacements, types, &fields);
+  /* The trailing float array can leave padding in particle_t. Alltoallv
+     counts and displacements must advance by the full C structure size. */
+  MPI_Type_create_resized(fields, 0, (MPI_Aint) sizeof(particle_t),
+			  &dd->MPI_Particle);
+  MPI_Type_free(&fields);
   MPI_Type_commit(&dd->MPI_Particle);
+  MPI_Aint lower_bound, extent;
+  MPI_Type_get_extent(dd->MPI_Particle, &lower_bound, &extent);
+  if (lower_bound != 0 || extent != (MPI_Aint) sizeof(particle_t))
+    ERRMSG("Invalid MPI particle datatype extent!");
 
   /* Check if particles are in subdomain... */
   dd_assign_subdomains(ctl, dd, atm, 1);
@@ -2403,6 +2419,8 @@ void dd_particles2atm(
     atm->p[ip] = particles[ip - atm->np].p;
     for (int iq = 0; iq < ctl->nq; iq++)
       atm->q[iq][ip] = particles[ip - atm->np].q[iq];
+    for (int i = 0; i < 3; i++)
+      cache->uvwp[ip][i] = particles[ip - atm->np].uvwp[i];
     cache->dt[ip] = ctl->dt_mod;
   }
 #ifdef _OPENACC
@@ -2522,7 +2540,7 @@ void dd_push(
 
   /* Push non local particles behind the end of the atm... */
 #ifdef _OPENACC
-#pragma acc parallel loop present(atm, cache) deviceptr(counter_ptr)
+#pragma acc parallel loop present(atm, cache, ctl) deviceptr(counter_ptr)
 #else
 #pragma omp parallel for
 #endif
@@ -2557,6 +2575,8 @@ void dd_push(
       /* Reset cache->dt for the shifted particle... */
       cache->dt[global_index] = cache->dt[ip];
       cache->dt[ip] = 0;
+      for (int i = 0; i < 3; i++)
+	cache->uvwp[global_index][i] = cache->uvwp[ip][i];
     }
   }
 

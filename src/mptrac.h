@@ -3624,8 +3624,8 @@ typedef struct {
  * @brief Particle data.
  * 
  * This structure contains information related to a single air parcel,
- * including the air parcels time, pressure, longitude, latitude,
- * and various user-defined attributes.
+ * including time, pressure, position, quantities, and the turbulent
+ * velocity state needed when the particle migrates between MPI ranks.
  */
 typedef struct {
 
@@ -3643,6 +3643,9 @@ typedef struct {
 
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ];
+
+  /*! Temporally correlated turbulent velocity perturbations [m/s]. */
+  float uvwp[3];
 
 } particle_t;
 
@@ -4871,7 +4874,7 @@ void dd_assign_subdomains(
  * - `atm->q[ctl->qnt_current_subdomain][ip] >= 0`.
  *
  * For each selected entry, the particle coordinates (`time`, `lon`,
- * `lat`, `p`) and all quantities `q[iq]` are copied into
+ * `lat`, `p`), all quantities `q[iq]`, and `cache->uvwp[ip]` are copied into
  * `particles[ip - atm->np]`.
  *
  * After copying, the atmospheric entry is marked as inactive for local
@@ -4946,10 +4949,9 @@ void dd_atm2particles(
  * @param[in]     nkeep     Number of particles retained on this rank.
  * @param[in]     npart     Number of particles sent to other ranks.
  *
- * @note Particle-specific cache values are preserved for retained
- *       particles but are not included in the MPI particle buffer.
- *       Atomic index assignment in OpenACC builds may change particle
- *       order relative to the CPU implementation.
+ * @note `uvwp` is packed for outgoing particles and preserved for retained
+ *       particles. Atomic index assignment in OpenACC builds may change
+ *       particle order relative to the CPU implementation.
  *
  * @author Lars Hoffmann
  */
@@ -5069,8 +5071,8 @@ void dd_communicate_particles(
  *   `ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal`.
  *
  * It then constructs and commits the MPI datatype `dd->MPI_Particle`
- * corresponding to the `particle_t` structure. This datatype is used
- * for particle exchange between MPI ranks.
+ * corresponding to the `particle_t` structure. Its extent is set to
+ * `sizeof(particle_t)` so arrays use the correct stride in MPI exchanges.
  *
  * Finally, the routine performs the initial particle-to-subdomain
  * assignment by calling ::dd_assign_subdomains() with `init = 1`.
@@ -5152,9 +5154,9 @@ void dd_normalize_lon_lat(
  *
  * For each transferred particle, the routine copies the particle
  * coordinates (`time`, `lon`, `lat`, `p`) and all particle quantities
- * `q[iq]` into the atmospheric arrays. The cached time-step value
- * `cache->dt[ip]` is initialized to `ctl->dt_mod` for each appended
- * particle.
+ * `q[iq]` into the atmospheric arrays and restores all three `uvwp`
+ * components into the cache. The cached time-step value `cache->dt[ip]`
+ * is initialized to `ctl->dt_mod` for each appended particle.
  *
  * After all particles have been copied, the total number of
  * atmospheric particles `atm->np` is increased by `npart`.
@@ -5164,8 +5166,8 @@ void dd_normalize_lon_lat(
  *                            `nq` and the model time step `dt_mod`.
  * @param[in,out] cache       Pointer to the cache structure. The
  *                            cached time-step values for appended
- *                            particles are initialized to
- *                            `ctl->dt_mod`.
+ *                            particles are initialized to `ctl->dt_mod`,
+ *                            and `uvwp` is restored from @p particles.
  * @param[in]     particles   Buffer containing the particles to be
  *                            appended to the atmospheric state.
  * @param[in]     npart       Number of valid particles stored in
@@ -5213,6 +5215,7 @@ void dd_particles2atm(
  *   @c q[ctl->qnt_current_subdomain][ip] = -1
  * - The cached time step @c cache->dt[ip] is copied to the new location and
  *   reset to zero at the original position
+ * - All three @c cache->uvwp[ip] components are copied to the staged entry
  *
  * @param[in]     ctl    Pointer to the control structure containing the
  *                       quantity indices @c qnt_target_subdomain and
@@ -5221,8 +5224,8 @@ void dd_particles2atm(
  *                       are copied to indices [atm->np, atm->np+npart) and
  *                       original entries are invalidated.
  * @param[in,out] cache  Pointer to the cache structure. Time-step values
- *                       for moved particles are preserved; original positions
- *                       are reset to zero.
+ *                       and velocity perturbations follow staged particles;
+ *                       original time-step values are reset to zero.
  * @param[out]    npart  Number of particles staged for transfer (i.e., the
  *                       number of valid particles in the range
  *                       [atm->np, atm->np + npart)).
