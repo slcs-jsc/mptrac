@@ -2716,6 +2716,9 @@ typedef struct {
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
 
+  /*! Quantity array index for isosurface reference (units depend on ISOSURF). */
+  int qnt_iso_var;
+
   /*! Quantity array index for zeta vertical coordinate. */
   int qnt_zeta;
 
@@ -3647,13 +3650,9 @@ typedef struct {
 /**
  * @brief Cache data structure.
  * 
- * This structure contains data related to cached isosurface variables
- * and wind perturbations for a given set of data points.
+ * This structure contains shared balloon data and particle wind perturbations.
  */
 typedef struct {
-
-  /*! Particle-specific isosurface variables. */
-  double iso_var[NP];
 
   /*! Shared balloon pressure time series [hPa] for ISOSURF=4. */
   double iso_ps[NP];
@@ -4922,8 +4921,8 @@ void dd_atm2particles(
  * @p particles, removes those particles and invalid entries from the
  * active atmosphere, and compacts the particles retained on the current
  * rank into the first @p nkeep slots. It moves `time`, `p`, `lon`, `lat`,
- * all quantities `q[iq]`, and the particle-specific cache values `dt`,
- * `iso_var`, and `uvwp` together. Random values in `rs` are regenerated
+ * all quantities `q[iq]`, and the particle-specific cache values `dt` and
+ * `uvwp` together. Random values in `rs` are regenerated
  * before their next use. The shared `iso_ps` and `iso_ts` cache series are
  * not changed.
  *
@@ -5353,7 +5352,7 @@ void dd_read_met_nc_grid(
  *
  * The resulting permutation is applied to all particle arrays
  * (`time`, `p`, `lon`, `lat`, and all quantities `q[iq]`) and their
- * persistent particle-specific cache values (`dt`, `iso_var`, and `uvwp`).
+ * persistent particle-specific cache values (`dt` and `uvwp`).
  * Random values in `rs` are regenerated before use; shared cache data
  * remain unchanged.
  *
@@ -6725,14 +6724,14 @@ void module_h2o2_chem(
  * required for generating the isosurface, such as pressure, density,
  * or potential temperature. Additionally, it can read balloon
  * pressure data from a file if specified in the control
- * structure. The initialized data is stored in the cache for later
- * use.
+ * structure. For modes 1-3 the reference is stored in the `iso_var`
+ * particle quantity; mode 4 stores a shared pressure series in the cache.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the current time step.
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param cache Pointer to the cache structure for storing initialized data.
+ * @param cache Pointer to the cache structure for the shared balloon series.
  *
  * @author Lars Hoffmann
  */
@@ -6747,7 +6746,7 @@ void module_isosurf_init(
  * @brief Apply the isosurface module to adjust atmospheric properties.
  *
  * This function applies the isosurface module to adjust atmospheric
- * properties based on the initialized data stored in the cache. It
+ * properties based on the initialized particle quantity or balloon cache. It
  * interpolates and restores atmospheric pressure, density, or
  * potential temperature according to the specified isosurface mode in
  * the control structure.
@@ -7177,7 +7176,7 @@ void sort_uvwp(
  * and pressure level. It allocates temporary arrays to store indices
  * and auxiliary data for sorting, then performs the sorting
  * operation. After sorting, it updates the order of particles and their
- * persistent particle-specific cache values (`dt`, `iso_var`, and `uvwp`).
+ * persistent particle-specific cache values (`dt` and `uvwp`).
  * Random values in `rs` are regenerated before use; shared cache data
  * remain unchanged.
  *

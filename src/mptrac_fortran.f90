@@ -131,7 +131,6 @@ MODULE mptrac_struct
   
   ! Cache data...
   TYPE, bind(c) :: cache_t
-     REAL(c_double), DIMENSION(npp) :: iso_var
      REAL(c_double), DIMENSION(npp) :: iso_ps
      REAL(c_double), DIMENSION(npp) :: iso_ts
      INTEGER(c_int) :: iso_n
@@ -276,6 +275,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_rh
      INTEGER(c_int) :: qnt_rhice
      INTEGER(c_int) :: qnt_theta
+     INTEGER(c_int) :: qnt_iso_var
      INTEGER(c_int) :: qnt_zeta
      INTEGER(c_int) :: qnt_zeta_d
      INTEGER(c_int) :: qnt_zeta_dot

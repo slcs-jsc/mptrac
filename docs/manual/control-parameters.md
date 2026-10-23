@@ -64,6 +64,15 @@ This mechanism is also useful for short sensitivity studies. For example, a rele
                INIT_RELZ0 0.0 INIT_RELZ1 1.2 INIT_DRELZ 0.2
 ```
 
+For `ISOSURF=1`, `2`, or `3`, include `iso_var` among the configured
+quantities. It stores each particle's initial isosurface reference and is
+included in particle output and MPI domain-decomposition exchanges. Its
+units depend on `ISOSURF`: hPa for pressure (`1`), hPa/K for the
+pressure-to-temperature ratio (`2`), and K for potential temperature (`3`).
+Existing particle files without this quantity need a configuration that
+provides a free quantity slot; `NQ` and other quantity indices are not
+changed automatically. `ISOSURF=0` and `4` do not require it.
+
 ## Radionuclide deposition
 
 Radionuclide decay and deposition require the activity quantities to be part

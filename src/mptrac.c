@@ -2085,7 +2085,6 @@ void dd_pack_compact(
     for (int iq = 0; iq < ctl->nq; iq++)
       sort_array(atm->q[iq], dd->perm, dd->tmp, nkeep);
     sort_array(cache->dt, dd->perm, dd->tmp, nkeep);
-    sort_array(cache->iso_var, dd->perm, dd->tmp, nkeep);
     sort_uvwp(cache, dd->perm, dd->tmp, nkeep);
   }
 
@@ -2128,7 +2127,6 @@ void dd_pack_compact(
       for (int iq = 0; iq < ctl->nq; iq++)
 	atm->q[iq][nkeep_cpu] = atm->q[iq][ip];
       cache->dt[nkeep_cpu] = cache->dt[ip];
-      cache->iso_var[nkeep_cpu] = cache->iso_var[ip];
       for (int i = 0; i < 3; i++)
 	cache->uvwp[nkeep_cpu][i] = cache->uvwp[ip][i];
     }
@@ -2651,7 +2649,6 @@ void dd_sort(
   for (int iq = 0; iq < ctl->nq; iq++)
     sort_array(atm->q[iq], dd->perm, dd->tmp, np);
   sort_array(cache->dt, dd->perm, dd->tmp, np);
-  sort_array(cache->iso_var, dd->perm, dd->tmp, np);
   sort_uvwp(cache, dd->perm, dd->tmp, np);
 
   /* Count kept, outgoing, and invalid particles in one pass... */
@@ -5142,26 +5139,26 @@ void module_isosurf_init(
 
   /* Save pressure... */
   if (ctl->isosurf == 1) {
-    PARTICLE_LOOP(0, atm->np, 0, "acc data present(cache,atm)") {
-      cache->iso_var[ip] = atm->p[ip];
+    PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,atm)") {
+      atm->q[ctl->qnt_iso_var][ip] = atm->p[ip];
     }
   }
 
   /* Save density... */
   else if (ctl->isosurf == 2) {
-    PARTICLE_LOOP(0, atm->np, 0, "acc data present(cache,met0,met1,atm)") {
+    PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm)") {
       INTPOL_INIT;
       INTPOL_3D(t, 1);
-      cache->iso_var[ip] = atm->p[ip] / t;
+      atm->q[ctl->qnt_iso_var][ip] = atm->p[ip] / t;
     }
   }
 
   /* Save potential temperature... */
   else if (ctl->isosurf == 3) {
-    PARTICLE_LOOP(0, atm->np, 0, "acc data present(cache,met0,met1,atm)") {
+    PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm)") {
       INTPOL_INIT;
       INTPOL_3D(t, 1);
-      cache->iso_var[ip] = THETA(atm->p[ip], t);
+      atm->q[ctl->qnt_iso_var][ip] = THETA(atm->p[ip], t);
     }
   }
 
@@ -5217,18 +5214,18 @@ void module_isosurf(
 
     /* Restore pressure... */
     if (ctl->isosurf == 1)
-      atm->p[ip] = cache->iso_var[ip];
+      atm->p[ip] = atm->q[ctl->qnt_iso_var][ip];
 
     /* Restore density... */
     else if (ctl->isosurf == 2) {
       INTPOL_3D(t, 1);
-      atm->p[ip] = cache->iso_var[ip] * t;
+      atm->p[ip] = atm->q[ctl->qnt_iso_var][ip] * t;
     }
 
     /* Restore potential temperature... */
     else if (ctl->isosurf == 3) {
       INTPOL_3D(t, 1);
-      atm->p[ip] = 1000. * pow(cache->iso_var[ip] / t, -1. / KAPPA);
+      atm->p[ip] = 1000. * pow(atm->q[ctl->qnt_iso_var][ip] / t, -1. / KAPPA);
     }
 
     /* Interpolate pressure... */
@@ -6227,7 +6224,6 @@ void module_sort(
   for (int iq = 0; iq < ctl->nq; iq++)
     sort_array(atm->q[iq], p, a, np);
   sort_array(cache->dt, p, a, np);
-  sort_array(cache->iso_var, p, a, np);
   sort_uvwp(cache, p, a, np);
 
   /* Free... */
@@ -7052,6 +7048,7 @@ void mptrac_read_ctl(
   ctl->qnt_rh = -1;
   ctl->qnt_rhice = -1;
   ctl->qnt_theta = -1;
+  ctl->qnt_iso_var = -1;
   ctl->qnt_zeta = -1;
   ctl->qnt_zeta_d = -1;
   ctl->qnt_zeta_dot = -1;
@@ -7178,6 +7175,7 @@ void mptrac_read_ctl(
       SET_QNT(qnt_rh, "rh", "relative humidity", "%%")
       SET_QNT(qnt_rhice, "rhice", "relative humidity over ice", "%%")
       SET_QNT(qnt_theta, "theta", "potential temperature", "K")
+      SET_QNT(qnt_iso_var, "iso_var", "isosurface reference value", "varies")
       SET_QNT(qnt_zeta, "zeta", "zeta coordinate", "K")
       SET_QNT(qnt_zeta_d, "zeta_d", "diagnosed zeta coordinate", "K")
       SET_QNT(qnt_zeta_dot, "zeta_dot", "velocity of zeta coordinate",
@@ -7464,6 +7462,8 @@ void mptrac_read_ctl(
   /* Isosurface parameters... */
   ctl->isosurf =
     (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
+  if (ctl->isosurf >= 1 && ctl->isosurf <= 3 && ctl->qnt_iso_var < 0)
+    ERRMSG("Add quantity iso_var for ISOSURF=1, 2, or 3!");
   scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
 
   /* Random number generator... */

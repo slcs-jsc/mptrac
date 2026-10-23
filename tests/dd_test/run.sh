@@ -16,6 +16,9 @@ set -e
 # select the run duration, sorting backend, toolchain, and input wind fields.
 # DD_COMPARE_DIR selects reference .tab files (default: data.ref).
 # DD_SAVE_DIR saves this run's .tab files for a later CPU/GPU comparison.
+# DD_ISOSURF=3 adds the iso_var quantity for the isosurface migration test.
+# DD_INIT_Z0/Z1/DZ and DD_INIT_IDX_STRIDE set its two heights and unique IDs;
+# DD_WIND_ALPHA=0 makes particles cross the zonal subdomain boundary.
 # From tests/dd_test, for example:
 #   DD_EXCHANGE_MODE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
 #   DD_EXCHANGE_MODE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
@@ -100,6 +103,14 @@ domains_lon=${DD_DOMAINS_LON:-3}    # number of zonal subdomains
 domains_lat=${DD_DOMAINS_LAT:-3}    # number of meridional subdomains
 dd_exchange_mode=${DD_EXCHANGE_MODE:-0}
 use_thrust=${DD_THRUST:-1}
+isosurf=${DD_ISOSURF:-0}
+if [[ $isosurf -eq 3 ]]; then
+    nq=6
+    iso_quantity='QNT_NAME[5] = iso_var'
+else
+    nq=5
+    iso_quantity=''
+fi
 
 # Set parameters for atmospheric initialization
 use_evenly_distributed=0            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
@@ -130,7 +141,7 @@ met_grid_nz=60          # number of vertical levels of meteo files
 dex_glob=364            # allocated size of meteo grid in longitudinal direction
 dey_glob=186            # allocated size of meteo grid in latitudinal direction
 dez_glob=90             # allocated size of meteo grid in vertical direction
-wind_alpha=90           # angle for wind rotation  in degrees
+wind_alpha=${DD_WIND_ALPHA:-90}  # angle for wind rotation in degrees
 wind_speed=50           # wind speed in m/s
 
 # Calculate derived parameters
@@ -140,6 +151,7 @@ if (( ntasks_per_node > ntasks )); then
 fi
 nnodes=$(( (ntasks + ntasks_per_node - 1) / ntasks_per_node ))
 particles_num_subdomain=$((particles_subdomain_lon_stride * particles_subdomain_lat_stride))
+particle_id_stride=${DD_INIT_IDX_STRIDE:-$particles_num_subdomain}
 npmax=${DD_NP_MAX:-$((particles_num_subdomain * 2))}
 nparticles=$((particles_num_subdomain * ntasks))
 subgrid_lon_size=$(echo "scale=6; $grid_lon_size / $domains_lon" | bc)
@@ -186,7 +198,7 @@ export OMP_PLACES=sockets
 #export LANG=C
 #export LC_ALL=C
 
-defs="-DNP=${npmax} -DEX_GLOB=${dex_glob} -DEY_GLOB=${dey_glob} -DEP=${dez_glob} -DEX=${dex} -DEY=${dey} -DNQ=5"
+defs="-DNP=${npmax} -DEX_GLOB=${dex_glob} -DEY_GLOB=${dey_glob} -DEP=${dez_glob} -DEX=${dex} -DEY=${dey} -DNQ=${nq}"
 
 echo "[INFO] defs: $defs"
 echo "[INFO] LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
@@ -264,12 +276,14 @@ GRID_LAT1 = ${grid_lat_start}
 GRID_NX = ${grid_nx}
 GRID_NY = ${grid_ny}
 ENSEMBLE = 1
-NQ = 5
+NQ = ${nq}
 QNT_NAME[0] = idx
 QNT_NAME[1] = zeta
 QNT_NAME[2] = m
 QNT_NAME[3] = current_subdomain
 QNT_NAME[4] = target_subdomain
+${iso_quantity}
+ISOSURF = ${isosurf}
 DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
@@ -326,7 +340,8 @@ for i in $(seq 0 $((ntasks-1))); do
     "$mptrac_dir"/src/atm_init "$work_dir"/data/config.ctl \
                  "$work_dir"/data/"data.$i"/init.nc \
                  INIT_T0 "$t0" INIT_T1 "$t0" \
-                 INIT_Z0 10.0 INIT_Z1 10.0 \
+                 INIT_Z0 "${DD_INIT_Z0:-10.0}" INIT_Z1 "${DD_INIT_Z1:-10.0}" \
+                 INIT_DZ "${DD_INIT_DZ:-1.0}" \
                  INIT_LON0 "$init_lon0" \
                  INIT_LON1 "$init_lon1" \
                  INIT_DLON "$init_dlon" \
@@ -334,7 +349,7 @@ for i in $(seq 0 $((ntasks-1))); do
                  INIT_LAT1 "$init_lat1" \
                  INIT_DLAT "$init_dlat" \
                  INIT_EVENLY "$use_evenly_distributed" \
-                 INIT_IDX_OFFSET $((particles_num_subdomain * i)) >> "$work_dir"/data/atm_generation.log 2>&1
+                 INIT_IDX_OFFSET $((particle_id_stride * i)) >> "$work_dir"/data/atm_generation.log 2>&1
     
     cat > data/"data.$i"/config.ctl <<EOF
 MET_PRESS_LEVEL_DEF = ${met_press_level_def}
@@ -370,12 +385,14 @@ GRID_LAT1 = ${grid_lat_start}
 GRID_NX = ${grid_nx}
 GRID_NY = ${grid_ny}
 ENSEMBLE = 1
-NQ = 5
+NQ = ${nq}
 QNT_NAME[0] = idx
 QNT_NAME[1] = zeta
 QNT_NAME[2] = m
 QNT_NAME[3] = current_subdomain
 QNT_NAME[4] = target_subdomain
+${iso_quantity}
+ISOSURF = ${isosurf}
 DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
