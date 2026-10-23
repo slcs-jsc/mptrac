@@ -8125,9 +8125,10 @@ int mptrac_read_met(
 
       /* Create periodic boundary conditions... */
 #ifdef DD
-      /* With domain decomposition, the periodic boundaries are provided by the
-         halos of the subdomains... */
-      if (!ctl->dd)
+      /* Zonal DD halos provide periodic boundaries only when there is more
+         than one zonal subdomain. With a single zonal subdomain, append the
+         periodic endpoint locally as in a run without DD. */
+      if (!ctl->dd || ctl->dd_subdomains_zonal == 1)
 	read_met_periodic(met);
 #else
       read_met_periodic(met);
