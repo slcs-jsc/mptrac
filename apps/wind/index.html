@@ -906,6 +906,10 @@ $ ./wind &lt;ctl&gt; &lt;metbase&gt;
 * WIND_U0: horizontal wind speed at lowermost level (default: 38.587660177302 m/s)
 * WIND_U1: horizontal wind speed at uppermost level (default: 38.587660177302 m/s)
 * WIND_W0: vertical velocity (default: 0 m/s)
+* WIND_PERT_U: amplitude of the zonal wind perturbation (default: 0 m/s)
+* WIND_PERT_V: amplitude of the meridional wind perturbation (default: 0 m/s)
+* WIND_PERT_W: amplitude of the vertical wind perturbation (default: 0 m/s)
+* WIND_PERT_K: positive integer number of perturbation cycles around the globe (default: 24, corresponding to a 15° wavelength)
 * WIND_ALPHA: rotation angle (default: 0 deg)
 * WIND_LAT_REVERSE: latitude direction flag (default: 0, set to 1 for reversed latitude direction)
 * WIND_TEMP0: temperature at the lowermost level (default: 280 K)
@@ -921,6 +925,23 @@ $ ./wind &lt;ctl&gt; &lt;metbase&gt;
 * WIND_BLH: boundary layer height (default: 1 km). Converted to boundary layer pressure via the barometric formula (P(z) in hPa, where z = WIND_ZS + WIND_BLH)
 * WIND_Q: specific humidity (default: 0 kg/kg)
 * WIND_O3: ozone mass mixing ratio (default: 0 kg/kg)</p>
+<p>The perturbations are deterministic and are applied only when at least one
+amplitude is nonzero. With longitude <code>lambda</code>, latitude <code>phi</code>, and level index
+<code>i</code> (from 0 to <code>WIND_NZ - 1</code>), define <code>T = cos(phi)^2</code> and
+<code>H = 0.75 + 0.25 cos(2 pi i / (WIND_NZ - 1))</code>. Angles are in radians. The
+three-dimensional wind receives these additions before output:</p>
+<pre><code>u += WIND_PERT_U * H * T * sin(K * lambda) * cos(K * phi)
+v += WIND_PERT_V * H * T * cos(K * lambda) * cos(K * phi + pi/4)
+w += WIND_PERT_W * H * T * sin(K * lambda + pi/4) * sin(K * phi + pi/4)
+</code></pre>
+<p>The same horizontal perturbations, with <code>H = 1</code>, are added to surface wind.
+The vertical perturbation is in m/s and is converted to pressure velocity
+along with <code>WIND_W0</code>. The longitude functions are periodic at 0°/360°; the
+latitude taper makes the perturbations vanish smoothly at both poles. For a
+1° grid, <code>WIND_PERT_K=18</code> to <code>36</code> gives a longitude wavelength of 20° to 10°.
+For example, <code>WIND_PERT_U=3</code>, <code>WIND_PERT_V=3</code>, and <code>WIND_PERT_W=0.03</code> add
+moderate spatial variability to a diffusion regression test. The default
+zero amplitudes preserve the original wind field.</p>
 
 
 
