@@ -8607,21 +8607,29 @@ void mptrac_write_output(
   /* Get time... */
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
+  /* Decide which particle outputs are due, including the final step... */
+  const int final = (t == ctl->t_stop);
+  const int output_atm = ctl->atm_basename[0] != '-'
+    && (fmod(t, ctl->atm_dt_out) == 0 || final);
+  const int output_grid = ctl->grid_basename[0] != '-'
+    && (fmod(t, ctl->grid_dt_out) == 0 || final);
+  const int output_budget = ctl->budget_basename[0] != '-'
+    && (fmod(t, ctl->budget_dt_out) == 0 || final);
+  const int output_depo = ctl->depo_basename[0] != '-'
+    && (fmod(t, ctl->depo_dt_out) == 0 || final);
+  const int output_ens = ctl->ens_basename[0] != '-'
+    && (fmod(t, ctl->ens_dt_out) == 0 || final);
+  const int output_vtk = ctl->vtk_basename[0] != '-'
+    && (fmod(t, ctl->vtk_dt_out) == 0 || final);
+
   /* Update host... */
-  if ((ctl->atm_basename[0] != '-'
-	&& (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop))
-      || (ctl->budget_basename[0] != '-'
-	  && (fmod(t, ctl->budget_dt_out) == 0 || t == ctl->t_stop))
-      || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
-      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
+  if (output_atm || output_grid || output_budget || output_ens || output_vtk
       || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
-      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
-      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0))
+      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-')
     mptrac_update_host(NULL, NULL, NULL, NULL, NULL, atm);
 
   /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' &&
-      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
+  if (output_atm) {
     if (ctl->atm_type_out == 0)
       sprintf(ext, "tab");
     else if (ctl->atm_type_out == 1)
@@ -8634,7 +8642,7 @@ void mptrac_write_output(
   }
 
   /* Write gridded data... */
-  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
+  if (output_grid) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min, sec,
 	    ctl->grid_type == 0 ? "tab" : "nc");
@@ -8642,15 +8650,13 @@ void mptrac_write_output(
   }
 
   /* Write mass budget data... */
-  if (ctl->budget_basename[0] != '-'
-      && (fmod(t, ctl->budget_dt_out) == 0 || t == ctl->t_stop)) {
+  if (output_budget) {
     sprintf(filename, "%s/%s.tab", dirname, ctl->budget_basename);
     write_budget(filename, ctl, atm, t);
   }
 
   /* Write radioactive deposition data... */
-  if (ctl->depo_basename[0] != '-'
-      && (fmod(t, ctl->depo_dt_out) == 0 || t == ctl->t_stop)) {
+  if (output_depo) {
 #ifdef _OPENACC
 #pragma acc update host(depo[:1])
 #endif
@@ -8667,7 +8673,7 @@ void mptrac_write_output(
   }
 
   /* Write ensemble data... */
-  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
+  if (output_ens) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->ens_basename, year, mon, day, hour, min, sec);
     write_ens(filename, ctl, atm, t);
@@ -8692,7 +8698,7 @@ void mptrac_write_output(
   }
 
   /* Write VTK data... */
-  if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
+  if (output_vtk) {
     static int nvtk;
     if (t == ctl->t_start)
       nvtk = 0;
