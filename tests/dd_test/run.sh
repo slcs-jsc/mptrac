@@ -21,6 +21,8 @@ set -e
 # DD_WIND_ALPHA=0 makes particles cross the zonal subdomain boundary.
 # DD_DIFFUSION=1 with DD_TURB_MESOX/DD_TURB_MESOZ>0 enables mesoscale diffusion.
 # DD_WIND_PERT_U/V/W and DD_WIND_PERT_K control optional synthetic wind waves.
+# DD_BENCHMARK=1 selects binary particle I/O, sparse output, and a configurable
+# particle-capacity margin. See benchmark.sh for automated matrix runs.
 # From tests/dd_test, for example:
 #   DD_EXCHANGE_MODE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
 #   DD_EXCHANGE_MODE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
@@ -48,6 +50,11 @@ hpc_mode="local"
 skip_wind=""
 skip_run=""
 skip_compare=""
+benchmark=${DD_BENCHMARK:-0}
+if [[ $benchmark != 0 && $benchmark != 1 ]]; then
+    echo "[ERROR] DD_BENCHMARK must be 0 or 1" >&2
+    exit 1
+fi
 for arg in "$@"; do
     case "$arg" in
         "compile")
@@ -70,6 +77,7 @@ for arg in "$@"; do
             ;;
     esac
 done
+if [[ $benchmark == 1 ]]; then skip_compare=skip_compare; fi
 
 # Keep generated wind fields when skip_wind is requested. This lets a CPU
 # baseline and a GPU run use the same meteorological input without rebuilding it.
@@ -101,8 +109,13 @@ cpus_per_task=1                     # number of CPUs per task
 mpi_cc=${DD_MPICC:-mpicc}
 mpi_run=${DD_MPIRUN:-mpirun}
 
-domains_lon=${DD_DOMAINS_LON:-3}    # number of zonal subdomains
-domains_lat=${DD_DOMAINS_LAT:-3}    # number of meridional subdomains
+if [[ $benchmark == 1 ]]; then
+    domains_lon=${DD_DOMAINS_LON:-2}
+    domains_lat=${DD_DOMAINS_LAT:-2}
+else
+    domains_lon=${DD_DOMAINS_LON:-3}
+    domains_lat=${DD_DOMAINS_LAT:-3}
+fi
 dd_exchange_mode=${DD_EXCHANGE_MODE:-0}
 use_thrust=${DD_THRUST:-1}
 isosurf=${DD_ISOSURF:-0}
@@ -116,8 +129,13 @@ fi
 
 # Set parameters for atmospheric initialization
 use_evenly_distributed=0            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
-particles_subdomain_lon_stride=${DD_PARTICLES_LON_STRIDE:-4}
-particles_subdomain_lat_stride=${DD_PARTICLES_LAT_STRIDE:-4}
+if [[ $benchmark == 1 ]]; then
+    particles_subdomain_lon_stride=${DD_PARTICLES_LON_STRIDE:-250}
+    particles_subdomain_lat_stride=${DD_PARTICLES_LAT_STRIDE:-100}
+else
+    particles_subdomain_lon_stride=${DD_PARTICLES_LON_STRIDE:-4}
+    particles_subdomain_lat_stride=${DD_PARTICLES_LAT_STRIDE:-4}
+fi
 grid_lon_start=0                    # starting longitude of the grid for the atmospheric initialization
 grid_lon_d=1                        # longitude direction (1 or -1)
 grid_lon_size=360                   # size of the grid for the atmospheric initialization in longitudinal direction
@@ -132,11 +150,24 @@ met_vert_coord=0        # original vertical coordinate type
 dt_met=3600             # read time interval for meteo files
 dt_mod=600              # model time step
 met_dt_out=3600         # output time interval for meteo files
+if [[ $benchmark == 1 ]]; then atm_dt_out=${DD_ATM_DT_OUT:-86400}
+else atm_dt_out=${DD_ATM_DT_OUT:-3600}
+fi
 
 # Set simulation time parameters
 simulation_hours=${DD_SIMULATION_HOURS:-6}
 ntimesteps=$((simulation_hours * 3600 / dt_met + 1))  # number of time steps (including initial time)
-atm_type=3              # original atmospheric data type
+if [[ $benchmark == 1 ]]; then
+    atm_type=1
+    atm_type_out_global=1
+    atm_type_out_rank=1
+    init_ext=bin
+else
+    atm_type=3
+    atm_type_out_global=4
+    atm_type_out_rank=0
+    init_ext=nc
+fi
 met_grid_nx=360         # number of grid points in longitudinal direction of meteo files
 met_grid_ny=181         # number of grid points in latitudinal direction of meteo files
 met_grid_nz=60          # number of vertical levels of meteo files
@@ -147,6 +178,22 @@ wind_alpha=${DD_WIND_ALPHA:-90}  # angle for wind rotation in degrees
 wind_speed=50           # wind speed in m/s
 
 # Calculate derived parameters
+if [[ $benchmark == 1 ]]; then
+    for value in "$domains_lon" "$domains_lat" "$particles_subdomain_lon_stride" \
+        "$particles_subdomain_lat_stride" "$simulation_hours" "$atm_dt_out" \
+        "${DD_NP_MARGIN_PERCENT:-25}" "${DD_INIT_IDX_STRIDE:-0}"; do
+        if [[ ! $value =~ ^[0-9]+$ ]]; then
+            echo "[ERROR] Benchmark dimensions, hours, output interval, margin, and ID stride must be integers" >&2
+            exit 1
+        fi
+    done
+    if (( domains_lon < 1 || domains_lat < 1 ||
+          particles_subdomain_lon_stride < 1 || particles_subdomain_lat_stride < 1 ||
+          simulation_hours < 1 || atm_dt_out < 1 || atm_dt_out % dt_mod != 0 )); then
+        echo "[ERROR] Benchmark dimensions and hours must be positive; output interval must be a multiple of DT_MOD" >&2
+        exit 1
+    fi
+fi
 ntasks=$((domains_lon * domains_lat))
 if (( ntasks_per_node > ntasks )); then
     ntasks_per_node=$ntasks
@@ -154,7 +201,21 @@ fi
 nnodes=$(( (ntasks + ntasks_per_node - 1) / ntasks_per_node ))
 particles_num_subdomain=$((particles_subdomain_lon_stride * particles_subdomain_lat_stride))
 particle_id_stride=${DD_INIT_IDX_STRIDE:-$particles_num_subdomain}
-npmax=${DD_NP_MAX:-$((particles_num_subdomain * 2))}
+if [[ $benchmark == 1 ]]; then
+    margin=${DD_NP_MARGIN_PERCENT:-25}
+    npmax=${DD_NP_MAX:-$((particles_num_subdomain +
+        (particles_num_subdomain * margin + 99) / 100 + 1))}
+    if [[ ! $npmax =~ ^[0-9]+$ ]] ||
+       (( npmax <= particles_num_subdomain || npmax > 2147483647 ||
+          particle_id_stride < particles_num_subdomain ||
+          particle_id_stride * (ntasks - 1) + particles_num_subdomain > 2147483647 )); then
+        echo "[ERROR] Benchmark NP must exceed initial particles/rank; IDs and NP must fit in signed int" >&2
+        exit 1
+    fi
+    echo "[INFO] Benchmark spare capacity: $((npmax - particles_num_subdomain)) particles/rank"
+else
+    npmax=${DD_NP_MAX:-$((particles_num_subdomain * 2))}
+fi
 nparticles=$((particles_num_subdomain * ntasks))
 subgrid_lon_size=$(echo "scale=6; $grid_lon_size / $domains_lon" | bc)
 subgrid_lat_size=$(echo "scale=6; $grid_lat_size / $domains_lat" | bc)
@@ -221,11 +282,17 @@ else
     echo "[INFO] Compile MPTRAC with domain decomposition using $compiler"
     cd "$mptrac_dir"/src
     make clean
+    build_opt=()
+    if [[ $benchmark == 1 && $compiler == nvc ]]; then
+        build_opt=(OPT="${DD_BENCH_OPT:--O3 -Mlarge_arrays}")
+    elif [[ -n ${DD_BENCH_OPT:-} ]]; then
+        build_opt=(OPT="$DD_BENCH_OPT")
+    fi
     
     # Build input generators on the CPU, then force a separate trac object
     # build with the requested accelerator setting.
-    make -j atm_init wind time2jsec DD=1 MPI=1 STATIC=0 GPU=0 THRUST=0 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
-    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=$use_thrust COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs"
+    make -j atm_init wind time2jsec DD=1 MPI=1 STATIC=0 GPU=0 THRUST=0 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs" "${build_opt[@]}"
+    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=$use_thrust COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs" "${build_opt[@]}"
 fi
 
 #################################################################################################################
@@ -251,7 +318,7 @@ MET_VERT_COORD = ${met_vert_coord}
 MET_DT_OUT = ${met_dt_out}
 MET_CONVENTION = 0
 ATM_TYPE = ${atm_type}
-ATM_TYPE_OUT = 4
+ATM_TYPE_OUT = ${atm_type_out_global}
 ADVECT = 2
 ADVECT_VERT_COORD = 0
 DIFFUSION = ${DD_DIFFUSION:-0}
@@ -270,7 +337,7 @@ DT_MOD = ${dt_mod}
 DT_MET = ${dt_met}
 T_START = ${t0}
 T_STOP = ${t1}
-ATM_DT_OUT = ${met_dt_out}
+ATM_DT_OUT = ${atm_dt_out}
 GRID_DT_OUT = 25920000
 GRID_LON0 = ${grid_lon_start}
 GRID_LON1 = $((grid_lon_start + grid_lon_size))
@@ -340,8 +407,16 @@ for i in $(seq 0 $((ntasks-1))); do
     echo "[INFO]   Dlon: $init_dlon"
     echo "[INFO]   Dlat: $init_dlat"
 
-    "$mptrac_dir"/src/atm_init "$work_dir"/data/config.ctl \
-                 "$work_dir"/data/"data.$i"/init.nc \
+    if [[ $benchmark == 1 && -n ${DD_INIT_SOURCE:-} ]]; then
+        source_init=${DD_INIT_SOURCE}/data.$i/init.bin
+        if [[ ! -f $source_init ]]; then
+            echo "[ERROR] Missing reusable binary initialization: $source_init" >&2
+            exit 1
+        fi
+        ln -f "$source_init" "$work_dir/data/data.$i/init.bin"
+    else
+        "$mptrac_dir"/src/atm_init "$work_dir"/data/config.ctl \
+                 "$work_dir"/data/"data.$i"/"init.$init_ext" \
                  INIT_T0 "$t0" INIT_T1 "$t0" \
                  INIT_Z0 "${DD_INIT_Z0:-10.0}" INIT_Z1 "${DD_INIT_Z1:-10.0}" \
                  INIT_DZ "${DD_INIT_DZ:-1.0}" \
@@ -353,6 +428,7 @@ for i in $(seq 0 $((ntasks-1))); do
                  INIT_DLAT "$init_dlat" \
                  INIT_EVENLY "$use_evenly_distributed" \
                  INIT_IDX_OFFSET $((particle_id_stride * i)) >> "$work_dir"/data/atm_generation.log 2>&1
+    fi
     
     cat > data/"data.$i"/config.ctl <<EOF
 MET_PRESS_LEVEL_DEF = ${met_press_level_def}
@@ -361,7 +437,7 @@ MET_VERT_COORD = ${met_vert_coord}
 MET_DT_OUT = ${met_dt_out}
 MET_CONVENTION = 0
 ATM_TYPE = ${atm_type}
-ATM_TYPE_OUT = 0
+ATM_TYPE_OUT = ${atm_type_out_rank}
 ADVECT = 2
 ADVECT_VERT_COORD = 0
 DIFFUSION = ${DD_DIFFUSION:-0}
@@ -380,7 +456,7 @@ DT_MOD = ${dt_mod}
 DT_MET = ${dt_met}
 T_START = ${t0}
 T_STOP = ${t1}
-ATM_DT_OUT = ${met_dt_out}
+ATM_DT_OUT = ${atm_dt_out}
 GRID_DT_OUT = 25920000
 GRID_LON0 = ${grid_lon_start}
 GRID_LON1 = $((grid_lon_start + grid_lon_size))
@@ -465,17 +541,17 @@ else
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
                 --output="$work_dir"/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
                 --error="$work_dir"/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
-                "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
+                "$mptrac_dir"/src/trac dirlist.tab config.ctl "init.$init_ext" ATM_BASENAME atm
         else
             echo "[INFO] Running with CPU-only on HPC (cpus-per-task=$cpus_per_task)"
             srun --nodes $nnodes --ntasks $ntasks --account=clams-esm --time=00:59:00 \
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
                 --output="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
                 --error="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
-                "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
+                "$mptrac_dir"/src/trac dirlist.tab config.ctl "init.$init_ext" ATM_BASENAME atm
         fi
     else
-        "$mpi_run" --oversubscribe -np $ntasks "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > "$work_dir"/data/mpirun_output.log 2>&1
+        "$mpi_run" --oversubscribe -np $ntasks "$mptrac_dir"/src/trac dirlist.tab config.ctl "init.$init_ext" ATM_BASENAME atm > "$work_dir"/data/mpirun_output.log 2>&1
     fi
 fi
 
@@ -484,7 +560,7 @@ fi
 #################################################################################################################
 
 cd "$work_dir"
-if [ -n "${DD_SAVE_DIR:-}" ]; then
+if [[ $benchmark == 0 && -n ${DD_SAVE_DIR:-} ]]; then
     mkdir -p "$DD_SAVE_DIR"
     while IFS= read -r -d '' data_file; do
         rel_path=${data_file#data/}

@@ -125,6 +125,9 @@ int main(
 
     /* Initialize MPTRAC... */
     mptrac_init(ctl, cache, clim, atm, depo, ntask);
+#ifdef DD
+    int peak_np = atm->np;
+#endif
 
     /* ------------------------------------------------------------
        Loop over timesteps...
@@ -160,6 +163,10 @@ int main(
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, depo, t, dd);
+#ifdef DD
+      if (ctl->dd && atm->np > peak_np)
+	peak_np = atm->np;
+#endif
 
       /* Write output... */
       mptrac_write_output(dirname, ctl, met0, met1, atm, depo, t);
@@ -174,6 +181,11 @@ int main(
 
     /* Report problem size... */
     LOG(1, "SIZE_NP = %d", atm->np);
+#ifdef DD
+    const char *benchmark = getenv("DD_BENCHMARK");
+    if (ctl->dd && benchmark && benchmark[0] == '1' && benchmark[1] == '\0')
+      LOG(1, "SIZE_NP_PEAK = %d", peak_np);
+#endif
     LOG(1, "SIZE_MPI_TASKS = %d", size);
     LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
 

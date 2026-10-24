@@ -4474,6 +4474,9 @@ void module_dd(
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* Perform the communication... */
+  const char *benchmark = getenv("DD_BENCHMARK");
+  if (benchmark && benchmark[0] == '1' && benchmark[1] == '\0')
+    LOG(1, "DD_SENT_PARTICLES = %d", npart);
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
   /* Transform from array of struct to struct of array... */
@@ -8605,7 +8608,8 @@ void mptrac_write_output(
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Update host... */
-  if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
+  if ((ctl->atm_basename[0] != '-'
+	&& (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop))
       || (ctl->budget_basename[0] != '-'
 	  && (fmod(t, ctl->budget_dt_out) == 0 || t == ctl->t_stop))
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)

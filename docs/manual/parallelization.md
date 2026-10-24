@@ -74,6 +74,102 @@ make DD=1 MPI=1 MPIFC=mpifort \
   wrapper_test
 ```
 
+### DD performance benchmark
+
+`tests/dd_test/benchmark.sh` runs a matrix of the sort/push exchange path
+(`DD_EXCHANGE_MODE=0`) and the sort-free compaction path
+(`DD_EXCHANGE_MODE=1`). It uses the existing DD setup in `run.sh` with
+`DD_BENCHMARK=1`. The normal regression mode and its reference files are
+unchanged. By default the benchmark uses a 2 × 2 DD layout, approximately
+100,000, 1 million, and 10 million particles, both exchange modes, a
+six-hour smooth-wind simulation, and no diffusion. Set `DD_BENCH_COUNTS`
+explicitly to include 100 million particles; that size is never run by
+default. `DD_BENCH_MODES` and `DD_BENCH_REPEATS` select modes and repeats.
+
+Benchmark mode uses MPTRAC binary particle files (`ATM_TYPE=1`,
+`ATM_TYPE_OUT=1`). `atm_init` writes `init.bin`; each rank writes binary
+snapshots at the beginning and end of the default six-hour run. The output
+interval is `DD_ATM_DT_OUT=86400` seconds by default and must include the
+initial time and be divisible by the 600-second model step. Longer runs or
+shorter output intervals can create additional snapshots. The script
+checks expected disk use before compiling or running and limits it to
+`DD_BENCH_MAX_DISK_GIB=64` by default. Initial files are hard-linked
+between modes and repeats for the same particle count. Meteorological
+input is generated once and cached in the benchmark work directory, or
+can be supplied with `DD_WIND_DIR`.
+
+Particle counts come from `DD_PARTICLES_LON_STRIDE ×
+DD_PARTICLES_LAT_STRIDE` on each MPI rank. The matrix script derives
+strides for each approximate target, or accepts both stride variables for
+a single target. `DD_NP_MAX` is the compiled particle capacity **per
+rank**. Its benchmark default is the initial per-rank count plus a
+configurable `DD_NP_MARGIN_PERCENT=25` margin and one extra slot. Increase
+the margin if particles concentrate on particular ranks. The benchmark
+checks that NP exceeds the initial count and that IDs fit in signed 32-bit
+integers. At `NQ=5`, the atmospheric arrays, particle cache, and DD helper
+arrays alone use approximately `152 × DD_NP_MAX` bytes per rank. Host and
+GPU copies, meteorology, MPI buffers, and allocator overhead add to this;
+the CSV memory estimate is therefore a lower bound. The preflight limit
+`DD_BENCH_MAX_PARTICLE_MEMORY_GIB=24` applies to this lower bound and can be
+overridden. Each binary snapshot uses about 72 bytes per particle, so 100 million particles require about
+7.2 GB for each snapshot and another 7.2 GB for the initial files.
+
+Run inside a JUWELS Booster Slurm allocation with four ranks and four GPUs.
+For example, a batch script can request one Booster node, four tasks, and
+four GPUs. Replace the account and wall time with suitable values:
+
+```bash
+#SBATCH --partition=booster
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --gres=gpu:4
+#SBATCH --account=<account>
+#SBATCH --time=02:00:00
+module purge
+module load Stages/2026 nvidia-compilers ParaStationMPI CMake ecBuild netCDF/4.9.3
+```
+
+Set a shared scratch work directory and launch from the repository root:
+
+```bash
+export DD_BENCH_WORK_DIR=/p/data1/slmet/model_data/mptrac/projects/domain_decomp/lars/dd_benchmark
+export DD_USE_GPU=1 DD_COMPILER=nvc DD_MPICC=mpicc
+export DD_BENCH_COUNTS=100000,1000000,10000000
+export DD_BENCH_MODES=0,1 DD_BENCH_REPEATS=3
+./tests/dd_test/benchmark.sh
+```
+
+For a single optional large run, set `DD_BENCH_COUNTS=100000000`,
+`DD_BENCH_REPEATS=1`, and provide sufficient GPU memory, wall time, and
+scratch space. Set `DD_BENCH_DRY_RUN=1` first to print capacity and disk
+estimates without compiling or running. Start with a small matrix. The same
+script accepts
+`DD_DOMAINS_LON`, `DD_DOMAINS_LAT`, `DD_SIMULATION_HOURS`, `DD_SORT_DT`,
+`DD_EXCHANGE_MODE` through `DD_BENCH_MODES`, `DD_DIFFUSION`,
+`DD_TURB_MESOX`, `DD_TURB_MESOZ`, and the `DD_WIND_PERT_*` parameters.
+`DD_THRUST=1` selects GPU Thrust sorting in mode 0; set it to 0 to compare
+the GSL sorting backend. NVIDIA benchmark builds use `-Mlarge_arrays`
+through `DD_BENCH_OPT` by default to support large NP values. A local CPU
+smoke test can use `DD_USE_GPU=0`,
+`DD_COMPILER=gcc`, and an existing `DD_WIND_DIR`. If `mpicc` in the
+current `PATH` wraps NVIDIA's compiler, set `DD_MPICC` and `DD_MPIRUN`
+to matching system MPI executables for the GCC build.
+
+The script stores each run, full logs, and validated binary outputs in a
+separate directory and appends one row to `summary.csv`. It checks every
+particle ID in each snapshot with a compact bitset. `migrated_particles`
+counts IDs whose final rank differs from the rank encoded by their initial
+ID; it does not count repeat crossings or particles that return to their
+original rank. `sent_particle_events` sums the lightweight per-exchange
+send-count diagnostic and includes repeated crossings. Times are the maximum
+reported across MPI ranks. `launcher_wall_time` separately includes launcher
+startup and process shutdown.
+`mpi_time` is MPTRAC's `DD_COMMUNICATE_PARTICLES` phase, which includes
+host-side preparation in addition to MPI calls. `gpu_d2h_time` is the
+separately timed outgoing transfer in mode 1. A complete GPU transfer time,
+pure host-to-GPU time, and pure unpacking time are not isolated by the
+existing timers and remain blank or are reported only as combined phases.
+
 ### OpenMP and OpenACC within each rank
 
 OpenMP is enabled in MPTRAC builds and parallelizes particle

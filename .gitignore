@@ -38,6 +38,7 @@ projects/web_runner/__pycache__/
 projects/web_runner/runs/
 projects/web_runner/venv/
 src/*.o
+src/*.tsm
 src/*.mod
 src/atm2grid
 src/atm_conv
@@ -81,6 +82,7 @@ tests/cms_test/data/
 tests/compress_test/data/
 tests/coord_test/data/
 tests/dd_test/data/
+tests/dd_test/dd_benchmark/
 tests/dt_test/data/
 tests/gpu_test/data/
 tests/grib_test/data/
