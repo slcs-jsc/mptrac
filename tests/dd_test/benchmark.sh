@@ -349,7 +349,18 @@ PY
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
                             --gpus-per-task="$gpus_per_rank" \
                             --gpu-bind=single:1 --cpu-bind=cores \
-                            "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
+                        bash -c '
+                            IFS=, read -r -a visible_gpus <<< "${CUDA_VISIBLE_DEVICES:-}"
+                            if (( ${#visible_gpus[@]} > 1 )); then
+                                local_rank=${SLURM_LOCALID:?Missing local Slurm rank}
+                                if (( local_rank >= ${#visible_gpus[@]} )); then
+                                    echo "[ERROR] Too few visible GPUs for local rank $local_rank" >&2
+                                    exit 1
+                                fi
+                                export CUDA_VISIBLE_DEVICES=${visible_gpus[local_rank]}
+                            fi
+                            exec "$@"
+                        ' bash "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
                             > "$case_dir/trac.log" 2>&1
                     else
                         (cd "$case_dir/data" && srun --nodes="$nodes" \

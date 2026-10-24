@@ -134,6 +134,10 @@ the actual shared-memory node of every rank in `trac.log`; the report checks
 the requested placement and writes `rank_mapping.csv`, including the
 visible GPU assignment. If the actual placement differs, the case fails
 validation.
+On JUWELS Booster, `srun` can expose the full allocated GPU list to every
+rank even with GPU binding enabled. The benchmark launcher selects one
+visible GPU by `SLURM_LOCALID` before starting `trac`, and the recorded
+`CUDA_VISIBLE_DEVICES` values are checked for overlap within each node.
 
 For a four-GPU, single-node allocation, replace the account and wall time
 with suitable values:
