@@ -71,11 +71,13 @@ def timers(path):
         match = re.search(r"SIZE_NP_PEAK = (\d+)", line)
         if match:
             peaks.append(int(match.group(1)))
-        match = re.search(r"DD_SENT_PARTICLES = (\d+)", line)
+        match = re.search(
+            r"(?:DD_SENT_PARTICLES =\s*|DD_SEND rank=\d+ particles=)(\d+)",
+            line)
         if match:
             sent += int(match.group(1))
         match = re.search(
-            r"DD_BENCH_NODE rank=(\d+) leader=(\d+) local_rank=(\d+) "
+            r"(?:DD_BENCH_NODE|DD_NODE) rank=(\d+) leader=(\d+) local_rank=(\d+) "
             r"host=(\S+) gpu=(\S+)", line)
         if match:
             rank, leader, local_rank = map(int, match.group(1, 2, 3))
@@ -83,7 +85,7 @@ def timers(path):
                 raise ValueError(f"Duplicate node mapping for rank {rank}")
             mapping[rank] = (leader, local_rank, match.group(4), match.group(5))
         match = re.search(
-            r"DD_BENCH_COMM rank=(\d+) sent=(\d+) intra=(\d+) "
+            r"(?:DD_BENCH_COMM|DD_COMM) rank=(\d+) sent=(\d+) intra=(\d+) "
             r"inter=(\d+) intra_bytes=(\d+) inter_bytes=(\d+) "
             r"particle_bytes=(\d+)", line)
         if match:
@@ -97,7 +99,8 @@ def timers(path):
 def validate_communication(mapping, communication, ranks, nodes, ranks_per_node,
                            gpus, case):
     if set(mapping) != set(range(ranks)) or set(communication) != set(range(ranks)):
-        raise ValueError("Missing rank placement or communication diagnostics")
+        raise ValueError("Missing DD rank placement or communication diagnostics; "
+                         "compile MPTRAC with LOGLEV >= 2")
     by_node = {}
     for rank, (leader, local_rank, host, gpu) in mapping.items():
         by_node.setdefault(leader, []).append((rank, local_rank, host, gpu))
@@ -195,12 +198,13 @@ def main():
     parser.add_argument("--sort-dt", type=int, required=True)
     parser.add_argument("--hours", type=int, required=True)
     parser.add_argument("--repeat", type=int, required=True)
+    parser.add_argument("--allow-zero-migration", action="store_true")
     parser.add_argument("--header", action="store_true")
     args = parser.parse_args()
 
     migrated, snapshots = validate_snapshots(
         args.case, args.ranks, args.per_rank, args.id_stride, args.nq)
-    if migrated == 0:
+    if migrated == 0 and not args.allow_zero_migration:
         raise ValueError("No particles migrated between initial and final ranks")
     measured, peak, old_sent, mapping, communication = timers(args.log)
     sent, intra, inter, intra_bytes, inter_bytes = validate_communication(

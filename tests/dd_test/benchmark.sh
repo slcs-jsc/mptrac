@@ -324,6 +324,11 @@ for index in "${!count_list[@]}"; do
                 echo "[INFO] Setup particles=$total, layout=$layout, mode=$mode, repeat=$repeat, NP=$capacity"
                 (cd "$case_dir" && "$script_dir/run.sh" "${setup_args[@]}" \
                     > setup.log 2>&1)
+                if [[ ${DD_BENCH_CANONICAL_INIT:-0} == 1 && -z $init_source ]]; then
+                    python3 "$script_dir/benchmark_canonical_init.py" \
+                        "$case_dir/data" "${global_lon_list[index]}" \
+                        "${global_lat_list[index]}" "$lon_domains" "$lat_domains"
+                fi
                 python3 - "$case_dir/data" "$ranks" "$per_rank" <<'PY'
 import pathlib
 import struct
@@ -345,7 +350,7 @@ PY
                 start=$(date +%s.%N)
                 if [[ -n ${SLURM_JOB_ID:-} ]]; then
                     if [[ $DD_USE_GPU == 1 ]]; then
-                        (cd "$case_dir/data" && srun --nodes="$nodes" \
+                        (cd "$case_dir/data" && srun --label --nodes="$nodes" \
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
                             --gpus-per-task="$gpus_per_rank" \
                             --gpu-bind=single:1 --cpu-bind=cores \
@@ -363,7 +368,7 @@ PY
                         ' bash "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
                             > "$case_dir/trac.log" 2>&1
                     else
-                        (cd "$case_dir/data" && srun --nodes="$nodes" \
+                        (cd "$case_dir/data" && srun --label --nodes="$nodes" \
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
                             "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
                             > "$case_dir/trac.log" 2>&1
@@ -376,6 +381,10 @@ PY
                 end=$(date +%s.%N)
                 python3 -c 'import sys; print(float(sys.argv[2])-float(sys.argv[1]))' \
                     "$start" "$end" > "$case_dir/launcher_wall_seconds.txt"
+                report_args=()
+                if [[ ${DD_BENCH_ALLOW_ZERO_MIGRATION:-0} == 1 ]]; then
+                    report_args+=(--allow-zero-migration)
+                fi
                 python3 "$script_dir/benchmark_report.py" --case "$case_dir" \
                     --log "$case_dir/trac.log" --ranks "$ranks" \
                     --nodes "$nodes" --ranks-per-node "$ranks_per_node" \
@@ -384,7 +393,7 @@ PY
                     --per-rank "$per_rank" --id-stride "${DD_INIT_IDX_STRIDE:-$per_rank}" \
                     --capacity "$capacity" --nq "$nq" --mode "$mode" \
                     --sort-dt "$DD_SORT_DT" --hours "$DD_SIMULATION_HOURS" \
-                    --repeat "$repeat" --header > "$case_dir/result.csv" \
+                    --repeat "$repeat" --header "${report_args[@]}" > "$case_dir/result.csv" \
                     2> "$case_dir/report.log"
                 if [[ ! -f $summary ]]; then
                     cp "$case_dir/result.csv" "$summary"
