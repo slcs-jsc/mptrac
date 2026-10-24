@@ -1249,7 +1249,11 @@ nodes. The launcher passes explicit <code>--nodes</code>, <code>--ntasks</code>,
 the actual shared-memory node of every rank in <code>trac.log</code>; the report checks
 the requested placement and writes <code>rank_mapping.csv</code>, including the
 visible GPU assignment. If the actual placement differs, the case fails
-validation.</p>
+validation.
+On JUWELS Booster, <code>srun</code> can expose the full allocated GPU list to every
+rank even with GPU binding enabled. The benchmark launcher selects one
+visible GPU by <code>SLURM_LOCALID</code> before starting <code>trac</code>, and the recorded
+<code>CUDA_VISIBLE_DEVICES</code> values are checked for overlap within each node.</p>
 <p>For a four-GPU, single-node allocation, replace the account and wall time
 with suitable values:</p>
 <pre><code class="language-bash">#SBATCH --partition=booster
