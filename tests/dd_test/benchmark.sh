@@ -10,6 +10,7 @@ work_root=${DD_BENCH_WORK_DIR:-$PWD/dd_benchmark}
 mkdir -p "$work_root"
 work_root=$(cd "$work_root" && pwd)
 
+# Configure run.sh for binary I/O and sparse output; MPTRAC does not read this.
 export DD_BENCHMARK=1
 export DD_USE_GPU=${DD_USE_GPU:-1}
 export DD_SIMULATION_HOURS=${DD_SIMULATION_HOURS:-6}

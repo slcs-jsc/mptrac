@@ -1915,10 +1915,12 @@ void day2doy(
 /*****************************************************************************/
 
 #ifdef DD
-/* Benchmark counters stay on the host and are inactive in normal runs. */
-static int *dd_bench_node;
-static int dd_bench_particle_bytes;
-static unsigned long long dd_bench_sent, dd_bench_intra, dd_bench_inter;
+/* Per-rank communication statistics use the existing MPI send counts. */
+#if LOGLEV >= 2
+static int *dd_node;
+static int dd_particle_bytes;
+static unsigned long long dd_sent, dd_intra, dd_inter;
+#endif
 
 void dd_assign_subdomains(
   const ctl_t *ctl,
@@ -2240,17 +2242,22 @@ void dd_communicate_particles(
     send_displs[i] = nsend;
     nsend += send_counts[i];
   }
+#if LOGLEV >= 3
+  LOG(3, "DD_SEND rank=%d particles=%d", rank, nsend);
+#endif
 
   /* Classify the already available MPI counts without scanning particles. */
-  if (dd_bench_node != NULL) {
-    dd_bench_sent += (unsigned long long) nsend;
+#if LOGLEV >= 2
+  if (dd_node != NULL) {
+    dd_sent += (unsigned long long) nsend;
     for (int i = 0; i < size; i++) {
-      if (dd_bench_node[i] == dd_bench_node[rank])
-	dd_bench_intra += (unsigned long long) send_counts[i];
+      if (dd_node[i] == dd_node[rank])
+	dd_intra += (unsigned long long) send_counts[i];
       else
-	dd_bench_inter += (unsigned long long) send_counts[i];
+	dd_inter += (unsigned long long) send_counts[i];
     }
   }
+#endif
 
   /* Exchange particle counts... */
   MPI_Alltoall(send_counts, 1, MPI_INT,
@@ -2363,9 +2370,13 @@ void dd_init(
   if (lower_bound != 0 || extent != (MPI_Aint) sizeof(particle_t))
     ERRMSG("Invalid MPI particle datatype extent!");
 
-  /* Discover actual node placement once for benchmark diagnostics. */
-  const char *benchmark = getenv("DD_BENCHMARK");
-  if (benchmark && benchmark[0] == '1' && benchmark[1] == '\0') {
+  LOG(1, "DD: %d x %d subdomains | exchange mode %d | initial particles %d",
+      ctl->dd_subdomains_zonal, ctl->dd_subdomains_meridional,
+      ctl->dd_exchange_mode, atm->np);
+
+  /* Discover node placement once when detailed logging is enabled. */
+#if LOGLEV >= 2
+  {
     int rank, local_rank, leader;
     MPI_Comm shared;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2374,19 +2385,20 @@ void dd_init(
     MPI_Comm_rank(shared, &local_rank);
     leader = local_rank == 0 ? rank : -1;
     MPI_Bcast(&leader, 1, MPI_INT, 0, shared);
-    ALLOC(dd_bench_node, int, size);
-    MPI_Allgather(&leader, 1, MPI_INT, dd_bench_node, 1, MPI_INT,
+    ALLOC(dd_node, int, size);
+    MPI_Allgather(&leader, 1, MPI_INT, dd_node, 1, MPI_INT,
 		  MPI_COMM_WORLD);
-    MPI_Type_size(dd->MPI_Particle, &dd_bench_particle_bytes);
-    dd_bench_sent = dd_bench_intra = dd_bench_inter = 0;
+    MPI_Type_size(dd->MPI_Particle, &dd_particle_bytes);
+    dd_sent = dd_intra = dd_inter = 0;
     char hostname[MPI_MAX_PROCESSOR_NAME];
     int hostname_len;
     MPI_Get_processor_name(hostname, &hostname_len);
     const char *gpu = getenv("CUDA_VISIBLE_DEVICES");
-    LOG(1, "DD_BENCH_NODE rank=%d leader=%d local_rank=%d host=%s gpu=%s",
+    LOG(2, "DD_NODE rank=%d leader=%d local_rank=%d host=%s gpu=%s",
 	rank, leader, local_rank, hostname, gpu ? gpu : "-");
     MPI_Comm_free(&shared);
   }
+#endif
 
   /* Check if particles are in subdomain... */
   dd_assign_subdomains(ctl, dd, atm, 1);
@@ -4515,9 +4527,6 @@ void module_dd(
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* Perform the communication... */
-  const char *benchmark = getenv("DD_BENCHMARK");
-  if (benchmark && benchmark[0] == '1' && benchmark[1] == '\0')
-    LOG(1, "DD_SENT_PARTICLES = %d", npart);
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
   /* Transform from array of struct to struct of array... */
@@ -6698,18 +6707,20 @@ void mptrac_free(
   dd_t *dd) {
 
 #ifdef DD
-  if (dd_bench_node != NULL) {
+#if LOGLEV >= 2
+  if (dd_node != NULL) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    LOG(1, "DD_BENCH_COMM rank=%d sent=%llu intra=%llu inter=%llu "
+    LOG(2, "DD_COMM rank=%d sent=%llu intra=%llu inter=%llu "
 	"intra_bytes=%llu inter_bytes=%llu particle_bytes=%d",
-	rank, dd_bench_sent, dd_bench_intra, dd_bench_inter,
-	dd_bench_intra * (unsigned long long) dd_bench_particle_bytes,
-	dd_bench_inter * (unsigned long long) dd_bench_particle_bytes,
-	dd_bench_particle_bytes);
-    free(dd_bench_node);
-    dd_bench_node = NULL;
+	rank, dd_sent, dd_intra, dd_inter,
+	dd_intra * (unsigned long long) dd_particle_bytes,
+	dd_inter * (unsigned long long) dd_particle_bytes,
+	dd_particle_bytes);
+    free(dd_node);
+    dd_node = NULL;
   }
+#endif
 #endif
 
   /* Delete data region on GPU... */

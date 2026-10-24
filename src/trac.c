@@ -182,8 +182,7 @@ int main(
     /* Report problem size... */
     LOG(1, "SIZE_NP = %d", atm->np);
 #ifdef DD
-    const char *benchmark = getenv("DD_BENCHMARK");
-    if (ctl->dd && benchmark && benchmark[0] == '1' && benchmark[1] == '\0')
+    if (ctl->dd)
       LOG(1, "SIZE_NP_PEAK = %d", peak_np);
 #endif
     LOG(1, "SIZE_MPI_TASKS = %d", size);

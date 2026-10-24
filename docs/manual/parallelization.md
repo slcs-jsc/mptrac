@@ -79,19 +79,31 @@ make DD=1 MPI=1 MPIFC=mpifort \
 `tests/dd_test/benchmark.sh` runs a matrix of the sort/push exchange path
 (`DD_EXCHANGE_MODE=0`) and the sort-free compaction path
 (`DD_EXCHANGE_MODE=1`). It uses the existing DD setup in `run.sh` with
-`DD_BENCHMARK=1`. The normal regression mode and its reference files are
-unchanged. By default the benchmark uses a 2 × 2 DD layout, approximately
+`DD_BENCHMARK=1` in the test script. This setting selects benchmark input and
+output; MPTRAC diagnostics use the regular compile-time `LOGLEV`. The normal
+regression mode and its reference files are unchanged. By default the
+benchmark uses a 2 × 2 DD layout, approximately
 100,000, 1 million, and 10 million particles, both exchange modes, a
 six-hour smooth-wind simulation, and no diffusion. Set `DD_BENCH_COUNTS`
 explicitly to include 100 million particles; that size is never run by
 default. `DD_BENCH_MODES` and `DD_BENCH_REPEATS` select modes and repeats;
 their execution order alternates on successive repeats.
 
+`DD_WIND_ALPHA` controls the axis of the analytic horizontal wind field in
+degrees. At `0`, the field is zonal (`u = U cos(latitude)`, `v = 0`). At
+`90`, both components vary with position; it is predominantly meridional
+in some regions, not a uniform north-south wind. The amplitude parameter
+`WIND_U0`/`WIND_U1` is unchanged when rotating the field, although the
+velocity sampled at a fixed particle position can change.
+
 `DD_BENCH_LAYOUTS=1x4,2x2,4x1` compares layouts with the same MPI rank
 count. For each particle target, the script chooses one global longitude ×
-latitude particle grid divisible by every requested layout. Thus all
-layouts start from the same geographical positions and approximately the
-same total particle count. Initial files are reused only within the same
+latitude particle grid divisible by every requested layout. The ordinary
+`atm_init` path rounds each layout's local grid spacing to six decimal
+places, so positions can differ slightly between layouts. Set
+`DD_BENCH_CANONICAL_INIT=1` for an exact global cell-center grid when
+comparing layouts; this leaves particle IDs and the total count unchanged.
+Initial files are reused only within the same
 layout. Each size, layout, repeat, and exchange mode has its own directory.
 Meteorological input can be shared across layouts if the wind settings are
 identical. Set both `DD_PARTICLES_LON_STRIDE` and
@@ -108,6 +120,9 @@ checks expected disk use before compiling or running and limits it to
 between modes and repeats for the same particle count and layout. Meteorological
 input is generated once and cached in the benchmark work directory, or
 can be supplied with `DD_WIND_DIR`.
+For a direction with no boundary crossings, such as purely zonal flow in
+`1x4`, set `DD_BENCH_ALLOW_ZERO_MIGRATION=1` to retain the valid zero-send
+case in the summary. The default still requires nonzero migration.
 
 Particle counts come from the common global grid, divided among the MPI
 ranks. `DD_NP_MAX` is the compiled particle capacity **per
@@ -133,7 +148,8 @@ nodes. The launcher passes explicit `--nodes`, `--ntasks`,
 the actual shared-memory node of every rank in `trac.log`; the report checks
 the requested placement and writes `rank_mapping.csv`, including the
 visible GPU assignment. If the actual placement differs, the case fails
-validation.
+validation. Slurm benchmark logs label each line with its rank, allowing
+per-rank timer values to be inspected without ambiguity.
 On JUWELS Booster, `srun` can expose the full allocated GPU list to every
 rank even with GPU binding enabled. The benchmark launcher selects one
 visible GPU by `SLURM_LOCALID` before starting `trac`, and the recorded
@@ -232,11 +248,21 @@ statistics use existing host-side send counts and do not copy particle
 arrays from the GPU. Times are the maximum
 reported across MPI ranks. `launcher_wall_time` separately includes launcher
 startup and process shutdown.
+The benchmark report requires `LOGLEV >= 2` for rank-to-node mapping and
+communication totals. At level 1, MPTRAC reports the DD configuration,
+initial local particle count, final `SIZE_NP`, and `SIZE_NP_PEAK`. Level 2
+adds node placement, optional visible GPU assignment, and per-rank cumulative
+intra-node and inter-node send counts and payload bytes. Level 3 adds one
+send-count line per DD exchange. The node topology is determined once during
+DD initialization; send statistics reuse the existing MPI counts.
 `mpi_time` is MPTRAC's `DD_COMMUNICATE_PARTICLES` phase, which includes
 host-side preparation in addition to MPI calls. `gpu_d2h_time` is the
 separately timed outgoing transfer in mode 1. A complete GPU transfer time,
 pure host-to-GPU time, and pure unpacking time are not isolated by the
 existing timers and remain blank or are reported only as combined phases.
+`TIMER_GROUP_INPUT` accumulates particle-file and meteorological reads
+throughout the simulation. `TIMER_READ_MET_NC_LEVELS` includes the 3D
+netCDF reads and parallel file close.
 Changing node placement also changes available CPUs and GPU affinity, so
 differences in total runtime cannot be attributed solely to network traffic.
 
