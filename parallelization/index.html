@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
       
 
@@ -1199,18 +1199,29 @@ make DD=1 MPI=1 MPIFC=mpifort \
 <p><code>tests/dd_test/benchmark.sh</code> runs a matrix of the sort/push exchange path
 (<code>DD_EXCHANGE_MODE=0</code>) and the sort-free compaction path
 (<code>DD_EXCHANGE_MODE=1</code>). It uses the existing DD setup in <code>run.sh</code> with
-<code>DD_BENCHMARK=1</code>. The normal regression mode and its reference files are
-unchanged. By default the benchmark uses a 2 × 2 DD layout, approximately
+<code>DD_BENCHMARK=1</code> in the test script. This setting selects benchmark input and
+output; MPTRAC diagnostics use the regular compile-time <code>LOGLEV</code>. The normal
+regression mode and its reference files are unchanged. By default the
+benchmark uses a 2 × 2 DD layout, approximately
 100,000, 1 million, and 10 million particles, both exchange modes, a
 six-hour smooth-wind simulation, and no diffusion. Set <code>DD_BENCH_COUNTS</code>
 explicitly to include 100 million particles; that size is never run by
 default. <code>DD_BENCH_MODES</code> and <code>DD_BENCH_REPEATS</code> select modes and repeats;
 their execution order alternates on successive repeats.</p>
+<p><code>DD_WIND_ALPHA</code> controls the axis of the analytic horizontal wind field in
+degrees. At <code>0</code>, the field is zonal (<code>u = U cos(latitude)</code>, <code>v = 0</code>). At
+<code>90</code>, both components vary with position; it is predominantly meridional
+in some regions, not a uniform north-south wind. The amplitude parameter
+<code>WIND_U0</code>/<code>WIND_U1</code> is unchanged when rotating the field, although the
+velocity sampled at a fixed particle position can change.</p>
 <p><code>DD_BENCH_LAYOUTS=1x4,2x2,4x1</code> compares layouts with the same MPI rank
 count. For each particle target, the script chooses one global longitude ×
-latitude particle grid divisible by every requested layout. Thus all
-layouts start from the same geographical positions and approximately the
-same total particle count. Initial files are reused only within the same
+latitude particle grid divisible by every requested layout. The ordinary
+<code>atm_init</code> path rounds each layout's local grid spacing to six decimal
+places, so positions can differ slightly between layouts. Set
+<code>DD_BENCH_CANONICAL_INIT=1</code> for an exact global cell-center grid when
+comparing layouts; this leaves particle IDs and the total count unchanged.
+Initial files are reused only within the same
 layout. Each size, layout, repeat, and exchange mode has its own directory.
 Meteorological input can be shared across layouts if the wind settings are
 identical. Set both <code>DD_PARTICLES_LON_STRIDE</code> and
@@ -1225,7 +1236,10 @@ checks expected disk use before compiling or running and limits it to
 <code>DD_BENCH_MAX_DISK_GIB=64</code> by default. Initial files are hard-linked
 between modes and repeats for the same particle count and layout. Meteorological
 input is generated once and cached in the benchmark work directory, or
-can be supplied with <code>DD_WIND_DIR</code>.</p>
+can be supplied with <code>DD_WIND_DIR</code>.
+For a direction with no boundary crossings, such as purely zonal flow in
+<code>1x4</code>, set <code>DD_BENCH_ALLOW_ZERO_MIGRATION=1</code> to retain the valid zero-send
+case in the summary. The default still requires nonzero migration.</p>
 <p>Particle counts come from the common global grid, divided among the MPI
 ranks. <code>DD_NP_MAX</code> is the compiled particle capacity <strong>per
 rank</strong>. Its benchmark default is the initial per-rank count plus a
@@ -1249,7 +1263,8 @@ nodes. The launcher passes explicit <code>--nodes</code>, <code>--ntasks</code>,
 the actual shared-memory node of every rank in <code>trac.log</code>; the report checks
 the requested placement and writes <code>rank_mapping.csv</code>, including the
 visible GPU assignment. If the actual placement differs, the case fails
-validation.
+validation. Slurm benchmark logs label each line with its rank, allowing
+per-rank timer values to be inspected without ambiguity.
 On JUWELS Booster, <code>srun</code> can expose the full allocated GPU list to every
 rank even with GPU binding enabled. The benchmark launcher selects one
 visible GPU by <code>SLURM_LOCALID</code> before starting <code>trac</code>, and the recorded
@@ -1330,11 +1345,21 @@ statistics use existing host-side send counts and do not copy particle
 arrays from the GPU. Times are the maximum
 reported across MPI ranks. <code>launcher_wall_time</code> separately includes launcher
 startup and process shutdown.
+The benchmark report requires <code>LOGLEV &gt;= 2</code> for rank-to-node mapping and
+communication totals. At level 1, MPTRAC reports the DD configuration,
+initial local particle count, final <code>SIZE_NP</code>, and <code>SIZE_NP_PEAK</code>. Level 2
+adds node placement, optional visible GPU assignment, and per-rank cumulative
+intra-node and inter-node send counts and payload bytes. Level 3 adds one
+send-count line per DD exchange. The node topology is determined once during
+DD initialization; send statistics reuse the existing MPI counts.
 <code>mpi_time</code> is MPTRAC's <code>DD_COMMUNICATE_PARTICLES</code> phase, which includes
 host-side preparation in addition to MPI calls. <code>gpu_d2h_time</code> is the
 separately timed outgoing transfer in mode 1. A complete GPU transfer time,
 pure host-to-GPU time, and pure unpacking time are not isolated by the
 existing timers and remain blank or are reported only as combined phases.
+<code>TIMER_GROUP_INPUT</code> accumulates particle-file and meteorological reads
+throughout the simulation. <code>TIMER_READ_MET_NC_LEVELS</code> includes the 3D
+netCDF reads and parallel file close.
 Changing node placement also changes available CPUs and GPU affinity, so
 differences in total runtime cannot be attributed solely to network traffic.</p>
 <h3 id="openmp-and-openacc-within-each-rank">OpenMP and OpenACC within each rank</h3>
@@ -1415,10 +1440,10 @@ system</a>.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
