@@ -12,8 +12,6 @@ work_root=$(cd "$work_root" && pwd)
 
 export DD_BENCHMARK=1
 export DD_USE_GPU=${DD_USE_GPU:-1}
-export DD_DOMAINS_LON=${DD_DOMAINS_LON:-2}
-export DD_DOMAINS_LAT=${DD_DOMAINS_LAT:-2}
 export DD_SIMULATION_HOURS=${DD_SIMULATION_HOURS:-6}
 export DD_SORT_DT=${DD_SORT_DT:-1800}
 export DD_DIFFUSION=${DD_DIFFUSION:-0}
@@ -34,15 +32,36 @@ modes=${DD_BENCH_MODES:-${DD_EXCHANGE_MODE:-0,1}}
 repeats=${DD_BENCH_REPEATS:-1}
 disk_limit=${DD_BENCH_MAX_DISK_GIB:-64}
 memory_limit=${DD_BENCH_MAX_PARTICLE_MEMORY_GIB:-24}
-counts=${counts//,/ }
-modes=${modes//,/ }
-read -r -a count_list <<< "$counts"
-read -r -a mode_list <<< "$modes"
-if (( ${#count_list[@]} == 0 || ${#mode_list[@]} == 0 )); then
-    echo "[ERROR] Empty benchmark particle-count or exchange-mode matrix" >&2
+nodes=${DD_BENCH_NODES:-${SLURM_JOB_NUM_NODES:-1}}
+gpus_per_rank=${DD_BENCH_GPUS_PER_RANK:-$DD_USE_GPU}
+if [[ -n ${DD_BENCH_RANKS:-} && ! $DD_BENCH_RANKS =~ ^[1-9][0-9]*$ ]]; then
+    echo "[ERROR] DD_BENCH_RANKS must be a positive integer" >&2
     exit 1
 fi
-for value in "$DD_DOMAINS_LON" "$DD_DOMAINS_LAT" "$DD_SIMULATION_HOURS" \
+if [[ -n ${DD_BENCH_LAYOUTS:-} ]]; then
+    layouts=${DD_BENCH_LAYOUTS}
+elif [[ -n ${DD_DOMAINS_LON:-} || -n ${DD_DOMAINS_LAT:-} ]]; then
+    layouts=${DD_DOMAINS_LON:-2}x${DD_DOMAINS_LAT:-2}
+elif [[ -n ${DD_BENCH_RANKS:-} ]]; then
+    layouts=$(python3 -c 'import math,sys
+n=int(sys.argv[1]); a=math.isqrt(n)
+while a>1 and n%a: a-=1
+print(f"{a}x{n//a}")' "$DD_BENCH_RANKS")
+else
+    layouts=2x2
+fi
+counts=${counts//,/ }
+modes=${modes//,/ }
+layouts=${layouts//,/ }
+read -r -a count_list <<< "$counts"
+read -r -a mode_list <<< "$modes"
+read -r -a layout_list <<< "$layouts"
+if (( ${#count_list[@]} == 0 || ${#mode_list[@]} == 0 ||
+      ${#layout_list[@]} == 0 )); then
+    echo "[ERROR] Empty benchmark particle-count, layout, or exchange-mode matrix" >&2
+    exit 1
+fi
+for value in "$nodes" "$gpus_per_rank" "$DD_SIMULATION_HOURS" \
     "$DD_ATM_DT_OUT" "$DD_NP_MARGIN_PERCENT" "$repeats" "$disk_limit" \
     "$memory_limit" \
     "${count_list[@]}"; do
@@ -65,8 +84,56 @@ if [[ -n ${DD_NP_MAX:-} && ! ${DD_NP_MAX} =~ ^[0-9]+$ ]]; then
     echo "[ERROR] DD_NP_MAX must be an integer" >&2
     exit 1
 fi
-ranks=$((DD_DOMAINS_LON * DD_DOMAINS_LAT))
-if (( ranks < 2 || repeats < 1 || DD_SIMULATION_HOURS < 1 ||
+declare -a layout_lon layout_lat
+ranks=0
+lcm_lon=1
+lcm_lat=1
+for layout in "${layout_list[@]}"; do
+    if [[ ! $layout =~ ^([1-9][0-9]*)x([1-9][0-9]*)$ ]]; then
+        echo "[ERROR] Invalid DD layout: $layout (expected LONxLAT)" >&2
+        exit 1
+    fi
+    lon_domains=${BASH_REMATCH[1]}
+    lat_domains=${BASH_REMATCH[2]}
+    layout_ranks=$((lon_domains * lat_domains))
+    if (( ranks != 0 && layout_ranks != ranks )); then
+        echo "[ERROR] All DD layouts must have the same MPI rank count" >&2
+        exit 1
+    fi
+    ranks=$layout_ranks
+    layout_lon+=("$lon_domains")
+    layout_lat+=("$lat_domains")
+    lcm_lon=$(python3 -c 'import math,sys; print(math.lcm(*map(int,sys.argv[1:])))' "$lcm_lon" "$lon_domains")
+    lcm_lat=$(python3 -c 'import math,sys; print(math.lcm(*map(int,sys.argv[1:])))' "$lcm_lat" "$lat_domains")
+done
+if [[ -n ${DD_BENCH_RANKS:-} && $DD_BENCH_RANKS != "$ranks" ]]; then
+    echo "[ERROR] DD_BENCH_RANKS must equal the product of each DD layout" >&2
+    exit 1
+fi
+if (( nodes < 1 )); then
+    echo "[ERROR] DD_BENCH_NODES must be positive" >&2
+    exit 1
+fi
+ranks_per_node=${DD_BENCH_RANKS_PER_NODE:-$((ranks / nodes))}
+if [[ ! $ranks_per_node =~ ^[0-9]+$ ]] ||
+   (( ranks < 2 || nodes < 1 || ranks % nodes != 0 ||
+      ranks_per_node * nodes != ranks || ranks_per_node < 1 ||
+      gpus_per_rank != DD_USE_GPU || gpus_per_rank > 1 )); then
+    echo "[ERROR] Use an even rank placement and one GPU per rank (zero for CPU)" >&2
+    exit 1
+fi
+if [[ -n ${SLURM_JOB_ID:-} ]]; then
+    if (( nodes > ${SLURM_JOB_NUM_NODES:-0} )) ||
+       [[ -n ${SLURM_NTASKS:-} && $ranks -gt $SLURM_NTASKS ]]; then
+        echo "[ERROR] Benchmark topology exceeds the enclosing Slurm allocation" >&2
+        exit 1
+    fi
+elif (( nodes != 1 )); then
+    echo "[ERROR] Multi-node runs require an enclosing Slurm allocation" >&2
+    exit 1
+fi
+export DD_TASKS_PER_NODE=$ranks_per_node
+if (( repeats < 1 || DD_SIMULATION_HOURS < 1 ||
       DD_ATM_DT_OUT < 600 || DD_ATM_DT_OUT % 600 != 0 )); then
     echo "[ERROR] Use at least two ranks, positive repeats/hours, and an output interval divisible by 600 s" >&2
     exit 1
@@ -82,16 +149,16 @@ if (( tstop % DD_ATM_DT_OUT != 0 )); then noutputs=$((noutputs + 1)); fi
 nq=5
 if [[ ${DD_ISOSURF:-0} == 3 ]]; then nq=6; fi
 
-# Derive nearly square particle grids for each requested approximate count.
-# Explicit lon/lat strides override this calculation for a single-count run.
+# Use one global grid for every layout at a given target particle count.
+# Divisibility by each layout preserves the same physical initial positions.
 if [[ -n ${DD_PARTICLES_LON_STRIDE:-} || -n ${DD_PARTICLES_LAT_STRIDE:-} ]]; then
     if [[ -z ${DD_PARTICLES_LON_STRIDE:-} || -z ${DD_PARTICLES_LAT_STRIDE:-} ||
-          ${#count_list[@]} -ne 1 ]]; then
-        echo "[ERROR] Set both DD_PARTICLES_*_STRIDE values with one DD_BENCH_COUNTS entry" >&2
+          ${#count_list[@]} -ne 1 || ${#layout_list[@]} -ne 1 ]]; then
+        echo "[ERROR] Set both particle strides with one count and one layout" >&2
         exit 1
     fi
 fi
-declare -a lon_list lat_list total_list capacity_list
+declare -a global_lon_list global_lat_list total_list capacity_list
 estimated_bytes=0
 for target in "${count_list[@]}"; do
     if (( target < ranks )); then
@@ -99,21 +166,22 @@ for target in "${count_list[@]}"; do
         exit 1
     fi
     if [[ -n ${DD_PARTICLES_LON_STRIDE:-} ]]; then
-        lon=$DD_PARTICLES_LON_STRIDE
-        lat=$DD_PARTICLES_LAT_STRIDE
+        global_lon=$((DD_PARTICLES_LON_STRIDE * layout_lon[0]))
+        global_lat=$((DD_PARTICLES_LAT_STRIDE * layout_lat[0]))
     else
-        read -r lon lat < <(python3 -c 'import math,sys
-n=int(sys.argv[1]); ranks=int(sys.argv[2]); per=math.ceil(n/ranks)
-lon=max(1,round(math.sqrt(2*per))); lat=math.ceil(per/lon)
-print(lon,lat)' "$target" "$ranks")
+        read -r global_lon global_lat < <(python3 -c 'import math,sys
+n,step_lon,step_lat=map(int,sys.argv[1:]);
+lat=max(step_lat,round(math.sqrt(n/2)/step_lat)*step_lat)
+lon=math.ceil(n/lat/step_lon)*step_lon
+print(lon,lat)' "$target" "$lcm_lon" "$lcm_lat")
     fi
-    if [[ ! $lon =~ ^[0-9]+$ || ! $lat =~ ^[0-9]+$ ]] ||
-       (( lon < 1 || lat < 1 )); then
+    if [[ ! $global_lon =~ ^[0-9]+$ || ! $global_lat =~ ^[0-9]+$ ]] ||
+       (( global_lon < 1 || global_lat < 1 )); then
         echo "[ERROR] Particle strides must be positive integers" >&2
         exit 1
     fi
-    per_rank=$((lon * lat))
-    total=$((per_rank * ranks))
+    total=$((global_lon * global_lat))
+    per_rank=$((total / ranks))
     capacity=${DD_NP_MAX:-$((per_rank + (per_rank * DD_NP_MARGIN_PERCENT + 99) / 100 + 1))}
     if (( capacity <= per_rank || capacity > 2147483647 || total > 2147483647 )); then
         echo "[ERROR] NP capacity or particle IDs exceed the supported signed-int range" >&2
@@ -123,14 +191,14 @@ print(lon,lat)' "$target" "$ranks")
         echo "[ERROR] Estimated per-rank particle arrays exceed DD_BENCH_MAX_PARTICLE_MEMORY_GIB=$memory_limit" >&2
         exit 1
     fi
-    echo "[INFO] Target $target: actual $total, initial/rank $per_rank, NP/rank $capacity, particle arrays/rank ~$((capacity * (8 * (4 + nq) + 80) / 1048576)) MiB"
-    lon_list+=("$lon")
-    lat_list+=("$lat")
+    echo "[INFO] Target $target: actual $total, global grid ${global_lon}x${global_lat}, initial/rank $per_rank, NP/rank $capacity, particle arrays/rank ~$((capacity * (8 * (4 + nq) + 80) / 1048576)) MiB"
+    global_lon_list+=("$global_lon")
+    global_lat_list+=("$global_lat")
     total_list+=("$total")
     capacity_list+=("$capacity")
-    # One hard-linked initial state per size; all cases have noutputs files.
+    # One initial state per size/layout; modes and repeats use hard links.
     estimated_bytes=$((estimated_bytes + total * 8 * (4 + nq) *
-        (1 + noutputs * ${#mode_list[@]} * repeats)))
+        ${#layout_list[@]} * (1 + noutputs * ${#mode_list[@]} * repeats)))
 done
 if (( estimated_bytes > disk_limit * 1073741824 )); then
     echo "[ERROR] Estimated particle files exceed DD_BENCH_MAX_DISK_GIB=$disk_limit" >&2
@@ -138,6 +206,15 @@ if (( estimated_bytes > disk_limit * 1073741824 )); then
 fi
 echo "[INFO] Estimated particle-file storage: $((estimated_bytes / 1073741824)) GiB"
 echo "[INFO] Particle snapshots per case: $noutputs"
+echo "[INFO] Topology: nodes=$nodes ranks=$ranks ranks/node=$ranks_per_node GPUs/rank=$gpus_per_rank"
+echo "[INFO] Slurm launch: srun --nodes=$nodes --ntasks=$ranks --ntasks-per-node=$ranks_per_node --gpus-per-task=$gpus_per_rank"
+for index in "${!count_list[@]}"; do
+    for layout_index in "${!layout_list[@]}"; do
+        lon=$((global_lon_list[index] / layout_lon[layout_index]))
+        lat=$((global_lat_list[index] / layout_lat[layout_index]))
+        echo "[INFO] Matrix: n${total_list[index]} layout${layout_list[layout_index]} strides=${lon}x${lat} modes=${modes// /,} repeats=$repeats"
+    done
+done
 if [[ ${DD_BENCH_DRY_RUN:-0} == 1 ]]; then
     echo "[INFO] Dry run complete; no particle or wind files were generated"
     exit 0
@@ -198,41 +275,56 @@ if (( generate_wind )); then
 fi
 
 summary=$work_root/summary.csv
-compiled_capacity=-1
+compiled_key=""
 for index in "${!count_list[@]}"; do
-    lon=${lon_list[$index]}
-    lat=${lat_list[$index]}
     total=${total_list[$index]}
     capacity=${capacity_list[$index]}
-    per_rank=$((lon * lat))
-    init_source=""
-    for ((repeat=1; repeat<=repeats; repeat++)); do
-        for mode in "${mode_list[@]}"; do
-            case_dir=$work_root/n${total}/repeat${repeat}/mode${mode}
-            if [[ -e $case_dir/data ]]; then
-                echo "[ERROR] Existing benchmark case: $case_dir; use a fresh work directory" >&2
-                exit 1
+    per_rank=$((total / ranks))
+    for layout_index in "${!layout_list[@]}"; do
+        layout=${layout_list[$layout_index]}
+        lon_domains=${layout_lon[$layout_index]}
+        lat_domains=${layout_lat[$layout_index]}
+        lon=$((global_lon_list[index] / lon_domains))
+        lat=$((global_lat_list[index] / lat_domains))
+        export DD_DOMAINS_LON=$lon_domains DD_DOMAINS_LAT=$lat_domains
+        export DD_PARTICLES_LON_STRIDE=$lon DD_PARTICLES_LAT_STRIDE=$lat
+        export DD_NP_MAX=$capacity
+        init_source=""
+        for ((repeat=1; repeat<=repeats; repeat++)); do
+            case_modes=("${mode_list[@]}")
+            if (( repeat % 2 == 0 )); then
+                reversed=()
+                for ((i=${#case_modes[@]}-1; i>=0; i--)); do
+                    reversed+=("${case_modes[i]}")
+                done
+                case_modes=("${reversed[@]}")
             fi
-            mkdir -p "$case_dir"
-            export DD_PARTICLES_LON_STRIDE=$lon DD_PARTICLES_LAT_STRIDE=$lat
-            export DD_NP_MAX=$capacity DD_EXCHANGE_MODE=$mode
-            setup_args=(skip_run)
-            if (( compiled_capacity != capacity )); then
-                setup_args=(compile "${setup_args[@]}")
-                compiled_capacity=$capacity
-            fi
-            if (( generate_wind )); then
-                generate_wind=0
-            else
-                setup_args+=(skip_wind)
-            fi
-            if [[ -n $init_source ]]; then export DD_INIT_SOURCE=$init_source
-            else unset DD_INIT_SOURCE || true
-            fi
-            echo "[INFO] Setup particles=$total, mode=$mode, repeat=$repeat, NP=$capacity"
-            (cd "$case_dir" && "$script_dir/run.sh" "${setup_args[@]}" \
-                > setup.log 2>&1)
-            python3 - "$case_dir/data" "$ranks" "$per_rank" <<'PY'
+            for mode in "${case_modes[@]}"; do
+                case_dir=$work_root/n${total}/layout${layout}/repeat${repeat}/mode${mode}
+                if [[ -e $case_dir/data ]]; then
+                    echo "[ERROR] Existing benchmark case: $case_dir; use a fresh work directory" >&2
+                    exit 1
+                fi
+                mkdir -p "$case_dir"
+                export DD_EXCHANGE_MODE=$mode
+                setup_args=(skip_run)
+                compile_key="$capacity:$layout"
+                if [[ $compiled_key != "$compile_key" ]]; then
+                    setup_args=(compile "${setup_args[@]}")
+                    compiled_key=$compile_key
+                fi
+                if (( generate_wind )); then
+                    generate_wind=0
+                else
+                    setup_args+=(skip_wind)
+                fi
+                if [[ -n $init_source ]]; then export DD_INIT_SOURCE=$init_source
+                else unset DD_INIT_SOURCE || true
+                fi
+                echo "[INFO] Setup particles=$total, layout=$layout, mode=$mode, repeat=$repeat, NP=$capacity"
+                (cd "$case_dir" && "$script_dir/run.sh" "${setup_args[@]}" \
+                    > setup.log 2>&1)
+                python3 - "$case_dir/data" "$ranks" "$per_rank" <<'PY'
 import pathlib
 import struct
 import sys
@@ -244,47 +336,52 @@ for rank in range(ranks):
     if version != 100 or count != expected:
         raise SystemExit(f"[ERROR] Unexpected initialization count in {path}: {count}")
 PY
-            if [[ ! -f $wind_dir/.benchmark_config && $wind_external == 0 ]]; then
-                printf '%s\n' "$wind_key" > "$wind_dir/.benchmark_config"
-            fi
-            if [[ -z $init_source ]]; then init_source=$case_dir/data; fi
+                if [[ ! -f $wind_dir/.benchmark_config && $wind_external == 0 ]]; then
+                    printf '%s\n' "$wind_key" > "$wind_dir/.benchmark_config"
+                fi
+                if [[ -z $init_source ]]; then init_source=$case_dir/data; fi
 
-            echo "[INFO] Run particles=$total, mode=$mode, repeat=$repeat"
-            start=$(date +%s.%N)
-            if [[ -n ${SLURM_JOB_ID:-} ]]; then
-                if [[ $DD_USE_GPU == 1 ]]; then
-                    (cd "$case_dir/data" && srun --ntasks="$ranks" \
-                        --gpus-per-task=1 --gpu-bind=single:1 --cpu-bind=cores \
-                        "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
-                        > "$case_dir/trac.log" 2>&1
+                echo "[INFO] Run particles=$total, layout=$layout, mode=$mode, repeat=$repeat"
+                start=$(date +%s.%N)
+                if [[ -n ${SLURM_JOB_ID:-} ]]; then
+                    if [[ $DD_USE_GPU == 1 ]]; then
+                        (cd "$case_dir/data" && srun --nodes="$nodes" \
+                            --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
+                            --gpus-per-task="$gpus_per_rank" \
+                            --gpu-bind=single:1 --cpu-bind=cores \
+                            "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
+                            > "$case_dir/trac.log" 2>&1
+                    else
+                        (cd "$case_dir/data" && srun --nodes="$nodes" \
+                            --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
+                            "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
+                            > "$case_dir/trac.log" 2>&1
+                    fi
                 else
-                    (cd "$case_dir/data" && srun --ntasks="$ranks" \
+                    (cd "$case_dir/data" && "$DD_MPIRUN" --oversubscribe -np "$ranks" \
                         "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
                         > "$case_dir/trac.log" 2>&1
                 fi
-            else
-                (cd "$case_dir/data" && "$DD_MPIRUN" --oversubscribe -np "$ranks" \
-                    "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
-                    > "$case_dir/trac.log" 2>&1
-            fi
-            end=$(date +%s.%N)
-            python3 -c 'import sys; print(float(sys.argv[2])-float(sys.argv[1]))' \
-                "$start" "$end" > "$case_dir/launcher_wall_seconds.txt"
-            python3 "$script_dir/benchmark_report.py" --case "$case_dir" \
-                --log "$case_dir/trac.log" --ranks "$ranks" \
-                --gpus "$((DD_USE_GPU * ranks))" \
-                --lon-domains "$DD_DOMAINS_LON" --lat-domains "$DD_DOMAINS_LAT" \
-                --per-rank "$per_rank" --id-stride "${DD_INIT_IDX_STRIDE:-$per_rank}" \
-                --capacity "$capacity" --nq "$nq" --mode "$mode" \
-                --sort-dt "$DD_SORT_DT" --hours "$DD_SIMULATION_HOURS" \
-                --repeat "$repeat" --header > "$case_dir/result.csv" \
-                2> "$case_dir/report.log"
-            if [[ ! -f $summary ]]; then
-                cp "$case_dir/result.csv" "$summary"
-            else
-                tail -n 1 "$case_dir/result.csv" >> "$summary"
-            fi
-            cat "$case_dir/report.log"
+                end=$(date +%s.%N)
+                python3 -c 'import sys; print(float(sys.argv[2])-float(sys.argv[1]))' \
+                    "$start" "$end" > "$case_dir/launcher_wall_seconds.txt"
+                python3 "$script_dir/benchmark_report.py" --case "$case_dir" \
+                    --log "$case_dir/trac.log" --ranks "$ranks" \
+                    --nodes "$nodes" --ranks-per-node "$ranks_per_node" \
+                    --gpus "$((gpus_per_rank * ranks))" \
+                    --lon-domains "$lon_domains" --lat-domains "$lat_domains" \
+                    --per-rank "$per_rank" --id-stride "${DD_INIT_IDX_STRIDE:-$per_rank}" \
+                    --capacity "$capacity" --nq "$nq" --mode "$mode" \
+                    --sort-dt "$DD_SORT_DT" --hours "$DD_SIMULATION_HOURS" \
+                    --repeat "$repeat" --header > "$case_dir/result.csv" \
+                    2> "$case_dir/report.log"
+                if [[ ! -f $summary ]]; then
+                    cp "$case_dir/result.csv" "$summary"
+                else
+                    tail -n 1 "$case_dir/result.csv" >> "$summary"
+                fi
+                cat "$case_dir/report.log"
+            done
         done
     done
 done

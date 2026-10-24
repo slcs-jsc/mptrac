@@ -84,7 +84,18 @@ unchanged. By default the benchmark uses a 2 × 2 DD layout, approximately
 100,000, 1 million, and 10 million particles, both exchange modes, a
 six-hour smooth-wind simulation, and no diffusion. Set `DD_BENCH_COUNTS`
 explicitly to include 100 million particles; that size is never run by
-default. `DD_BENCH_MODES` and `DD_BENCH_REPEATS` select modes and repeats.
+default. `DD_BENCH_MODES` and `DD_BENCH_REPEATS` select modes and repeats;
+their execution order alternates on successive repeats.
+
+`DD_BENCH_LAYOUTS=1x4,2x2,4x1` compares layouts with the same MPI rank
+count. For each particle target, the script chooses one global longitude ×
+latitude particle grid divisible by every requested layout. Thus all
+layouts start from the same geographical positions and approximately the
+same total particle count. Initial files are reused only within the same
+layout. Each size, layout, repeat, and exchange mode has its own directory.
+Meteorological input can be shared across layouts if the wind settings are
+identical. Set both `DD_PARTICLES_LON_STRIDE` and
+`DD_PARTICLES_LAT_STRIDE` only for a single count and a single layout.
 
 Benchmark mode uses MPTRAC binary particle files (`ATM_TYPE=1`,
 `ATM_TYPE_OUT=1`). `atm_init` writes `init.bin`; each rank writes binary
@@ -94,14 +105,12 @@ initial time and be divisible by the 600-second model step. Longer runs or
 shorter output intervals can create additional snapshots. The script
 checks expected disk use before compiling or running and limits it to
 `DD_BENCH_MAX_DISK_GIB=64` by default. Initial files are hard-linked
-between modes and repeats for the same particle count. Meteorological
+between modes and repeats for the same particle count and layout. Meteorological
 input is generated once and cached in the benchmark work directory, or
 can be supplied with `DD_WIND_DIR`.
 
-Particle counts come from `DD_PARTICLES_LON_STRIDE ×
-DD_PARTICLES_LAT_STRIDE` on each MPI rank. The matrix script derives
-strides for each approximate target, or accepts both stride variables for
-a single target. `DD_NP_MAX` is the compiled particle capacity **per
+Particle counts come from the common global grid, divided among the MPI
+ranks. `DD_NP_MAX` is the compiled particle capacity **per
 rank**. Its benchmark default is the initial per-rank count plus a
 configurable `DD_NP_MARGIN_PERCENT=25` margin and one extra slot. Increase
 the margin if particles concentrate on particular ranks. The benchmark
@@ -114,14 +123,26 @@ the CSV memory estimate is therefore a lower bound. The preflight limit
 overridden. Each binary snapshot uses about 72 bytes per particle, so 100 million particles require about
 7.2 GB for each snapshot and another 7.2 GB for the initial files.
 
-Run inside a JUWELS Booster Slurm allocation with four ranks and four GPUs.
-For example, a batch script can request one Booster node, four tasks, and
-four GPUs. Replace the account and wall time with suitable values:
+Run inside a JUWELS Booster Slurm allocation. The benchmark never submits
+another job. `DD_BENCH_NODES`, `DD_BENCH_RANKS`,
+`DD_BENCH_RANKS_PER_NODE`, and `DD_BENCH_GPUS_PER_RANK` specify the launch
+topology; GPU benchmarks currently use one GPU per rank. The layout product
+must equal the rank count, and ranks must be evenly distributed across
+nodes. The launcher passes explicit `--nodes`, `--ntasks`,
+`--ntasks-per-node`, and `--gpus-per-task` options to `srun`. MPTRAC records
+the actual shared-memory node of every rank in `trac.log`; the report checks
+the requested placement and writes `rank_mapping.csv`, including the
+visible GPU assignment. If the actual placement differs, the case fails
+validation.
+
+For a four-GPU, single-node allocation, replace the account and wall time
+with suitable values:
 
 ```bash
 #SBATCH --partition=booster
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
+#SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:4
 #SBATCH --account=<account>
 #SBATCH --time=02:00:00
@@ -138,6 +159,44 @@ export DD_BENCH_COUNTS=100000,1000000,10000000
 export DD_BENCH_MODES=0,1 DD_BENCH_REPEATS=3
 ./tests/dd_test/benchmark.sh
 ```
+
+Run the three comparison phases in separate allocations and separate work
+directories. Phase A compares domain geometry on one node:
+
+```bash
+export DD_BENCH_LAYOUTS=1x4,2x2,4x1 DD_BENCH_COUNTS=1000000,10000000
+export DD_BENCH_MODES=0,1 DD_BENCH_REPEATS=3
+export DD_BENCH_NODES=1 DD_BENCH_RANKS=4 DD_BENCH_RANKS_PER_NODE=4
+./tests/dd_test/benchmark.sh
+```
+
+For phase B, run `2x2` with 10 million particles once in the allocation
+above, then in a **two-node** allocation with four total tasks, two tasks
+per node, and two GPUs on each node. Set a different work directory and:
+
+```bash
+#SBATCH --partition=booster
+#SBATCH --nodes=2
+#SBATCH --ntasks=4
+#SBATCH --ntasks-per-node=2
+#SBATCH --gres=gpu:2
+```
+
+Within that allocation:
+
+```bash
+export DD_BENCH_LAYOUTS=2x2 DD_BENCH_COUNTS=10000000
+export DD_BENCH_NODES=2 DD_BENCH_RANKS=4 DD_BENCH_RANKS_PER_NODE=2
+export DD_BENCH_MODES=0,1 DD_BENCH_REPEATS=3
+./tests/dd_test/benchmark.sh
+```
+
+For phase C, use 4, 8, or 16 tasks and GPUs in matching allocations.
+Suitable layouts include `2x2` for four ranks, `2x4,4x2` for eight, and
+`4x4,2x8,8x2` for sixteen. Set `DD_BENCH_RANKS` and
+`DD_BENCH_LAYOUTS` accordingly; keep the total particle target fixed for
+strong-scaling comparisons. The default layout is near square when an
+explicit rank count is given without a layout.
 
 For a single optional large run, set `DD_BENCH_COUNTS=100000000`,
 `DD_BENCH_REPEATS=1`, and provide sufficient GPU memory, wall time, and
@@ -160,8 +219,13 @@ separate directory and appends one row to `summary.csv`. It checks every
 particle ID in each snapshot with a compact bitset. `migrated_particles`
 counts IDs whose final rank differs from the rank encoded by their initial
 ID; it does not count repeat crossings or particles that return to their
-original rank. `sent_particle_events` sums the lightweight per-exchange
-send-count diagnostic and includes repeated crossings. Times are the maximum
+original rank. `sent_particle_events`, `intra_node_particle_events`, and
+`inter_node_particle_events` sum the MPI send counts over every exchange,
+so repeated crossings count again. Byte columns use the MPI datatype's
+transmitted size, which can be smaller than its in-memory extent.
+`inter_node_event_fraction` is the fraction of sends crossing nodes. These
+statistics use existing host-side send counts and do not copy particle
+arrays from the GPU. Times are the maximum
 reported across MPI ranks. `launcher_wall_time` separately includes launcher
 startup and process shutdown.
 `mpi_time` is MPTRAC's `DD_COMMUNICATE_PARTICLES` phase, which includes
@@ -169,6 +233,8 @@ host-side preparation in addition to MPI calls. `gpu_d2h_time` is the
 separately timed outgoing transfer in mode 1. A complete GPU transfer time,
 pure host-to-GPU time, and pure unpacking time are not isolated by the
 existing timers and remain blank or are reported only as combined phases.
+Changing node placement also changes available CPUs and GPU affinity, so
+differences in total runtime cannot be attributed solely to network traffic.
 
 ### OpenMP and OpenACC within each rank
 

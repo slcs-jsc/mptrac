@@ -1915,6 +1915,11 @@ void day2doy(
 /*****************************************************************************/
 
 #ifdef DD
+/* Benchmark counters stay on the host and are inactive in normal runs. */
+static int *dd_bench_node;
+static int dd_bench_particle_bytes;
+static unsigned long long dd_bench_sent, dd_bench_intra, dd_bench_inter;
+
 void dd_assign_subdomains(
   const ctl_t *ctl,
   const dd_t *dd,
@@ -2236,6 +2241,17 @@ void dd_communicate_particles(
     nsend += send_counts[i];
   }
 
+  /* Classify the already available MPI counts without scanning particles. */
+  if (dd_bench_node != NULL) {
+    dd_bench_sent += (unsigned long long) nsend;
+    for (int i = 0; i < size; i++) {
+      if (dd_bench_node[i] == dd_bench_node[rank])
+	dd_bench_intra += (unsigned long long) send_counts[i];
+      else
+	dd_bench_inter += (unsigned long long) send_counts[i];
+    }
+  }
+
   /* Exchange particle counts... */
   MPI_Alltoall(send_counts, 1, MPI_INT,
 	       recv_counts, 1, MPI_INT, MPI_COMM_WORLD);
@@ -2346,6 +2362,31 @@ void dd_init(
   MPI_Type_get_extent(dd->MPI_Particle, &lower_bound, &extent);
   if (lower_bound != 0 || extent != (MPI_Aint) sizeof(particle_t))
     ERRMSG("Invalid MPI particle datatype extent!");
+
+  /* Discover actual node placement once for benchmark diagnostics. */
+  const char *benchmark = getenv("DD_BENCHMARK");
+  if (benchmark && benchmark[0] == '1' && benchmark[1] == '\0') {
+    int rank, local_rank, leader;
+    MPI_Comm shared;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
+			MPI_INFO_NULL, &shared);
+    MPI_Comm_rank(shared, &local_rank);
+    leader = local_rank == 0 ? rank : -1;
+    MPI_Bcast(&leader, 1, MPI_INT, 0, shared);
+    ALLOC(dd_bench_node, int, size);
+    MPI_Allgather(&leader, 1, MPI_INT, dd_bench_node, 1, MPI_INT,
+		  MPI_COMM_WORLD);
+    MPI_Type_size(dd->MPI_Particle, &dd_bench_particle_bytes);
+    dd_bench_sent = dd_bench_intra = dd_bench_inter = 0;
+    char hostname[MPI_MAX_PROCESSOR_NAME];
+    int hostname_len;
+    MPI_Get_processor_name(hostname, &hostname_len);
+    const char *gpu = getenv("CUDA_VISIBLE_DEVICES");
+    LOG(1, "DD_BENCH_NODE rank=%d leader=%d local_rank=%d host=%s gpu=%s",
+	rank, leader, local_rank, hostname, gpu ? gpu : "-");
+    MPI_Comm_free(&shared);
+  }
 
   /* Check if particles are in subdomain... */
   dd_assign_subdomains(ctl, dd, atm, 1);
@@ -6655,6 +6696,21 @@ void mptrac_free(
   atm_t *atm,
   depo_t *depo,
   dd_t *dd) {
+
+#ifdef DD
+  if (dd_bench_node != NULL) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    LOG(1, "DD_BENCH_COMM rank=%d sent=%llu intra=%llu inter=%llu "
+	"intra_bytes=%llu inter_bytes=%llu particle_bytes=%d",
+	rank, dd_bench_sent, dd_bench_intra, dd_bench_inter,
+	dd_bench_intra * (unsigned long long) dd_bench_particle_bytes,
+	dd_bench_inter * (unsigned long long) dd_bench_particle_bytes,
+	dd_bench_particle_bytes);
+    free(dd_bench_node);
+    dd_bench_node = NULL;
+  }
+#endif
 
   /* Delete data region on GPU... */
 #ifdef _OPENACC

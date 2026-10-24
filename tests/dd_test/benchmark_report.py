@@ -12,7 +12,8 @@ from pathlib import Path
 
 
 FIELDS = (
-    "particles", "mpi_ranks", "gpus", "dd_layout", "exchange_mode",
+    "particles", "nodes", "mpi_ranks", "gpus", "ranks_per_node",
+    "dd_layout", "exchange_mode",
     "sort_dt", "simulation_hours", "total_runtime", "launcher_wall_time",
     "dd_runtime",
     "classification_time", "sorting_time", "compaction_time", "packing_time",
@@ -20,7 +21,9 @@ FIELDS = (
     "pack_transfer_phase_time", "unpack_h2d_phase_time",
     "migrated_particles", "migration_fraction", "peak_particles_per_rank",
     "initial_particles_per_rank", "estimated_particle_memory_gib_per_rank",
-    "sent_particle_events", "repeat",
+    "sent_particle_events", "intra_node_particle_events",
+    "inter_node_particle_events", "intra_node_bytes", "inter_node_bytes",
+    "inter_node_event_fraction", "repeat",
 )
 
 
@@ -55,6 +58,8 @@ def timers(path):
     result = {}
     peaks = []
     sent = 0
+    mapping = {}
+    communication = {}
     for line in path.read_text(errors="replace").splitlines():
         match = re.search(r"TIMER_([A-Z0-9_]+) = ([\d.eE+-]+) s", line)
         if match:
@@ -69,7 +74,64 @@ def timers(path):
         match = re.search(r"DD_SENT_PARTICLES = (\d+)", line)
         if match:
             sent += int(match.group(1))
-    return result, max(peaks) if peaks else None, sent
+        match = re.search(
+            r"DD_BENCH_NODE rank=(\d+) leader=(\d+) local_rank=(\d+) "
+            r"host=(\S+) gpu=(\S+)", line)
+        if match:
+            rank, leader, local_rank = map(int, match.group(1, 2, 3))
+            if rank in mapping:
+                raise ValueError(f"Duplicate node mapping for rank {rank}")
+            mapping[rank] = (leader, local_rank, match.group(4), match.group(5))
+        match = re.search(
+            r"DD_BENCH_COMM rank=(\d+) sent=(\d+) intra=(\d+) "
+            r"inter=(\d+) intra_bytes=(\d+) inter_bytes=(\d+) "
+            r"particle_bytes=(\d+)", line)
+        if match:
+            values = tuple(map(int, match.groups()))
+            if values[0] in communication:
+                raise ValueError(f"Duplicate communication summary for rank {values[0]}")
+            communication[values[0]] = values[1:]
+    return result, max(peaks) if peaks else None, sent, mapping, communication
+
+
+def validate_communication(mapping, communication, ranks, nodes, ranks_per_node,
+                           gpus, case):
+    if set(mapping) != set(range(ranks)) or set(communication) != set(range(ranks)):
+        raise ValueError("Missing rank placement or communication diagnostics")
+    by_node = {}
+    for rank, (leader, local_rank, host, gpu) in mapping.items():
+        by_node.setdefault(leader, []).append((rank, local_rank, host, gpu))
+    if len(by_node) != nodes or any(len(group) != ranks_per_node
+                                   for group in by_node.values()):
+        raise ValueError(f"Actual MPI placement differs from {nodes} nodes × "
+                         f"{ranks_per_node} ranks/node")
+    for leader, group in by_node.items():
+        if leader not in {item[0] for item in group} or \
+                set(item[1] for item in group) != set(range(ranks_per_node)) or \
+                len({item[2] for item in group}) != 1:
+            raise ValueError(f"Inconsistent shared-memory mapping for node {leader}")
+        visible = [item[3] for item in group]
+        if gpus == ranks and all(gpu != "-" for gpu in visible):
+            if any(len(gpu.split(",")) != 1 for gpu in visible) or \
+                    len(set(visible)) != len(visible):
+                raise ValueError(f"GPU assignment overlaps on node {leader}")
+    with (case / "rank_mapping.csv").open("w", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(("rank", "node_leader_rank", "local_rank", "host",
+                         "cuda_visible_devices"))
+        for rank in sorted(mapping):
+            writer.writerow((rank, *mapping[rank]))
+    sums = [sum(communication[rank][i] for rank in range(ranks))
+            for i in range(5)]
+    sent, intra, inter, intra_bytes, inter_bytes = sums
+    particle_sizes = {communication[rank][5] for rank in range(ranks)}
+    if len(particle_sizes) != 1 or sent != intra + inter or \
+            intra_bytes != intra * next(iter(particle_sizes)) or \
+            inter_bytes != inter * next(iter(particle_sizes)):
+        raise ValueError("Inconsistent MPI particle counts or payload bytes")
+    if nodes == 1 and inter != 0:
+        raise ValueError("Single-node run reported inter-node particle transfers")
+    return sent, intra, inter, intra_bytes, inter_bytes
 
 
 def validate_snapshots(root, ranks, per_rank, stride, nq):
@@ -120,6 +182,8 @@ def main():
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--ranks", type=int, required=True)
+    parser.add_argument("--nodes", type=int, required=True)
+    parser.add_argument("--ranks-per-node", type=int, required=True)
     parser.add_argument("--gpus", type=int, required=True)
     parser.add_argument("--lon-domains", type=int, required=True)
     parser.add_argument("--lat-domains", type=int, required=True)
@@ -138,10 +202,13 @@ def main():
         args.case, args.ranks, args.per_rank, args.id_stride, args.nq)
     if migrated == 0:
         raise ValueError("No particles migrated between initial and final ranks")
-    measured, peak, sent = timers(args.log)
+    measured, peak, old_sent, mapping, communication = timers(args.log)
+    sent, intra, inter, intra_bytes, inter_bytes = validate_communication(
+        mapping, communication, args.ranks, args.nodes, args.ranks_per_node,
+        args.gpus, args.case)
     if "GROUP_DD" not in measured or "TOTAL" not in measured:
         raise ValueError("Missing DD or total MPTRAC timer output")
-    if sent < migrated:
+    if sent < migrated or (old_sent and old_sent != sent):
         raise ValueError("Missing or inconsistent DD send-count diagnostics")
     total = args.per_rank * args.ranks
     wall_file = args.case / "launcher_wall_seconds.txt"
@@ -151,8 +218,10 @@ def main():
     value = lambda name: measured.get(name, "")
     row = {
         "particles": total,
+        "nodes": args.nodes,
         "mpi_ranks": args.ranks,
         "gpus": args.gpus,
+        "ranks_per_node": args.ranks_per_node,
         "dd_layout": f"{args.lon_domains}x{args.lat_domains}",
         "exchange_mode": args.mode,
         "sort_dt": args.sort_dt,
@@ -178,6 +247,11 @@ def main():
         "estimated_particle_memory_gib_per_rank":
             round(bytes_per_slot * args.capacity / 2**30, 6),
         "sent_particle_events": sent,
+        "intra_node_particle_events": intra,
+        "inter_node_particle_events": inter,
+        "intra_node_bytes": intra_bytes,
+        "inter_node_bytes": inter_bytes,
+        "inter_node_event_fraction": inter / sent if sent else 0,
         "repeat": args.repeat,
     }
     for key in ("total_runtime", "launcher_wall_time", "dd_runtime", "classification_time",
@@ -187,12 +261,14 @@ def main():
         if row[key] != "":
             row[key] = f"{row[key]:.9g}"
     row["migration_fraction"] = f"{row['migration_fraction']:.9g}"
+    row["inter_node_event_fraction"] = f"{row['inter_node_event_fraction']:.9g}"
     writer = csv.DictWriter(sys.stdout, fieldnames=FIELDS, lineterminator="\n")
     if args.header:
         writer.writeheader()
     writer.writerow(row)
     print(f"Validated {total} IDs in {snapshots} binary snapshots; "
-          f"{migrated} changed owner, {sent} send events", file=sys.stderr)
+          f"{migrated} changed owner, {sent} send events "
+          f"({intra} intra-node, {inter} inter-node)", file=sys.stderr)
 
 
 if __name__ == "__main__":
