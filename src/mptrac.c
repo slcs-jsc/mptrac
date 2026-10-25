@@ -24,6 +24,8 @@
 
 #include "mptrac.h"
 
+#include <limits.h>
+
 #ifdef MET_IO_PROFILE
 #include <sys/resource.h>
 #endif
@@ -41,9 +43,10 @@ static uint64_t rng_ctr;
 #ifdef MET_IO_PROFILE
 /* Rank-local call times. These counters do not alter SELECT_TIMER state. */
 static struct {
-  double open, core, halo, empty, close, mpi_distribute, mpi_pack;
-  unsigned long long core_calls, halo_calls, empty_calls;
-  unsigned long long core_bytes, halo_bytes;
+  double open, core, halo, global, empty, close, mpi_distribute, mpi_pack;
+  double file_elapsed;
+  unsigned long long core_calls, halo_calls, global_calls, empty_calls;
+  unsigned long long core_bytes, halo_bytes, global_bytes;
   size_t core_shape[3], halo_shape[3];
 } met_io_profile;
 
@@ -67,6 +70,11 @@ static int met_io_read_float(
   if (elements == 0) {
     met_io_profile.empty += elapsed;
     met_io_profile.empty_calls++;
+  } else if (halo == 2) {
+    met_io_profile.global += elapsed;
+    met_io_profile.global_calls++;
+    met_io_profile.global_bytes +=
+      (unsigned long long) elements * sizeof(float);
   } else if (halo) {
     met_io_profile.halo += elapsed;
     met_io_profile.halo_calls++;
@@ -124,16 +132,21 @@ static void met_io_report(const char *filename) {
   const long peak_rss_kib =
     (getrusage(RUSAGE_SELF, &usage) == 0 ? usage.ru_maxrss : 0);
   LOG(2, "MET_IO rank=%d file=%s open_s=%.9f met_nc_read_s=%.9f "
-      "core_s=%.9f halo_s=%.9f empty_s=%.9f close_s=%.9f core_calls=%llu "
-      "halo_calls=%llu empty_calls=%llu core_bytes=%llu halo_bytes=%llu "
+      "core_s=%.9f halo_s=%.9f global_s=%.9f empty_s=%.9f "
+      "close_s=%.9f file_elapsed_s=%.9f core_calls=%llu "
+      "halo_calls=%llu global_calls=%llu empty_calls=%llu "
+      "core_bytes=%llu halo_bytes=%llu global_bytes=%llu "
       "core_shape=%zux%zux%zu halo_shape=%zux%zux%zu "
       "met_mpi_distribute_s=%.9f met_mpi_pack_s=%.9f peak_rss_kib=%ld",
       rank, filename, met_io_profile.open,
-      met_io_profile.core + met_io_profile.halo + met_io_profile.empty,
-      met_io_profile.core, met_io_profile.halo, met_io_profile.empty,
-      met_io_profile.close, met_io_profile.core_calls,
-      met_io_profile.halo_calls, met_io_profile.empty_calls,
-      met_io_profile.core_bytes, met_io_profile.halo_bytes,
+      met_io_profile.core + met_io_profile.halo + met_io_profile.global
+      + met_io_profile.empty,
+      met_io_profile.core, met_io_profile.halo, met_io_profile.global,
+      met_io_profile.empty, met_io_profile.close,
+      met_io_profile.file_elapsed, met_io_profile.core_calls,
+      met_io_profile.halo_calls, met_io_profile.global_calls,
+      met_io_profile.empty_calls, met_io_profile.core_bytes,
+      met_io_profile.halo_bytes, met_io_profile.global_bytes,
       met_io_profile.core_shape[0], met_io_profile.core_shape[1],
       met_io_profile.core_shape[2], met_io_profile.halo_shape[0],
       met_io_profile.halo_shape[1], met_io_profile.halo_shape[2],
@@ -7517,6 +7530,10 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
+  ctl->met_nc_read_mode =
+    (int) scan_ctl(filename, argc, argv, "MET_NC_READ_MODE", -1, "0", NULL);
+  if (ctl->met_nc_read_mode < 0 || ctl->met_nc_read_mode > 1)
+    ERRMSG("Set MET_NC_READ_MODE to 0 or 1!");
   ctl->met_nc_level =
     (int) scan_ctl(filename, argc, argv, "MET_NC_LEVEL", -1, "0", NULL);
   ctl->met_nc_quant =
@@ -8244,6 +8261,13 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "DD_EXCHANGE_MODE", -1, "0", NULL);
   if (ctl->dd_exchange_mode < 0 || ctl->dd_exchange_mode > 1)
     ERRMSG("Set DD_EXCHANGE_MODE to 0 (sort/push) or 1 (no sort)!");
+  if (ctl->met_nc_read_mode == 1 &&
+      (!ctl->dd || ctl->met_type != 0 || ctl->met_convention != 0))
+    ERRMSG("MET_NC_READ_MODE=1 requires MPI DD, NetCDF, and MET_CONVENTION=0!");
+#ifndef DD
+  if (ctl->met_nc_read_mode == 1)
+    ERRMSG("MET_NC_READ_MODE=1 requires a DD build!");
+#endif
 
 #ifdef DD
   /* Check the domain decomposition configuration... */
@@ -10773,6 +10797,196 @@ void read_met_nc_levels(
 
 /*****************************************************************************/
 
+#ifdef DD
+/* One file-local redistribution workspace. The eight entries per rank are
+ * y/x starts, y/x counts, periodic x start/count, and the two x offsets. */
+static struct {
+  unsigned long long *geometry;
+  float *global, *packed, *local;
+  size_t global_elements, packed_elements, local_elements;
+  int rank, size;
+} met_global_2d;
+
+/*! Prepare reusable buffers and gather the exact DD read windows once. */
+static void met_global_2d_init(const dd_t *dd, const met_t *met) {
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &met_global_2d.rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &met_global_2d.size);
+  const unsigned long long own[8] = {
+    dd->subdomain_start[2], dd->subdomain_start[3],
+    dd->subdomain_count[2], dd->subdomain_count[3],
+    dd->halo_bnd_start[3], dd->halo_bnd_count[3],
+    (unsigned long long) dd->halo_offset_start,
+    (unsigned long long) dd->halo_offset_end
+  };
+  ALLOC(met_global_2d.geometry, unsigned long long,
+	8 * (size_t) met_global_2d.size);
+  MPI_Allgather(own, 8, MPI_UNSIGNED_LONG_LONG, met_global_2d.geometry,
+		8, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+
+  const size_t nx = (size_t) dd->nx_glob, ny = (size_t) dd->ny_glob;
+  if (nx > SIZE_MAX / ny || nx * ny > SIZE_MAX / sizeof(float))
+    ERRMSG("Global 2-D meteorological field exceeds addressable memory!");
+  met_global_2d.global_elements = nx * ny;
+  met_global_2d.local_elements = (size_t) met->nx * (size_t) met->ny;
+  if (met_global_2d.local_elements > SIZE_MAX / sizeof(float))
+    ERRMSG("Local 2-D meteorological field exceeds addressable memory!");
+  ALLOC(met_global_2d.local, float, met_global_2d.local_elements);
+
+  for (int rank = 0; rank < met_global_2d.size; rank++) {
+    const unsigned long long *g = met_global_2d.geometry + 8 * rank;
+    if (g[3] > SIZE_MAX - g[5])
+      ERRMSG("Invalid DD window width for global 2-D redistribution!");
+    const size_t width = (size_t) g[3] + (size_t) g[5];
+    if (width == 0 || g[2] > SIZE_MAX / width)
+      ERRMSG("Invalid DD window size for global 2-D redistribution!");
+    const size_t count = (size_t) g[2] * width;
+    if (g[6] > width || g[3] > width - g[6]
+	|| g[7] > width || g[5] > width - g[7]
+	|| count > SIZE_MAX / sizeof(float)
+	|| g[0] + g[2] > ny || g[1] + g[3] > nx
+	|| g[4] + g[5] > nx)
+      ERRMSG("Invalid DD window for global 2-D redistribution!");
+    if (count > met_global_2d.packed_elements)
+      met_global_2d.packed_elements = count;
+  }
+  ALLOC(met_global_2d.packed, float, met_global_2d.packed_elements);
+}
+
+/*! Release all host buffers after the current meteorological file. */
+static void met_global_2d_free(void) {
+
+  free(met_global_2d.geometry);
+  free(met_global_2d.global);
+  free(met_global_2d.packed);
+  free(met_global_2d.local);
+  memset(&met_global_2d, 0, sizeof(met_global_2d));
+}
+
+/*! Pack both DD windows, including the exact periodic halo and corners. */
+static void met_global_2d_pack(
+  const float *global,
+  float *packed,
+  const unsigned long long *g,
+  const size_t nx) {
+
+  const size_t width = (size_t) g[3] + (size_t) g[5];
+  for (size_t y = 0; y < (size_t) g[2]; y++) {
+    float *row = packed + y * width;
+    const float *source = global + ((size_t) g[0] + y) * nx;
+    memcpy(row + (size_t) g[6], source + (size_t) g[1],
+	   (size_t) g[3] * sizeof(float));
+    if (g[5])
+      memcpy(row + (size_t) g[7], source + (size_t) g[4],
+	     (size_t) g[5] * sizeof(float));
+  }
+}
+
+/*! Read one complete horizontal slice, then distribute local raw floats. */
+static const float *met_global_2d_read(
+  const int ncid,
+  const int varid,
+  const int ndims,
+  const int level,
+  const dd_t *dd) {
+
+  const int reader = level % met_global_2d.size;
+  if (met_global_2d.rank == reader) {
+    if (met_global_2d.global == NULL)
+      ALLOC(met_global_2d.global, float, met_global_2d.global_elements);
+    if (ndims == 4) {
+      const size_t start[4] = { 0, (size_t) level, 0, 0 };
+      const size_t count[4] = { 1, 1, (size_t) dd->ny_glob,
+	(size_t) dd->nx_glob };
+      NC(MET_IO_READ(ncid, varid, start, count, met_global_2d.global, 4,
+		     2));
+    } else {
+      const size_t start[3] = { 0, 0, 0 };
+      const size_t count[3] = { 1, (size_t) dd->ny_glob,
+	(size_t) dd->nx_glob };
+      NC(MET_IO_READ(ncid, varid, start, count, met_global_2d.global, 3,
+		     2));
+    }
+  }
+
+  for (int rank = 0; rank < met_global_2d.size; rank++) {
+    const unsigned long long *g = met_global_2d.geometry + 8 * rank;
+    const size_t elements = (size_t) g[2] * ((size_t) g[3] + (size_t) g[5]);
+    if (met_global_2d.rank == reader) {
+      const double t0 = MET_IO_START();
+      float *target = rank == reader ? met_global_2d.local :
+	met_global_2d.packed;
+      met_global_2d_pack(met_global_2d.global, target, g,
+			 (size_t) dd->nx_glob);
+      MET_MPI_PACK(t0);
+      if (rank != reader)
+	for (size_t offset = 0; offset < elements;) {
+	  const int count = (int) MIN(elements - offset, (size_t) INT_MAX);
+	  const double send_start = MET_IO_START();
+	  if (MPI_Send(target + offset, count, MPI_FLOAT, rank, 0,
+		       MPI_COMM_WORLD) != MPI_SUCCESS)
+	    ERRMSG("Failed to distribute meteorological field!");
+	  MET_MPI_DISTRIBUTE(send_start);
+	  offset += (size_t) count;
+	}
+    } else if (met_global_2d.rank == rank) {
+      for (size_t offset = 0; offset < elements;) {
+	const int count = (int) MIN(elements - offset, (size_t) INT_MAX);
+	const double recv_start = MET_IO_START();
+	if (MPI_Recv(met_global_2d.local + offset, count, MPI_FLOAT, reader,
+		     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) != MPI_SUCCESS)
+	  ERRMSG("Failed to receive meteorological field!");
+	MET_MPI_DISTRIBUTE(recv_start);
+	offset += (size_t) count;
+      }
+    }
+  }
+  return met_global_2d.local;
+}
+
+/*! Reject layouts other than the supported benchmark NetCDF convention. */
+static void met_global_2d_check_var(
+  const int ncid,
+  const int varid,
+  const int ndims,
+  const dd_t *dd,
+  const int levels) {
+
+  int actual, ids[NC_MAX_VAR_DIMS];
+  char name[NC_MAX_NAME + 1];
+  size_t length;
+  NC(nc_inq_varndims(ncid, varid, &actual));
+  if (actual != ndims)
+    ERRMSG("MET_NC_READ_MODE=1 requires time-first NetCDF variables!");
+  NC(nc_inq_vardimid(ncid, varid, ids));
+  NC(nc_inq_dimname(ncid, ids[0], name));
+  if (strcmp(name, "time") != 0)
+    ERRMSG("MET_NC_READ_MODE=1 requires time as first dimension!");
+  NC(nc_inq_dimlen(ncid, ids[0], &length));
+  if (length < 1)
+    ERRMSG("MET_NC_READ_MODE=1 requires a nonempty time dimension!");
+  NC(nc_inq_dimname(ncid, ids[ndims - 1], name));
+  if (strcmp(name, "lon") != 0)
+    ERRMSG("MET_NC_READ_MODE=1 requires longitude as last dimension!");
+  NC(nc_inq_dimlen(ncid, ids[ndims - 1], &length));
+  if (length != (size_t) dd->nx_glob)
+    ERRMSG("MET_NC_READ_MODE=1 requires longitude as fastest dimension!");
+  NC(nc_inq_dimname(ncid, ids[ndims - 2], name));
+  if (strcmp(name, "lat") != 0)
+    ERRMSG("MET_NC_READ_MODE=1 requires latitude before longitude!");
+  NC(nc_inq_dimlen(ncid, ids[ndims - 2], &length));
+  if (length != (size_t) dd->ny_glob)
+    ERRMSG("MET_NC_READ_MODE=1 requires latitude before longitude!");
+  if (ndims == 4) {
+    NC(nc_inq_dimlen(ncid, ids[1], &length));
+    if (length != (size_t) levels)
+      ERRMSG("MET_NC_READ_MODE=1 requires all vertical levels!");
+  }
+}
+#endif
+
+/*****************************************************************************/
+
 int read_met_nc_2d(
   const int ncid,
   const char *const varnames[],
@@ -10929,6 +11143,26 @@ int read_met_nc_2d(
     /* Write info... */
     LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
 	varsel, fillval, missval);
+
+#ifdef DD
+    if (ctl->met_nc_read_mode == 1) {
+      met_global_2d_check_var(ncid, varid, 3, dd, 0);
+      NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
+      const float *help = met_global_2d_read(ncid, varid, 3, varid, dd);
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ix = 0; ix < met->nx; ix++) {
+	  const float aux = help[(size_t) iy * (size_t) met->nx + (size_t) ix];
+	  if (init)
+	    dest[ix][iy] = 0;
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval) && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = NAN;
+	}
+      return 1;
+    }
+#endif
 
     /* Define hyperslab... */
     float *help;
@@ -11232,6 +11466,27 @@ int read_met_nc_3d(
     /* Write info... */
     LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
 	varsel, fillval, missval);
+
+#ifdef DD
+    if (ctl->met_nc_read_mode == 1) {
+      met_global_2d_check_var(ncid, varid, 4, dd, met->np);
+      NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
+      for (int ip = 0; ip < met->np; ip++) {
+	const float *help = met_global_2d_read(ncid, varid, 4, ip, dd);
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ix = 0; ix < met->nx; ix++) {
+	    const float aux =
+	      help[(size_t) iy * (size_t) met->nx + (size_t) ix];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval) && fabsf(aux) < 1e14f)
+	      dest[ix][iy][ip] = scl * aux;
+	    else
+	      dest[ix][iy][ip] = NAN;
+	  }
+      }
+      return 1;
+    }
+#endif
 
     /* Define hyperslab... */
     size_t help_subdomain_start[4];
@@ -11957,6 +12212,7 @@ int read_met_nc(
 
   int ncid = 0;
   int have_ncid = 0;
+  const double file_start = MET_IO_START();
 
 #ifdef MET_IO_PROFILE
   memset(&met_io_profile, 0, sizeof(met_io_profile));
@@ -11985,14 +12241,30 @@ int read_met_nc(
   /* Read coordinates of meteo data... */
   read_met_nc_grid(filename, ncid, ctl, met, dd);
 
+#ifdef DD
+  if (ctl->dd && ctl->met_nc_read_mode == 1)
+    met_global_2d_init(dd, met);
+#endif
+
   /* Read surface data... */
   read_met_nc_surface(ncid, ctl, met, dd);
 
   /* Read meteo data on vertical levels... */
   read_met_nc_levels(ncid, ctl, met, dd);
 
+#ifdef DD
+  if (ctl->dd && ctl->met_nc_read_mode == 1)
+    met_global_2d_free();
+#endif
+
   /* Close file... */
   NC(MET_IO_CLOSE(ncid));
+
+#ifdef MET_IO_PROFILE
+  met_io_profile.file_elapsed = omp_get_wtime() - file_start;
+#else
+  (void) file_start;
+#endif
 
 #if defined(MET_IO_PROFILE) && defined(DD)
   if (ctl->dd)

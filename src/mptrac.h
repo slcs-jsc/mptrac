@@ -2887,6 +2887,9 @@ typedef struct {
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
+  /*! NetCDF DD input (0=local hyperslabs, 1=global 2-D slices via MPI). */
+  int met_nc_read_mode;
+
   /*! zlib compression level of netCDF meteo files (0=off). */
   int met_nc_level;
 
