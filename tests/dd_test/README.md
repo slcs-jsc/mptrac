@@ -196,6 +196,8 @@ existing timers and remain blank or are reported only as combined phases.
 `TIMER_GROUP_INPUT` accumulates particle-file and meteorological reads
 throughout the simulation. `TIMER_READ_MET_NC_LEVELS` includes the 3D
 netCDF reads and parallel file close.
+The optional NetCDF call profiler and its rank/repetition aggregation are
+documented in [IO_SCALING.md](IO_SCALING.md).
 Changing node placement also changes available CPUs and GPU affinity, so
 differences in total runtime cannot be attributed solely to network traffic.
 

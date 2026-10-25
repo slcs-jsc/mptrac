@@ -24,6 +24,10 @@
 
 #include "mptrac.h"
 
+#ifdef MET_IO_PROFILE
+#include <sys/resource.h>
+#endif
+
 #ifdef KPP
 #include "kpp_chem.h"
 #endif
@@ -33,6 +37,135 @@ static gsl_rng *rng[NTHREADS];
 
 /*! Counter variable of Squares random number generator. */
 static uint64_t rng_ctr;
+
+#ifdef MET_IO_PROFILE
+/* Rank-local call times. These counters do not alter SELECT_TIMER state. */
+static struct {
+  double open, core, halo, empty, close, mpi_distribute, mpi_pack;
+  unsigned long long core_calls, halo_calls, empty_calls;
+  unsigned long long core_bytes, halo_bytes;
+  size_t core_shape[3], halo_shape[3];
+} met_io_profile;
+
+/*! Measure one rank-local DD NetCDF float read and its requested bytes. */
+static int met_io_read_float(
+  const int ncid,
+  const int varid,
+  const size_t *start,
+  const size_t *count,
+  float *data,
+  const int ndims,
+  const int halo) {
+
+  const double t0 = omp_get_wtime();
+  const int status = nc_get_vara_float(ncid, varid, start, count, data);
+  const double elapsed = omp_get_wtime() - t0;
+  size_t elements = 1;
+  for (int i = 0; i < ndims; i++)
+    elements *= count[i];
+
+  if (elements == 0) {
+    met_io_profile.empty += elapsed;
+    met_io_profile.empty_calls++;
+  } else if (halo) {
+    met_io_profile.halo += elapsed;
+    met_io_profile.halo_calls++;
+    met_io_profile.halo_bytes +=
+      (unsigned long long) elements * sizeof(float);
+    if (ndims == 4)
+      memcpy(met_io_profile.halo_shape, count + 1, 3 * sizeof(size_t));
+  } else {
+    met_io_profile.core += elapsed;
+    met_io_profile.core_calls++;
+    met_io_profile.core_bytes +=
+      (unsigned long long) elements * sizeof(float);
+    if (ndims == 4)
+      memcpy(met_io_profile.core_shape, count + 1, 3 * sizeof(size_t));
+  }
+  return status;
+}
+
+#ifdef DD
+/*! Measure a parallel NetCDF open, including time spent inside the call. */
+static int met_io_open_par(
+  const char *filename,
+  const int mode,
+  MPI_Comm comm,
+  MPI_Info info,
+  int *ncid) {
+
+  const double t0 = omp_get_wtime();
+  const int status = nc_open_par(filename, mode, comm, info, ncid);
+  met_io_profile.open += omp_get_wtime() - t0;
+  return status;
+}
+#endif
+
+/*! Measure a NetCDF close without adding synchronization. */
+static int met_io_close(const int ncid) {
+
+  const double t0 = omp_get_wtime();
+  const int status = nc_close(ncid);
+  met_io_profile.close += omp_get_wtime() - t0;
+  return status;
+}
+
+/*! Report the measurements accumulated for one meteorological file. */
+static void met_io_report(const char *filename) {
+
+  int rank = 0;
+#ifdef MPI
+  int mpi_initialized = 0;
+  MPI_Initialized(&mpi_initialized);
+  if (mpi_initialized)
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+  struct rusage usage;
+  const long peak_rss_kib =
+    (getrusage(RUSAGE_SELF, &usage) == 0 ? usage.ru_maxrss : 0);
+  LOG(2, "MET_IO rank=%d file=%s open_s=%.9f met_nc_read_s=%.9f "
+      "core_s=%.9f halo_s=%.9f empty_s=%.9f close_s=%.9f core_calls=%llu "
+      "halo_calls=%llu empty_calls=%llu core_bytes=%llu halo_bytes=%llu "
+      "core_shape=%zux%zux%zu halo_shape=%zux%zux%zu "
+      "met_mpi_distribute_s=%.9f met_mpi_pack_s=%.9f peak_rss_kib=%ld",
+      rank, filename, met_io_profile.open,
+      met_io_profile.core + met_io_profile.halo + met_io_profile.empty,
+      met_io_profile.core, met_io_profile.halo, met_io_profile.empty,
+      met_io_profile.close, met_io_profile.core_calls,
+      met_io_profile.halo_calls, met_io_profile.empty_calls,
+      met_io_profile.core_bytes, met_io_profile.halo_bytes,
+      met_io_profile.core_shape[0], met_io_profile.core_shape[1],
+      met_io_profile.core_shape[2], met_io_profile.halo_shape[0],
+      met_io_profile.halo_shape[1], met_io_profile.halo_shape[2],
+      met_io_profile.mpi_distribute, met_io_profile.mpi_pack, peak_rss_kib);
+}
+
+/* Future redistribution code can time nonoverlapping MPI calls and CPU
+ * packing with omp_get_wtime() and add the durations to these two fields. */
+#define MET_IO_START() omp_get_wtime()
+#define MET_MPI_DISTRIBUTE(t0) \
+  (met_io_profile.mpi_distribute += omp_get_wtime() - (t0))
+#define MET_MPI_PACK(t0) \
+  (met_io_profile.mpi_pack += omp_get_wtime() - (t0))
+#define MET_IO_READ(ncid, varid, start, count, data, ndims, halo) \
+  met_io_read_float(ncid, varid, start, count, data, ndims, halo)
+#ifdef DD
+#define MET_IO_OPEN_PAR(filename, mode, comm, info, ncid) \
+  met_io_open_par(filename, mode, comm, info, ncid)
+#endif
+#define MET_IO_CLOSE(ncid) met_io_close(ncid)
+#else
+#define MET_IO_READ(ncid, varid, start, count, data, ndims, halo) \
+  nc_get_vara_float(ncid, varid, start, count, data)
+#ifdef DD
+#define MET_IO_OPEN_PAR(filename, mode, comm, info, ncid) \
+  nc_open_par(filename, mode, comm, info, ncid)
+#endif
+#define MET_IO_CLOSE(ncid) nc_close(ncid)
+#define MET_IO_START() 0.0
+#define MET_MPI_DISTRIBUTE(t0) ((void) (t0))
+#define MET_MPI_PACK(t0) ((void) (t0))
+#endif
 
 /*! State variables of cuRAND random number generator. */
 #ifdef CURAND
@@ -10827,8 +10960,8 @@ int read_met_nc_2d(
 #ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
 #endif
-    NC(nc_get_vara_float
-       (ncid, varid, help_subdomain_start, help_subdomain_count, help));
+    NC(MET_IO_READ
+       (ncid, varid, help_subdomain_start, help_subdomain_count, help, 3, 0));
 
     /* Read halos at boundaries... */
     size_t help_halo_bnd_start[3];
@@ -10859,8 +10992,9 @@ int read_met_nc_2d(
 #ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
 #endif
-    NC(nc_get_vara_float
-       (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
+    NC(MET_IO_READ
+       (ncid, varid, help_halo_bnd_start, help_halo_bnd_count,
+	help_halo, 3, 1));
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
@@ -11144,8 +11278,8 @@ int read_met_nc_3d(
 #ifdef DD
     NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
 #endif
-    NC(nc_get_vara_float
-       (ncid, varid, help_subdomain_start, help_subdomain_count, help));
+    NC(MET_IO_READ
+       (ncid, varid, help_subdomain_start, help_subdomain_count, help, 4, 0));
 
     /* Read halos separately at boundaries... */
     float *help_halo;
@@ -11158,8 +11292,9 @@ int read_met_nc_3d(
 #endif
     if (dd->halo_bnd_count[1] > 0 && dd->halo_bnd_count[2] > 0
 	&& dd->halo_bnd_count[3] > 0) {
-      NC(nc_get_vara_float
-	 (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
+      NC(MET_IO_READ
+	 (ncid, varid, help_halo_bnd_start, help_halo_bnd_count,
+	  help_halo, 4, 1));
     }
 
     /* Check meteo data layout... */
@@ -11823,11 +11958,15 @@ int read_met_nc(
   int ncid = 0;
   int have_ncid = 0;
 
+#ifdef MET_IO_PROFILE
+  memset(&met_io_profile, 0, sizeof(met_io_profile));
+#endif
+
   /* With domain decomposition, all tasks collectively open the file in
      parallel mode and each task reads its own subdomain... */
 #ifdef DD
   if (ctl->dd) {
-    NC(nc_open_par
+    NC(MET_IO_OPEN_PAR
        (filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL,
 	&ncid));
     have_ncid = 1;
@@ -11853,7 +11992,12 @@ int read_met_nc(
   read_met_nc_levels(ncid, ctl, met, dd);
 
   /* Close file... */
-  NC(nc_close(ncid));
+  NC(MET_IO_CLOSE(ncid));
+
+#if defined(MET_IO_PROFILE) && defined(DD)
+  if (ctl->dd)
+    met_io_report(filename);
+#endif
 
   /* Return success... */
   return 1;

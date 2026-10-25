@@ -12,11 +12,22 @@ from pathlib import Path
 LAYOUTS = ("1x4", "2x2", "4x1")
 FIELDS = (
     "resolution", "nx", "ny", "nz", "layout", "repeat", "status",
-    "io_trace_status", "gpu_sample_status",
-    "particles", "total_seconds", "input_seconds", "dd_seconds",
+    "io_trace_status", "io_profile_source", "gpu_sample_status",
+    "particles", "total_seconds", "total_seconds_mean_rank",
+    "input_seconds", "input_seconds_mean_rank",
+    "dd_seconds", "dd_seconds_mean_rank",
     "core_seconds_max_rank", "halo_seconds_max_rank", "close_seconds_max_rank",
+    "open_seconds_max_rank", "open_seconds_mean_rank",
+    "netcdf_read_seconds_max_rank", "netcdf_read_seconds_mean_rank",
+    "core_seconds_mean_rank", "halo_seconds_mean_rank",
+    "close_seconds_mean_rank", "empty_seconds_max_rank",
+    "empty_seconds_mean_rank",
+    "mpi_distribute_seconds_max_rank", "mpi_distribute_seconds_mean_rank",
+    "mpi_pack_seconds_max_rank", "mpi_pack_seconds_mean_rank",
     "requested_bytes_all_ranks", "requested_gib_per_input_second",
     "core_calls_all_ranks", "halo_calls_all_ranks", "core_shape", "halo_shape",
+    "empty_calls_all_ranks", "netcdf_read_calls_all_ranks",
+    "core_bytes_all_ranks", "halo_bytes_all_ranks",
     "peak_host_gib_per_rank", "peak_gpu_gib", "wind_files_gib",
     "sent_particle_events", "migration_fraction",
 )
@@ -42,52 +53,129 @@ def rank_timers(path):
     return timers
 
 
-def traces(path):
-    files = sorted(path.glob("rank_*.csv"))
-    if len(files) != 4:
-        return {}
-    per_rank = []
-    for file in files:
-        with file.open(newline="") as stream:
-            records = list(csv.DictReader(stream))
-        if len(records) != 7:
-            return {}
-        per_rank.append(records)
-    sums = lambda key: [sum(float(record[key]) for record in records)
-                        for records in per_rank]
-    halo_bytes = int(sum(sums("halo_bytes")))
-    shapes = lambda prefix: ";".join(sorted({"x".join(
-        record[f"{prefix}_{dim}"] for dim in ("lev", "lat", "lon"))
-        for records in per_rank for record in records
-        if record[f"{prefix}_lev"] != "0"}))
-    return {
-        "core_seconds_max_rank": max(sums("core_seconds")),
-        "halo_seconds_max_rank": max(sums("halo_seconds")) if halo_bytes else 0,
-        "close_seconds_max_rank": max(sums("close_seconds")),
-        "requested_bytes_all_ranks": int(sum(sums("core_bytes"))) + halo_bytes,
-        "core_calls_all_ranks": int(sum(sums("core_calls"))),
-        "halo_calls_all_ranks": int(sum(sums("halo_calls"))) if halo_bytes else 0,
-        "core_shape": shapes("core"),
-        "halo_shape": shapes("halo"),
-        "peak_host_gib_per_rank": max(float(record["peak_rss_kib"])
-            for records in per_rank for record in records) / 2**20,
-    }
-
-
-def rank_traces(path, resolution, layout, repeat):
-    rows = []
+def trace_records(path, log):
+    """Return per-rank, per-file records from native logs or legacy CSV."""
+    records = {}
+    if log.exists():
+        for line in log.read_text(errors="replace").splitlines():
+            match = re.search(r"\bMET_IO rank=(\d+) file=(.*?) (open_s=.*)", line)
+            if not match:
+                continue
+            rank = int(match.group(1))
+            values = dict(item.split("=", 1) for item in match.group(3).split())
+            values["file"] = match.group(2)
+            for current, previous in (("met_nc_read_s", "read_s"),
+                                      ("met_mpi_distribute_s", "mpi_distribute_s"),
+                                      ("met_mpi_pack_s", "mpi_pack_s")):
+                if current not in values and previous in values:
+                    values[current] = values.pop(previous)
+            for source, target in (("open_s", "open_seconds"),
+                                   ("met_nc_read_s", "netcdf_read_seconds"),
+                                   ("core_s", "core_seconds"),
+                                   ("halo_s", "halo_seconds"),
+                                   ("empty_s", "empty_seconds"),
+                                   ("close_s", "close_seconds"),
+                                   ("met_mpi_distribute_s", "mpi_distribute_seconds"),
+                                   ("met_mpi_pack_s", "mpi_pack_seconds")):
+                values[target] = values.pop(source)
+            for category in ("core", "halo"):
+                shape = values.pop(f"{category}_shape").split("x")
+                for dim, size in zip(("lev", "lat", "lon"), shape):
+                    values[f"{category}_{dim}"] = size
+            records.setdefault(rank, []).append(values)
+    if records:
+        return records, "native"
     for file in sorted(path.glob("rank_*.csv")):
         with file.open(newline="") as stream:
-            records = list(csv.DictReader(stream))
-        if len(records) != 7:
+            items = list(csv.DictReader(stream))
+        for item in items:
+            if int(item["halo_bytes"]) == 0:
+                item["empty_seconds"] = str(float(item.get("empty_seconds", 0)) +
+                                            float(item["halo_seconds"]))
+                item["empty_calls"] = str(int(item.get("empty_calls", 0)) +
+                                          int(item["halo_calls"]))
+                item["halo_seconds"] = "0"
+                item["halo_calls"] = "0"
+            else:
+                item.setdefault("empty_seconds", "0")
+                item.setdefault("empty_calls", "0")
+            item["netcdf_read_seconds"] = str(sum(float(item[key]) for key in
+                ("core_seconds", "halo_seconds", "empty_seconds")))
+        records[int(file.stem.split("_")[-1])] = items
+    return records, "legacy"
+
+
+def traces(records, ranks=4, files_per_rank=7):
+    if set(records) != set(range(ranks)) or any(
+            len(items) != files_per_rank for items in records.values()):
+        return {}
+    per_rank = [records[rank] for rank in range(ranks)]
+    def sums(key):
+        if any(key not in record for items in per_rank for record in items):
+            return None
+        return [sum(float(record[key]) for record in items) for items in per_rank]
+    def aggregate(key):
+        values = sums(key)
+        return ((max(values), statistics.mean(values)) if values is not None
+                else ("", ""))
+    shapes = lambda prefix: ";".join(sorted({"x".join(
+        record[f"{prefix}_{dim}"] for dim in ("lev", "lat", "lon"))
+        for items in per_rank for record in items
+        if record[f"{prefix}_lev"] != "0"}))
+    result = {}
+    for source, target in (("open_seconds", "open_seconds"),
+                           ("netcdf_read_seconds", "netcdf_read_seconds"),
+                           ("core_seconds", "core_seconds"),
+                           ("halo_seconds", "halo_seconds"),
+                           ("empty_seconds", "empty_seconds"),
+                           ("close_seconds", "close_seconds"),
+                           ("mpi_distribute_seconds", "mpi_distribute_seconds"),
+                           ("mpi_pack_seconds", "mpi_pack_seconds")):
+        maximum, mean = aggregate(source)
+        result[f"{target}_max_rank"] = maximum
+        result[f"{target}_mean_rank"] = mean
+    for source, target in (("core_calls", "core_calls_all_ranks"),
+                           ("halo_calls", "halo_calls_all_ranks"),
+                           ("empty_calls", "empty_calls_all_ranks"),
+                           ("core_bytes", "core_bytes_all_ranks"),
+                           ("halo_bytes", "halo_bytes_all_ranks")):
+        values = sums(source)
+        result[target] = int(sum(values)) if values is not None else ""
+    calls = (result["core_calls_all_ranks"], result["halo_calls_all_ranks"],
+             result["empty_calls_all_ranks"])
+    result["netcdf_read_calls_all_ranks"] = (sum(calls) if all(
+        value != "" for value in calls) else "")
+    result["requested_bytes_all_ranks"] = (
+        result["core_bytes_all_ranks"] + result["halo_bytes_all_ranks"])
+    result["core_shape"] = shapes("core")
+    result["halo_shape"] = shapes("halo")
+    result["peak_host_gib_per_rank"] = max(float(record["peak_rss_kib"])
+        for items in per_rank for record in items) / 2**20
+    return result
+
+
+def rank_traces(records, resolution, layout, repeat, files_per_rank=7):
+    rows = []
+    for rank, items in sorted(records.items()):
+        if len(items) != files_per_rank:
             continue
         row = {"resolution": resolution, "layout": layout, "repeat": repeat,
-               "rank": int(file.stem.split("_")[-1])}
-        for field in ("core_seconds", "halo_seconds", "close_seconds",
-                      "core_calls", "halo_calls", "core_bytes", "halo_bytes"):
-            row[field] = sum(float(record[field]) for record in records)
+               "rank": rank}
+        for field in ("open_seconds", "netcdf_read_seconds", "core_seconds",
+                      "halo_seconds", "empty_seconds", "close_seconds",
+                      "mpi_distribute_seconds", "mpi_pack_seconds",
+                      "core_calls", "halo_calls", "empty_calls",
+                      "core_bytes", "halo_bytes"):
+            if all(field in record for record in items):
+                convert = int if field.endswith(("_calls", "_bytes")) else float
+                row[field] = sum(convert(record[field]) for record in items)
+        if all(field in row for field in ("core_calls", "halo_calls",
+                                          "empty_calls")):
+            row["netcdf_read_calls"] = sum(row[field] for field in
+                ("core_calls", "halo_calls", "empty_calls"))
+        row["requested_bytes"] = row["core_bytes"] + row["halo_bytes"]
         row["peak_host_gib"] = max(float(record["peak_rss_kib"])
-                                    for record in records) / 2**20
+                                    for record in items) / 2**20
         rows.append(row)
     return rows
 
@@ -165,7 +253,13 @@ def plot(rows, field, ylabel, path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("work_dir", type=Path)
+    parser.add_argument("--files-per-run", type=int, default=7)
+    parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--ranks", type=int, default=4)
+    parser.add_argument("--gpus", type=int, default=4)
     args = parser.parse_args()
+    if min(args.files_per_run, args.repeats, args.ranks) < 1:
+        parser.error("file count, repeats, and ranks must be positive")
     root = args.work_dir
     with (root / "plan.csv").open(newline="") as stream:
         plan = list(csv.DictReader(stream))
@@ -184,7 +278,7 @@ def main():
             if files:
                 wind_gib = sum(path.stat().st_size for path in files) / 2**30
         for layout in LAYOUTS:
-            for repeat in range(1, 4):
+            for repeat in range(1, args.repeats + 1):
                 matches = list(directory.glob(
                     f"n*/layout{layout}/repeat{repeat}/mode1"))
                 case = matches[0] if len(matches) == 1 else None
@@ -206,12 +300,23 @@ def main():
                     else:
                         row["status"] = "failed_or_incomplete"
                     row["input_seconds"] = input_timer(case / "trac.log")
-                    io_data = traces(case / "io_trace")
+                    records, source = trace_records(case / "io_trace",
+                                                    case / "trac.log")
+                    io_data = traces(records, args.ranks, args.files_per_run)
                     row["io_trace_status"] = "complete" if io_data else "missing_or_incomplete"
+                    row["io_profile_source"] = source if io_data else ""
                     row.update(io_data)
                     timing = rank_timers(case / "trac.log")
-                    for rank_row in rank_traces(case / "io_trace", resolution,
-                                                layout, repeat):
+                    if set(timing) == set(range(args.ranks)):
+                        for source, target in (("total_seconds", "total_seconds_mean_rank"),
+                                               ("group_input_seconds", "input_seconds_mean_rank"),
+                                               ("group_dd_seconds", "dd_seconds_mean_rank")):
+                            values = [timing[rank].get(source)
+                                      for rank in range(args.ranks)]
+                            if all(value is not None for value in values):
+                                row[target] = statistics.mean(values)
+                    for rank_row in rank_traces(records, resolution, layout,
+                                                repeat, args.files_per_run):
                         rank_row.update(timing.get(rank_row["rank"], {}))
                         rank_rows.append(rank_row)
                     row["peak_gpu_gib"] = gpu_peak(case / "gpu_memory.csv")
@@ -242,11 +347,13 @@ def main():
         figure = plot(rows, field, ylabel, root / filename)
         if figure:
             figures.append(figure)
-    lines = ["# GPU-DD NetCDF I/O scaling at 137 vertical levels", "",
+    platform = "GPU-DD" if args.gpus else "CPU-DD"
+    lines = [f"# {platform} NetCDF I/O scaling at 137 vertical levels", "",
              "The synthetic vertical coordinate spans 0–60 km. All cases use "
-             "the same particle positions, six-hour simulation, four GPUs, "
+             f"the same particle positions, {args.files_per_run - 1}-hour "
+             f"simulation, {args.ranks} MPI ranks, {args.gpus} GPUs, "
              "DD exchange mode 1, and no diffusion.", "",
-             "| Resolution | Wind files (GiB) | Layout | Complete / 3 | "
+             f"| Resolution | Wind files (GiB) | Layout | Complete / {args.repeats} | "
              "Median input (s) | Median total (s) | Median core / halo / close (s) | "
              "Requested GiB/s | Peak host / GPU (GiB) |",
              "|---|---:|---|---:|---:|---:|---:|---:|---:|"]
@@ -269,14 +376,54 @@ def main():
                          f"{median('requested_gib_per_input_second')} | "
                          f"{median('peak_host_gib_per_rank')} / "
                          f"{median('peak_gpu_gib')} |")
-    lines += ["", "The NetCDF profiler records the duration of each float "
-              "hyperslab call and `nc_close()` per rank. A read with a "
-              "two-column longitude extent is classified as a periodic halo "
-              "read. These are call times, not a decomposition of the full "
-              "MPTRAC input timer, which also includes particle input and "
-              "other meteorological preparation. Requested throughput is the sum of "
-              "hyperslab bytes across ranks divided by the maximum input "
-              "timer; file-system bytes may differ due to caching and HDF5.", "",
+    lines += ["", "## Call-level measurements", "",
+              f"Each entry is the median of {args.repeats} run-level summaries. Time "
+              "pairs are maximum / mean of the **rank-local accumulated call "
+              "times**; they are not elapsed times for a collective phase. "
+              "A missing measurement is `NA`.", "",
+              "| Grid | Layout | Open max / mean (s) | NetCDF read max / mean (s) | "
+              "MPI redistribute max / mean (s) | MPI pack max / mean (s) | "
+              "Core / halo / empty calls | Core / halo requested GiB |",
+              "|---|---|---:|---:|---:|---:|---:|---:|"]
+    for entry in plan:
+        resolution = entry["resolution"]
+        for layout in LAYOUTS:
+            group = [row for row in rows if row["resolution"] == resolution
+                     and row["layout"] == layout and row["status"] == "complete"]
+            def median(key, scale=1):
+                values = [float(row[key]) / scale for row in group
+                          if row[key] != ""]
+                return f"{statistics.median(values):.3f}" if values else "NA"
+            def pair(prefix):
+                return (f"{median(prefix + '_max_rank')} / "
+                        f"{median(prefix + '_mean_rank')}")
+            lines.append(
+                f"| {resolution}° | {layout} | {pair('open_seconds')} | "
+                f"{pair('netcdf_read_seconds')} | "
+                f"{pair('mpi_distribute_seconds')} | "
+                f"{pair('mpi_pack_seconds')} | "
+                f"{median('core_calls_all_ranks')} / "
+                f"{median('halo_calls_all_ranks')} / "
+                f"{median('empty_calls_all_ranks')} | "
+                f"{median('core_bytes_all_ranks', 2**30)} / "
+                f"{median('halo_bytes_all_ranks', 2**30)} |")
+    lines += ["", "The optional native DD profiler measures `nc_open_par()`, "
+              "each float core/periodic-halo read, "
+              "and `nc_close()` with a local monotonic wall clock. "
+              "Zero-element collective read calls have their own `empty` "
+              "category. `MET_NC_READ` is the sum of core, halo, and empty "
+              "NetCDF call durations on a rank. Current-reader MPI "
+              "redistribution and CPU pack counters remain zero. "
+              "Archived LD_PRELOAD traces lack open and MPI timings. The "
+              "current interposer records open time but still classifies "
+              "halos by the last hyperslab dimension. Missing fields "
+              "remain `NA`.", "",
+              "The MPTRAC input timer also includes particle input and "
+              "meteorological preparation. It cannot be decomposed by "
+              "adding independent rank maxima. Requested throughput is the "
+              "sum of hyperslab bytes across ranks divided by the maximum "
+              "input timer; actual filesystem bytes may differ due to "
+              "caching and HDF5. Per-rank values are in `io_rank_summary.csv`.", "",
               "Peak host RSS is measured per rank by `getrusage`; peak GPU "
               "memory is the largest one-second `nvidia-smi` sample. Missing "
               "measurements are left blank in `io_summary.csv`.", ""]
@@ -287,7 +434,8 @@ def main():
         for layout in LAYOUTS:
             group = [row for row in rows if row["resolution"] == resolution
                      and row["layout"] == layout and row["status"] == "complete"]
-            if len(group) == 3 and all(row["input_seconds"] != "" for row in group):
+            if len(group) == args.repeats and all(
+                    row["input_seconds"] != "" for row in group):
                 groups[layout] = group
         if "1x4" in groups and "4x1" in groups:
             med = lambda layout, key: statistics.median(

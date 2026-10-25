@@ -13,9 +13,10 @@
 
 static int active_ncid = -1;
 static char active_name[512];
-static double core_seconds, halo_seconds, close_seconds;
+static double open_seconds, core_seconds, halo_seconds, empty_seconds,
+  close_seconds;
 static unsigned long long core_bytes, halo_bytes;
-static unsigned long long core_calls, halo_calls;
+static unsigned long long core_calls, halo_calls, empty_calls;
 static size_t core_shape[4], halo_shape[4];
 
 static double now(void) {
@@ -31,12 +32,15 @@ int nc_open_par(const char *path, int mode, MPI_Comm comm, MPI_Info info,
     void *symbol = dlsym(RTLD_NEXT, "nc_open_par");
     memcpy(&real_open, &symbol, sizeof(real_open));
   }
+  double start = now();
   int status = real_open(path, mode, comm, info, ncidp);
+  double elapsed = now() - start;
   if (status == NC_NOERR && getenv("DD_IO_TRACE_DIR")) {
     active_ncid = *ncidp;
     snprintf(active_name, sizeof(active_name), "%s", path);
-    core_seconds = halo_seconds = close_seconds = 0;
-    core_bytes = halo_bytes = core_calls = halo_calls = 0;
+    open_seconds = elapsed;
+    core_seconds = halo_seconds = empty_seconds = close_seconds = 0;
+    core_bytes = halo_bytes = core_calls = halo_calls = empty_calls = 0;
     memset(core_shape, 0, sizeof(core_shape));
     memset(halo_shape, 0, sizeof(halo_shape));
   }
@@ -62,6 +66,11 @@ int nc_get_vara_float(int ncid, int varid, const size_t *startp,
     unsigned long long elements = 1;
     for (int i = 0; i < ndims; ++i)
       elements *= (unsigned long long) countp[i];
+    if (elements == 0) {
+      empty_seconds += elapsed;
+      ++empty_calls;
+      return status;
+    }
     int halo = countp[ndims - 1] <= 2;
     double *seconds = halo ? &halo_seconds : &core_seconds;
     unsigned long long *bytes = halo ? &halo_bytes : &core_bytes;
@@ -99,13 +108,13 @@ int nc_close(int ncid) {
       struct rusage usage;
       getrusage(RUSAGE_SELF, &usage);
       if (ftell(stream) == 0)
-        fprintf(stream, "file,core_seconds,halo_seconds,close_seconds,core_calls,halo_calls,core_bytes,halo_bytes,core_lev,core_lat,core_lon,halo_lev,halo_lat,halo_lon,peak_rss_kib\n");
-      fprintf(stream, "%s,%.9f,%.9f,%.9f,%llu,%llu,%llu,%llu,%zu,%zu,%zu,%zu,%zu,%zu,%ld\n",
+        fprintf(stream, "file,core_seconds,halo_seconds,close_seconds,core_calls,halo_calls,core_bytes,halo_bytes,core_lev,core_lat,core_lon,halo_lev,halo_lat,halo_lon,peak_rss_kib,open_seconds,empty_seconds,empty_calls\n");
+      fprintf(stream, "%s,%.9f,%.9f,%.9f,%llu,%llu,%llu,%llu,%zu,%zu,%zu,%zu,%zu,%zu,%ld,%.9f,%.9f,%llu\n",
               active_name, core_seconds, halo_seconds, close_seconds,
               core_calls, halo_calls, core_bytes, halo_bytes,
               core_shape[1], core_shape[2], core_shape[3],
               halo_shape[1], halo_shape[2], halo_shape[3],
-              usage.ru_maxrss);
+              usage.ru_maxrss, open_seconds, empty_seconds, empty_calls);
       fclose(stream);
     }
   }

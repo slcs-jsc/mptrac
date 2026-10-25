@@ -273,6 +273,10 @@ export OMP_PLACES=sockets
 #export LC_ALL=C
 
 defs="-DNP=${npmax} -DEX_GLOB=${dex_glob} -DEY_GLOB=${dey_glob} -DEP=${dez_glob} -DEX=${dex} -DEY=${dey} -DNQ=${nq}"
+trac_defs=$defs
+if [[ ${DD_IO_PROFILE:-0} == 1 ]]; then
+    trac_defs+=" -DMET_IO_PROFILE"
+fi
 
 echo "[INFO] defs: $defs"
 echo "[INFO] LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
@@ -303,7 +307,7 @@ else
     # Build input generators on the CPU, then force a separate trac object
     # build with the requested accelerator setting.
     make -j atm_init wind time2jsec DD=1 MPI=1 STATIC=0 GPU=0 THRUST=0 COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs" "${build_opt[@]}"
-    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=$use_thrust COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$defs" "${build_opt[@]}"
+    make -B trac DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=$use_thrust COMPILER=$compiler MPICC="$mpi_cc" DEFINES="$trac_defs" "${build_opt[@]}"
 fi
 
 #################################################################################################################

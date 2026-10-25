@@ -39,12 +39,61 @@ DD_IO_RUN=1 ./tests/dd_test/io_scaling.sh  # run after checking the plan
 
 Set `DD_IO_RESOLUTIONS=1` to preflight one resolution first; use a
 separate work directory for exploratory runs. The full matrix comprises
-36 simulations. `io_scaling.sh` builds an optional NetCDF interposer
-(`netcdf_read_trace.c`) and enables it only for benchmark processes. It
-records per-rank core and periodic two-column halo hyperslab times,
-requested bytes, shapes, `nc_close()` time, and peak host RSS without
-changing the reader. One-second `nvidia-smi` samples record observed GPU
-memory use. `io_scaling_report.py` writes `io_summary.csv`, an English
-`report.md`, and plots (PNG with Matplotlib, SVG otherwise). Missing or failed
+36 simulations. By default, it compiles `trac` with `-DMET_IO_PROFILE`.
+This optional DD instrumentation times `nc_open_par()`, the explicitly marked
+core and periodic-halo float reads, zero-element collective reads, and
+`nc_close()` without changing the NetCDF access mode or the existing MPTRAC
+timers. It prints one `MET_IO` record per rank and wind file at `LOGLEV=2`.
+Set `DD_IO_PROFILE=0` to use the older LD_PRELOAD interposer
+(`netcdf_read_trace.c`) instead. The report parser accepts both formats;
+archived traces do not contain open or MPI-redistribution timings. The
+current interposer records open time but still infers halo reads from
+the last hyperslab dimension.
+One-second `nvidia-smi` samples record observed GPU memory use, and
+`getrusage()` records peak host RSS. `io_scaling_report.py` writes
+`io_summary.csv`, an English `report.md`, and plots (PNG with Matplotlib,
+SVG otherwise). Missing or failed
 runs remain visible in the CSV. Requested read throughput uses requested
 hyperslab bytes, not measured file-system traffic.
+
+## Timing semantics
+
+`SELECT_TIMER()` ends the previously selected timer and starts a new one.
+`TIMER_GROUP_INPUT` includes particle input and meteorological input across
+the simulation. `TIMER_READ_MET_NC_LEVELS` starts before 3D reads and is not
+ended until a later timer selection, so it can include `nc_close()` and other
+work after the final 3D read. The `MET_IO` measurements are independent local
+wall-clock intervals directly around individual NetCDF calls. Their sums are
+rank-local accumulated call durations, not a synchronized elapsed phase.
+
+`MET_NC_READ` is the sum of core, periodic-halo, and zero-element NetCDF
+float-read call durations. The core and halo categories use the actual DD
+reader call sites; they are not inferred from a slab width. A rank without
+periodic halo data has zero halo calls and bytes, although the current 2D
+reader can still make zero-element collective calls (`empty_calls`). The
+requested byte count is the product of the hyperslab dimensions times
+`sizeof(float)`; it does not measure HDF5 cache misses or filesystem traffic.
+Coordinate reads, NetCDF metadata calls, `nc_var_par_access()`, buffer
+allocation, and copying into meteorological arrays are outside these call
+intervals. Open and close intervals include only their corresponding NetCDF
+calls, not the profiler's logging or `getrusage()`.
+They may include waiting inside NetCDF/HDF5; the profiler adds no MPI
+barrier and does not separate storage time from library synchronization.
+
+The reusable `MET_MPI_DISTRIBUTE` and `MET_MPI_PACK` hooks in
+`src/mptrac.c` are reserved for a future reader. They use the same local
+clock and are independent of `SELECT_TIMER()`; both counters remain zero for
+the current reader. Time only the MPI operation (including time spent waiting
+inside it) in the first category and CPU packing/unpacking in the second.
+Place these intervals before the per-file `MET_IO` report and avoid
+overlapping intervals within one category.
+
+`io_rank_summary.csv` sums each metric over the seven default wind files
+(or `DD_SIMULATION_HOURS + 1` for shorter runs) separately for each rank.
+`io_summary.csv` reports the maximum and arithmetic mean of
+those rank-local sums for each run. Rank-labeled MPTRAC total, input, and DD
+timer means are also retained when available. The Markdown tables take the
+median of the three run-level values for each grid/layout. Maxima of
+different metrics can occur on different ranks and must not be added to
+reconstruct `TIMER_GROUP_INPUT` or total simulation time. Older trace files
+are still read; their unavailable metrics are left blank rather than estimated.
