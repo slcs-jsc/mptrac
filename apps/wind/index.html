@@ -866,6 +866,69 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#global-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global rotation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-spatial-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional spatial perturbations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-control-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional control parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perturbation-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Perturbation formula
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -885,46 +948,70 @@
 
 
 <h1 id="wind">wind</h1>
-<p>This app creates a meteorological data file with synthetic wind fields suitable for testing advection using the method of Williamson et al. (1992, Sect. 3). The synthetic wind field describes a global rotation around the Earth with a given rotation axis. The output is written in form of MPTRAC's netCDF meteo file format.</p>
-<p>The generated file now also contains a configurable set of auxiliary meteorological fields (<code>PS</code>, <code>BLH</code>, <code>ISHF</code>, <code>IEWS</code>, <code>INSS</code>, <code>Q</code>, etc.) written through MPTRAC's standard <code>write_met_nc()</code> path, so the output can be used directly in idealized diffusion and PBL test cases without an additional post-processing step. <code>WIND_BLH</code> is converted internally to boundary-layer top pressure, while <code>WIND_Q</code> and <code>WIND_O3</code> are still specified as mass mixing ratios and converted internally to the representation used by MPTRAC's meteo writer.</p>
-<ul>
-<li>Williamson, D. L., Drake, J. B., Hack, J. J., Jakob, R., &amp; Swarztrauber, P. N. (1992). A standard test set for numerical approximations to the shallow water equations in spherical geometry. Journal of computational physics, 102(1), 211-224.</li>
-</ul>
-<pre><code># Calling wind
-$ ./wind &lt;ctl&gt; &lt;metbase&gt;
+<p><code>wind</code> creates synthetic meteorological fields in MPTRAC's netCDF format.
+The wind field combines global rotation with optional spatial perturbations.</p>
+<h2 id="global-rotation">Global rotation</h2>
+<p>The base wind describes a global rotation around an axis set by
+<code>WIND_ALPHA</code>, following Williamson et al. (1992, Sect. 3). <code>WIND_U0</code> and
+<code>WIND_U1</code> set the speed at the lowest and highest levels, with linear
+interpolation between them. At <code>WIND_ALPHA=0</code>, the flow is zonal:
+<code>u = U cos(latitude)</code> and <code>v = 0</code>. <code>WIND_W0</code> sets the base vertical velocity.</p>
+<h2 id="optional-spatial-perturbations">Optional spatial perturbations</h2>
+<p><code>WIND_PERT_U</code>, <code>WIND_PERT_V</code>, and <code>WIND_PERT_W</code> add smooth, deterministic
+variability to the three wind components. <code>WIND_PERT_K</code> sets their spatial
+frequency. The perturbations vary with longitude, latitude, and altitude;
+they are periodic at 0°/360° longitude and taper to zero at the poles.
+Each amplitude can be set independently. All three default to zero, so the
+global rotation remains unchanged unless perturbations are enabled.</p>
+<p>The generator also writes configurable auxiliary meteorological fields
+(<code>PS</code>, <code>BLH</code>, <code>ISHF</code>, <code>IEWS</code>, <code>INSS</code>, <code>Q</code>, etc.) through MPTRAC's standard
+<code>write_met_nc()</code> path. <code>WIND_BLH</code> is converted to boundary-layer top
+pressure. <code>WIND_Q</code> and <code>WIND_O3</code> are specified as mass mixing ratios and
+converted to the representation used by the meteo writer.</p>
+<p>Williamson, D. L., Drake, J. B., Hack, J. J., Jakob, R., &amp; Swarztrauber,
+P. N. (1992). A standard test set for numerical approximations to the
+shallow water equations in spherical geometry. <em>Journal of Computational
+Physics</em>, 102(1), 211–224.</p>
+<h2 id="usage">Usage</h2>
+<pre><code class="language-bash">./wind &lt;ctl&gt; &lt;metbase&gt;
 </code></pre>
-<p>The required parameters are:
-* ctl: the control parameter file
-* metbase: the basename of the output file</p>
-<p>Optional control parameters:
-* WIND_T0: time step of meteo data (default: 0 s)
-* WIND_NX: number of longitudes (default: 360, minimum: 2)
-* WIND_NY: number of latitudes (default: 181, minimum: 2)
-* WIND_NZ: number of pressure levels (default: 61, minimum: 2)
-* WIND_Z0: log-pressure height of lowermost pressure level (default: 0 km)
-* WIND_Z1: log-pressure height of uppermost pressure level (default: 60 km)
-* WIND_U0: horizontal wind speed at lowermost level (default: 38.587660177302 m/s)
-* WIND_U1: horizontal wind speed at uppermost level (default: 38.587660177302 m/s)
-* WIND_W0: vertical velocity (default: 0 m/s)
-* WIND_PERT_U: amplitude of the zonal wind perturbation (default: 0 m/s)
-* WIND_PERT_V: amplitude of the meridional wind perturbation (default: 0 m/s)
-* WIND_PERT_W: amplitude of the vertical wind perturbation (default: 0 m/s)
-* WIND_PERT_K: positive integer number of perturbation cycles around the globe (default: 24, corresponding to a 15° wavelength)
-* WIND_ALPHA: rotation angle (default: 0 deg)
-* WIND_LAT_REVERSE: latitude direction flag (default: 0, set to 1 for reversed latitude direction)
-* WIND_TEMP0: temperature at the lowermost level (default: 280 K)
-* WIND_TEMP1: temperature at the uppermost level (default: 280 K)
-* WIND_PS: surface pressure in hPa (default: 1013.25 hPa)
-* WIND_ZS: surface height (default: 0 km)
-* WIND_T2M: 2 m temperature (default: 280 K)
-* WIND_IEWS: eastward turbulent surface stress (default: 0 N/m^2)
-* WIND_INSS: northward turbulent surface stress (default: 0 N/m^2)
-* WIND_ISHF: surface sensible heat flux in ECMWF convention (positive downward; default: 0 W/m^2)
-* WIND_LSM: land-sea mask (default: 1)
-* WIND_SST: sea surface temperature (default: 280 K)
-* WIND_BLH: boundary layer height (default: 1 km). Converted to boundary layer pressure via the barometric formula (P(z) in hPa, where z = WIND_ZS + WIND_BLH)
-* WIND_Q: specific humidity (default: 0 kg/kg)
-* WIND_O3: ozone mass mixing ratio (default: 0 kg/kg)</p>
+<p>The required parameters are:</p>
+<ul>
+<li>ctl: the control parameter file</li>
+<li>metbase: the basename of the output file</li>
+</ul>
+<h2 id="optional-control-parameters">Optional control parameters</h2>
+<ul>
+<li>WIND_T0: time step of meteo data (default: 0 s)</li>
+<li>WIND_NX: number of longitudes (default: 360, minimum: 2)</li>
+<li>WIND_NY: number of latitudes (default: 181, minimum: 2)</li>
+<li>WIND_NZ: number of pressure levels (default: 61, minimum: 2)</li>
+<li>WIND_Z0: log-pressure height of lowermost pressure level (default: 0 km)</li>
+<li>WIND_Z1: log-pressure height of uppermost pressure level (default: 60 km)</li>
+<li>WIND_U0: horizontal wind speed at lowermost level (default: 38.587660177302 m/s)</li>
+<li>WIND_U1: horizontal wind speed at uppermost level (default: 38.587660177302 m/s)</li>
+<li>WIND_W0: vertical velocity (default: 0 m/s)</li>
+<li>WIND_PERT_U: amplitude of the zonal wind perturbation (default: 0 m/s)</li>
+<li>WIND_PERT_V: amplitude of the meridional wind perturbation (default: 0 m/s)</li>
+<li>WIND_PERT_W: amplitude of the vertical wind perturbation (default: 0 m/s)</li>
+<li>WIND_PERT_K: positive integer number of perturbation cycles around the globe (default: 24, corresponding to a 15° wavelength)</li>
+<li>WIND_ALPHA: rotation angle (default: 0 deg)</li>
+<li>WIND_LAT_REVERSE: latitude direction flag (default: 0, set to 1 for reversed latitude direction)</li>
+<li>WIND_TEMP0: temperature at the lowermost level (default: 280 K)</li>
+<li>WIND_TEMP1: temperature at the uppermost level (default: 280 K)</li>
+<li>WIND_PS: surface pressure in hPa (default: 1013.25 hPa)</li>
+<li>WIND_ZS: surface height (default: 0 km)</li>
+<li>WIND_T2M: 2 m temperature (default: 280 K)</li>
+<li>WIND_IEWS: eastward turbulent surface stress (default: 0 N/m^2)</li>
+<li>WIND_INSS: northward turbulent surface stress (default: 0 N/m^2)</li>
+<li>WIND_ISHF: surface sensible heat flux in ECMWF convention (positive downward; default: 0 W/m^2)</li>
+<li>WIND_LSM: land-sea mask (default: 1)</li>
+<li>WIND_SST: sea surface temperature (default: 280 K)</li>
+<li>WIND_BLH: boundary layer height (default: 1 km). Converted to boundary layer pressure via the barometric formula (P(z) in hPa, where z = WIND_ZS + WIND_BLH)</li>
+<li>WIND_Q: specific humidity (default: 0 kg/kg)</li>
+<li>WIND_O3: ozone mass mixing ratio (default: 0 kg/kg)</li>
+</ul>
+<h2 id="perturbation-formula">Perturbation formula</h2>
 <p>The perturbations are deterministic and are applied only when at least one
 amplitude is nonzero. With longitude <code>lambda</code>, latitude <code>phi</code>, and level index
 <code>i</code> (from 0 to <code>WIND_NZ - 1</code>), define <code>T = cos(phi)^2</code> and
@@ -937,11 +1024,8 @@ w += WIND_PERT_W * H * T * sin(K * lambda + pi/4) * sin(K * phi + pi/4)
 <p>The same horizontal perturbations, with <code>H = 1</code>, are added to surface wind.
 The vertical perturbation is in m/s and is converted to pressure velocity
 along with <code>WIND_W0</code>. The longitude functions are periodic at 0°/360°; the
-latitude taper makes the perturbations vanish smoothly at both poles. For a
-1° grid, <code>WIND_PERT_K=18</code> to <code>36</code> gives a longitude wavelength of 20° to 10°.
-For example, <code>WIND_PERT_U=3</code>, <code>WIND_PERT_V=3</code>, and <code>WIND_PERT_W=0.03</code> add
-moderate spatial variability to a diffusion regression test. The default
-zero amplitudes preserve the original wind field.</p>
+latitude taper makes the perturbations vanish smoothly at both poles. The
+default zero amplitudes preserve the original wind field.</p>
 
 
 
