@@ -40,6 +40,24 @@ DD_IO_RUN=1 ./tests/dd_test/io_scaling.sh  # run after checking the plan
 Set `DD_IO_RESOLUTIONS=1` to preflight one resolution first; use a
 separate work directory for exploratory runs. The full matrix comprises
 36 simulations. By default, it compiles `trac` with `-DMET_IO_PROFILE`.
+Set `DD_MET_NC_READ_MODE=1` to benchmark the global horizontal slice reader;
+the default `0` keeps the existing local hyperslab reader. Use a new
+`DD_IO_WORK_DIR` for mode 1, since the script does not overwrite results.
+The mode 1 reader allocates one global float32 horizontal field on each
+rank assigned a level and reuses it over the file. At 0.25° this field is
+about 4 MiB per rank; at 0.125° it is about 16 MiB. It also needs one
+largest-destination packed slice and one local slice per rank. Existing
+preflight estimates remain conservative for the much larger `met_t` arrays.
+For direct field verification, run `bash tests/dd_test/met_reader_compare.sh`
+on a CPU node with parallel NetCDF. It generates a small private synthetic
+file, encodes global x/y/level coordinates and invalid samples, and compares
+the complete local `met_t` structures bytewise for 1×1, 1×4, 2×2, and 4×1
+with two halo points. It also checks a duplicate 0°/360° endpoint for 1×1
+and 1×4. The 1×1 case exercises the reader geometry directly;
+normal particle DD simulations require at least two ranks. A duplicate
+0°/360° endpoint is currently accepted only without a zonal split: the
+existing zonal DD geometry produces duplicate local longitudes and fails
+its regular-spacing check, independent of read mode.
 This optional DD instrumentation times `nc_open_par()`, the explicitly marked
 core and periodic-halo float reads, zero-element collective reads, and
 `nc_close()` without changing the NetCDF access mode or the existing MPTRAC
@@ -66,8 +84,8 @@ work after the final 3D read. The `MET_IO` measurements are independent local
 wall-clock intervals directly around individual NetCDF calls. Their sums are
 rank-local accumulated call durations, not a synchronized elapsed phase.
 
-`MET_NC_READ` is the sum of core, periodic-halo, and zero-element NetCDF
-float-read call durations. The core and halo categories use the actual DD
+`MET_NC_READ` is the sum of core, periodic-halo, global-slice, and
+zero-element NetCDF float-read call durations. The core and halo categories use the actual DD
 reader call sites; they are not inferred from a slab width. A rank without
 periodic halo data has zero halo calls and bytes, although the current 2D
 reader can still make zero-element collective calls (`empty_calls`). The
@@ -80,13 +98,13 @@ calls, not the profiler's logging or `getrusage()`.
 They may include waiting inside NetCDF/HDF5; the profiler adds no MPI
 barrier and does not separate storage time from library synchronization.
 
-The reusable `MET_MPI_DISTRIBUTE` and `MET_MPI_PACK` hooks in
-`src/mptrac.c` are reserved for a future reader. They use the same local
-clock and are independent of `SELECT_TIMER()`; both counters remain zero for
-the current reader. Time only the MPI operation (including time spent waiting
-inside it) in the first category and CPU packing/unpacking in the second.
-Place these intervals before the per-file `MET_IO` report and avoid
-overlapping intervals within one category.
+`MET_MPI_DISTRIBUTE` measures blocking point-to-point transfers, including
+waiting; `MET_MPI_PACK` measures CPU packing into local contiguous slices.
+Both use a local clock independent of `SELECT_TIMER()` and remain zero for
+mode 0. `file_elapsed_s` spans the full rank-local file read, preparation,
+redistribution, and close. It has no added MPI barrier. Global read calls
+are counted only on the assigned reader rank, and requested bytes are the
+NetCDF hyperslab size rather than physical storage traffic.
 
 `io_rank_summary.csv` sums each metric over the seven default wind files
 (or `DD_SIMULATION_HOURS + 1` for shorter runs) separately for each rank.

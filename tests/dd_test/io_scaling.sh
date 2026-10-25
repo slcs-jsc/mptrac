@@ -21,6 +21,7 @@ export DD_USE_GPU=${DD_USE_GPU:-1}
 export DD_IO_GPU_SAMPLE=${DD_IO_GPU_SAMPLE:-1}
 export DD_IO_CHECK_FINITE=1
 export DD_IO_PROFILE=${DD_IO_PROFILE:-1}
+export DD_MET_NC_READ_MODE=${DD_MET_NC_READ_MODE:-0}
 export DD_BENCH_MAX_DISK_GIB=${DD_BENCH_MAX_DISK_GIB:-32}
 export DD_MET_NZ=137 DD_MET_EP=140
 
@@ -34,7 +35,8 @@ report_results() {
         python3 "$script_dir/io_scaling_report.py" "$work_root" \
             --files-per-run "$((DD_SIMULATION_HOURS + 1))" \
             --repeats "$DD_BENCH_REPEATS" --ranks "$DD_BENCH_RANKS" \
-            --gpus "$((DD_USE_GPU * DD_BENCH_RANKS))" || true
+            --gpus "$((DD_USE_GPU * DD_BENCH_RANKS))" \
+            --read-mode "$DD_MET_NC_READ_MODE" || true
     fi
 }
 trap report_results EXIT

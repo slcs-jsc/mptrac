@@ -11,12 +11,14 @@ from pathlib import Path
 
 LAYOUTS = ("1x4", "2x2", "4x1")
 FIELDS = (
-    "resolution", "nx", "ny", "nz", "layout", "repeat", "status",
+    "resolution", "nx", "ny", "nz", "layout", "repeat", "read_mode", "status",
     "io_trace_status", "io_profile_source", "gpu_sample_status",
     "particles", "total_seconds", "total_seconds_mean_rank",
     "input_seconds", "input_seconds_mean_rank",
     "dd_seconds", "dd_seconds_mean_rank",
     "core_seconds_max_rank", "halo_seconds_max_rank", "close_seconds_max_rank",
+    "global_seconds_max_rank", "global_seconds_mean_rank",
+    "file_elapsed_seconds_max_rank", "file_elapsed_seconds_mean_rank",
     "open_seconds_max_rank", "open_seconds_mean_rank",
     "netcdf_read_seconds_max_rank", "netcdf_read_seconds_mean_rank",
     "core_seconds_mean_rank", "halo_seconds_mean_rank",
@@ -26,6 +28,7 @@ FIELDS = (
     "mpi_pack_seconds_max_rank", "mpi_pack_seconds_mean_rank",
     "requested_bytes_all_ranks", "requested_gib_per_input_second",
     "core_calls_all_ranks", "halo_calls_all_ranks", "core_shape", "halo_shape",
+    "global_calls_all_ranks", "global_bytes_all_ranks",
     "empty_calls_all_ranks", "netcdf_read_calls_all_ranks",
     "core_bytes_all_ranks", "halo_bytes_all_ranks",
     "peak_host_gib_per_rank", "peak_gpu_gib", "wind_files_gib",
@@ -64,6 +67,9 @@ def trace_records(path, log):
             rank = int(match.group(1))
             values = dict(item.split("=", 1) for item in match.group(3).split())
             values["file"] = match.group(2)
+            values.setdefault("global_s", "0")
+            values.setdefault("global_calls", "0")
+            values.setdefault("global_bytes", "0")
             for current, previous in (("met_nc_read_s", "read_s"),
                                       ("met_mpi_distribute_s", "mpi_distribute_s"),
                                       ("met_mpi_pack_s", "mpi_pack_s")):
@@ -73,11 +79,14 @@ def trace_records(path, log):
                                    ("met_nc_read_s", "netcdf_read_seconds"),
                                    ("core_s", "core_seconds"),
                                    ("halo_s", "halo_seconds"),
+                                   ("global_s", "global_seconds"),
+                                   ("file_elapsed_s", "file_elapsed_seconds"),
                                    ("empty_s", "empty_seconds"),
                                    ("close_s", "close_seconds"),
                                    ("met_mpi_distribute_s", "mpi_distribute_seconds"),
                                    ("met_mpi_pack_s", "mpi_pack_seconds")):
-                values[target] = values.pop(source)
+                if source in values:
+                    values[target] = values.pop(source)
             for category in ("core", "halo"):
                 shape = values.pop(f"{category}_shape").split("x")
                 for dim, size in zip(("lev", "lat", "lon"), shape):
@@ -101,6 +110,9 @@ def trace_records(path, log):
                 item.setdefault("empty_calls", "0")
             item["netcdf_read_seconds"] = str(sum(float(item[key]) for key in
                 ("core_seconds", "halo_seconds", "empty_seconds")))
+            item["global_seconds"] = "0"
+            item["global_calls"] = "0"
+            item["global_bytes"] = "0"
         records[int(file.stem.split("_")[-1])] = items
     return records, "legacy"
 
@@ -127,6 +139,8 @@ def traces(records, ranks=4, files_per_rank=7):
                            ("netcdf_read_seconds", "netcdf_read_seconds"),
                            ("core_seconds", "core_seconds"),
                            ("halo_seconds", "halo_seconds"),
+                           ("global_seconds", "global_seconds"),
+                           ("file_elapsed_seconds", "file_elapsed_seconds"),
                            ("empty_seconds", "empty_seconds"),
                            ("close_seconds", "close_seconds"),
                            ("mpi_distribute_seconds", "mpi_distribute_seconds"),
@@ -136,17 +150,20 @@ def traces(records, ranks=4, files_per_rank=7):
         result[f"{target}_mean_rank"] = mean
     for source, target in (("core_calls", "core_calls_all_ranks"),
                            ("halo_calls", "halo_calls_all_ranks"),
+                           ("global_calls", "global_calls_all_ranks"),
                            ("empty_calls", "empty_calls_all_ranks"),
                            ("core_bytes", "core_bytes_all_ranks"),
-                           ("halo_bytes", "halo_bytes_all_ranks")):
+                           ("halo_bytes", "halo_bytes_all_ranks"),
+                           ("global_bytes", "global_bytes_all_ranks")):
         values = sums(source)
         result[target] = int(sum(values)) if values is not None else ""
     calls = (result["core_calls_all_ranks"], result["halo_calls_all_ranks"],
-             result["empty_calls_all_ranks"])
+             result["global_calls_all_ranks"], result["empty_calls_all_ranks"])
     result["netcdf_read_calls_all_ranks"] = (sum(calls) if all(
         value != "" for value in calls) else "")
     result["requested_bytes_all_ranks"] = (
-        result["core_bytes_all_ranks"] + result["halo_bytes_all_ranks"])
+        result["core_bytes_all_ranks"] + result["halo_bytes_all_ranks"]
+        + result["global_bytes_all_ranks"])
     result["core_shape"] = shapes("core")
     result["halo_shape"] = shapes("halo")
     result["peak_host_gib_per_rank"] = max(float(record["peak_rss_kib"])
@@ -162,18 +179,20 @@ def rank_traces(records, resolution, layout, repeat, files_per_rank=7):
         row = {"resolution": resolution, "layout": layout, "repeat": repeat,
                "rank": rank}
         for field in ("open_seconds", "netcdf_read_seconds", "core_seconds",
-                      "halo_seconds", "empty_seconds", "close_seconds",
+                      "halo_seconds", "global_seconds", "empty_seconds",
+                      "close_seconds", "file_elapsed_seconds",
                       "mpi_distribute_seconds", "mpi_pack_seconds",
-                      "core_calls", "halo_calls", "empty_calls",
-                      "core_bytes", "halo_bytes"):
+                      "core_calls", "halo_calls", "global_calls", "empty_calls",
+                      "core_bytes", "halo_bytes", "global_bytes"):
             if all(field in record for record in items):
                 convert = int if field.endswith(("_calls", "_bytes")) else float
                 row[field] = sum(convert(record[field]) for record in items)
         if all(field in row for field in ("core_calls", "halo_calls",
-                                          "empty_calls")):
+                                          "global_calls", "empty_calls")):
             row["netcdf_read_calls"] = sum(row[field] for field in
-                ("core_calls", "halo_calls", "empty_calls"))
-        row["requested_bytes"] = row["core_bytes"] + row["halo_bytes"]
+                ("core_calls", "halo_calls", "global_calls", "empty_calls"))
+        row["requested_bytes"] = (row["core_bytes"] + row["halo_bytes"]
+                                  + row["global_bytes"])
         row["peak_host_gib"] = max(float(record["peak_rss_kib"])
                                     for record in items) / 2**20
         rows.append(row)
@@ -257,6 +276,7 @@ def main():
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--ranks", type=int, default=4)
     parser.add_argument("--gpus", type=int, default=4)
+    parser.add_argument("--read-mode", type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if min(args.files_per_run, args.repeats, args.ranks) < 1:
         parser.error("file count, repeats, and ranks must be positive")
@@ -285,7 +305,7 @@ def main():
                 row = {key: "" for key in FIELDS}
                 row.update(resolution=resolution, nx=entry["nx"],
                            ny=entry["ny"], nz=entry["nz"],
-                           layout=layout, repeat=repeat,
+                           layout=layout, repeat=repeat, read_mode=args.read_mode,
                            status="missing", wind_files_gib=wind_gib)
                 if case:
                     result = case / "result.csv"
@@ -343,6 +363,7 @@ def main():
         ("total_seconds", "Total runtime (s)", "total_vs_resolution.png"),
         ("core_seconds_max_rank", "NetCDF core reads, max rank (s)", "core_vs_resolution.png"),
         ("halo_seconds_max_rank", "NetCDF periodic halo reads, max rank (s)", "halo_vs_resolution.png"),
+        ("global_seconds_max_rank", "NetCDF global 2-D reads, max rank (s)", "global_vs_resolution.png"),
     ):
         figure = plot(rows, field, ylabel, root / filename)
         if figure:
@@ -352,7 +373,8 @@ def main():
              "The synthetic vertical coordinate spans 0–60 km. All cases use "
              f"the same particle positions, {args.files_per_run - 1}-hour "
              f"simulation, {args.ranks} MPI ranks, {args.gpus} GPUs, "
-             "DD exchange mode 1, and no diffusion.", "",
+             f"DD exchange mode 1, NetCDF read mode {args.read_mode}, "
+             "and no diffusion.", "",
              f"| Resolution | Wind files (GiB) | Layout | Complete / {args.repeats} | "
              "Median input (s) | Median total (s) | Median core / halo / close (s) | "
              "Requested GiB/s | Peak host / GPU (GiB) |",
@@ -383,7 +405,8 @@ def main():
               "A missing measurement is `NA`.", "",
               "| Grid | Layout | Open max / mean (s) | NetCDF read max / mean (s) | "
               "MPI redistribute max / mean (s) | MPI pack max / mean (s) | "
-              "Core / halo / empty calls | Core / halo requested GiB |",
+              "Core / halo / global / empty calls | "
+              "Core / halo / global requested GiB |",
               "|---|---|---:|---:|---:|---:|---:|---:|"]
     for entry in plan:
         resolution = entry["resolution"]
@@ -404,16 +427,20 @@ def main():
                 f"{pair('mpi_pack_seconds')} | "
                 f"{median('core_calls_all_ranks')} / "
                 f"{median('halo_calls_all_ranks')} / "
+                f"{median('global_calls_all_ranks')} / "
                 f"{median('empty_calls_all_ranks')} | "
                 f"{median('core_bytes_all_ranks', 2**30)} / "
-                f"{median('halo_bytes_all_ranks', 2**30)} |")
+                f"{median('halo_bytes_all_ranks', 2**30)} / "
+                f"{median('global_bytes_all_ranks', 2**30)} |")
     lines += ["", "The optional native DD profiler measures `nc_open_par()`, "
-              "each float core/periodic-halo read, "
+              "each float core/periodic-halo/global-slice read, "
               "and `nc_close()` with a local monotonic wall clock. "
               "Zero-element collective read calls have their own `empty` "
-              "category. `MET_NC_READ` is the sum of core, halo, and empty "
-              "NetCDF call durations on a rank. Current-reader MPI "
-              "redistribution and CPU pack counters remain zero. "
+              "category. `MET_NC_READ` is the sum of core, halo, global, "
+              "and empty NetCDF call durations on a rank. MPI redistribution "
+              "and CPU pack counters are nonzero only in read mode 1. "
+              "`file_elapsed_s` spans each rank's complete NetCDF file read "
+              "and redistribution without a synchronization barrier. "
               "Archived LD_PRELOAD traces lack open and MPI timings. The "
               "current interposer records open time but still classifies "
               "halos by the last hyperslab dimension. Missing fields "
