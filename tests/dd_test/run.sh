@@ -168,17 +168,28 @@ else
     atm_type_out_rank=0
     init_ext=nc
 fi
-met_grid_nx=360         # number of grid points in longitudinal direction of meteo files
-met_grid_ny=181         # number of grid points in latitudinal direction of meteo files
-met_grid_nz=60          # number of vertical levels of meteo files
-dex_glob=364            # allocated size of meteo grid in longitudinal direction
-dey_glob=186            # allocated size of meteo grid in latitudinal direction
-dez_glob=90             # allocated size of meteo grid in vertical direction
+met_grid_nx=${DD_MET_NX:-360}  # meteorological grid dimensions
+met_grid_ny=${DD_MET_NY:-181}
+met_grid_nz=${DD_MET_NZ:-60}
+dex_glob=$((met_grid_nx + 4))
+dey_glob=$((met_grid_ny + 5))
+dez_glob=${DD_MET_EP:-$((met_grid_nz > 60 ? met_grid_nz + 3 : 90))}
 wind_alpha=${DD_WIND_ALPHA:-90}  # angle for wind rotation in degrees
 wind_speed=50           # wind speed in m/s
 
 # Calculate derived parameters
 if [[ $benchmark == 1 ]]; then
+    for value in "$met_grid_nx" "$met_grid_ny" "$met_grid_nz" "$dez_glob"; do
+        if [[ ! $value =~ ^[1-9][0-9]*$ ]]; then
+            echo "[ERROR] Meteorological grid dimensions and EP must be positive integers" >&2
+            exit 1
+        fi
+    done
+    if (( met_grid_nx < 2 || met_grid_ny < 2 || met_grid_nz < 2 ||
+          dez_glob < met_grid_nz )); then
+        echo "[ERROR] Invalid meteorological grid dimensions or EP capacity" >&2
+        exit 1
+    fi
     for value in "$domains_lon" "$domains_lat" "$particles_subdomain_lon_stride" \
         "$particles_subdomain_lat_stride" "$simulation_hours" "$atm_dt_out" \
         "${DD_NP_MARGIN_PERCENT:-25}" "${DD_INIT_IDX_STRIDE:-0}"; do

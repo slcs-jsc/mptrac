@@ -27,6 +27,21 @@ export DD_WIND_PERT_U=${DD_WIND_PERT_U:-0}
 export DD_WIND_PERT_V=${DD_WIND_PERT_V:-0}
 export DD_WIND_PERT_W=${DD_WIND_PERT_W:-0}
 export DD_WIND_PERT_K=${DD_WIND_PERT_K:-24}
+met_nx=${DD_MET_NX:-360}
+met_ny=${DD_MET_NY:-181}
+met_nz=${DD_MET_NZ:-60}
+met_ep=${DD_MET_EP:-$((met_nz > 60 ? met_nz + 3 : 90))}
+for value in "$met_nx" "$met_ny" "$met_nz" "$met_ep"; do
+    if [[ ! $value =~ ^[1-9][0-9]*$ ]]; then
+        echo "[ERROR] DD_MET_NX, DD_MET_NY, DD_MET_NZ, and DD_MET_EP must be positive integers" >&2
+        exit 1
+    fi
+done
+if (( met_nx < 2 || met_ny < 2 || met_nz < 2 || met_ep < met_nz )); then
+    echo "[ERROR] Invalid meteorological grid or vertical capacity" >&2
+    exit 1
+fi
+export DD_MET_NX=$met_nx DD_MET_NY=$met_ny DD_MET_NZ=$met_nz DD_MET_EP=$met_ep
 
 counts=${DD_BENCH_COUNTS:-100000,1000000,10000000}
 modes=${DD_BENCH_MODES:-${DD_EXCHANGE_MODE:-0,1}}
@@ -228,6 +243,9 @@ mkdir -p "$wind_dir"
 wind_dir=$(cd "$wind_dir" && pwd)
 export DD_WIND_DIR=$wind_dir
 wind_key="hours=$DD_SIMULATION_HOURS alpha=$DD_WIND_ALPHA u=$DD_WIND_PERT_U v=$DD_WIND_PERT_V w=$DD_WIND_PERT_W k=$DD_WIND_PERT_K"
+if (( met_nx != 360 || met_ny != 181 || met_nz != 60 || met_ep != 90 )); then
+    wind_key+=" nx=$met_nx ny=$met_ny nz=$met_nz ep=$met_ep"
+fi
 generate_wind=0
 if (( ! wind_external )); then
     if [[ -f $wind_dir/.benchmark_config ]]; then
@@ -259,7 +277,7 @@ if (( generate_wind )); then
     else
         echo "[INFO] Building the global-grid wind generator"
         first_capacity=${capacity_list[0]}
-        defs="-DNP=$first_capacity -DEX=364 -DEY=186 -DEP=90 -DNQ=$nq"
+        defs="-DNP=$first_capacity -DEX=$((met_nx + 4)) -DEY=$((met_ny + 5)) -DEP=$met_ep -DNQ=$nq"
         build_opt=()
         if [[ $DD_COMPILER == nvc ]]; then
             build_opt=(OPT="${DD_BENCH_OPT:--O3 -Mlarge_arrays}")
@@ -277,6 +295,7 @@ fi
 
 summary=$work_root/summary.csv
 compiled_key=""
+met_validated=0
 for index in "${!count_list[@]}"; do
     total=${total_list[$index]}
     capacity=${capacity_list[$index]}
@@ -325,6 +344,11 @@ for index in "${!count_list[@]}"; do
                 echo "[INFO] Setup particles=$total, layout=$layout, mode=$mode, repeat=$repeat, NP=$capacity"
                 (cd "$case_dir" && "$script_dir/run.sh" "${setup_args[@]}" \
                     > setup.log 2>&1)
+                if [[ -n ${DD_MET_VALIDATE_EXEC:-} && $met_validated == 0 ]]; then
+                    "$DD_MET_VALIDATE_EXEC" "$met_nx" "$met_ny" "$met_nz" \
+                        "$wind_dir"/wind_*.nc > "$work_root/wind_validation.log"
+                    met_validated=1
+                fi
                 if [[ ${DD_BENCH_CANONICAL_INIT:-0} == 1 && -z $init_source ]]; then
                     python3 "$script_dir/benchmark_canonical_init.py" \
                         "$case_dir/data" "${global_lon_list[index]}" \
@@ -348,9 +372,27 @@ PY
                 if [[ -z $init_source ]]; then init_source=$case_dir/data; fi
 
                 echo "[INFO] Run particles=$total, layout=$layout, mode=$mode, repeat=$repeat"
+                if [[ -n ${DD_IO_TRACE_LIB:-} ]]; then
+                    mkdir -p "$case_dir/io_trace"
+                    export DD_IO_TRACE_DIR=$case_dir/io_trace
+                fi
                 start=$(date +%s.%N)
                 if [[ -n ${SLURM_JOB_ID:-} ]]; then
                     if [[ $DD_USE_GPU == 1 ]]; then
+                        monitor_pid=""
+                        if [[ ${DD_IO_GPU_SAMPLE:-0} == 1 ]]; then
+                            printf '%s\n' 'time,gpu,memory_mib' > "$case_dir/gpu_memory.csv"
+                            (while :; do
+                                sample_time=$(date +%s.%N)
+                                nvidia-smi --query-gpu=index,memory.used \
+                                    --format=csv,noheader,nounits 2>/dev/null |
+                                    awk -F, -v t="$sample_time" \
+                                        '{gsub(/ /,"",$1); gsub(/ /,"",$2); print t "," $1 "," $2}'
+                                sleep 1
+                            done) >> "$case_dir/gpu_memory.csv" &
+                            monitor_pid=$!
+                        fi
+                        run_status=0
                         (cd "$case_dir/data" && srun --label --nodes="$nodes" \
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
                             --gpus-per-task="$gpus_per_rank" \
@@ -365,9 +407,20 @@ PY
                                 fi
                                 export CUDA_VISIBLE_DEVICES=${visible_gpus[local_rank]}
                             fi
+                            if [[ -n ${DD_IO_TRACE_LIB:-} ]]; then
+                                export LD_PRELOAD=${DD_IO_TRACE_LIB}${LD_PRELOAD:+:$LD_PRELOAD}
+                            fi
                             exec "$@"
                         ' bash "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
-                            > "$case_dir/trac.log" 2>&1
+                            > "$case_dir/trac.log" 2>&1 || run_status=$?
+                        if [[ -n $monitor_pid ]]; then
+                            kill "$monitor_pid" 2>/dev/null || true
+                            wait "$monitor_pid" 2>/dev/null || true
+                        fi
+                        if (( run_status != 0 )); then
+                            echo "[ERROR] GPU benchmark failed: $case_dir (srun=$run_status)" >&2
+                            exit "$run_status"
+                        fi
                     else
                         (cd "$case_dir/data" && srun --label --nodes="$nodes" \
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
@@ -375,7 +428,10 @@ PY
                             > "$case_dir/trac.log" 2>&1
                     fi
                 else
-                    (cd "$case_dir/data" && "$DD_MPIRUN" --oversubscribe -np "$ranks" \
+                    (cd "$case_dir/data" && if [[ -n ${DD_IO_TRACE_LIB:-} ]]; then
+                        export LD_PRELOAD=${DD_IO_TRACE_LIB}${LD_PRELOAD:+:$LD_PRELOAD}
+                    fi
+                    "$DD_MPIRUN" --oversubscribe -np "$ranks" \
                         "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
                         > "$case_dir/trac.log" 2>&1
                 fi
@@ -385,6 +441,9 @@ PY
                 report_args=()
                 if [[ ${DD_BENCH_ALLOW_ZERO_MIGRATION:-0} == 1 ]]; then
                     report_args+=(--allow-zero-migration)
+                fi
+                if [[ ${DD_IO_CHECK_FINITE:-0} == 1 ]]; then
+                    report_args+=(--check-finite-coordinates)
                 fi
                 python3 "$script_dir/benchmark_report.py" --case "$case_dir" \
                     --log "$case_dir/trac.log" --ranks "$ranks" \

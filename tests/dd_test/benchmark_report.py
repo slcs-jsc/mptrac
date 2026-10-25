@@ -54,6 +54,21 @@ def particle_ids(path, count):
             remaining -= nread
 
 
+def check_finite_coordinates(path, count):
+    with path.open("rb") as stream:
+        stream.seek(8)
+        for field in ("time", "pressure", "longitude", "latitude"):
+            remaining = count
+            while remaining:
+                nread = min(remaining, 131072)
+                values = array.array("d")
+                values.frombytes(stream.read(8 * nread))
+                if len(values) != nread or any(not math.isfinite(value)
+                                                for value in values):
+                    raise ValueError(f"Non-finite {field} in {path}")
+                remaining -= nread
+
+
 def timers(path):
     result = {}
     peaks = []
@@ -137,7 +152,7 @@ def validate_communication(mapping, communication, ranks, nodes, ranks_per_node,
     return sent, intra, inter, intra_bytes, inter_bytes
 
 
-def validate_snapshots(root, ranks, per_rank, stride, nq):
+def validate_snapshots(root, ranks, per_rank, stride, nq, finite_coordinates=False):
     expected = ranks * per_rank
     rank_dirs = [root / "data" / f"data.{rank}" for rank in range(ranks)]
     if any(not directory.is_dir() for directory in rank_dirs):
@@ -159,6 +174,8 @@ def validate_snapshots(root, ranks, per_rank, stride, nq):
         for rank, directory in enumerate(rank_dirs):
             path = directory / stamp
             count = header(path, nq)
+            if finite_coordinates:
+                check_finite_coordinates(path, count)
             count_all += count
             for value in particle_ids(path, count):
                 if not math.isfinite(value) or int(value) != value:
@@ -199,11 +216,13 @@ def main():
     parser.add_argument("--hours", type=int, required=True)
     parser.add_argument("--repeat", type=int, required=True)
     parser.add_argument("--allow-zero-migration", action="store_true")
+    parser.add_argument("--check-finite-coordinates", action="store_true")
     parser.add_argument("--header", action="store_true")
     args = parser.parse_args()
 
     migrated, snapshots = validate_snapshots(
-        args.case, args.ranks, args.per_rank, args.id_stride, args.nq)
+        args.case, args.ranks, args.per_rank, args.id_stride, args.nq,
+        args.check_finite_coordinates)
     if migrated == 0 and not args.allow_zero_migration:
         raise ValueError("No particles migrated between initial and final ranks")
     measured, peak, old_sent, mapping, communication = timers(args.log)
