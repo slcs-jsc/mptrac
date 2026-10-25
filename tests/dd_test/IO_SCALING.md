@@ -115,3 +115,18 @@ median of the three run-level values for each grid/layout. Maxima of
 different metrics can occur on different ranks and must not be added to
 reconstruct `TIMER_GROUP_INPUT` or total simulation time. Older trace files
 are still read; their unavailable metrics are left blank rather than estimated.
+
+The report's **DD and I/O timing breakdown** uses the maximum rank-local
+sum for each component in a run, then the median across completed repeats.
+`io_rank_summary.csv` retains the individual rank values and
+`io_summary.csv` also records their mean. For detailed `TIMER_DD_*` entries,
+the reporter uses the logged call mean times call count to reduce rounding
+from the three-decimal printed total. `DD_GPU_CLASSIFY`, `DD_GPU_COMPACT`,
+`DD_GPU_PACK`, `DD_GPU_SEND_D2H`, and `DD_COMMUNICATE_PARTICLES` supply the
+particle rows; the communication timer includes host-side preparation.
+`TIMER_GROUP_DD` is the separate particle-DD total. `MET_IO file_elapsed_s`
+covers NetCDF file reading and MPI redistribution, but not later
+meteorological processing. `TIMER_GROUP_INPUT` includes particle input as
+well as meteorological input. These independent measurements are shown as
+separate rows, never added to form a total. Archived traces without a
+measurement display N/A.

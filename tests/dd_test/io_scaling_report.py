@@ -10,6 +10,18 @@ from pathlib import Path
 
 
 LAYOUTS = ("1x4", "2x2", "4x1")
+DD_COMPONENTS = (
+    ("dd_classification_seconds", ("dd_gpu_classify_seconds", "dd_count_outgoing_seconds")),
+    ("dd_compaction_seconds", ("dd_gpu_compact_seconds",)),
+    ("dd_packing_seconds", ("dd_gpu_pack_seconds", "dd_atm2particles_seconds")),
+    ("dd_send_d2h_seconds", ("dd_gpu_send_d2h_seconds",)),
+    ("dd_particle_communication_seconds", ("dd_communicate_particles_seconds",)),
+)
+RANK_TIMERS = {
+    "GROUP_INPUT", "GROUP_DD", "TOTAL", "DD_GPU_CLASSIFY",
+    "DD_COUNT_OUTGOING", "DD_GPU_COMPACT", "DD_GPU_PACK",
+    "DD_ATM2PARTICLES", "DD_GPU_SEND_D2H", "DD_COMMUNICATE_PARTICLES",
+}
 FIELDS = (
     "resolution", "nx", "ny", "nz", "layout", "repeat", "read_mode", "status",
     "io_trace_status", "io_profile_source", "gpu_sample_status",
@@ -33,6 +45,12 @@ FIELDS = (
     "core_bytes_all_ranks", "halo_bytes_all_ranks",
     "peak_host_gib_per_rank", "peak_gpu_gib", "wind_files_gib",
     "sent_particle_events", "migration_fraction",
+    "dd_classification_seconds_max_rank", "dd_classification_seconds_mean_rank",
+    "dd_compaction_seconds_max_rank", "dd_compaction_seconds_mean_rank",
+    "dd_packing_seconds_max_rank", "dd_packing_seconds_mean_rank",
+    "dd_send_d2h_seconds_max_rank", "dd_send_d2h_seconds_mean_rank",
+    "dd_particle_communication_seconds_max_rank",
+    "dd_particle_communication_seconds_mean_rank",
 )
 
 
@@ -49,9 +67,14 @@ def rank_timers(path):
     if not path.exists():
         return timers
     for line in path.read_text(errors="replace").splitlines():
-        match = re.match(r"\s*(\d+): TIMER_(GROUP_INPUT|GROUP_DD|TOTAL) =\s*([\d.eE+-]+) s", line)
+        match = re.match(r"\s*(\d+): TIMER_([A-Z0-9_]+) =\s*([\d.eE+-]+) s", line)
         if match:
             rank, name, value = match.groups()
+            if name not in RANK_TIMERS:
+                continue
+            detail = re.search(r"mean=\s*([\d.eE+-]+) s, max=.*?n=\s*(\d+)\)", line)
+            if detail:
+                value = float(detail.group(1)) * int(detail.group(2))
             timers.setdefault(int(rank), {})[name.lower() + "_seconds"] = float(value)
     return timers
 
@@ -335,9 +358,21 @@ def main():
                                       for rank in range(args.ranks)]
                             if all(value is not None for value in values):
                                 row[target] = statistics.mean(values)
-                    for rank_row in rank_traces(records, resolution, layout,
-                                                repeat, args.files_per_run):
-                        rank_row.update(timing.get(rank_row["rank"], {}))
+                        for target, sources in DD_COMPONENTS:
+                            for source in sources:
+                                values = [timing[rank].get(source)
+                                          for rank in range(args.ranks)]
+                                if all(value is not None for value in values):
+                                    row[target + "_max_rank"] = max(values)
+                                    row[target + "_mean_rank"] = statistics.mean(values)
+                                    break
+                    profiles = {item["rank"]: item for item in rank_traces(
+                        records, resolution, layout, repeat, args.files_per_run)}
+                    for rank in sorted(set(profiles) | set(timing)):
+                        rank_row = profiles.get(rank, {
+                            "resolution": resolution, "layout": layout,
+                            "repeat": repeat, "rank": rank})
+                        rank_row.update(timing.get(rank, {}))
                         rank_rows.append(rank_row)
                     row["peak_gpu_gib"] = gpu_peak(case / "gpu_memory.csv")
                     row["gpu_sample_status"] = ("complete" if row["peak_gpu_gib"] != ""
@@ -432,6 +467,57 @@ def main():
                 f"{median('core_bytes_all_ranks', 2**30)} / "
                 f"{median('halo_bytes_all_ranks', 2**30)} / "
                 f"{median('global_bytes_all_ranks', 2**30)} |")
+    lines += ["", "## DD and I/O timing breakdown", "",
+              "Values are seconds. Call-level and DD phase timers are summed "
+              "over the run on each rank; the maximum rank-local value is "
+              "then taken for each component, followed by the median across "
+              "completed repetitions. Group and total timers use their "
+              "direct MPTRAC values. The "
+              "meteorological file phase is `MET_IO file_elapsed_s`; older "
+              "traces without it show N/A. The MPTRAC input group includes "
+              "particle input and other input work. Component maxima may "
+              "come from different ranks and must not be added.", ""]
+    components = (
+        ("NetCDF open", "open_seconds_max_rank"),
+        ("NetCDF reads", "netcdf_read_seconds_max_rank"),
+        ("NetCDF close", "close_seconds_max_rank"),
+        ("MPI meteorological redistribution", "mpi_distribute_seconds_max_rank"),
+        ("Meteorological packing", "mpi_pack_seconds_max_rank"),
+        ("Total meteorological input (file phase)", "file_elapsed_seconds_max_rank"),
+        ("MPTRAC input group", "input_seconds"),
+        ("DD particle classification", "dd_classification_seconds_max_rank"),
+        ("DD particle compaction", "dd_compaction_seconds_max_rank"),
+        ("DD particle packing", "dd_packing_seconds_max_rank"),
+        ("DD outgoing device-to-host", "dd_send_d2h_seconds_max_rank"),
+        ("DD particle communication phase", "dd_particle_communication_seconds_max_rank"),
+        ("Total particle DD", "dd_seconds"),
+        ("Total simulation", "total_seconds"),
+    )
+    for entry in plan:
+        resolution = entry["resolution"]
+        lines += [f"### {resolution}° — NetCDF read mode {args.read_mode}", "",
+                  "| Component | 1x4 | 2x2 | 4x1 |",
+                  "|---|---:|---:|---:|"]
+        for label, key in components:
+            cells = []
+            for layout in LAYOUTS:
+                values = [float(row[key]) for row in rows
+                          if row["resolution"] == resolution
+                          and row["layout"] == layout
+                          and row["status"] == "complete" and row[key] != ""]
+                cells.append(f"{statistics.median(values):.3f}"
+                             if values else "N/A")
+            lines.append(f"| {label} | {' | '.join(cells)} |")
+        lines.append("")
+    lines += ["`DD_GPU_CLASSIFY` (or CPU `DD_COUNT_OUTGOING`) supplies "
+              "classification; `DD_GPU_COMPACT`, `DD_GPU_PACK`, and "
+              "`DD_GPU_SEND_D2H` supply the corresponding GPU rows. "
+              "`DD_ATM2PARTICLES` is the packing fallback for the sort/push "
+              "path. `DD_COMMUNICATE_PARTICLES` includes host preparation "
+              "as well as MPI calls. `GROUP_DD` and `TOTAL` come directly "
+              "from MPTRAC timers. N/A means the measurement is absent, "
+              "not zero; rank-local timer values remain in "
+              "`io_rank_summary.csv`.", ""]
     lines += ["", "The optional native DD profiler measures `nc_open_par()`, "
               "each float core/periodic-halo/global-slice read, "
               "and `nc_close()` with a local monotonic wall clock. "
@@ -477,21 +563,30 @@ def main():
                 "The ratios describe association, not causation."
             )
             lines.append("")
-    lines += [
-        "The files are NetCDF4 with contiguous, uncompressed variables. "
-        "In `(time, lev, lat, lon)` order, a full-longitude core read is "
-        "contiguous within each latitude row; a narrow longitude slab "
-        "touches many separated portions of the file. Zonal edge ranks "
-        "also request two-column periodic halos. The measured core, halo, "
-        "and close maxima may come from different ranks and must not be "
-        "added as a decomposition of input time.", "",
-        "Recommended next steps: (1) test a more contiguous core read "
-        "window, measuring extra bytes against I/O time; (2) test whether "
-        "periodic halo reads can reuse loaded data or be combined with "
-        "compatible reads; (3) trace NetCDF/HDF5 and MPI calls around "
-        "`nc_close()` to distinguish deferred work from rank waiting. "
-        "No reader change is included in this baseline.", ""
-    ]
+    if args.read_mode == 0:
+        lines += [
+            "The files are NetCDF4 with contiguous, uncompressed variables. "
+            "In `(time, lev, lat, lon)` order, a full-longitude core read is "
+            "contiguous within each latitude row; a narrow longitude slab "
+            "touches many separated portions of the file. Zonal edge ranks "
+            "also request two-column periodic halos. The measured core, halo, "
+            "and close maxima may come from different ranks and must not be "
+            "added as a decomposition of input time.", "",
+            "Recommended next steps: (1) test a more contiguous core read "
+            "window, measuring extra bytes against I/O time; (2) test whether "
+            "periodic halo reads can reuse loaded data or be combined with "
+            "compatible reads; (3) trace NetCDF/HDF5 and MPI calls around "
+            "`nc_close()` to distinguish deferred work from rank waiting. "
+            "No reader change is included in this baseline.", ""
+        ]
+    else:
+        lines += [
+            "The global 2-D reader requests complete horizontal slices and "
+            "uses MPI to distribute the local DD windows. Compare its "
+            "global NetCDF reads and MPI redistribution using the measured "
+            "rank-local values above; neither component alone is the total "
+            "meteorological input time.", ""
+        ]
     lines.extend(f"![{name}]({name})" for name in figures)
     (root / "report.md").write_text("\n".join(lines) + "\n")
     print(f"Wrote {root / 'io_summary.csv'} and {root / 'report.md'}")
