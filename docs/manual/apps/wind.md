@@ -1,21 +1,49 @@
-# wind 
+# wind
 
-This app creates a meteorological data file with synthetic wind fields suitable for testing advection using the method of Williamson et al. (1992, Sect. 3). The synthetic wind field describes a global rotation around the Earth with a given rotation axis. The output is written in form of MPTRAC's netCDF meteo file format.
+`wind` creates synthetic meteorological fields in MPTRAC's netCDF format.
+The wind field combines global rotation with optional spatial perturbations.
 
-The generated file now also contains a configurable set of auxiliary meteorological fields (`PS`, `BLH`, `ISHF`, `IEWS`, `INSS`, `Q`, etc.) written through MPTRAC's standard `write_met_nc()` path, so the output can be used directly in idealized diffusion and PBL test cases without an additional post-processing step. `WIND_BLH` is converted internally to boundary-layer top pressure, while `WIND_Q` and `WIND_O3` are still specified as mass mixing ratios and converted internally to the representation used by MPTRAC's meteo writer.
+## Global rotation
 
-* Williamson, D. L., Drake, J. B., Hack, J. J., Jakob, R., & Swarztrauber, P. N. (1992). A standard test set for numerical approximations to the shallow water equations in spherical geometry. Journal of computational physics, 102(1), 211-224.
+The base wind describes a global rotation around an axis set by
+`WIND_ALPHA`, following Williamson et al. (1992, Sect. 3). `WIND_U0` and
+`WIND_U1` set the speed at the lowest and highest levels, with linear
+interpolation between them. At `WIND_ALPHA=0`, the flow is zonal:
+`u = U cos(latitude)` and `v = 0`. `WIND_W0` sets the base vertical velocity.
 
-```
-# Calling wind
-$ ./wind <ctl> <metbase>
+## Optional spatial perturbations
+
+`WIND_PERT_U`, `WIND_PERT_V`, and `WIND_PERT_W` add smooth, deterministic
+variability to the three wind components. `WIND_PERT_K` sets their spatial
+frequency. The perturbations vary with longitude, latitude, and altitude;
+they are periodic at 0°/360° longitude and taper to zero at the poles.
+Each amplitude can be set independently. All three default to zero, so the
+global rotation remains unchanged unless perturbations are enabled.
+
+The generator also writes configurable auxiliary meteorological fields
+(`PS`, `BLH`, `ISHF`, `IEWS`, `INSS`, `Q`, etc.) through MPTRAC's standard
+`write_met_nc()` path. `WIND_BLH` is converted to boundary-layer top
+pressure. `WIND_Q` and `WIND_O3` are specified as mass mixing ratios and
+converted to the representation used by the meteo writer.
+
+Williamson, D. L., Drake, J. B., Hack, J. J., Jakob, R., & Swarztrauber,
+P. N. (1992). A standard test set for numerical approximations to the
+shallow water equations in spherical geometry. *Journal of Computational
+Physics*, 102(1), 211–224.
+
+## Usage
+
+```bash
+./wind <ctl> <metbase>
 ```
 
 The required parameters are:
+
 * ctl: the control parameter file
 * metbase: the basename of the output file
 
-Optional control parameters:
+## Optional control parameters
+
 * WIND_T0: time step of meteo data (default: 0 s)
 * WIND_NX: number of longitudes (default: 360, minimum: 2)
 * WIND_NY: number of latitudes (default: 181, minimum: 2)
@@ -45,6 +73,8 @@ Optional control parameters:
 * WIND_Q: specific humidity (default: 0 kg/kg)
 * WIND_O3: ozone mass mixing ratio (default: 0 kg/kg)
 
+## Perturbation formula
+
 The perturbations are deterministic and are applied only when at least one
 amplitude is nonzero. With longitude `lambda`, latitude `phi`, and level index
 `i` (from 0 to `WIND_NZ - 1`), define `T = cos(phi)^2` and
@@ -60,8 +90,5 @@ w += WIND_PERT_W * H * T * sin(K * lambda + pi/4) * sin(K * phi + pi/4)
 The same horizontal perturbations, with `H = 1`, are added to surface wind.
 The vertical perturbation is in m/s and is converted to pressure velocity
 along with `WIND_W0`. The longitude functions are periodic at 0°/360°; the
-latitude taper makes the perturbations vanish smoothly at both poles. For a
-1° grid, `WIND_PERT_K=18` to `36` gives a longitude wavelength of 20° to 10°.
-For example, `WIND_PERT_U=3`, `WIND_PERT_V=3`, and `WIND_PERT_W=0.03` add
-moderate spatial variability to a diffusion regression test. The default
-zero amplitudes preserve the original wind field.
+latitude taper makes the perturbations vanish smoothly at both poles. The
+default zero amplitudes preserve the original wind field.
