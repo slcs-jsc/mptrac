@@ -1149,6 +1149,24 @@ with halos and owns the particles currently in that region. Particles
 crossing a subdomain boundary are sent to their new owner by MPI.
 DD requires at least two subdomains and a latitude/longitude
 meteorological grid; radioactive deposition is not supported.</p>
+<p>For NetCDF input, <code>MET_NC_READ_MODE=0</code> (default) lets each DD rank read
+its own extended subdomain. <code>MET_NC_READ_MODE=1</code> instead assigns each
+complete horizontal field at one vertical level to one reader rank and
+redistributes the local slices with MPI. It uses the same DD windows for
+inner and periodic longitude halos, including their corners. The first
+implementation supports MPI-DD NetCDF files with dimensions
+<code>(time, level, lat, lon)</code> for 3D fields and <code>(time, lat, lon)</code> for surface
+fields; it rejects other conventions. Each reader rank temporarily needs
+one global float32 horizontal field plus a buffer for the largest local
+slice. All ranks keep one local slice. No global 3D field is allocated.
+For example, a 40,000 × 20,000 field needs about 3.2 GB for the global
+buffer alone. With zonal DD, the present grid geometry expects a periodic
+longitude grid without a duplicate 360° endpoint; the duplicate-endpoint
+form fails the existing regular-spacing check in both read modes.
+Build with <code>-DMET_IO_PROFILE</code> and use <code>LOGLEV=2</code> to log rank-local NetCDF
+read, MPI redistribution, and CPU packing times. These component times
+are not synchronized elapsed times and should be compared alongside the
+existing total input timer.</p>
 <p><code>DD_EXCHANGE_MODE=0</code> (the default) uses the sort/push exchange path;
 <code>DD_SORT_DT</code> controls periodic sorting and defaults to 1800 s.
 <code>DD_EXCHANGE_MODE=1</code> classifies particles, packs outgoing particles, and
