@@ -5,7 +5,7 @@
 <area shape="rect" id="node50" href="$mptrac_8c.html#a55562b13a38a124b0abc09ce8511dde9" title="Updates device memory for specified data structures." alt="" coords="169,671,323,697"/>
 <area shape="rect" id="node3" href="$mptrac_8c.html#ad1c9df0ba0d19441bec285a6ebe3d757" title="Replaces occurrences of a substring in a string with another substring." alt="" coords="387,139,506,165"/>
 <area shape="rect" id="node4" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="799,329,878,356"/>
-<area shape="rect" id="node6" href="$mptrac_8h.html#aa4b5f89a098befae2a864decab80f133" title="Broadcasts large data across all processes in an MPI communicator." alt="" coords="373,645,520,672"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#aa4b5f89a098befae2a864decab80f133" title="State variables of cuRAND random number generator." alt="" coords="373,645,520,672"/>
 <area shape="rect" id="node7" href="$mptrac_8c.html#acc520c5d948ea75f0acb9b351a6b8b75" title="Reads meteorological data from a binary file." alt="" coords="397,341,497,368"/>
 <area shape="rect" id="node16" href="$mptrac_8c.html#af61accbe7a6587652bb15ea68d6aee03" title="Calculates Convective Available Potential Energy (CAPE) for each grid point." alt="" coords="589,772,699,799"/>
 <area shape="rect" id="node24" href="$mptrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculates cloud&#45;related variables for each grid point." alt="" coords="389,848,504,875"/>

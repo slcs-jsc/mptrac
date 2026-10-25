@@ -113,6 +113,18 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a1ab27aa0213a1886a32747eec1a24819"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdd__t.html#a1ab27aa0213a1886a32747eec1a24819">halo_offset_end</a></td></tr>
 <tr class="memdesc:a1ab27aa0213a1886a32747eec1a24819"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset of the periodic halo block at the end of the local x-array.  <a href="structdd__t.html#a1ab27aa0213a1886a32747eec1a24819">More...</a><br /></td></tr>
 <tr class="separator:a1ab27aa0213a1886a32747eec1a24819"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd1ddb0ba81670baebc154fff994e73b"><td class="memItemLeft" align="right" valign="top">MPI_Datatype&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdd__t.html#abd1ddb0ba81670baebc154fff994e73b">MPI_Particle</a></td></tr>
+<tr class="memdesc:abd1ddb0ba81670baebc154fff994e73b"><td class="mdescLeft">&#160;</td><td class="mdescRight">MPI datatype for particle exchange.  <a href="structdd__t.html#abd1ddb0ba81670baebc154fff994e73b">More...</a><br /></td></tr>
+<tr class="separator:abd1ddb0ba81670baebc154fff994e73b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a324850a446af9cf285289c5785556cce"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdd__t.html#a324850a446af9cf285289c5785556cce">sort_key</a> [<a class="el" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>]</td></tr>
+<tr class="memdesc:a324850a446af9cf285289c5785556cce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Auxiliary array for sorting.  <a href="structdd__t.html#a324850a446af9cf285289c5785556cce">More...</a><br /></td></tr>
+<tr class="separator:a324850a446af9cf285289c5785556cce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb0267273e6ef5563ff05d100da5c109"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdd__t.html#adb0267273e6ef5563ff05d100da5c109">perm</a> [<a class="el" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>]</td></tr>
+<tr class="memdesc:adb0267273e6ef5563ff05d100da5c109"><td class="mdescLeft">&#160;</td><td class="mdescRight">Auxiliary permutation array for sorting.  <a href="structdd__t.html#adb0267273e6ef5563ff05d100da5c109">More...</a><br /></td></tr>
+<tr class="separator:adb0267273e6ef5563ff05d100da5c109"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86087b343a9b8121d0b3c4b5b38d8993"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdd__t.html#a86087b343a9b8121d0b3c4b5b38d8993">tmp</a> [<a class="el" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>]</td></tr>
+<tr class="memdesc:a86087b343a9b8121d0b3c4b5b38d8993"><td class="mdescLeft">&#160;</td><td class="mdescRight">Auxiliary temporary array for sorting.  <a href="structdd__t.html#a86087b343a9b8121d0b3c4b5b38d8993">More...</a><br /></td></tr>
+<tr class="separator:a86087b343a9b8121d0b3c4b5b38d8993"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Domain decomposition data structure. </p>
@@ -297,6 +309,78 @@ Data Fields</h2></td></tr>
 <p>Offset of the periodic halo block at the end of the local x-array. </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l04096">4096</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="abd1ddb0ba81670baebc154fff994e73b" name="abd1ddb0ba81670baebc154fff994e73b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd1ddb0ba81670baebc154fff994e73b">&#9670;&nbsp;</a></span>MPI_Particle</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">MPI_Datatype dd_t::MPI_Particle</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>MPI datatype for particle exchange. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l04105">4105</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="a324850a446af9cf285289c5785556cce" name="a324850a446af9cf285289c5785556cce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a324850a446af9cf285289c5785556cce">&#9670;&nbsp;</a></span>sort_key</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double dd_t::sort_key[<a class="el" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Auxiliary array for sorting. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l04108">4108</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="adb0267273e6ef5563ff05d100da5c109" name="adb0267273e6ef5563ff05d100da5c109"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb0267273e6ef5563ff05d100da5c109">&#9670;&nbsp;</a></span>perm</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int dd_t::perm[<a class="el" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Auxiliary permutation array for sorting. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l04111">4111</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="a86087b343a9b8121d0b3c4b5b38d8993" name="a86087b343a9b8121d0b3c4b5b38d8993"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86087b343a9b8121d0b3c4b5b38d8993">&#9670;&nbsp;</a></span>tmp</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double dd_t::tmp[<a class="el" href="mptrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Auxiliary temporary array for sorting. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l04114">4114</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>

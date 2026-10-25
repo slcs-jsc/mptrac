@@ -24,7 +24,7 @@
 <area shape="rect" id="node16" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="540,1145,611,1172"/>
 <area shape="rect" id="node19" href="$mptrac_8c.html#a4392a0ab24a984ac30ed1ef85a89257d" title="Reads a 3D climatological photochemistry variable from a NetCDF file." alt="" coords="501,993,649,1020"/>
 <area shape="rect" id="node23" href="$mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="308,1247,423,1273"/>
-<area shape="rect" id="node26" href="$mptrac_8h.html#aa4b5f89a098befae2a864decab80f133" title="Broadcasts large data across all processes in an MPI communicator." alt="" coords="292,183,439,209"/>
+<area shape="rect" id="node26" href="$mptrac_8c.html#aa4b5f89a098befae2a864decab80f133" title="State variables of cuRAND random number generator." alt="" coords="292,183,439,209"/>
 <area shape="rect" id="node27" href="$mptrac_8c.html#acc520c5d948ea75f0acb9b351a6b8b75" title="Reads meteorological data from a binary file." alt="" coords="315,892,415,919"/>
 <area shape="rect" id="node31" href="$mptrac_8c.html#af61accbe7a6587652bb15ea68d6aee03" title="Calculates Convective Available Potential Energy (CAPE) for each grid point." alt="" coords="310,233,421,260"/>
 <area shape="rect" id="node33" href="$mptrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculates cloud&#45;related variables for each grid point." alt="" coords="308,335,423,361"/>

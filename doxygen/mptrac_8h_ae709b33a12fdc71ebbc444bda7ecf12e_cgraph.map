@@ -1,0 +1,17 @@
+<map id="module_dd" name="module_dd">
+<area shape="rect" id="node1" title="Perform domain decomposition and exchange particles between MPI ranks." alt="" coords="5,372,91,399"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a68d3a4948deb3dc418875d5185f6d483" title="Assign or update particle subdomain ownership." alt="" coords="148,85,307,112"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#ab00c921714a16b063769d5562c7ab41a" title="Copy migratable atmospheric particles from the ATM state into a particle buffer." alt="" coords="167,347,288,373"/>
+<area shape="rect" id="node8" href="$mptrac_8c.html#ab245e130e5bd4686db1cffec3c2f0e3c" title="Exchange particles between MPI ranks according to their destination rank." alt="" coords="139,397,316,424"/>
+<area shape="rect" id="node9" href="$mptrac_8c.html#a9f5414891f681d7d642d6f3178c5bf00" title="Classify particles before direct packing and compaction." alt="" coords="162,448,293,475"/>
+<area shape="rect" id="node10" href="$mptrac_8c.html#a64310d30625a7f0c0d504a94680072ab" title="Pack outgoing particles and compact local arrays without sorting." alt="" coords="163,296,291,323"/>
+<area shape="rect" id="node13" href="$mptrac_8c.html#a86b56b9f39f9a179f0fd1c2c06072fe7" title="Copy received particles from the communication buffer into the atmospheric state." alt="" coords="167,499,288,525"/>
+<area shape="rect" id="node14" href="$mptrac_8c.html#af995f4263f18de3fc22d3cec1d04ef9a" title="Compact and stage non&#45;local particles for domain decomposition transfer." alt="" coords="192,549,263,576"/>
+<area shape="rect" id="node15" href="$mptrac_8c.html#a51ef0f49dd0b6685632993cd6c8480a6" title="Sort local atmospheric particles and determine export counts for domain decomposition." alt="" coords="195,245,260,272"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a768c2d1906f17487bebd010c2929ce44" title="Determine MPI subdomain from particle coordinates." alt="" coords="364,78,535,119"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a7dbebfcfc3c8880219a85e2506e83077" title="Normalize geographic coordinates to the global grid convention." alt="" coords="583,5,725,32"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="617,85,691,112"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="613,144,695,171"/>
+<area shape="rect" id="node11" href="$mptrac_8c.html#aa47bb24433c8220341f0a2dc36729364" title="Reorder a double array according to particle source indices." alt="" coords="410,296,489,323"/>
+<area shape="rect" id="node12" href="$mptrac_8c.html#acf52fbb23e87b8d994fd15c6f5f95aff" title="Reorder particle&#45;specific wind perturbations." alt="" coords="408,347,491,373"/>
+</map>

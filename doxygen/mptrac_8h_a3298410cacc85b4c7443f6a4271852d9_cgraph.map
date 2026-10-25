@@ -1,0 +1,6 @@
+<map id="dd_calc_subdomain_from_coords" name="dd_calc_subdomain_from_coords">
+<area shape="rect" id="node1" title="Determine MPI subdomain from particle coordinates." alt="" coords="5,49,176,90"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a7dbebfcfc3c8880219a85e2506e83077" title="Normalize geographic coordinates to the global grid convention." alt="" coords="224,5,367,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="258,56,333,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="254,107,337,133"/>
+</map>

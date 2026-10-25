@@ -25,7 +25,7 @@
 <area shape="rect" id="node17" href="$mptrac_8c.html#a4536a82b3dc62081d26114c1250b1427" title="Reads observation data from a NetCDF file." alt="" coords="601,544,697,571"/>
 <area shape="rect" id="node19" href="$mptrac_8c.html#a2a023c3af1433054ddd85578ab0803d4" title="Write radioactive deposition densities as a gnuplot&#45;compatible table." alt="" coords="398,772,511,799"/>
 <area shape="rect" id="node20" href="$mptrac_8c.html#ad5658bf46d3988dd7ecab254fd60ddee" title="Write radioactive deposition densities as a CF&#45;style netCDF file." alt="" coords="401,823,508,849"/>
-<area shape="rect" id="node22" href="$mptrac_8c.html#aaf98f7230de0893b8dc4833d3c83c7a4" title="State variables of cuRAND random number generator." alt="" coords="419,645,491,672"/>
+<area shape="rect" id="node22" href="$mptrac_8c.html#aaf98f7230de0893b8dc4833d3c83c7a4" title="Converts Cartesian coordinates to geographic coordinates." alt="" coords="419,645,491,672"/>
 <area shape="rect" id="node23" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="419,595,491,621"/>
 <area shape="rect" id="node25" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="387,493,522,520"/>
 <area shape="rect" id="node30" href="$mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="401,291,508,317"/>

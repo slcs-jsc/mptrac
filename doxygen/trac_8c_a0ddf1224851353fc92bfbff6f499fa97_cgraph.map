@@ -1,6 +1,6 @@
 <map id="main" name="main">
 <area shape="rect" id="node1" title=" " alt="" coords="5,309,56,336"/>
-<area shape="rect" id="node2" href="$mptrac_8h.html#a045ffa06d9f954b6a558e19a46388049" title="Initialize the domain decomposition infrastructure." alt="" coords="146,56,206,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a045ffa06d9f954b6a558e19a46388049" title="Initialize the domain decomposition infrastructure." alt="" coords="146,56,206,83"/>
 <area shape="rect" id="node3" href="$mptrac_8c.html#aa2d277d4dd8ef1eb8226aa9ab93ebb04" title="Allocates and initializes memory resources for MPTRAC." alt="" coords="128,107,224,133"/>
 <area shape="rect" id="node4" href="$mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef" title="Frees memory resources allocated for MPTRAC." alt="" coords="131,157,221,184"/>
 <area shape="rect" id="node5" href="$mptrac_8c.html#a8435d2ccfa5de00f6d8080d363737cd6" title="Retrieves meteorological data for the specified time." alt="" coords="118,208,234,235"/>
@@ -32,7 +32,7 @@
 <area shape="rect" id="node30" href="$mptrac_8c.html#a6882c1e1af3a10c5f53662d353c8c1d8" title="Computes gridded chemical tracer concentrations (volume mixing ratio) from individual air parcel mass..." alt="" coords="319,1019,449,1045"/>
 <area shape="rect" id="node31" href="$mptrac_8c.html#a2a04fee6c403d3d912d89d9666c0fd7b" title="Initializes the chemistry modules by setting atmospheric composition." alt="" coords="321,1069,447,1096"/>
 <area shape="rect" id="node32" href="$mptrac_8c.html#a799ef256c15dc112842d1dbc5afc787c" title="Performs convective mixing of atmospheric particles." alt="" coords="317,1120,451,1147"/>
-<area shape="rect" id="node33" href="$mptrac_8h.html#ae709b33a12fdc71ebbc444bda7ecf12e" title="Perform domain decomposition and exchange particles between MPI ranks." alt="" coords="341,1171,427,1197"/>
+<area shape="rect" id="node33" href="$mptrac_8c.html#ae709b33a12fdc71ebbc444bda7ecf12e" title="Perform domain decomposition and exchange particles between MPI ranks." alt="" coords="341,1171,427,1197"/>
 <area shape="rect" id="node34" href="$mptrac_8c.html#a1b4a2c668aae5a7ae522eab2489a464c" title="Simulate exponential decay processes for atmospheric particles." alt="" coords="331,1221,437,1248"/>
 <area shape="rect" id="node35" href="$mptrac_8c.html#a9154ed73c861d6074fbcfd42ed511531" title="Simulate mesoscale diffusion for atmospheric particles." alt="" coords="321,1272,447,1299"/>
 <area shape="rect" id="node36" href="$mptrac_8c.html#ae102581d80f5817f4c5ef356bde43184" title="Computes particle diffusion within the planetary boundary layer (PBL)." alt="" coords="328,1323,440,1349"/>

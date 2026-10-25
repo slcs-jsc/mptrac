@@ -1,0 +1,7 @@
+<map id="dd_assign_subdomains" name="dd_assign_subdomains">
+<area shape="rect" id="node1" title="Assign or update particle subdomain ownership." alt="" coords="5,66,164,93"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a768c2d1906f17487bebd010c2929ce44" title="Determine MPI subdomain from particle coordinates." alt="" coords="212,29,383,71"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a7dbebfcfc3c8880219a85e2506e83077" title="Normalize geographic coordinates to the global grid convention." alt="" coords="431,11,573,38"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="465,63,539,90"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="461,118,543,145"/>
+</map>
