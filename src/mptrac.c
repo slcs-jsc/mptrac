@@ -11164,6 +11164,7 @@ int read_met_nc_2d(
       NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
       const float *help = met_global_2d_read(ncid, varid, 3, varid, dd);
       const double tconvert = MET_IO_START();
+#pragma omp parallel for default(shared)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ix = 0; ix < met->nx; ix++) {
 	  const float aux = help[(size_t) iy * (size_t) met->nx + (size_t) ix];
@@ -11493,6 +11494,7 @@ int read_met_nc_3d(
       for (int ip = 0; ip < met->np; ip++) {
 	const float *help = met_global_2d_read(ncid, varid, 4, ip, dd);
 	const double tconvert = MET_IO_START();
+#pragma omp parallel for default(shared)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ix = 0; ix < met->nx; ix++) {
 	    const float aux =
