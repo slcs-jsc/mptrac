@@ -44,6 +44,7 @@ static uint64_t rng_ctr;
 /* Rank-local call times. These counters do not alter SELECT_TIMER state. */
 static struct {
   double open, core, halo, global, empty, close, mpi_distribute, mpi_pack;
+  double convert, grid, setup;
   double file_elapsed;
   unsigned long long core_calls, halo_calls, global_calls, empty_calls;
   unsigned long long core_bytes, halo_bytes, global_bytes;
@@ -137,7 +138,9 @@ static void met_io_report(const char *filename) {
       "halo_calls=%llu global_calls=%llu empty_calls=%llu "
       "core_bytes=%llu halo_bytes=%llu global_bytes=%llu "
       "core_shape=%zux%zux%zu halo_shape=%zux%zux%zu "
-      "met_mpi_distribute_s=%.9f met_mpi_pack_s=%.9f peak_rss_kib=%ld",
+      "met_mpi_distribute_s=%.9f met_mpi_pack_s=%.9f "
+      "met_convert_s=%.9f met_grid_s=%.9f met_setup_s=%.9f "
+      "peak_rss_kib=%ld",
       rank, filename, met_io_profile.open,
       met_io_profile.core + met_io_profile.halo + met_io_profile.global
       + met_io_profile.empty,
@@ -150,7 +153,9 @@ static void met_io_report(const char *filename) {
       met_io_profile.core_shape[0], met_io_profile.core_shape[1],
       met_io_profile.core_shape[2], met_io_profile.halo_shape[0],
       met_io_profile.halo_shape[1], met_io_profile.halo_shape[2],
-      met_io_profile.mpi_distribute, met_io_profile.mpi_pack, peak_rss_kib);
+      met_io_profile.mpi_distribute, met_io_profile.mpi_pack,
+      met_io_profile.convert, met_io_profile.grid, met_io_profile.setup,
+      peak_rss_kib);
 }
 
 /* Future redistribution code can time nonoverlapping MPI calls and CPU
@@ -160,6 +165,12 @@ static void met_io_report(const char *filename) {
   (met_io_profile.mpi_distribute += omp_get_wtime() - (t0))
 #define MET_MPI_PACK(t0) \
   (met_io_profile.mpi_pack += omp_get_wtime() - (t0))
+#define MET_CONVERT(t0) \
+  (met_io_profile.convert += omp_get_wtime() - (t0))
+#define MET_GRID(t0) \
+  (met_io_profile.grid += omp_get_wtime() - (t0))
+#define MET_SETUP(t0) \
+  (met_io_profile.setup += omp_get_wtime() - (t0))
 #define MET_IO_READ(ncid, varid, start, count, data, ndims, halo) \
   met_io_read_float(ncid, varid, start, count, data, ndims, halo)
 #ifdef DD
@@ -178,6 +189,9 @@ static void met_io_report(const char *filename) {
 #define MET_IO_START() 0.0
 #define MET_MPI_DISTRIBUTE(t0) ((void) (t0))
 #define MET_MPI_PACK(t0) ((void) (t0))
+#define MET_CONVERT(t0) ((void) (t0))
+#define MET_GRID(t0) ((void) (t0))
+#define MET_SETUP(t0) ((void) (t0))
 #endif
 
 /*! State variables of cuRAND random number generator. */
@@ -11149,6 +11163,7 @@ int read_met_nc_2d(
       met_global_2d_check_var(ncid, varid, 3, dd, 0);
       NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
       const float *help = met_global_2d_read(ncid, varid, 3, varid, dd);
+      const double tconvert = MET_IO_START();
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ix = 0; ix < met->nx; ix++) {
 	  const float aux = help[(size_t) iy * (size_t) met->nx + (size_t) ix];
@@ -11160,6 +11175,7 @@ int read_met_nc_2d(
 	  else
 	    dest[ix][iy] = NAN;
 	}
+      MET_CONVERT(tconvert);
       return 1;
     }
 #endif
@@ -11229,6 +11245,8 @@ int read_met_nc_2d(
     NC(MET_IO_READ
        (ncid, varid, help_halo_bnd_start, help_halo_bnd_count,
 	help_halo, 3, 1));
+
+    const double tconvert = MET_IO_START();
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
@@ -11302,6 +11320,7 @@ int read_met_nc_2d(
 	}
       omp_set_dynamic(0);
     }
+    MET_CONVERT(tconvert);
 
     /* Free... */
     free(help);
@@ -11473,6 +11492,7 @@ int read_met_nc_3d(
       NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
       for (int ip = 0; ip < met->np; ip++) {
 	const float *help = met_global_2d_read(ncid, varid, 4, ip, dd);
+	const double tconvert = MET_IO_START();
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ix = 0; ix < met->nx; ix++) {
 	    const float aux =
@@ -11483,6 +11503,7 @@ int read_met_nc_3d(
 	    else
 	      dest[ix][iy][ip] = NAN;
 	  }
+	MET_CONVERT(tconvert);
       }
       return 1;
     }
@@ -11551,6 +11572,8 @@ int read_met_nc_3d(
 	 (ncid, varid, help_halo_bnd_start, help_halo_bnd_count,
 	  help_halo, 4, 1));
     }
+
+    const double tconvert = MET_IO_START();
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
@@ -11624,6 +11647,7 @@ int read_met_nc_3d(
 	  }
       omp_set_dynamic(0);
     }
+    MET_CONVERT(tconvert);
 
     /* Free... */
     free(help);
@@ -12239,11 +12263,16 @@ int read_met_nc(
   met->coord_type = ctl->met_coord_type;
 
   /* Read coordinates of meteo data... */
+  const double tgrid = MET_IO_START();
   read_met_nc_grid(filename, ncid, ctl, met, dd);
+  MET_GRID(tgrid);
 
 #ifdef DD
-  if (ctl->dd && ctl->met_nc_read_mode == 1)
+  if (ctl->dd && ctl->met_nc_read_mode == 1) {
+    const double tsetup = MET_IO_START();
     met_global_2d_init(dd, met);
+    MET_SETUP(tsetup);
+  }
 #endif
 
   /* Read surface data... */
@@ -12253,8 +12282,11 @@ int read_met_nc(
   read_met_nc_levels(ncid, ctl, met, dd);
 
 #ifdef DD
-  if (ctl->dd && ctl->met_nc_read_mode == 1)
+  if (ctl->dd && ctl->met_nc_read_mode == 1) {
+    const double tsetup = MET_IO_START();
     met_global_2d_free();
+    MET_SETUP(tsetup);
+  }
 #endif
 
   /* Close file... */
