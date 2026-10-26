@@ -266,9 +266,9 @@ echo "[INFO] dey: $dey"
 
 # Set environment
 export LD_LIBRARY_PATH=$mptrac_dir/libs/build/lib/:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=$cpus_per_task
-export OMP_PROC_BIND=true
-export OMP_PLACES=sockets
+export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
+export OMP_PROC_BIND=${OMP_PROC_BIND:-true}
+export OMP_PLACES=${OMP_PLACES:-sockets}
 #export LANG=C
 #export LC_ALL=C
 
