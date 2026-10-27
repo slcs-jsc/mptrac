@@ -274,9 +274,6 @@ export OMP_PLACES=${OMP_PLACES:-sockets}
 
 defs="-DNP=${npmax} -DEX_GLOB=${dex_glob} -DEY_GLOB=${dey_glob} -DEP=${dez_glob} -DEX=${dex} -DEY=${dey} -DNQ=${nq}"
 trac_defs=$defs
-if [[ ${DD_IO_PROFILE:-0} == 1 ]]; then
-    trac_defs+=" -DMET_IO_PROFILE"
-fi
 
 echo "[INFO] defs: $defs"
 echo "[INFO] LD_LIBRARY_PATH: $LD_LIBRARY_PATH"

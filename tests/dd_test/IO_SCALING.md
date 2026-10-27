@@ -39,7 +39,8 @@ DD_IO_RUN=1 ./tests/dd_test/io_scaling.sh  # run after checking the plan
 
 Set `DD_IO_RESOLUTIONS=1` to preflight one resolution first; use a
 separate work directory for exploratory runs. The full matrix comprises
-36 simulations. By default, it compiles `trac` with `-DMET_IO_PROFILE`.
+36 simulations. Component read times come from the built-in MPTRAC timers
+(`TIMER_MET_*`).
 Set `DD_MET_NC_READ_MODE=1` to benchmark the global horizontal slice reader;
 the default `0` keeps the existing local hyperslab reader. Use a new
 `DD_IO_WORK_DIR` for mode 1, since the script does not overwrite results.
@@ -58,14 +59,17 @@ normal particle DD simulations require at least two ranks. A duplicate
 0°/360° endpoint is currently accepted only without a zonal split: the
 existing zonal DD geometry produces duplicate local longitudes and fails
 its regular-spacing check, independent of read mode.
-This optional DD instrumentation times `nc_open_par()`, the explicitly marked
-core and periodic-halo float reads, zero-element collective reads, and
-`nc_close()` without changing the NetCDF access mode or the existing MPTRAC
-timers. It prints one `MET_IO` record per rank and wind file at `LOGLEV=2`.
-Set `DD_IO_PROFILE=0` to use the older LD_PRELOAD interposer
-(`netcdf_read_trace.c`) instead. The report parser accepts both formats;
-archived traces do not contain open or MPI-redistribution timings. The
-current interposer records open time but still infers halo reads from
+The DD met-input instrumentation uses MPTRAC's standard timers and requires
+no extra compile flags. The timer output at `LOGLEV=1` includes
+`TIMER_MET_READ` (core, halo, and global float reads), `TIMER_MET_PACK`
+(CPU packing), `TIMER_MET_MPI` (MPI redistribution), and `TIMER_MET_CONVERT`
+(conversion into the destination buffers), plus `TIMER_GET_MET`, which covers
+`nc_open_par()`, grid reading, setup, and `nc_close()`.
+Set `DD_IO_PROFILE=0` to additionally build the older LD_PRELOAD interposer
+(`netcdf_read_trace.c`). The report parser still accepts `MET_IO` records
+from archived logs of older instrumented builds, but new runs no longer emit
+them. The
+interposer records open time but still infers halo reads from
 the last hyperslab dimension.
 One-second `nvidia-smi` samples record observed GPU memory use, and
 `getrusage()` records peak host RSS. `io_scaling_report.py` writes
