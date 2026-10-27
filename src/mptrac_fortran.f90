@@ -330,6 +330,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_type
      INTEGER(c_int) :: met_clams
      INTEGER(c_int) :: met_nc_scale
+     INTEGER(c_int) :: met_nc_read_mode
      INTEGER(c_int) :: met_nc_level
      INTEGER(c_int) :: met_nc_quant
      INTEGER(c_int) :: met_zstd_level
