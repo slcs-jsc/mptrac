@@ -1163,8 +1163,13 @@ For example, a 40,000 × 20,000 field needs about 3.2 GB for the global
 buffer alone. With zonal DD, the present grid geometry expects a periodic
 longitude grid without a duplicate 360° endpoint; the duplicate-endpoint
 form fails the existing regular-spacing check in both read modes.
-Build with <code>-DMET_IO_PROFILE</code> and use <code>LOGLEV=2</code> to log rank-local NetCDF
-read, MPI redistribution, and CPU packing times. These component times
+The domain-decomposed met input is instrumented with the standard timer
+mechanism: <code>TIMER_MET_READ</code> (NetCDF reads), <code>TIMER_MET_PACK</code> (CPU packing),
+<code>TIMER_MET_MPI</code> (MPI redistribution), and <code>TIMER_MET_CONVERT</code> (conversion
+into the destination buffers) are printed with the regular timer output at
+<code>LOGLEV=1</code>, together with the general timers <code>TIMER_GET_MET</code> (file open,
+grid, setup, close), <code>TIMER_READ_MET_SURFACE</code>, and
+<code>TIMER_READ_MET_NC_LEVELS</code>. These component times
 are not synchronized elapsed times and should be compared alongside the
 existing total input timer.</p>
 <p><code>DD_EXCHANGE_MODE=0</code> (the default) uses the sort/push exchange path;
