@@ -2747,7 +2747,7 @@ void dd_sort(
 
   if (nlost > 0)
     WARN
-      ("Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)",
+      ("Rank %d: removing %d inactive particle slots during DD sorting (kept: %d, to_send: %d, total_before: %d)",
        rank, nlost, nkeep, nsend, np);
 
   atm->np = nkeep;
