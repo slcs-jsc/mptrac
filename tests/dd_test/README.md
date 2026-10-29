@@ -201,6 +201,58 @@ documented in [IO_SCALING.md](IO_SCALING.md).
 Changing node placement also changes available CPUs and GPU affinity, so
 differences in total runtime cannot be attributed solely to network traffic.
 
+## Exchange-mode campaign
+
+`campaign_exchange_prep.sh`, `campaign_exchange_run.sbatch`, and
+`campaign_exchange_report.py` compare exchange modes 0 and 1 under identical
+initial conditions. The prepared design is two wind scenarios (A: zonal
+transport, `ALPHA=90 SPEED=50 PERT=0`; B: turbulent perturbations,
+`SPEED=0 PERT_U=3 PERT_V=3 PERT_W=0.03 K=24`), particle counts
+100000/1000000/10000000/100000000, layouts `1x4,2x2,4x1`, both modes, and
+three repeats: 144 runs on one Booster node with four ranks, four GPUs,
+and 12 OpenMP threads per rank (`OMP_NUM_THREADS=12`, `OMP_PLACES=cores`,
+`OMP_PROC_BIND=close`, `--cpus-per-task=12`, `--hint=nomultithread`,
+`DD_BENCH_CPUS_PER_TASK=12`) with `MET_NC_READ_MODE=1` on the 0.125° met grid
+(`DD_MET_NX=2880 DD_MET_NY=1441 DD_MET_NZ=137 DD_MET_EP=140`; the compile-time
+`-DEX/-DEY/-DEP` limits are derived from these values by the build, both in
+preparation and in `run.sh`). Both modes run with
+`DD_THRUST=1`: mode 0 uses Thrust GPU sorting, mode 1 uses sort-free GPU
+classify/compact/pack. The campaign does not vary Thrust.
+
+Preparation generates one deterministic global initialization per count with
+`init_global.sh` (`INIT_EVENLY` recipe on a 1x1 global lattice, fixed
+`GSL_RNG_SEED`) and splits it per layout with `init_partition.py`, so every
+layout, mode, scenario, and repeat starts from the same particle population.
+`benchmark_grid.py` chooses lattice dimensions whose product equals the
+requested count exactly and that every layout divides. Preparation also
+builds both wind scenarios; running this step on a login node is fine, and
+existing wind and initialization files are reused on reruns.
+
+```bash
+export DD_CAMPAIGN_ROOT=$PWD/dd_exchange_campaign   # absolute path
+./tests/dd_test/campaign_exchange_prep.sh
+```
+
+Then submit one job per scenario and count (eight jobs; each runs 18 cases
+through `benchmark.sh` with `DD_BENCH_INIT_SOURCE` and `DD_WIND_DIR`). Jobs
+default to 12 hours; Booster caps jobs at 24 hours, so the largest cell can
+at most be resubmitted with `--time=24:00:00`:
+
+```bash
+cd $DD_CAMPAIGN_ROOT
+for scenario in A B; do for count in 100000 1000000 10000000 100000000; do
+  sbatch --export=ALL,DD_CAMPAIGN_ROOT=$PWD,DD_CAMPAIGN_SCENARIO=$scenario,DD_CAMPAIGN_COUNT=$count \
+      ../mptrac/tests/dd_test/campaign_exchange_run.sbatch
+done; done
+```
+
+Each cell appends to `campaign_summary.csv`. `campaign_exchange_report.py`
+aggregates repeats into `campaign_aggregate.csv` (mean and stdev per design
+point, including `TIMER_GROUP_DD` rollups such as `dd_runtime`) and extracts
+raw per-rank `TIMER_*` lines from every `trac.log` into
+`per_rank_timers.csv`. The per-rank files in each case directory remain
+untouched as the primary record.
+
 ## Fortran wrapper DD test
 
 The DD branch of `wrapper_test` compares `trac_fortran` with `trac` using

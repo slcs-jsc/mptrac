@@ -175,7 +175,7 @@ dex_glob=$((met_grid_nx + 4))
 dey_glob=$((met_grid_ny + 5))
 dez_glob=${DD_MET_EP:-$((met_grid_nz > 60 ? met_grid_nz + 3 : 90))}
 wind_alpha=${DD_WIND_ALPHA:-90}  # angle for wind rotation in degrees
-wind_speed=50           # wind speed in m/s
+wind_speed=${DD_WIND_SPEED:-50}  # background wind speed in m/s (0 for pure perturbation scenarios)
 
 # Calculate derived parameters
 if [[ $benchmark == 1 ]]; then
@@ -329,7 +329,7 @@ MET_CLAMS = ${met_clams}
 MET_VERT_COORD = ${met_vert_coord}
 MET_DT_OUT = ${met_dt_out}
 MET_CONVENTION = 0
-MET_NC_READ_MODE = 0
+MET_NC_READ_MODE = ${DD_MET_NC_READ_MODE:-0}
 ATM_TYPE = ${atm_type}
 ATM_TYPE_OUT = ${atm_type_out_global}
 ADVECT = 2
@@ -440,6 +440,7 @@ for i in $(seq 0 $((ntasks-1))); do
                  INIT_LAT1 "$init_lat1" \
                  INIT_DLAT "$init_dlat" \
                  INIT_EVENLY "$use_evenly_distributed" \
+                 MET_NC_READ_MODE 0 \
                  INIT_IDX_OFFSET $((particle_id_stride * i)) >> "$work_dir"/data/atm_generation.log 2>&1
     fi
     

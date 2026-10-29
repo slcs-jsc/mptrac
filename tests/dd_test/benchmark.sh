@@ -23,6 +23,7 @@ export DD_COMPILER=${DD_COMPILER:-$([[ $DD_USE_GPU == 1 ]] && echo nvc || echo g
 export DD_MPICC=${DD_MPICC:-mpicc}
 export DD_MPIRUN=${DD_MPIRUN:-mpirun}
 export DD_WIND_ALPHA=${DD_WIND_ALPHA:-90}
+export DD_WIND_SPEED=${DD_WIND_SPEED:-50}
 export DD_WIND_PERT_U=${DD_WIND_PERT_U:-0}
 export DD_WIND_PERT_V=${DD_WIND_PERT_V:-0}
 export DD_WIND_PERT_W=${DD_WIND_PERT_W:-0}
@@ -100,6 +101,13 @@ if [[ -n ${DD_NP_MAX:-} && ! ${DD_NP_MAX} =~ ^[0-9]+$ ]]; then
     echo "[ERROR] DD_NP_MAX must be an integer" >&2
     exit 1
 fi
+if [[ -n ${DD_BENCH_INIT_SOURCE:-} ]]; then
+    if [[ ! -d $DD_BENCH_INIT_SOURCE ]]; then
+        echo "[ERROR] DD_BENCH_INIT_SOURCE is not a directory: $DD_BENCH_INIT_SOURCE" >&2
+        exit 1
+    fi
+    DD_BENCH_INIT_SOURCE=$(cd "$DD_BENCH_INIT_SOURCE" && pwd)
+fi
 declare -a layout_lon layout_lat
 ranks=0
 lcm_lon=1
@@ -131,6 +139,11 @@ if (( nodes < 1 )); then
     exit 1
 fi
 ranks_per_node=${DD_BENCH_RANKS_PER_NODE:-$((ranks / nodes))}
+cpus_per_task=${DD_BENCH_CPUS_PER_TASK:-}
+cpu_args=()
+if [[ -n $cpus_per_task ]]; then
+    cpu_args=(--cpus-per-task="$cpus_per_task")
+fi
 if [[ ! $ranks_per_node =~ ^[0-9]+$ ]] ||
    (( ranks < 2 || nodes < 1 || ranks % nodes != 0 ||
       ranks_per_node * nodes != ranks || ranks_per_node < 1 ||
@@ -185,11 +198,9 @@ for target in "${count_list[@]}"; do
         global_lon=$((DD_PARTICLES_LON_STRIDE * layout_lon[0]))
         global_lat=$((DD_PARTICLES_LAT_STRIDE * layout_lat[0]))
     else
-        read -r global_lon global_lat < <(python3 -c 'import math,sys
-n,step_lon,step_lat=map(int,sys.argv[1:]);
-lat=max(step_lat,round(math.sqrt(n/2)/step_lat)*step_lat)
-lon=math.ceil(n/lat/step_lon)*step_lon
-print(lon,lat)' "$target" "$lcm_lon" "$lcm_lat")
+        read -r global_lon global_lat < <(
+            python3 "$script_dir/benchmark_grid.py" "$target" \
+                "$lcm_lon" "$lcm_lat")
     fi
     if [[ ! $global_lon =~ ^[0-9]+$ || ! $global_lat =~ ^[0-9]+$ ]] ||
        (( global_lon < 1 || global_lat < 1 )); then
@@ -197,6 +208,10 @@ print(lon,lat)' "$target" "$lcm_lon" "$lcm_lat")
         exit 1
     fi
     total=$((global_lon * global_lat))
+    if (( total != target )); then
+        echo "[ERROR] Grid ${global_lon}x${global_lat} does not produce exactly $target particles" >&2
+        exit 1
+    fi
     per_rank=$((total / ranks))
     capacity=${DD_NP_MAX:-$((per_rank + (per_rank * DD_NP_MARGIN_PERCENT + 99) / 100 + 1))}
     if (( capacity <= per_rank || capacity > 2147483647 || total > 2147483647 )); then
@@ -242,7 +257,7 @@ wind_dir=${DD_WIND_DIR:-$work_root/wind_data}
 mkdir -p "$wind_dir"
 wind_dir=$(cd "$wind_dir" && pwd)
 export DD_WIND_DIR=$wind_dir
-wind_key="hours=$DD_SIMULATION_HOURS alpha=$DD_WIND_ALPHA u=$DD_WIND_PERT_U v=$DD_WIND_PERT_V w=$DD_WIND_PERT_W k=$DD_WIND_PERT_K"
+wind_key="hours=$DD_SIMULATION_HOURS alpha=$DD_WIND_ALPHA speed=${DD_WIND_SPEED:-50} u=$DD_WIND_PERT_U v=$DD_WIND_PERT_V w=$DD_WIND_PERT_W k=$DD_WIND_PERT_K"
 if (( met_nx != 360 || met_ny != 181 || met_nz != 60 || met_ep != 90 )); then
     wind_key+=" nx=$met_nx ny=$met_ny nz=$met_nz ep=$met_ep"
 fi
@@ -310,6 +325,41 @@ for index in "${!count_list[@]}"; do
         export DD_PARTICLES_LON_STRIDE=$lon DD_PARTICLES_LAT_STRIDE=$lat
         export DD_NP_MAX=$capacity
         init_source=""
+        init_external=0
+        if [[ -n ${DD_BENCH_INIT_SOURCE:-} ]]; then
+            init_external=1
+            if [[ -d $DD_BENCH_INIT_SOURCE/init_layout${layout} ]]; then
+                init_source=$DD_BENCH_INIT_SOURCE/init_layout${layout}/data
+            else
+                init_source=$DD_BENCH_INIT_SOURCE
+            fi
+            if [[ ! -d $init_source ]]; then
+                echo "[ERROR] Missing external init data for layout $layout: $init_source" >&2
+                exit 1
+            fi
+            init_max=$(python3 - "$init_source" "$ranks" <<'PY'
+import struct
+import sys
+root, ranks = sys.argv[1], int(sys.argv[2])
+counts = []
+for rank in range(ranks):
+    with open(f"{root}/data.{rank}/init.bin", "rb") as stream:
+        counts.append(struct.unpack("=ii", stream.read(8))[1])
+print(max(counts))
+PY
+)
+            capacity=$((init_max + (init_max * DD_NP_MARGIN_PERCENT + 99) / 100 + 1))
+            if (( capacity > 2147483647 )); then
+                echo "[ERROR] NP capacity from external init exceeds signed-int range" >&2
+                exit 1
+            fi
+            if (( capacity * (8 * (4 + nq) + 80) > memory_limit * 1073741824 )); then
+                echo "[ERROR] Estimated per-rank particle arrays exceed DD_BENCH_MAX_PARTICLE_MEMORY_GIB=$memory_limit" >&2
+                exit 1
+            fi
+            export DD_NP_MAX=$capacity
+            echo "[INFO] External init layout $layout: max/rank $init_max, NP/rank $capacity"
+        fi
         for ((repeat=1; repeat<=repeats; repeat++)); do
             case_modes=("${mode_list[@]}")
             if (( repeat % 2 == 0 )); then
@@ -354,17 +404,28 @@ for index in "${!count_list[@]}"; do
                         "$case_dir/data" "${global_lon_list[index]}" \
                         "${global_lat_list[index]}" "$lon_domains" "$lat_domains"
                 fi
-                python3 - "$case_dir/data" "$ranks" "$per_rank" <<'PY'
+                python3 - "$case_dir/data" "$ranks" "$per_rank" "$capacity" \
+                    "$((1 - init_external))" <<'PY'
 import pathlib
 import struct
 import sys
-root, ranks, expected = pathlib.Path(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
+root = pathlib.Path(sys.argv[1])
+ranks, per_rank, capacity, exact = map(int, sys.argv[2:6])
+total = 0
 for rank in range(ranks):
     path = root / f"data.{rank}" / "init.bin"
     with path.open("rb") as stream:
         version, count = struct.unpack("=ii", stream.read(8))
-    if version != 100 or count != expected:
+    if version != 100:
+        raise SystemExit(f"[ERROR] Unexpected initialization version in {path}: {version}")
+    if count > capacity:
+        raise SystemExit(f"[ERROR] Initialization count {count} exceeds NP capacity "
+                         f"{capacity} in {path}")
+    if exact and count != per_rank:
         raise SystemExit(f"[ERROR] Unexpected initialization count in {path}: {count}")
+    total += count
+if total != ranks * per_rank:
+    raise SystemExit(f"[ERROR] Initialization total {total} != {ranks * per_rank}")
 PY
                 if [[ ! -f $wind_dir/.benchmark_config && $wind_external == 0 ]]; then
                     printf '%s\n' "$wind_key" > "$wind_dir/.benchmark_config"
@@ -396,6 +457,7 @@ PY
                         (cd "$case_dir/data" && srun --label --nodes="$nodes" \
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
                             --gpus-per-task="$gpus_per_rank" \
+                            ${cpu_args[@]+"${cpu_args[@]}"} \
                             --gpu-bind=single:1 --cpu-bind=cores \
                         bash -c '
                             IFS=, read -r -a visible_gpus <<< "${CUDA_VISIBLE_DEVICES:-}"
@@ -424,6 +486,7 @@ PY
                     else
                         (cd "$case_dir/data" && srun --label --nodes="$nodes" \
                             --ntasks="$ranks" --ntasks-per-node="$ranks_per_node" \
+                            ${cpu_args[@]+"${cpu_args[@]}"} \
                             "$mptrac_dir/src/trac" dirlist.tab config.ctl init.bin ATM_BASENAME atm) \
                             > "$case_dir/trac.log" 2>&1
                     fi
@@ -439,6 +502,9 @@ PY
                 python3 -c 'import sys; print(float(sys.argv[2])-float(sys.argv[1]))' \
                     "$start" "$end" > "$case_dir/launcher_wall_seconds.txt"
                 report_args=()
+                if (( init_external )); then
+                    report_args+=(--init-source "$init_source")
+                fi
                 if [[ ${DD_BENCH_ALLOW_ZERO_MIGRATION:-0} == 1 ]]; then
                     report_args+=(--allow-zero-migration)
                 fi

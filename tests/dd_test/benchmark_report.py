@@ -17,6 +17,7 @@ FIELDS = (
     "sort_dt", "simulation_hours", "total_runtime", "launcher_wall_time",
     "dd_runtime",
     "classification_time", "sorting_time", "compaction_time", "packing_time",
+    "assign_time", "push_time",
     "mpi_time", "gpu_transfer_time", "gpu_d2h_time",
     "pack_transfer_phase_time", "unpack_h2d_phase_time",
     "migrated_particles", "migration_fraction", "peak_particles_per_rank",
@@ -152,14 +153,45 @@ def validate_communication(mapping, communication, ranks, nodes, ranks_per_node,
     return sent, intra, inter, intra_bytes, inter_bytes
 
 
-def validate_snapshots(root, ranks, per_rank, stride, nq, finite_coordinates=False):
+def initial_counts(init_root, ranks, nq):
+    return [header(Path(init_root) / f"data.{rank}" / "init.bin", nq)
+            for rank in range(ranks)]
+
+
+def build_origin_map(init_root, ranks, nq):
+    counts = initial_counts(init_root, ranks, nq)
+    total = sum(counts)
+    origins = array.array("h", [-1]) * total
+    for rank in range(ranks):
+        path = Path(init_root) / f"data.{rank}" / "init.bin"
+        for value in particle_ids(path, counts[rank]):
+            pid = int(value)
+            if not math.isfinite(value) or int(value) != value or \
+                    pid < 0 or pid >= total or origins[pid] != -1:
+                raise ValueError(f"Invalid or duplicate initial particle ID "
+                                 f"{value} in {path}")
+            origins[pid] = rank
+    return origins, counts
+
+
+def validate_snapshots(root, ranks, per_rank, stride, nq, finite_coordinates=False,
+                       init_source=None):
+    origins = None
     expected = ranks * per_rank
+    if init_source is not None:
+        origins, counts = build_origin_map(init_source, ranks, nq)
+        expected = sum(counts)
     rank_dirs = [root / "data" / f"data.{rank}" for rank in range(ranks)]
     if any(not directory.is_dir() for directory in rank_dirs):
         raise ValueError("Missing rank directory")
-    for directory in rank_dirs:
-        if header(directory / "init.bin", nq) != per_rank:
-            raise ValueError(f"Wrong initial particle count in {directory}")
+    for rank, directory in enumerate(rank_dirs):
+        count = header(directory / "init.bin", nq)
+        if origins is None:
+            if count != per_rank:
+                raise ValueError(f"Wrong initial particle count in {directory}")
+        elif count != counts[rank]:
+            raise ValueError(f"Initial particle count differs from the init "
+                             f"source in {directory}")
         if list(directory.glob("atm_*.tab")):
             raise ValueError(f"ASCII particle output in benchmark: {directory}")
 
@@ -181,10 +213,16 @@ def validate_snapshots(root, ranks, per_rank, stride, nq, finite_coordinates=Fal
                 if not math.isfinite(value) or int(value) != value:
                     raise ValueError(f"Invalid particle ID in {path}")
                 pid = int(value)
-                origin, local = divmod(pid, stride)
-                if origin >= ranks or local >= per_rank or origin < 0:
-                    raise ValueError(f"Out-of-range particle ID {pid} in {path}")
-                ordinal = origin * per_rank + local
+                if origins is None:
+                    origin, local = divmod(pid, stride)
+                    if origin >= ranks or local >= per_rank or origin < 0:
+                        raise ValueError(f"Out-of-range particle ID {pid} in {path}")
+                    ordinal = origin * per_rank + local
+                else:
+                    origin = origins[pid] if 0 <= pid < expected else -1
+                    if origin < 0:
+                        raise ValueError(f"Out-of-range particle ID {pid} in {path}")
+                    ordinal = pid
                 byte, bit = divmod(ordinal, 8)
                 mask = 1 << bit
                 if seen[byte] & mask:
@@ -209,6 +247,7 @@ def main():
     parser.add_argument("--lat-domains", type=int, required=True)
     parser.add_argument("--per-rank", type=int, required=True)
     parser.add_argument("--id-stride", type=int, required=True)
+    parser.add_argument("--init-source", type=Path)
     parser.add_argument("--capacity", type=int, required=True)
     parser.add_argument("--nq", type=int, required=True)
     parser.add_argument("--mode", type=int, required=True)
@@ -222,7 +261,7 @@ def main():
 
     migrated, snapshots = validate_snapshots(
         args.case, args.ranks, args.per_rank, args.id_stride, args.nq,
-        args.check_finite_coordinates)
+        args.check_finite_coordinates, args.init_source)
     if migrated == 0 and not args.allow_zero_migration:
         raise ValueError("No particles migrated between initial and final ranks")
     measured, peak, old_sent, mapping, communication = timers(args.log)
@@ -233,7 +272,10 @@ def main():
         raise ValueError("Missing DD or total MPTRAC timer output")
     if sent < migrated or (old_sent and old_sent != sent):
         raise ValueError("Missing or inconsistent DD send-count diagnostics")
-    total = args.per_rank * args.ranks
+    if args.init_source is not None:
+        total = sum(initial_counts(args.init_source, args.ranks, args.nq))
+    else:
+        total = args.per_rank * args.ranks
     wall_file = args.case / "launcher_wall_seconds.txt"
     # atm_t, cache_t, and the three DD helper arrays. Excludes meteorology,
     # MPI buffers, allocator overhead, and possible host/device duplicates.
@@ -256,6 +298,8 @@ def main():
         "sorting_time": value("DD_SORT") if args.mode == 0 else "",
         "compaction_time": value("DD_GPU_COMPACT") if args.mode == 1 else "",
         "packing_time": value("DD_GPU_PACK") if args.mode == 1 else "",
+        "assign_time": value("DD_ASSIGN_SUBDOMAINS"),
+        "push_time": value("DD_PUSH"),
         # This timer includes host-side preparation in addition to MPI calls.
         "mpi_time": value("DD_COMMUNICATE_PARTICLES"),
         # A complete GPU transfer total is not timed independently.
@@ -278,7 +322,8 @@ def main():
         "repeat": args.repeat,
     }
     for key in ("total_runtime", "launcher_wall_time", "dd_runtime", "classification_time",
-                "sorting_time", "compaction_time", "packing_time",
+                "sorting_time", "compaction_time", "packing_time", "assign_time",
+                "push_time",
                 "mpi_time", "gpu_d2h_time", "pack_transfer_phase_time",
                 "unpack_h2d_phase_time"):
         if row[key] != "":
