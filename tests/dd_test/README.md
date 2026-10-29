@@ -253,6 +253,75 @@ raw per-rank `TIMER_*` lines from every `trac.log` into
 `per_rank_timers.csv`. The per-rank files in each case directory remain
 untouched as the primary record.
 
+### Post-campaign DD analysis
+
+Run post-processing only after all eight campaign jobs have finished. The
+reporter reads existing summaries and logs; it never starts simulations:
+
+```bash
+python3 /path/to/mptrac/tests/dd_test/campaign_exchange_report.py \
+    --root "$DD_CAMPAIGN_ROOT"
+```
+
+`campaign_aggregate.csv` contains per-mode means and sample standard
+deviations over three repeats. `dd_runtime` is the maximum
+`TIMER_GROUP_DD` across ranks in each run; individual DD component columns
+are rank maxima and must be interpreted separately, not summed to derive DD
+time. `input_runtime` is the rank-maximum `TIMER_GROUP_INPUT`; it and
+`total_runtime` are diagnostics. `dd_speedups.csv` pairs modes within each
+repeat and records `dd_mode0 / dd_mode1`; `dd_speedup_aggregate.csv` gives
+the mean and sample standard deviation of those three paired ratios.
+`per_rank_timers.csv` preserves every raw per-rank timer sample.
+
+Compare final binary snapshots by particle ID, independently of rank and
+record order, with `compare_exchange_modes.py`. The tool checks all nine
+stored doubles and reports ID-set agreement, duplicate IDs, per-field NaN
+and Inf counts, differing particle and field counts, maximum finite absolute
+differences, and bitwise identity. It writes JSON to standard output and
+returns nonzero for missing/duplicate IDs, nonfinite values, or numerical
+differences. Signed zero is numerically equal but not bitwise identical.
+The maximum absolute difference excludes nonfinite pairs; their counts are
+reported separately. Scratch files are removed on exit.
+
+```bash
+base="$DD_CAMPAIGN_ROOT/runs/A/c100000/n100000/layout1x4/repeat1"
+python3 /path/to/mptrac/tests/dd_test/compare_exchange_modes.py \
+    "$base/mode0" "$base/mode1" --scratch /path/to/scratch > comparison.json
+```
+
+For the initial validation set, run the comparator for every scenario,
+layout, and repeat at 100k, 1M, and 10M; at 100M, run repeat 1 for each
+scenario and layout (six pairs). Use a scratch filesystem with at least
+15 GB free for each 100M comparison. The default 256 ID buckets and 64 MiB
+bucket cap bound memory for the campaign's consecutive IDs; run pairs one
+at a time. Each 100M pair reads about 14.4 GB of snapshots and does about
+43 GB of total I/O including temporary files. No extra snapshots are
+created or requested.
+
+After the jobs complete, this loop runs the initial 60 comparisons and
+keeps JSON results separate from benchmark case directories:
+
+```bash
+reporter=/path/to/mptrac/tests/dd_test/compare_exchange_modes.py
+mkdir -p "$DD_CAMPAIGN_ROOT/validation"
+status=0
+for scenario in A B; do
+  for count in 100000 1000000 10000000 100000000; do
+    for layout in 1x4 2x2 4x1; do
+      repeats='1 2 3'
+      if [ "$count" = 100000000 ]; then repeats=1; fi
+      for repeat in $repeats; do
+        base="$DD_CAMPAIGN_ROOT/runs/$scenario/c$count/n$count/layout$layout/repeat$repeat"
+        out="$DD_CAMPAIGN_ROOT/validation/${scenario}_${count}_${layout}_r${repeat}.json"
+        python3 "$reporter" "$base/mode0" "$base/mode1" \
+          --scratch /path/to/scratch > "$out" || status=1
+      done
+    done
+  done
+done
+test "$status" -eq 0
+```
+
 ## Fortran wrapper DD test
 
 The DD branch of `wrapper_test` compares `trac_fortran` with `trac` using
