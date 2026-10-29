@@ -4455,7 +4455,7 @@ Lars Hoffmann </dd></dl>
 <div class="line"><span class="lineno"> 2747</span> </div>
 <div class="line"><span class="lineno"> 2748</span>  <span class="keywordflow">if</span> (nlost &gt; 0)</div>
 <div class="line"><span class="lineno"> 2749</span>    <a class="code hl_define" href="mptrac_8h.html#a8f75b971030a39ef811d3526a62b36b8">WARN</a></div>
-<div class="line"><span class="lineno"> 2750</span>      (<span class="stringliteral">&quot;Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)&quot;</span>,</div>
+<div class="line"><span class="lineno"> 2750</span>      (<span class="stringliteral">&quot;Rank %d: removing %d inactive particle slots during DD sorting (kept: %d, to_send: %d, total_before: %d)&quot;</span>,</div>
 <div class="line"><span class="lineno"> 2751</span>       <a class="code hl_variable" href="mptrac_8c.html#a6cfd95afd0afebd625b889fb6e58371c">rank</a>, nlost, nkeep, nsend, np);</div>
 <div class="line"><span class="lineno"> 2752</span> </div>
 <div class="line"><span class="lineno"> 2753</span>  atm-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a> = nkeep;</div>
