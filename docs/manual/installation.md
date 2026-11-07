@@ -84,10 +84,11 @@ using a build script:
     cd [mptrac_directory]/libs
     ./build.sh -m
 
-`-m` builds the mandatory libraries. `-a` builds all bundled libraries,
-including both Thrust wrappers, and therefore requires Thrust headers and
-`nvcc`. Thrust sorting is not required by the standard MPTRAC build or tests.
-To build only its CPU wrapper for the current machine, run
+`-m` builds the mandatory libraries. `-a` builds all bundled libraries
+except the optional Thrust wrappers, so it does not require Thrust headers
+or `nvcc`. Thrust sorting is not required by the
+standard MPTRAC build or tests. To build its CPU wrapper for the current
+machine, run
 `./build.sh -t`; to build the GPU wrapper with `nvcc`, run `./build.sh -u`
 (or `./build.sh -tu` for both). These commands compile from the bundled
 `thrustsort-1.4` sources rather than installing precompiled libraries.
