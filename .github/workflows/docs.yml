@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Avoid concurrent deployments racing to update the gh-pages branch.
+concurrency:
+  group: docs-gh-pages
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04
