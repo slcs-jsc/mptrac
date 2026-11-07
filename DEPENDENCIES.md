@@ -2,6 +2,14 @@
 
 This file lists the software dependencies required to build and run MPTRAC. It includes both **mandatory** and **optional** dependencies. Ensure that the correct versions are installed for optimal performance.
 
+Ubuntu 24.04 LTS is the primary supported Linux development and test platform.
+The versions below are reference values drawn largely from that environment;
+some instead describe bundled source archives or separately installed HPC
+toolchains. They are not exact Ubuntu package requirements. A move to Ubuntu
+26.04 LTS is planned, but it is not yet the MPTRAC baseline. The Linux binary
+packaging workflow currently runs on Ubuntu 22.04 to support older Linux
+distributions.
+
 ## Mandatory Dependencies
 
 These dependencies are required to compile MPTRAC:
