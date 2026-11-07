@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
     - name: install
       run: sudo apt-get update ; sudo apt-get install gfortran gnuplot libgsl-dev libnetcdf-dev libhdf5-dev libzstd-dev liblz4-dev libzfp-dev libeccodes-dev
     - name: make
