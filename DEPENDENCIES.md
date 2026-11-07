@@ -63,18 +63,13 @@ For detailed installation instructions on each of these dependencies, refer to t
   
 ## Notes on Optional Dependencies
 
-  1. **NVIDIA HPC SDK**: Required for GPU support. Follow the official NVIDIA installation guide for your system.
-
-  2. **OpenMPI**: For high-performance computing (HPC) and parallel computing. Install via your package manager or build from source.
-
-  3. **KPP (Kinetic PreProcessor)**: If you're working with chemical mechanisms, KPP is needed for preprocessing. Follow the KPP documentation for installation.
-
-  4. **Thrust sorting**: The bundled `libs/thrustsort-1.4.tar.bz2` contains
-     MPTRAC's wrapper source, not NVIDIA Thrust or precompiled libraries.
-     `libs/build.sh -t` builds and checks the CPU wrapper using Thrust headers
-     and an OpenMP-capable C++ compiler; `-u` builds the GPU wrapper using
-     Thrust headers and `nvcc`. Supply compatible headers through a CUDA/CCCL
-     installation or a separate header package. Set `THRUST_INCLUDE_DIR` if
-     needed. Neither `-m` nor `-a` builds the wrapper, and the default
-     `THRUST=0` build and standard tests do not require it. See the
-     [installation guide](docs/manual/installation.md) for build options.
+1. **NVIDIA HPC SDK** enables OpenACC GPU builds with `COMPILER=nvc GPU=1`.
+   Choose a version compatible with the target system.
+2. **MPI (Open MPI or ParaStation MPI)** enables `MPI=1` builds. Use an MPI
+   compiler wrapper and libraries compatible with the selected toolchain.
+3. **KPP (Kinetic PreProcessor)** is needed when generating chemistry
+   mechanisms. See the [KPP project instructions](projects/kpp/README.md).
+4. **Thrust sorting** enables `THRUST=1`. MPTRAC bundles only the wrapper
+   source; Thrust headers are external. See the
+   [installation guide](docs/manual/installation.md) for the optional `-t`
+   and `-u` builds.
