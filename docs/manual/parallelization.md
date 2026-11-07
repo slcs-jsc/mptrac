@@ -73,9 +73,10 @@ existing total input timer.
 `DD_SORT_DT` controls periodic sorting and defaults to 1800 s.
 `DD_EXCHANGE_MODE=1` classifies particles, packs outgoing particles, and
 compacts retained particles without sorting. It also removes particles
-with invalid subdomain indices. In mode 1, neither `DD_SORT_DT` nor the
-general `SORT_DT` triggers sorting. Both modes use the same subdomain
-assignment and MPI particle communication.
+with invalid subdomain indices. In mode 1, `DD_SORT_DT` does not trigger
+DD exchange sorting. The general `SORT_DT` independently controls optional
+spatial particle sorting in the physics driver for either exchange mode.
+Both modes use the same subdomain assignment and MPI particle communication.
 
 With OpenACC, mode 1 performs classification, packing, and local
 compaction on the GPU. The active particle and cache arrays remain on
