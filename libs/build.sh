@@ -40,7 +40,7 @@ Usage:
   ./build.sh [options]
 
 Options:
-  -a           Clean build directory and build standard libraries (no Thrust)
+  -a           Clean build directory and build ALL libraries, including Thrust
   -m           Build MANDATORY libraries (GSL, HDF5, NETCDF)
   -c           Clean the build directory only
   -g           Build GSL
@@ -71,7 +71,7 @@ Examples:
       Build all libraries.
 
   ./build.sh -al
-      Build standard libraries including parallel HDF5 and NETCDF.
+      Build all libraries including parallel HDF5 and NETCDF.
 
   ./build.sh -gtzfs
       Build GSL, CPU Thrust wrapper, ZLIB, ZFP, and SZIP (without HDF5 and NETCDF).
@@ -104,7 +104,7 @@ unpack() {
 [[ $# -lt 1 ]] && print_help
 while getopts amcgtuzijfshxnlkep:d flag ; do
     case "${flag}" in
-        a) build[all]=true       ; echo "build standard libraries " ;;
+        a) build[all]=true       ; echo "build all libraries      " ;;
         m) build[mandatory]=true ; echo "build mandatory libraries" ;;
 	c) build[clean]=true     ; echo "clean build directory    " ;;
 	g) build[gsl]=true       ; echo "GSL is selected          " ;;
@@ -158,15 +158,15 @@ if ${build[all]} || ${build[gsl]} ; then
 fi
 
 # Build the optional Thrust sort wrappers for this host architecture...
-if ${build[thrust]} || ${build[thrust_gpu]} ; then
+if ${build[all]} || ${build[thrust]} || ${build[thrust_gpu]} ; then
     target="thrustsort-1.4"
     unpack "$target"
     # Never leave an older precompiled archive available for a later link.
     rm -f "$build_dir"/lib/libthrustsort_cpu.a "$build_dir"/lib/libthrustsort_gpu.a
-    if ${build[thrust]} ; then
+    if ${build[all]} || ${build[thrust]} ; then
         make check-cpu && cp libthrustsort_cpu.a "$build_dir"/lib/ || exit
     fi
-    if ${build[thrust_gpu]} ; then
+    if ${build[all]} || ${build[thrust_gpu]} ; then
         make gpu && cp libthrustsort_gpu.a "$build_dir"/lib/ || exit
     fi
     cp -a thrustsort.h "$build_dir"/include/ || exit
