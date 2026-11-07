@@ -7197,9 +7197,10 @@ void sort_uvwp(
  * Thrust wrapper. Otherwise, GSL (`gsl_sort_index`) computes the permutation
  * on the CPU; in OpenACC builds, sorting keys are copied to the host and the
  * resulting permutation is copied back to the device.
- * @note The calling physics driver invokes this routine only when SORT_DT is
- * positive and the time matches the configured interval. It currently skips
- * this spatial sorting when DD_EXCHANGE_MODE=1 is active.
+ * @note The calling physics driver invokes this routine when SORT_DT is
+ * positive and the time matches the configured interval, independently of
+ * DD_EXCHANGE_MODE. SORT_DT controls spatial sorting, whereas DD_SORT_DT
+ * controls sorting for the legacy DD exchange path (mode 0).
  * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere 
  * data structure to maintain consistency.
  *
