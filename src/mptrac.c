@@ -8317,8 +8317,7 @@ void mptrac_run_timestep(
   module_timesteps(ctl, cache, *met0, atm, t);
 
   /* Sort particles... */
-  if (!(ctl->dd && ctl->dd_exchange_mode == 1)
-      && ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
+  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
     module_sort(ctl, *met0, cache, atm);
 
   /* Check positions (initial)... */
