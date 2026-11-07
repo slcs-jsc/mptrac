@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -1144,6 +1144,23 @@ using a build script:</p>
 <pre><code>cd [mptrac_directory]/libs
 ./build.sh -a
 </code></pre>
+<p>Thrust sorting is optional and is not built by <code>-a</code> or required by the
+standard tests. To build its CPU wrapper for the current machine, run
+<code>./build.sh -t</code>; to build the GPU wrapper with <code>nvcc</code>, run <code>./build.sh -u</code>
+(or <code>./build.sh -tu</code> for both). These commands compile from the bundled
+<code>thrustsort-1.4</code> sources rather than installing precompiled libraries.
+Each invocation replaces both previous wrapper archives in <code>libs/build/lib</code>;
+use <code>-tu</code> when both variants are needed. The CPU option also runs a small
+C interface and sort check.
+They require Thrust headers; set <code>THRUST_INCLUDE_DIR</code> if the compiler does
+not find them in its default paths or under the CUDA root given by
+<code>CUDA_HOME</code> or <code>CUDA_PATH</code> (including CUDA 13's <code>include/cccl</code>). Enable the
+wrapper when compiling MPTRAC with <code>THRUST=1</code>; the default <code>THRUST=0</code>
+needs neither wrapper. GPU Thrust also
+requires <code>GPU=1 COMPILER=nvc</code> and a compatible CUDA toolchain. Build the
+wrapper and MPTRAC on the target architecture with compatible compiler and
+CUDA environments. Run the optional sorting tests on an allocated compute
+node when GPU execution is needed.</p>
 <p>For domain decomposition with parallel netCDF input, build HDF5 and netCDF
 with the same MPI implementation used to compile MPTRAC. If the other
 libraries are already installed locally, rebuild just these two. For example,
@@ -1255,7 +1272,7 @@ details.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
