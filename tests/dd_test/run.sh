@@ -14,6 +14,7 @@ set -e
 # configure non-default layouts and particle counts for benchmark runs.
 # DD_SORT_DT, DD_SIMULATION_HOURS, DD_THRUST, DD_COMPILER, and DD_WIND_DIR
 # select the run duration, sorting backend, toolchain, and input wind fields.
+# DD_THRUST defaults to 0; set it to 1 only after building the optional wrapper.
 # DD_COMPARE_DIR selects reference .tab files (default: data.ref).
 # DD_SAVE_DIR saves this run's .tab files for a later CPU/GPU comparison.
 # DD_ISOSURF=3 adds the iso_var quantity for the isosurface migration test.
@@ -117,7 +118,7 @@ else
     domains_lat=${DD_DOMAINS_LAT:-3}
 fi
 dd_exchange_mode=${DD_EXCHANGE_MODE:-0}
-use_thrust=${DD_THRUST:-1}
+use_thrust=${DD_THRUST:-0}
 isosurf=${DD_ISOSURF:-0}
 if [[ $isosurf -eq 3 ]]; then
     nq=6

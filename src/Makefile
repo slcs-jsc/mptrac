@@ -213,7 +213,10 @@ endif
 # Thrust sorting...
 ifeq ($(THRUST),1)
   ifeq ($(GPU),1)
-    CFLAGS += -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast
+    ifneq ($(COMPILER),nvc)
+      $(error GPU Thrust sorting requires COMPILER=nvc)
+    endif
+    CFLAGS += -DTHRUST -c++libs -fast
     LDFLAGS += -lthrustsort_gpu
   else
     CFLAGS += -DTHRUST 

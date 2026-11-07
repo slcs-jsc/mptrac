@@ -160,8 +160,11 @@ script accepts
 `DD_EXCHANGE_MODE` through `DD_BENCH_MODES`, `DD_DIFFUSION`,
 `DD_TURB_MESOX`, `DD_TURB_MESOZ`, and the `DD_WIND_PERT_*` parameters.
 `DD_THRUST=1` selects GPU Thrust sorting in mode 0; set it to 0 to compare
-the GSL sorting backend. NVIDIA benchmark builds use `-Mlarge_arrays`
-through `DD_BENCH_OPT` by default to support large NP values. A local CPU
+the GSL sorting backend. The ordinary `run.sh` test defaults to
+`DD_THRUST=0`, so it does not require the optional wrapper; the dedicated
+GPU benchmark defaults to Thrust when `DD_USE_GPU=1`. NVIDIA benchmark
+builds use `-Mlarge_arrays` through `DD_BENCH_OPT` by default to support
+large NP values. A local CPU
 smoke test can use `DD_USE_GPU=0`,
 `DD_COMPILER=gcc`, and an existing `DD_WIND_DIR`. If `mpicc` in the
 current `PATH` wraps NVIDIA's compiler, set `DD_MPICC` and `DD_MPIRUN`

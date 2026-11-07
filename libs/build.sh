@@ -6,7 +6,7 @@
 
 # Build flags...
 declare -A build
-for lib in all mandatory clean parallel gsl thrust zlib szip zfp zstd lz4 hdf5 netcdf kpp eccodes sz3 ; do
+for lib in all mandatory clean parallel gsl thrust thrust_gpu zlib szip zfp zstd lz4 hdf5 netcdf kpp eccodes sz3 ; do
     build[$lib]=false
 done
 
@@ -40,11 +40,14 @@ Usage:
   ./build.sh [options]
 
 Options:
-  -a           Clean build directory and build ALL libraries
+  -a           Clean build directory and build standard libraries (no Thrust)
   -m           Build MANDATORY libraries (GSL, HDF5, NETCDF)
   -c           Clean the build directory only
   -g           Build GSL
-  -t           Build THRUST
+  -t           Build optional CPU Thrust sort wrapper from source
+  -u           Build optional GPU Thrust sort wrapper from source
+               Either Thrust option replaces both older wrapper archives;
+               use -tu to keep both CPU and GPU variants.
   -z           Build ZLIB
   -i           Build SZIP
   -f           Build ZFP
@@ -68,10 +71,13 @@ Examples:
       Build all libraries.
 
   ./build.sh -al
-      Build all libraries including parallel HDF5 and NETCDF.
+      Build standard libraries including parallel HDF5 and NETCDF.
 
   ./build.sh -gtzfs
-      Build GSL, THRUST, ZLIB, ZFP, and SZIP (without HDF5 and NETCDF).
+      Build GSL, CPU Thrust wrapper, ZLIB, ZFP, and SZIP (without HDF5 and NETCDF).
+
+  ./build.sh -tu
+      Build both Thrust wrappers (requires Thrust headers and nvcc for GPU).
 
   ./build.sh -g -p 8
       Build GSL using 8 processor cores.
@@ -96,13 +102,14 @@ unpack() {
 # --------------------------------------------------
 
 [[ $# -lt 1 ]] && print_help
-while getopts amcgtzijfshxnlkep:d flag ; do
+while getopts amcgtuzijfshxnlkep:d flag ; do
     case "${flag}" in
-        a) build[all]=true       ; echo "build all libraries      " ;;
+        a) build[all]=true       ; echo "build standard libraries " ;;
         m) build[mandatory]=true ; echo "build mandatory libraries" ;;
 	c) build[clean]=true     ; echo "clean build directory    " ;;
 	g) build[gsl]=true       ; echo "GSL is selected          " ;;
 	t) build[thrust]=true    ; echo "THRUST is selected       " ;;
+	u) build[thrust_gpu]=true; echo "GPU THRUST is selected   " ;;
 	z) build[zlib]=true      ; echo "ZLIB is selected         " ;;
 	i) build[szip]=true      ; echo "SZIP is selected         " ;;
 	f) build[zfp]=true       ; echo "ZFP is selected          " ;;
@@ -150,11 +157,18 @@ if ${build[all]} || ${build[gsl]} ; then
     ./configure --prefix="$build_dir" && make -j $nprocs && make check && make install && make clean || exit
 fi
 
-# Build Thrust sort...
-if ${build[all]} || ${build[thrust]} ; then 
-    target="thrustsort-1.3"
+# Build the optional Thrust sort wrappers for this host architecture...
+if ${build[thrust]} || ${build[thrust_gpu]} ; then
+    target="thrustsort-1.4"
     unpack "$target"
-    cp -a libthrustsort_gpu.a libthrustsort_cpu.a "$build_dir"/lib/ || exit
+    # Never leave an older precompiled archive available for a later link.
+    rm -f "$build_dir"/lib/libthrustsort_cpu.a "$build_dir"/lib/libthrustsort_gpu.a
+    if ${build[thrust]} ; then
+        make check-cpu && cp libthrustsort_cpu.a "$build_dir"/lib/ || exit
+    fi
+    if ${build[thrust_gpu]} ; then
+        make gpu && cp libthrustsort_gpu.a "$build_dir"/lib/ || exit
+    fi
     cp -a thrustsort.h "$build_dir"/include/ || exit
 fi
 
@@ -262,9 +276,15 @@ fi
 
 # Finish...
 printf "All selected compilations are done.\n"
-echo -e "\n***** gcc *****\n"
-gcc --version
-echo -e "\n***** gsl-config *****\n"
-"$build_dir"/bin/gsl-config --libs --cflags --version
-echo -e "\n***** nc-config *****"
-"$build_dir"/bin/nc-config --all
+if command -v gcc >/dev/null 2>&1; then
+    echo -e "\n***** gcc *****\n"
+    gcc --version
+fi
+if [[ -x "$build_dir/bin/gsl-config" ]]; then
+    echo -e "\n***** gsl-config *****\n"
+    "$build_dir"/bin/gsl-config --libs --cflags --version
+fi
+if [[ -x "$build_dir/bin/nc-config" ]]; then
+    echo -e "\n***** nc-config *****"
+    "$build_dir"/bin/nc-config --all
+fi
