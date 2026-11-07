@@ -1,52 +1,115 @@
 <map id="main" name="main">
-<area shape="rect" id="node1" title=" " alt="" coords="5,1044,56,1071"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#ae52fff2b3c3eb9cdeb063c3d2d29620a" title="Calculate tropopause data." alt="" coords="129,107,205,133"/>
-<area shape="rect" id="node12" href="$mptrac_8c.html#aa2d277d4dd8ef1eb8226aa9ab93ebb04" title="Allocates and initializes memory resources for MPTRAC." alt="" coords="119,993,215,1020"/>
-<area shape="rect" id="node13" href="$mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef" title="Frees memory resources allocated for MPTRAC." alt="" coords="121,1044,212,1071"/>
-<area shape="rect" id="node14" href="$mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766" title="Reads various climatological data and populates the given climatology structure." alt="" coords="104,1095,229,1121"/>
-<area shape="rect" id="node22" href="$mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="109,1247,224,1273"/>
-<area shape="rect" id="node24" href="$mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a" title="Scans a control file or command&#45;line arguments for a specified variable." alt="" coords="330,1297,401,1324"/>
-<area shape="rect" id="node25" href="$mptrac_8c.html#ad761ca965e59ad9246ab5825a3730058" title="Reads meteorological data from a file, supporting multiple formats and MPI broadcasting." alt="" coords="105,563,228,589"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a1d832e4cf4224c4166d2f083a7a02514" title="Interpolates meteorological variables in 2D space." alt="" coords="503,31,648,57"/>
-<area shape="rect" id="node8" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="503,81,648,108"/>
-<area shape="rect" id="node9" href="$mptrac_8c.html#a29701c07d5dded042b2031e09e11d679" title="Calculates the tropopause and related meteorological variables based on various methods and stores th..." alt="" coords="309,132,421,159"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="697,56,852,83"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="705,5,845,32"/>
-<area shape="rect" id="node6" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="737,157,812,184"/>
-<area shape="rect" id="node7" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="733,107,816,133"/>
-<area shape="rect" id="node10" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="534,183,617,209"/>
-<area shape="rect" id="node11" href="$mptrac_8c.html#a62786d005ed312f3c9ba2fac7cd544fc" title="Performs spline interpolation or linear interpolation." alt="" coords="547,132,603,159"/>
-<area shape="rect" id="node15" href="$mptrac_8c.html#aba22251f4ea0fe56c2a59719998c650a" title="Applies a diurnal correction to the hydroxyl radical (OH) concentration in climatology data." alt="" coords="277,1145,453,1172"/>
-<area shape="rect" id="node17" href="$mptrac_8c.html#aa9cf40c6960c5078d1ea9e12a2fb0872" title="Initializes the tropopause data in the climatology structure." alt="" coords="312,1196,419,1223"/>
-<area shape="rect" id="node18" href="$mptrac_8c.html#a1a501ec43c01f1d742a133a7a3289d59" title="Reads photolysis rates from a NetCDF file and populates the given photolysis structure." alt="" coords="307,993,424,1020"/>
-<area shape="rect" id="node20" href="$mptrac_8c.html#a3510fe56a6a6e589b5c2474495af03e2" title="Reads a climatological time series from a file and populates the given time series structure." alt="" coords="317,1044,413,1071"/>
-<area shape="rect" id="node21" href="$mptrac_8c.html#a6af2603c773b4d11bf7e187ccb123ba2" title="Reads zonally averaged climatological data from a netCDF file and populates the given structure." alt="" coords="314,1095,417,1121"/>
-<area shape="rect" id="node16" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="540,1145,611,1172"/>
-<area shape="rect" id="node19" href="$mptrac_8c.html#a4392a0ab24a984ac30ed1ef85a89257d" title="Reads a 3D climatological photochemistry variable from a NetCDF file." alt="" coords="501,993,649,1020"/>
-<area shape="rect" id="node23" href="$mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="308,1247,423,1273"/>
-<area shape="rect" id="node26" href="$mptrac_8c.html#aa4b5f89a098befae2a864decab80f133" title="State variables of cuRAND random number generator." alt="" coords="292,183,439,209"/>
-<area shape="rect" id="node27" href="$mptrac_8c.html#acc520c5d948ea75f0acb9b351a6b8b75" title="Reads meteorological data from a binary file." alt="" coords="315,892,415,919"/>
-<area shape="rect" id="node33" href="$mptrac_8c.html#af61accbe7a6587652bb15ea68d6aee03" title="Calculates Convective Available Potential Energy (CAPE) for each grid point." alt="" coords="310,233,421,260"/>
-<area shape="rect" id="node35" href="$mptrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculates cloud&#45;related variables for each grid point." alt="" coords="308,335,423,361"/>
-<area shape="rect" id="node36" href="$mptrac_8c.html#a2776502fa762ba5034c0759d7645d1e1" title="Detrends meteorological data." alt="" coords="302,943,429,969"/>
-<area shape="rect" id="node38" href="$mptrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolates meteorological data." alt="" coords="292,436,439,463"/>
-<area shape="rect" id="node39" href="$mptrac_8c.html#a01594c9f21549808fcf2f2f8be781e79" title="Calculates geopotential heights from meteorological data." alt="" coords="514,360,637,387"/>
-<area shape="rect" id="node40" href="$mptrac_8h.html#a82c358b6cc1f736e2f186c8aef4d6a79" title="Reads meteorological data from a grib file and processes it." alt="" coords="313,487,417,513"/>
-<area shape="rect" id="node41" href="$mptrac_8c.html#a305d8ee431236c52e0fd21d26f23a695" title="Makes zeta and pressure profiles monotone." alt="" coords="291,537,440,564"/>
-<area shape="rect" id="node42" href="$mptrac_8c.html#a6d5d9f14125739740b23f1ff88baf835" title="Reads meteorological data from a NetCDF file and processes it." alt="" coords="317,639,414,665"/>
-<area shape="rect" id="node44" href="$mptrac_8c.html#a9ee63e8a6c82ac0dc569255455a50da2" title="Calculates the total column ozone from meteorological ozone data." alt="" coords="307,588,424,615"/>
-<area shape="rect" id="node45" href="$mptrac_8c.html#a2723705c94110a3ddfc84f2f0c8ddc71" title="Computes the planetary boundary layer (PBL) pressure based on meteorological data." alt="" coords="315,284,415,311"/>
-<area shape="rect" id="node47" href="$mptrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Applies periodic boundary conditions to meteorological data along longitudinal axis." alt="" coords="301,689,429,716"/>
-<area shape="rect" id="node48" href="$mptrac_8c.html#adea1a286e6ec2a763b560997203fd5b7" title="Applies a fix for polar winds in meteorological data." alt="" coords="289,740,441,767"/>
-<area shape="rect" id="node49" href="$mptrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculates potential vorticity (PV) from meteorological data." alt="" coords="317,791,414,817"/>
-<area shape="rect" id="node50" href="$mptrac_8c.html#a0e6ef467d264f7b13436a460c753ed8a" title="Downsamples meteorological data based on specified parameters." alt="" coords="303,841,428,868"/>
-<area shape="rect" id="node28" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="735,765,814,792"/>
-<area shape="rect" id="node29" href="$mptrac_8c.html#a4b9aea19f1f7b7461d49a90bef54d286" title="Reads a 2&#45;dimensional meteorological variable from a binary file and stores it in the provided array." alt="" coords="515,791,636,817"/>
-<area shape="rect" id="node30" href="$mptrac_8c.html#a8acf2c312916a07fa0856aa6d4948558" title="Reads 3D meteorological data from a binary file, potentially using different compression methods." alt="" coords="515,892,636,919"/>
-<area shape="rect" id="node31" href="$mptrac_8h.html#a64fc5fb7c13aa2c813392c46a9368051" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="719,943,830,969"/>
-<area shape="rect" id="node32" href="$mptrac_8h.html#a886dc0ac4e7a0f48bd1888b1bb580c7c" title="Compresses or decompresses a float array using LZ4." alt="" coords="723,892,826,919"/>
-<area shape="rect" id="node34" href="$mptrac_8c.html#afa485eb277a5ced6dac0ed77665c976c" title="Calculates the moist adiabatic lapse rate in Kelvin per kilometer." alt="" coords="534,233,617,260"/>
-<area shape="rect" id="node37" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="539,943,611,969"/>
-<area shape="rect" id="node43" href="$mptrac_8c.html#ae4562461a2883609e1768b1c3671eec4" title="Reads meteorological grid data from NetCDF files with domain decomposition." alt="" coords="513,689,638,716"/>
-<area shape="rect" id="node46" href="$mptrac_8c.html#a8b9ae6cda41f85d46c6333d039ee0861" title="Locate the index of the interval containing a given value in an irregularly spaced array." alt="" coords="522,284,629,311"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,1019,55,1044"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#ae52fff2b3c3eb9cdeb063c3d2d29620a" title="Calculate tropopause data." alt="" coords="127,103,202,128"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="31,1018,157,143,162,144,36,1019"/>
+<area shape="rect" id="Node000012" href="$mptrac_8c.html#aa2d277d4dd8ef1eb8226aa9ab93ebb04" title="Allocates and initializes memory resources for MPTRAC." alt="" coords="117,969,212,995"/>
+<area shape="poly" id="edge19_Node000001_Node000012" title=" " alt="" coords="54,1020,113,998,114,1003,56,1025"/>
+<area shape="rect" id="Node000013" href="$mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef" title="Frees memory resources allocated for MPTRAC." alt="" coords="120,1019,210,1044"/>
+<area shape="poly" id="edge20_Node000001_Node000013" title=" " alt="" coords="55,1029,104,1029,104,1034,55,1034"/>
+<area shape="rect" id="Node000014" href="$mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766" title="Reads various climatological data and populates the given climatology structure." alt="" coords="103,1068,227,1094"/>
+<area shape="poly" id="edge21_Node000001_Node000014" title=" " alt="" coords="56,1038,114,1060,113,1065,54,1043"/>
+<area shape="rect" id="Node000022" href="$mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="108,1215,222,1240"/>
+<area shape="poly" id="edge29_Node000001_Node000022" title=" " alt="" coords="43,1043,148,1200,144,1203,38,1046"/>
+<area shape="rect" id="Node000024" href="$mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a" title="Scans a control file or command&#45;line arguments for a specified variable." alt="" coords="328,1265,398,1291"/>
+<area shape="poly" id="edge63_Node000001_Node000024" title=" " alt="" coords="34,1045,35,1086,45,1143,53,1173,66,1202,83,1228,104,1251,128,1266,153,1277,209,1289,264,1290,312,1285,312,1291,264,1295,208,1294,152,1282,125,1271,101,1255,78,1232,61,1204,48,1175,39,1144,30,1086,28,1045"/>
+<area shape="rect" id="Node000025" href="$mptrac_8c.html#ad761ca965e59ad9246ab5825a3730058" title="Reads meteorological data from a file, supporting multiple formats and MPI broadcasting." alt="" coords="104,551,226,576"/>
+<area shape="poly" id="edge32_Node000001_Node000025" title=" " alt="" coords="32,1018,153,590,158,592,38,1019"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a1d832e4cf4224c4166d2f083a7a02514" title="Interpolates meteorological variables in 2D space." alt="" coords="500,29,644,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="202,101,274,82,383,63,484,49,485,54,384,68,276,87,204,106"/>
+<area shape="rect" id="Node000008" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="500,79,644,104"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="203,111,484,94,484,99,203,116"/>
+<area shape="rect" id="Node000009" href="$mptrac_8c.html#a29701c07d5dded042b2031e09e11d679" title="Calculates the tropopause and related meteorological variables based on various methods and stores th..." alt="" coords="307,128,418,154"/>
+<area shape="poly" id="edge12_Node000002_Node000009" title=" " alt="" coords="203,118,291,129,291,134,203,123"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="694,55,848,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="645,49,678,53,678,58,644,54"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="701,5,840,31"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="644,31,686,26,687,31,645,36"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="734,153,808,179"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="629,53,647,64,664,84,672,103,680,122,695,140,720,153,718,158,692,144,675,125,667,105,660,86,644,68,626,58"/>
+<area shape="rect" id="Node000007" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="730,104,812,130"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="619,53,647,64,695,90,716,99,715,104,693,95,645,69,617,58"/>
+<area shape="poly" id="edge8_Node000008_Node000004" title=" " alt="" coords="644,80,678,76,678,81,645,85"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="617,76,645,65,693,40,707,34,709,39,695,45,647,70,619,81"/>
+<area shape="poly" id="edge10_Node000008_Node000006" title=" " alt="" coords="619,102,647,113,695,140,720,149,718,154,693,145,645,118,617,107"/>
+<area shape="poly" id="edge11_Node000008_Node000007" title=" " alt="" coords="645,98,715,107,714,112,644,103"/>
+<area shape="poly" id="edge16_Node000009_Node000008" title=" " alt="" coords="418,125,499,106,500,111,419,130"/>
+<area shape="rect" id="Node000010" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="531,177,613,203"/>
+<area shape="poly" id="edge13_Node000009_Node000010" title=" " alt="" coords="419,151,517,175,516,180,418,157"/>
+<area shape="rect" id="Node000011" href="$mptrac_8c.html#a62786d005ed312f3c9ba2fac7cd544fc" title="Performs spline interpolation or linear interpolation." alt="" coords="544,128,600,154"/>
+<area shape="poly" id="edge17_Node000009_Node000011" title=" " alt="" coords="419,138,529,138,529,144,419,144"/>
+<area shape="poly" id="edge14_Node000010_Node000006" title=" " alt="" coords="613,183,718,170,719,175,613,188"/>
+<area shape="poly" id="edge15_Node000010_Node000007" title=" " alt="" coords="612,176,645,164,693,138,715,130,716,135,695,143,647,169,614,181"/>
+<area shape="poly" id="edge18_Node000011_Node000006" title=" " alt="" coords="601,142,719,157,718,162,600,147"/>
+<area shape="rect" id="Node000015" href="$mptrac_8c.html#aba22251f4ea0fe56c2a59719998c650a" title="Applies a diurnal correction to the hydroxyl radical (OH) concentration in climatology data." alt="" coords="275,1117,450,1143"/>
+<area shape="poly" id="edge22_Node000014_Node000015" title=" " alt="" coords="220,1092,294,1110,293,1116,219,1097"/>
+<area shape="rect" id="Node000017" href="$mptrac_8c.html#aa9cf40c6960c5078d1ea9e12a2fb0872" title="Initializes the tropopause data in the climatology structure." alt="" coords="310,1167,415,1192"/>
+<area shape="poly" id="edge24_Node000014_Node000017" title=" " alt="" coords="184,1092,224,1123,276,1153,296,1161,294,1166,274,1158,221,1127,180,1096"/>
+<area shape="rect" id="Node000018" href="$mptrac_8c.html#a1a501ec43c01f1d742a133a7a3289d59" title="Reads photolysis rates from a NetCDF file and populates the given photolysis structure." alt="" coords="304,969,421,995"/>
+<area shape="poly" id="edge25_Node000014_Node000018" title=" " alt="" coords="206,1065,225,1055,240,1042,249,1029,258,1017,274,1004,289,996,291,1001,276,1008,262,1020,253,1033,244,1046,229,1059,209,1070"/>
+<area shape="rect" id="Node000020" href="$mptrac_8c.html#a3510fe56a6a6e589b5c2474495af03e2" title="Reads a climatological time series from a file and populates the given time series structure." alt="" coords="315,1019,410,1044"/>
+<area shape="poly" id="edge27_Node000014_Node000020" title=" " alt="" coords="219,1065,299,1044,301,1050,220,1070"/>
+<area shape="rect" id="Node000021" href="$mptrac_8c.html#a6af2603c773b4d11bf7e187ccb123ba2" title="Reads zonally averaged climatological data from a netCDF file and populates the given structure." alt="" coords="312,1068,413,1094"/>
+<area shape="poly" id="edge28_Node000014_Node000021" title=" " alt="" coords="227,1078,296,1078,296,1084,227,1084"/>
+<area shape="rect" id="Node000016" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="537,1117,607,1143"/>
+<area shape="poly" id="edge23_Node000015_Node000016" title=" " alt="" coords="450,1128,522,1128,522,1133,450,1133"/>
+<area shape="rect" id="Node000019" href="$mptrac_8c.html#a4392a0ab24a984ac30ed1ef85a89257d" title="Reads a 3D climatological photochemistry variable from a NetCDF file." alt="" coords="498,971,646,996"/>
+<area shape="poly" id="edge26_Node000018_Node000019" title=" " alt="" coords="421,980,483,980,483,986,421,985"/>
+<area shape="rect" id="Node000023" href="$mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="306,1216,419,1242"/>
+<area shape="poly" id="edge30_Node000022_Node000023" title=" " alt="" coords="223,1225,290,1226,290,1231,223,1231"/>
+<area shape="poly" id="edge31_Node000022_Node000024" title=" " alt="" coords="219,1238,313,1263,312,1268,217,1244"/>
+<area shape="poly" id="edge62_Node000025_Node000009" title=" " alt="" coords="163,550,163,482,175,379,188,321,208,264,236,210,273,163,291,150,294,155,277,167,240,213,213,266,193,322,180,379,169,483,168,550"/>
+<area shape="rect" id="Node000026" href="$mptrac_8c.html#aa4b5f89a098befae2a864decab80f133" title="State variables of cuRAND random number generator." alt="" coords="290,177,435,203"/>
+<area shape="poly" id="edge33_Node000025_Node000026" title=" " alt="" coords="163,550,167,489,181,399,194,349,213,299,239,253,273,212,276,210,279,214,277,216,244,256,218,302,199,350,186,400,172,490,169,550"/>
+<area shape="rect" id="Node000027" href="$mptrac_8c.html#acc520c5d948ea75f0acb9b351a6b8b75" title="Reads meteorological data from a binary file." alt="" coords="313,871,412,896"/>
+<area shape="poly" id="edge34_Node000025_Node000027" title=" " alt="" coords="170,576,176,628,192,704,206,746,224,786,248,825,277,857,299,871,297,876,273,862,243,828,219,789,201,748,187,706,170,629,164,577"/>
+<area shape="rect" id="Node000038" href="$mptrac_8c.html#af61accbe7a6587652bb15ea68d6aee03" title="Calculates Convective Available Potential Energy (CAPE) for each grid point." alt="" coords="308,227,418,252"/>
+<area shape="poly" id="edge38_Node000025_Node000038" title=" " alt="" coords="164,550,170,497,186,419,200,377,219,335,243,296,273,261,292,249,295,254,277,266,247,299,224,337,205,379,192,421,175,498,169,551"/>
+<area shape="rect" id="Node000040" href="$mptrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculates cloud&#45;related variables for each grid point." alt="" coords="306,325,419,351"/>
+<area shape="poly" id="edge42_Node000025_Node000040" title=" " alt="" coords="168,549,180,514,202,465,233,414,273,368,292,356,295,360,277,372,237,417,206,468,185,516,173,551"/>
+<area shape="rect" id="Node000041" href="$mptrac_8c.html#a2776502fa762ba5034c0759d7645d1e1" title="Detrends meteorological data." alt="" coords="300,920,425,946"/>
+<area shape="poly" id="edge43_Node000025_Node000041" title=" " alt="" coords="169,577,172,636,186,725,200,774,219,822,244,868,277,907,288,915,285,919,273,911,240,871,214,825,195,776,181,726,167,637,163,577"/>
+<area shape="rect" id="Node000043" href="$mptrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolates meteorological data." alt="" coords="290,427,435,452"/>
+<area shape="poly" id="edge45_Node000025_Node000043" title=" " alt="" coords="175,548,215,505,243,482,274,461,284,456,286,461,276,466,246,486,219,509,179,552"/>
+<area shape="rect" id="Node000044" href="$mptrac_8c.html#a01594c9f21549808fcf2f2f8be781e79" title="Calculates geopotential heights from meteorological data." alt="" coords="511,351,633,376"/>
+<area shape="poly" id="edge46_Node000025_Node000044" title=" " alt="" coords="169,549,183,520,206,482,236,444,274,412,328,386,386,370,444,362,496,358,496,364,444,367,387,375,330,391,276,416,240,447,210,485,188,522,174,551"/>
+<area shape="rect" id="Node000045" href="$mptrac_8h.html#a82c358b6cc1f736e2f186c8aef4d6a79" title="Reads meteorological data from a grib file and processes it." alt="" coords="311,476,414,502"/>
+<area shape="poly" id="edge48_Node000025_Node000045" title=" " alt="" coords="191,548,274,510,295,503,297,508,276,515,193,553"/>
+<area shape="rect" id="Node000046" href="$mptrac_8c.html#a305d8ee431236c52e0fd21d26f23a695" title="Makes zeta and pressure profiles monotone." alt="" coords="288,525,437,551"/>
+<area shape="poly" id="edge49_Node000025_Node000046" title=" " alt="" coords="226,553,273,547,273,552,227,558"/>
+<area shape="rect" id="Node000047" href="$mptrac_8c.html#a6d5d9f14125739740b23f1ff88baf835" title="Reads meteorological data from a NetCDF file and processes it." alt="" coords="314,624,411,650"/>
+<area shape="poly" id="edge50_Node000025_Node000047" title=" " alt="" coords="194,574,276,610,300,618,298,623,274,615,191,579"/>
+<area shape="rect" id="Node000057" href="$mptrac_8c.html#a9ee63e8a6c82ac0dc569255455a50da2" title="Calculates the total column ozone from meteorological ozone data." alt="" coords="304,575,421,600"/>
+<area shape="poly" id="edge55_Node000025_Node000057" title=" " alt="" coords="227,568,290,576,289,581,226,574"/>
+<area shape="rect" id="Node000058" href="$mptrac_8c.html#a2723705c94110a3ddfc84f2f0c8ddc71" title="Computes the planetary boundary layer (PBL) pressure based on meteorological data." alt="" coords="313,276,412,302"/>
+<area shape="poly" id="edge56_Node000025_Node000058" title=" " alt="" coords="165,550,174,504,193,440,225,371,247,339,273,311,297,297,299,302,277,315,251,342,229,373,198,442,179,506,171,551"/>
+<area shape="rect" id="Node000060" href="$mptrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Applies periodic boundary conditions to meteorological data along longitudinal axis." alt="" coords="299,673,426,699"/>
+<area shape="poly" id="edge58_Node000025_Node000060" title=" " alt="" coords="179,575,219,617,246,640,276,660,287,665,284,670,274,664,243,644,216,621,175,579"/>
+<area shape="rect" id="Node000061" href="$mptrac_8c.html#adea1a286e6ec2a763b560997203fd5b7" title="Applies a fix for polar winds in meteorological data." alt="" coords="287,723,438,748"/>
+<area shape="poly" id="edge59_Node000025_Node000061" title=" " alt="" coords="174,576,211,640,241,678,277,709,283,713,280,718,273,714,237,681,207,643,170,578"/>
+<area shape="rect" id="Node000062" href="$mptrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculates potential vorticity (PV) from meteorological data." alt="" coords="314,772,411,798"/>
+<area shape="poly" id="edge60_Node000025_Node000062" title=" " alt="" coords="172,576,184,613,205,662,235,714,255,738,277,759,301,772,299,777,273,763,251,742,231,717,200,665,179,615,167,578"/>
+<area shape="rect" id="Node000063" href="$mptrac_8c.html#a0e6ef467d264f7b13436a460c753ed8a" title="Downsamples meteorological data based on specified parameters." alt="" coords="300,821,425,847"/>
+<area shape="poly" id="edge61_Node000025_Node000063" title=" " alt="" coords="171,576,179,620,198,683,230,751,251,781,277,808,288,816,285,820,273,812,247,785,225,753,193,685,174,622,165,577"/>
+<area shape="rect" id="Node000028" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="732,789,810,815"/>
+<area shape="poly" id="edge35_Node000027_Node000028" title=" " alt="" coords="413,881,520,876,583,868,645,856,691,840,732,820,734,825,693,845,646,861,584,874,521,881,413,887"/>
+<area shape="rect" id="Node000029" href="$mptrac_8c.html#a4b9aea19f1f7b7461d49a90bef54d286" title="Reads a 2&#45;dimensional meteorological variable from a binary file and stores it in the provided array." alt="" coords="512,820,632,846"/>
+<area shape="poly" id="edge36_Node000027_Node000029" title=" " alt="" coords="412,869,501,847,502,852,414,874"/>
+<area shape="rect" id="Node000030" href="$mptrac_8c.html#a8acf2c312916a07fa0856aa6d4948558" title="Reads 3D meteorological data from a binary file, potentially using different compression methods." alt="" coords="512,771,632,796"/>
+<area shape="poly" id="edge37_Node000027_Node000030" title=" " alt="" coords="412,872,449,857,463,845,472,832,481,819,497,805,505,801,507,805,500,810,485,822,477,835,467,849,452,862,414,877"/>
+<area shape="poly" id="edge40_Node000038_Node000008" title=" " alt="" coords="417,230,449,213,460,202,466,190,472,165,478,139,485,126,496,114,500,111,503,115,500,117,489,129,483,141,477,166,471,192,464,205,452,218,419,234"/>
+<area shape="poly" id="edge39_Node000038_Node000010" title=" " alt="" coords="418,224,516,201,517,206,419,229"/>
+<area shape="rect" id="Node000039" href="$mptrac_8c.html#afa485eb277a5ced6dac0ed77665c976c" title="Calculates the moist adiabatic lapse rate in Kelvin per kilometer." alt="" coords="531,227,613,252"/>
+<area shape="poly" id="edge41_Node000038_Node000039" title=" " alt="" coords="418,237,516,237,516,242,418,242"/>
+<area shape="rect" id="Node000042" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="536,921,608,947"/>
+<area shape="poly" id="edge44_Node000041_Node000042" title=" " alt="" coords="425,931,521,931,521,937,425,936"/>
+<area shape="poly" id="edge47_Node000044_Node000006" title=" " alt="" coords="594,348,644,312,704,248,749,190,754,193,708,252,647,316,598,352"/>
+<area shape="rect" id="Node000048" href="$mptrac_8c.html#ae4562461a2883609e1768b1c3671eec4" title="Reads meteorological grid data from NetCDF files with domain decomposition." alt="" coords="510,709,634,735"/>
+<area shape="poly" id="edge51_Node000047_Node000048" title=" " alt="" coords="412,645,451,658,500,684,531,700,529,704,497,689,449,663,410,651"/>
+<area shape="rect" id="Node000052" href="$mptrac_8c.html#a2ee3cac435af17ad5aaf885cc2dc3262" title="Reads and processes meteorological level data from NetCDF files with domain decomposition." alt="" coords="503,648,641,674"/>
+<area shape="poly" id="edge53_Node000047_Node000052" title=" " alt="" coords="412,640,488,649,487,654,411,645"/>
+<area shape="rect" id="Node000055" href="$mptrac_8c.html#aa86499774fc9def653b04f95e56b4052" title="Reads and processes surface meteorological data from NetCDF files with domain decomposition." alt="" coords="499,599,645,624"/>
+<area shape="poly" id="edge54_Node000047_Node000055" title=" " alt="" coords="411,628,483,620,484,625,412,634"/>
+<area shape="poly" id="edge52_Node000048_Node000028" title=" " alt="" coords="607,733,724,781,722,785,605,738"/>
+<area shape="rect" id="Node000059" href="$mptrac_8c.html#a8b9ae6cda41f85d46c6333d039ee0861" title="Locate the index of the interval containing a given value in an irregularly spaced array." alt="" coords="519,276,625,302"/>
+<area shape="poly" id="edge57_Node000058_Node000059" title=" " alt="" coords="413,286,504,286,504,292,413,292"/>
 </map>

@@ -1,15 +1,30 @@
 <map id="module_meteo" name="module_meteo">
-<area shape="rect" id="node1" title="Update atmospheric properties using meteorological data." alt="" coords="5,107,112,133"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a9ba00889eeb600010467d8b62de94a36" title="Calculates the hydroxyl radical (OH) concentration from climatology data, with an optional diurnal co..." alt="" coords="185,56,251,83"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a41f5ab8ff7acad400fe7332b6b53288a" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="356,5,427,32"/>
-<area shape="rect" id="node7" href="$mptrac_8c.html#ab5b4d31bdb9e487738d576ced596d190" title="Interpolates meteorological variables to a given position and time." alt="" coords="324,107,459,133"/>
-<area shape="rect" id="node12" href="$mptrac_8c.html#afa485eb277a5ced6dac0ed77665c976c" title="Calculates the moist adiabatic lapse rate in Kelvin per kilometer." alt="" coords="177,157,259,184"/>
-<area shape="rect" id="node13" href="$mptrac_8c.html#a623b433e01381315e5d49fc4c2bc3548" title="Calculates the nitric acid trihydrate (NAT) temperature." alt="" coords="160,208,276,235"/>
-<area shape="rect" id="node6" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="356,56,427,83"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="547,56,621,83"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="543,5,625,32"/>
-<area shape="rect" id="node8" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="507,107,661,133"/>
-<area shape="rect" id="node9" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="514,157,654,184"/>
-<area shape="rect" id="node10" href="$mptrac_8c.html#abd6bde703e5eec60bf68820afcdd5edc" title="Locate the four vertical indizes of a box for a given height value." alt="" coords="541,208,627,235"/>
-<area shape="rect" id="node11" href="$mptrac_8c.html#a8b9ae6cda41f85d46c6333d039ee0861" title="Locate the index of the interval containing a given value in an irregularly spaced array." alt="" coords="709,208,816,235"/>
+<area shape="rect" id="Node000001" title="Update atmospheric properties using meteorological data." alt="" coords="5,104,112,130"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a9ba00889eeb600010467d8b62de94a36" title="Calculates the hydroxyl radical (OH) concentration from climatology data, with an optional diurnal co..." alt="" coords="184,53,250,79"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,101,169,79,170,84,102,106"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a41f5ab8ff7acad400fe7332b6b53288a" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="355,5,424,31"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="70,102,107,69,132,52,159,38,205,24,253,16,339,13,339,18,254,22,206,30,161,43,135,56,110,73,74,106"/>
+<area shape="rect" id="Node000007" href="$mptrac_8c.html#ab5b4d31bdb9e487738d576ced596d190" title="Interpolates meteorological variables to a given position and time." alt="" coords="323,104,456,130"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="112,114,308,114,308,120,112,120"/>
+<area shape="rect" id="Node000012" href="$mptrac_8c.html#afa485eb277a5ced6dac0ed77665c976c" title="Calculates the moist adiabatic lapse rate in Kelvin per kilometer." alt="" coords="177,155,258,180"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="102,128,163,148,162,153,100,133"/>
+<area shape="rect" id="Node000013" href="$mptrac_8c.html#a623b433e01381315e5d49fc4c2bc3548" title="Calculates the nitric acid trihydrate (NAT) temperature." alt="" coords="160,204,275,230"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="76,128,114,158,161,191,169,195,166,199,158,195,110,163,73,132"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="250,54,339,29,341,34,252,60"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="355,55,424,80"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="251,64,339,64,339,70,251,69"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="544,55,619,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="425,24,530,52,529,57,424,30"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="541,5,622,31"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="425,16,525,16,525,21,425,21"/>
+<area shape="poly" id="edge10_Node000007_Node000004" title=" " alt="" coords="442,101,529,78,530,83,443,106"/>
+<area shape="poly" id="edge11_Node000007_Node000005" title=" " alt="" coords="435,101,455,91,469,78,478,66,487,53,503,40,525,29,527,34,506,44,491,56,482,69,473,82,458,95,437,106"/>
+<area shape="rect" id="Node000008" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="504,104,659,130"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="457,114,489,114,489,120,457,120"/>
+<area shape="rect" id="Node000009" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="512,153,651,179"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="443,128,515,146,514,152,442,133"/>
+<area shape="rect" id="Node000010" href="$mptrac_8c.html#abd6bde703e5eec60bf68820afcdd5edc" title="Locate the four vertical indizes of a box for a given height value." alt="" coords="539,203,624,228"/>
+<area shape="poly" id="edge12_Node000007_Node000010" title=" " alt="" coords="410,128,452,158,506,189,525,197,523,202,503,194,449,163,407,133"/>
+<area shape="rect" id="Node000011" href="$mptrac_8c.html#a8b9ae6cda41f85d46c6333d039ee0861" title="Locate the index of the interval containing a given value in an irregularly spaced array." alt="" coords="707,203,812,228"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="625,213,691,213,691,218,625,218"/>
 </map>

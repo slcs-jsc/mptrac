@@ -1,8 +1,14 @@
 <map id="module_chem_init" name="module_chem_init">
-<area shape="rect" id="node1" title="Initializes the chemistry modules by setting atmospheric composition." alt="" coords="5,56,132,83"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a9ba00889eeb600010467d8b62de94a36" title="Calculates the hydroxyl radical (OH) concentration from climatology data, with an optional diurnal co..." alt="" coords="180,81,247,108"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a41f5ab8ff7acad400fe7332b6b53288a" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="295,31,365,57"/>
-<area shape="rect" id="node6" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="295,81,365,108"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="417,5,492,32"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="413,56,496,83"/>
+<area shape="rect" id="Node000001" title="Initializes the chemistry modules by setting atmospheric composition." alt="" coords="5,53,132,79"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a9ba00889eeb600010467d8b62de94a36" title="Calculates the hydroxyl radical (OH) concentration from climatology data, with an optional diurnal co..." alt="" coords="180,79,246,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,75,165,80,164,86,132,80"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a41f5ab8ff7acad400fe7332b6b53288a" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="294,29,363,55"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="132,58,278,44,279,49,132,63"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="244,76,282,59,284,64,246,80"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="294,79,363,104"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="246,89,279,89,279,94,246,94"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="415,5,489,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="363,33,399,26,400,31,364,38"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="411,55,493,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="364,47,397,53,395,59,363,52"/>
 </map>

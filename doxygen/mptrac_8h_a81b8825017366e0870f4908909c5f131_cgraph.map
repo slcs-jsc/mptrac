@@ -1,4 +1,5 @@
 <map id="module_position" name="module_position">
-<area shape="rect" id="node1" title="Update the positions and pressure levels of atmospheric particles." alt="" coords="5,5,121,32"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="169,5,324,32"/>
+<area shape="rect" id="Node000001" title="Update the positions and pressure levels of atmospheric particles." alt="" coords="5,5,121,31"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="169,5,323,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,16,153,16,153,21,121,21"/>
 </map>

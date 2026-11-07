@@ -1,4 +1,5 @@
 <map id="main" name="main">
-<area shape="rect" id="node1" title=" " alt="" coords="5,5,56,32"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="104,5,183,32"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,55,31"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="103,5,180,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="55,16,87,16,87,21,55,21"/>
 </map>

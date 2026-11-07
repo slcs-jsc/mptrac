@@ -1,6 +1,9 @@
 <map id="dd_calc_subdomain_from_coords" name="dd_calc_subdomain_from_coords">
-<area shape="rect" id="node1" title="Determine MPI subdomain from particle coordinates." alt="" coords="5,49,176,90"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a7dbebfcfc3c8880219a85e2506e83077" title="Normalize geographic coordinates to the global grid convention." alt="" coords="224,5,367,32"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="258,56,333,83"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="254,107,337,133"/>
+<area shape="rect" id="Node000001" title="Determine MPI subdomain from particle coordinates." alt="" coords="5,47,175,88"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a7dbebfcfc3c8880219a85e2506e83077" title="Normalize geographic coordinates to the global grid convention." alt="" coords="223,5,365,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,44,222,33,224,38,176,50"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="257,55,331,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,65,241,65,241,70,175,70"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="253,104,334,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="176,85,239,101,237,106,174,91"/>
 </map>

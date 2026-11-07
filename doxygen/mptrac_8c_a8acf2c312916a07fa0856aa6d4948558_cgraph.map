@@ -1,10 +1,17 @@
 <map id="read_met_bin_3d" name="read_met_bin_3d">
-<area shape="rect" id="node1" title="Reads 3D meteorological data from a binary file, potentially using different compression methods." alt="" coords="5,132,127,159"/>
-<area shape="rect" id="node2" href="$mptrac_8h.html#a64fc5fb7c13aa2c813392c46a9368051" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="175,5,285,32"/>
-<area shape="rect" id="node3" href="$mptrac_8h.html#a886dc0ac4e7a0f48bd1888b1bb580c7c" title="Compresses or decompresses a float array using LZ4." alt="" coords="179,56,281,83"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a2ee9b49d5293211a43eff3d5c1aaef06" title="Compresses or decompresses a 3‑D float array using the PCK format." alt="" coords="177,107,283,133"/>
-<area shape="rect" id="node6" href="$mptrac_8h.html#a48abb251b3648aa37fbbabb38dba6022" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="177,157,283,184"/>
-<area shape="rect" id="node7" href="$mptrac_8h.html#a2da2394eb725e3f1daef68f9a1677d56" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="179,208,281,235"/>
-<area shape="rect" id="node8" href="$mptrac_8h.html#a5afd45ba43c3d57f47403cd0ad99e08e" title="Compresses or decompresses a float array using ZSTD." alt="" coords="175,259,285,285"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#ae9f0c3f03e2e5704e2cde5cfedd8708b" title="Write one row of per&#45;level compression diagnostics." alt="" coords="333,107,471,133"/>
+<area shape="rect" id="Node000001" title="Reads 3D meteorological data from a binary file, potentially using different compression methods." alt="" coords="5,129,126,155"/>
+<area shape="rect" id="Node000002" href="$mptrac_8h.html#a64fc5fb7c13aa2c813392c46a9368051" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="174,5,284,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="77,127,117,85,172,40,178,36,181,41,175,44,120,89,80,131"/>
+<area shape="rect" id="Node000003" href="$mptrac_8h.html#a886dc0ac4e7a0f48bd1888b1bb580c7c" title="Compresses or decompresses a float array using LZ4." alt="" coords="178,55,280,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="93,126,173,89,182,85,185,89,175,94,96,131"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a2ee9b49d5293211a43eff3d5c1aaef06" title="Compresses or decompresses a 3‑D float array using the PCK format." alt="" coords="176,104,282,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="126,130,160,125,161,130,127,135"/>
+<area shape="rect" id="Node000006" href="$mptrac_8h.html#a48abb251b3648aa37fbbabb38dba6022" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="176,153,282,179"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="127,148,161,154,161,159,126,154"/>
+<area shape="rect" id="Node000007" href="$mptrac_8h.html#a2da2394eb725e3f1daef68f9a1677d56" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="178,203,280,228"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="96,153,175,189,185,194,182,198,173,194,94,158"/>
+<area shape="rect" id="Node000008" href="$mptrac_8h.html#a5afd45ba43c3d57f47403cd0ad99e08e" title="Compresses or decompresses a float array using ZSTD." alt="" coords="174,252,284,278"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="80,154,120,194,175,239,181,242,178,247,172,243,117,198,77,157"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#ae9f0c3f03e2e5704e2cde5cfedd8708b" title="Write one row of per&#45;level compression diagnostics." alt="" coords="332,104,468,130"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="283,114,316,114,316,120,283,120"/>
 </map>

@@ -1,6 +1,9 @@
 <map id="intpol_tropo_3d" name="intpol_tropo_3d">
-<area shape="rect" id="node1" title="Interpolates tropopause data in 3D (latitude, longitude, and time)." alt="" coords="5,56,116,83"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="164,5,304,32"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="197,56,271,83"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="193,107,275,133"/>
+<area shape="rect" id="Node000001" title="Interpolates tropopause data in 3D (latitude, longitude, and time)." alt="" coords="5,55,115,80"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="163,5,302,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,51,169,33,171,38,108,57"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="195,55,270,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="115,65,180,65,180,70,115,70"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="192,104,273,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="108,78,177,98,176,103,107,84"/>
 </map>

@@ -1,0 +1,16 @@
+<map id="dd_init" name="dd_init">
+<area shape="rect" id="Node000001" title="Initialize the domain decomposition infrastructure." alt="" coords="5,65,65,91"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a68d3a4948deb3dc418875d5185f6d483" title="Assign or update particle subdomain ownership." alt="" coords="113,65,270,91"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="65,76,98,76,98,81,65,81"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a768c2d1906f17487bebd010c2929ce44" title="Determine MPI subdomain from particle coordinates." alt="" coords="318,29,487,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="270,65,302,60,303,66,271,70"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a7dbebfcfc3c8880219a85e2506e83077" title="Normalize geographic coordinates to the global grid convention." alt="" coords="535,11,678,36"/>
+<area shape="poly" id="edge6_Node000002_Node000004" title=" " alt="" coords="211,63,258,36,317,14,369,6,422,3,520,8,520,13,422,8,370,11,319,20,260,41,214,67"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="569,63,644,88"/>
+<area shape="poly" id="edge7_Node000002_Node000005" title=" " alt="" coords="270,78,487,78,554,76,554,81,487,84,270,83"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="566,116,647,142"/>
+<area shape="poly" id="edge8_Node000002_Node000006" title=" " alt="" coords="271,85,551,120,550,125,270,90"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="487,36,520,32,520,37,488,41"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="488,57,555,66,554,72,487,63"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="457,67,558,107,556,112,455,72"/>
+</map>

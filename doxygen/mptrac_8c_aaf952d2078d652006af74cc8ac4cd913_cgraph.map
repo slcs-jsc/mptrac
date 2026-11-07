@@ -1,4 +1,5 @@
 <map id="write_station" name="write_station">
-<area shape="rect" id="node1" title="Writes station data to a specified file." alt="" coords="5,5,101,32"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="149,5,221,32"/>
+<area shape="rect" id="Node000001" title="Writes station data to a specified file." alt="" coords="5,5,101,31"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="149,5,220,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,16,133,16,133,21,101,21"/>
 </map>

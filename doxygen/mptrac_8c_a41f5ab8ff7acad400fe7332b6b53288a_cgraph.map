@@ -1,5 +1,7 @@
 <map id="clim_zm" name="clim_zm">
-<area shape="rect" id="node1" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="5,31,76,57"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="128,5,203,32"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="124,56,207,83"/>
+<area shape="rect" id="Node000001" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="5,31,75,56"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="126,5,200,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="74,34,110,26,111,32,75,39"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="123,55,204,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="75,48,108,54,107,59,74,53"/>
 </map>

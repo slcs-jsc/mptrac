@@ -1,7 +1,11 @@
 <map id="module_decay" name="module_decay">
-<area shape="rect" id="node1" title="Simulate exponential decay processes for atmospheric particles." alt="" coords="5,31,111,57"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#af82147c2a37a4f9be2d99ff258838a63" title="Computes a weighting factor based on tropopause pressure." alt="" coords="159,31,255,57"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="303,31,385,57"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="437,5,512,32"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="433,56,516,83"/>
+<area shape="rect" id="Node000001" title="Simulate exponential decay processes for atmospheric particles." alt="" coords="5,31,110,56"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#af82147c2a37a4f9be2d99ff258838a63" title="Computes a weighting factor based on tropopause pressure." alt="" coords="158,31,253,56"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,41,142,41,142,46,110,46"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="301,31,382,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="253,41,285,41,285,46,253,46"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="434,5,508,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="382,33,418,26,419,31,383,38"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="430,55,512,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="383,48,416,55,415,60,382,54"/>
 </map>

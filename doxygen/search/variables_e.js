@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['q_0',['q',['../structparticle__t.html#adabeda2e4d6dfb8b74685e488c5fb031',1,'particle_t::q()'],['../structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7',1,'atm_t::q()']]],
+  ['q_0',['q',['../structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7',1,'atm_t::q'],['../structparticle__t.html#adabeda2e4d6dfb8b74685e488c5fb031',1,'particle_t::q']]],
   ['qnt_5fabe7_1',['qnt_Abe7',['../structctl__t.html#ac4ab2c06cc197cfa44d6716beea3d103',1,'ctl_t']]],
   ['qnt_5facs137_2',['qnt_Acs137',['../structctl__t.html#a277f8a40d2e1856490ec968708f93bf8',1,'ctl_t']]],
   ['qnt_5fai131_3',['qnt_Ai131',['../structctl__t.html#a9503064216c1b31c9f8344c494de210d',1,'ctl_t']]],

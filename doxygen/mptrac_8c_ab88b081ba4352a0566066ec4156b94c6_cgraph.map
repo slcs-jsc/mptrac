@@ -1,8 +1,13 @@
 <map id="intpol_met_time_2d" name="intpol_met_time_2d">
-<area shape="rect" id="node1" title="Interpolates meteorological data in 2D space and time." alt="" coords="5,81,140,108"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a1d832e4cf4224c4166d2f083a7a02514" title="Interpolates meteorological variables in 2D space." alt="" coords="188,81,333,108"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="381,5,536,32"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="389,56,529,83"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="421,107,496,133"/>
-<area shape="rect" id="node6" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="417,157,500,184"/>
+<area shape="rect" id="Node000001" title="Interpolates meteorological data in 2D space and time." alt="" coords="5,80,140,106"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a1d832e4cf4224c4166d2f083a7a02514" title="Interpolates meteorological variables in 2D space." alt="" coords="188,80,332,106"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,90,172,90,172,96,140,96"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="380,5,534,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,77,379,40,396,34,398,39,381,45,291,82"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="388,55,527,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="332,81,372,76,372,81,333,86"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="420,104,494,130"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="333,99,405,108,404,113,332,104"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="416,153,498,179"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="292,104,381,140,402,147,400,152,379,145,290,109"/>
 </map>

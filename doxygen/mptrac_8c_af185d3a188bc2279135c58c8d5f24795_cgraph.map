@@ -1,14 +1,26 @@
 <map id="write_grid" name="write_grid">
-<area shape="rect" id="node1" title="Writes grid data to a file in ASCII or netCDF format." alt="" coords="5,208,84,235"/>
-<area shape="rect" id="node2" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="132,107,267,133"/>
-<area shape="rect" id="node8" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="336,157,439,184"/>
-<area shape="rect" id="node9" href="$mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="155,208,244,235"/>
-<area shape="rect" id="node10" href="$mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="146,259,253,285"/>
-<area shape="rect" id="node12" href="$mptrac_8c.html#ae0a8f7561c1902f48e3ba8e9731eba9f" title="Writes grid data to a NetCDF file." alt="" coords="150,309,249,336"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="315,107,460,133"/>
-<area shape="rect" id="node4" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="508,5,663,32"/>
-<area shape="rect" id="node5" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="515,56,655,83"/>
-<area shape="rect" id="node6" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="548,157,623,184"/>
-<area shape="rect" id="node7" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="544,107,627,133"/>
-<area shape="rect" id="node11" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="348,259,427,285"/>
+<area shape="rect" id="Node000001" title="Writes grid data to a file in ASCII or netCDF format." alt="" coords="5,204,83,230"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="131,103,265,128"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="58,201,90,174,129,145,151,133,153,138,132,150,93,178,61,205"/>
+<area shape="rect" id="Node000008" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="334,153,436,179"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="83,201,130,189,229,174,318,167,319,172,229,180,131,194,84,207"/>
+<area shape="rect" id="Node000009" href="$mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="154,204,242,230"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="83,214,138,214,138,220,83,220"/>
+<area shape="rect" id="Node000010" href="$mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="145,253,250,279"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="84,227,142,246,140,251,82,232"/>
+<area shape="rect" id="Node000012" href="$mptrac_8c.html#ae0a8f7561c1902f48e3ba8e9731eba9f" title="Writes grid data to a NetCDF file." alt="" coords="149,303,247,328"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="59,228,91,258,132,289,140,293,137,298,129,294,87,263,56,232"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="313,103,457,128"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,113,297,113,297,118,265,118"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="505,5,660,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="404,100,448,70,504,40,517,34,519,39,506,45,451,75,407,104"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="513,55,652,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="441,99,511,82,512,87,442,105"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="545,153,620,179"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="439,126,531,150,529,155,437,132"/>
+<area shape="rect" id="Node000007" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="542,104,623,130"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="458,113,527,114,527,119,458,119"/>
+<area shape="poly" id="edge8_Node000008_Node000006" title=" " alt="" coords="436,164,530,164,530,169,436,169"/>
+<area shape="rect" id="Node000011" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="346,253,424,279"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="251,264,331,264,331,269,251,269"/>
 </map>
