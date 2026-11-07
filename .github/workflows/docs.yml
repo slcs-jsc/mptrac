@@ -34,7 +34,7 @@ jobs:
         run: cd docs && mkdocs build --clean --verbose
 
       - name: preparing_doxygen
-        uses: mattnotmitt/doxygen-action@v1.9.4
+        uses: mattnotmitt/doxygen-action@v1.12.0
         with:
           doxyfile-path: Doxyfile
           working-directory: docs
