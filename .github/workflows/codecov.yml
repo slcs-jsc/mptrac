@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: fetch
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
     - name: install
       run: sudo apt-get update ; sudo apt-get install gnuplot lcov libgsl-dev libnetcdf-dev libhdf5-dev libzstd-dev liblz4-dev libzfp-dev libeccodes-dev
     - name: make
@@ -19,7 +19,7 @@ jobs:
     - name: make coverage
       run: cd ./src ; make coverage
     - name: upload
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
