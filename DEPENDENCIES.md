@@ -35,12 +35,12 @@ These dependencies enable additional features of MPTRAC. They are not required f
 | [SZ3](https://github.com/szcompressor/SZ3) | v3.2.1 | Compression library |
 | [gnuplot](http://www.gnuplot.info) | v5.4.5 | Graphing utility for visualization |
 | [ParaView](https://www.paraview.org) | v5.11.0 | Visualization tool for scientific data |
-| Cppcheck | 2.13 | Static code analysis  |
-| gprofng | 2.42 | Performance profiling tool |
-| gcov | 13.2.0 | Coverage testing tool |
-| lcov | 2.0 | Code coverage visualization tool |
-| Doxygen | 1.9.8 | Automatic source code documentation |
-| MkDocs | 1.5.3 | Build documentation locally |
+| [Cppcheck](https://cppcheck.sourceforge.io/) | 2.13 | Static code analysis  |
+| [gprofng](https://www.sourceware.org/binutils/docs/gprofng.html) | 2.42 | Performance profiling tool |
+| [gcov](https://gcc.gnu.org/onlinedocs/gcc/Invoking-Gcov.html) | 13.2.0 | Coverage testing tool |
+| [lcov](https://github.com/linux-test-project/lcov) | 2.0 | Code coverage visualization tool |
+| [Doxygen](https://www.doxygen.nl/index.html) | 1.9.8 | Automatic source code documentation |
+| [MkDocs](https://www.mkdocs.org/) | 1.5.3 | Build documentation locally |
 
 ## Installing Dependencies
 
