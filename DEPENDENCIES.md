@@ -29,7 +29,7 @@ These dependencies enable additional features of MPTRAC. They are not required f
 | [ParaStation MPI](https://github.com/ParaStation/psmpi) | v5.11.0 | MPI library for HPC support |
 | [ecCodes](https://confluence.ecmwf.int/display/ECC/ecCodes+Home) | v2.38.3 | Encoding and decoding GRIB messages |
 | [Kinetic PreProcessor (KPP)](https://github.com/KineticPreProcessor/KPP) | v3.2.0 | Preprocessor for generating chemical mechanism code |
-| [Thrust](https://developer.nvidia.com/thrust) | v1.14.0 | C++ template library for parallel algorithms and data structures |
+| [Thrust (NVIDIA CCCL)](https://github.com/NVIDIA/cccl) | Compatible with the selected C++/CUDA toolchain | Headers for optional `THRUST=1` sorting; not bundled with MPTRAC |
 | [Zstandard](https://facebook.github.io/zstd) | v1.5.7 | Compression library |
 | [zfp](https://computing.llnl.gov/projects/zfp) | v1.0.1 | Compression library |
 | [SZ3](https://github.com/szcompressor/SZ3) | v3.2.1 | Compression library |
@@ -68,3 +68,13 @@ For detailed installation instructions on each of these dependencies, refer to t
   2. **OpenMPI**: For high-performance computing (HPC) and parallel computing. Install via your package manager or build from source.
 
   3. **KPP (Kinetic PreProcessor)**: If you're working with chemical mechanisms, KPP is needed for preprocessing. Follow the KPP documentation for installation.
+
+  4. **Thrust sorting**: The bundled `libs/thrustsort-1.4.tar.bz2` contains
+     MPTRAC's wrapper source, not NVIDIA Thrust or precompiled libraries.
+     `libs/build.sh -t` builds and checks the CPU wrapper using Thrust headers
+     and an OpenMP-capable C++ compiler; `-u` builds the GPU wrapper using
+     Thrust headers and `nvcc`. Supply compatible headers through a CUDA/CCCL
+     installation or a separate header package. Set `THRUST_INCLUDE_DIR` if
+     needed. Neither `-m` nor `-a` builds the wrapper, and the default
+     `THRUST=0` build and standard tests do not require it. See the
+     [installation guide](docs/manual/installation.md) for build options.

@@ -85,25 +85,25 @@ using a build script:
     ./build.sh -m
 
 `-m` builds the mandatory libraries. `-a` builds all bundled libraries
-except the optional Thrust wrappers, so it does not require Thrust headers
-or `nvcc`. Thrust sorting is not required by the
-standard MPTRAC build or tests. To build its CPU wrapper for the current
-machine, run
-`./build.sh -t`; to build the GPU wrapper with `nvcc`, run `./build.sh -u`
-(or `./build.sh -tu` for both). These commands compile from the bundled
-`thrustsort-1.4` sources rather than installing precompiled libraries.
-Each invocation replaces both previous wrapper archives in `libs/build/lib`;
-use `-tu` when both variants are needed. The CPU option also runs a small
-C interface and sort check.
-They require Thrust headers; set `THRUST_INCLUDE_DIR` if the compiler does
-not find them in its default paths or under the CUDA root given by
-`CUDA_HOME` or `CUDA_PATH` (including CUDA 13's `include/cccl`). Enable the
-wrapper when compiling MPTRAC with `THRUST=1`; the default `THRUST=0`
-needs neither wrapper. GPU Thrust also
-requires `GPU=1 COMPILER=nvc` and a compatible CUDA toolchain. Build the
-wrapper and MPTRAC on the target architecture with compatible compiler and
-CUDA environments. Run the optional sorting tests on an allocated compute
-node when GPU execution is needed.
+except the optional Thrust wrappers. The standard MPTRAC build and tests
+use `THRUST=0` and need neither Thrust headers nor `nvcc`.
+
+The bundled `thrustsort-1.4` archive contains the MPTRAC wrapper source,
+not NVIDIA Thrust. To enable Thrust sorting, provide compatible Thrust
+headers separately and build a wrapper for the target machine:
+
+    cd [mptrac_directory]/libs
+    ./build.sh -t    # CPU wrapper and small C interface/sort check
+    ./build.sh -u    # GPU wrapper; requires nvcc
+
+Use `./build.sh -tu` to build both. Each invocation replaces both previous
+wrapper archives in `libs/build/lib`. If the compiler does not find the
+Thrust headers, set `THRUST_INCLUDE_DIR`; the wrapper build also checks
+`CUDA_HOME` or `CUDA_PATH`, including CUDA 13's `include/cccl` layout.
+Only then compile MPTRAC with `THRUST=1`. GPU Thrust additionally requires
+`GPU=1 COMPILER=nvc` and a compatible CUDA toolchain. Build the wrapper
+and MPTRAC on the target architecture, and run GPU sorting tests on an
+allocated compute node.
 
 For domain decomposition with parallel netCDF input, build HDF5 and netCDF
 with the same MPI implementation used to compile MPTRAC. If the other
