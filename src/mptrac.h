@@ -7193,8 +7193,13 @@ void sort_uvwp(
  *
  * @note The function utilizes the `locate_reg` and `locate_irr` functions to determine the 
  * appropriate index for sorting particles based on their longitude, latitude, and pressure level.
- * @note Particle sorting is performed using either the Thrust library (if compiled with Thrust support) 
- * or a custom sorting algorithm. If compiled without Thrust support, an error message is displayed.
+ * @note With THRUST enabled, particle indices are sorted using the optional
+ * Thrust wrapper. Otherwise, GSL (`gsl_sort_index`) computes the permutation
+ * on the CPU; in OpenACC builds, sorting keys are copied to the host and the
+ * resulting permutation is copied back to the device.
+ * @note The calling physics driver invokes this routine only when SORT_DT is
+ * positive and the time matches the configured interval. It currently skips
+ * this spatial sorting when DD_EXCHANGE_MODE=1 is active.
  * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere 
  * data structure to maintain consistency.
  *
