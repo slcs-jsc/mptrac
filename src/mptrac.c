@@ -6879,6 +6879,9 @@ void mptrac_get_met(
     }
   }
 
+  if (!((*met0)->time < (*met1)->time))
+    ERRMSG("Meteo times must be strictly increasing!");
+
   if ((*met0)->coord_type != (*met1)->coord_type)
     ERRMSG("Coordinate types do not match!");
 
@@ -6887,6 +6890,12 @@ void mptrac_get_met(
     if ((*met0)->nx != (*met1)->nx
 	|| (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
       ERRMSG("Meteo grid dimensions do not match!");
+    if ((ctl->advect_vert_coord == 1
+	 || (ctl->advect > 0 && ctl->advect_vert_coord > 1)
+	 || ctl->qnt_eta_d >= 0
+	 || (ctl->advect_vert_coord == 3 && ctl->qnt_eta_dot >= 0))
+	&& ((*met0)->npl < 2 || (*met0)->npl != (*met1)->npl))
+      ERRMSG("Meteo native level counts do not match!");
     for (int ix = 0; ix < (*met0)->nx; ix++)
       if (fabs((*met0)->lon[ix] - (*met1)->lon[ix]) > 0.001)
 	ERRMSG("Meteo grid longitudes do not match!");
@@ -8216,6 +8225,28 @@ int mptrac_read_met(
     /* Not implemented... */
     else
       ERRMSG("MET_TYPE not implemented!");
+
+    /* Check geographic longitude coordinates... */
+    if (met->coord_type == 0)
+      for (int ix = 1; ix < met->nx; ix++)
+	if (!(met->lon[ix] > met->lon[ix - 1]))
+	  ERRMSG("Geographic longitudes must be strictly increasing!");
+
+    /* Check active latitude and pressure coordinates... */
+    for (int iy = 0; iy < met->ny; iy++) {
+      if (!isfinite(met->lat[iy]))
+	ERRMSG("Meteo latitudes must be finite!");
+      if (met->coord_type == 0 && fabs(met->lat[iy]) > 90.)
+	ERRMSG("Geographic latitudes must be within [-90, 90] degrees!");
+    }
+    if (met->np < 2)
+      ERRMSG("At least two pressure levels are required!");
+    for (int ip = 0; ip < met->np; ip++) {
+      if (!isfinite(met->p[ip]))
+	ERRMSG("Meteo pressure levels must be finite!");
+      if (ip > 0 && !(met->p[ip - 1] > met->p[ip]))
+	ERRMSG("Meteo pressure levels must be strictly descending!");
+    }
 
     /* Preprocessing for netCDF and grib files... */
     if (ctl->met_type == 0 || ctl->met_type == 6) {
