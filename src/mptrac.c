@@ -6065,6 +6065,9 @@ void module_radio_depo(
 void module_rng_init(
   const int ntask) {
 
+  /* Separate Squares counter ranges by task (task 0 keeps its sequence)... */
+  rng_ctr = (uint64_t) (unsigned int) ntask << 48;
+
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
   if (omp_get_max_threads() > NTHREADS)
@@ -6183,9 +6186,12 @@ void module_rng(
       }
 
       /* Normal distribution... */
-      else if (method == 1) {
+      else if (method == 1 && n > 0) {
+	if (n > 3 * (size_t) NP)
+	  ERRMSG("Too many random numbers requested!");
+	const size_t n_generate = (n < 4 ? 4 : n + (n & 1));
 	if (curandGenerateNormalDouble
-	    (rng_curand, rs, (n < 4 ? 4 : n), 0.0,
+	    (rng_curand, rs, n_generate, 0.0,
 	     1.0) != CURAND_STATUS_SUCCESS)
 	  ERRMSG("Cannot create random numbers!");
       }

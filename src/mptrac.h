@@ -3647,7 +3647,7 @@ typedef struct {
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ];
 
-  /*! Temporally correlated turbulent velocity perturbations [m/s]. */
+  /*! Correlated velocity perturbations: horizontal [m/s], mesoscale vertical [hPa/s]. */
   float uvwp[3];
 
 } particle_t;
@@ -3669,7 +3669,7 @@ typedef struct {
   /*! Isosurface balloon number of data points. */
   int iso_n;
 
-  /*! Wind perturbations [m/s]. */
+  /*! Wind perturbations: horizontal [m/s], mesoscale vertical [hPa/s]. */
   float uvwp[NP][3];
 
   /*! Random numbers. */
@@ -6989,23 +6989,20 @@ void module_position(
  * @brief Initialize random number generators for parallel tasks.
  *
  * This function initializes random number generators for parallel
- * tasks using both GSL (GNU Scientific Library) and cuRAND (NVIDIA
- * CUDA Random Number Generation Library) if available. It sets up GSL
- * random number generators for each OpenMP thread and initializes
- * them with unique seeds. For cuRAND, it creates a pseudo-random
- * number generator and sets its seed. The initialization ensures that
- * each task or thread has its own independent random number generator
- * to prevent interference between parallel executions.
+ * tasks using GSL (GNU Scientific Library), Squares, and cuRAND
+ * (NVIDIA CUDA Random Number Generation Library) if available. GSL
+ * generators are seeded per OpenMP thread, cuRAND is seeded per task,
+ * and Squares starts at a task-dependent counter offset.
  *
- * @param ntask The number of tasks or parallel threads for which random number generators are initialized.
+ * @param ntask Task identifier used to initialize the generator streams.
  *
  * @note This function must be called before using any random number generation functions to ensure proper 
  * initialization of random number generators.
- * @note GSL random number generators are initialized for each OpenMP thread, while cuRAND is initialized 
- * for the entire task set.
+ * @note GSL random number generators are initialized for each OpenMP thread, while cuRAND is initialized per task.
  * @note If cuRAND is not available (CURAND macro not defined), the cuRAND initialization section is skipped.
- * @note Random number generators are allocated and seeded uniquely for each task or thread to ensure 
- * independence and avoid interference between parallel executions.
+ * @note Squares spaces initial counters by 2^48 values; task 0 retains the
+ * original sequence. Streams can overlap after that many draws, counter
+ * wraparound, or reuse of task identifiers.
  *
  * @author Lars Hoffmann
  */

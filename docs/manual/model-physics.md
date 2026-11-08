@@ -117,13 +117,27 @@ diffusivities in the free troposphere and in the stratosphere, being
 in the scope of the MPTRAC model. In our model, the effects of
 atmospheric diffusion are simulated by adding stochastic perturbations
 to the positions $\vec{x}$ of the air parcels at each time step
-$\Delta t$ of the model,
+$\Delta t$ of the model. For either horizontal component $x_i$,
 
 $$
 \begin{align}
-  \Delta x_i(t+\Delta t) = x_i(t) + \sqrt{2\,D_i\,\Delta t}\xi_i.
+  x_i(t+\Delta t) = x_i(t) + \sqrt{2\,D_x\,|\Delta t|}\,\xi_i.
 \end{align}
 $$
+
+For vertical displacement in geometric height, the implementation uses
+
+$$
+\Delta z = \sqrt{2\,D_z\,|\Delta t|}\,\xi_z
+  + \left(\frac{dD_z}{dz}-\frac{D_z}{H}\right)|\Delta t|,
+$$
+
+where $H=1000H_0$ is the assumed atmospheric scale height in metres.
+The deterministic term accounts for changes in vertical diffusivity and
+the decrease of atmospheric density with height. MPTRAC converts
+$\Delta z$ to a pressure increment using the linearized hydrostatic
+relation $\Delta p=-p\,\Delta z/H$, before applying vertical boundary
+conditions.
 
 This method requires a vector $\vec{\xi}=(\xi_x, \xi_y, \xi_z)$ of
 random variates to be drawn from the standard normal distribution for
