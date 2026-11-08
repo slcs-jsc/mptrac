@@ -5682,8 +5682,8 @@ void intpol_check_cartesian(
  * @param met1 Pointer to the meteorological data at the second time step.
  * @param height1 Array containing heights at the second time step.
  * @param array1 Array containing meteorological variable values at the second time step.
- * @param ts Interpolation time (fractional time between met0 and met1).
- * @param height Altitude at which to interpolate.
+ * @param ts Absolute interpolation time [s] on the same time axis as met0 and met1.
+ * @param height Vertical coordinate at which to interpolate (e.g., pressure or zeta).
  * @param lon Longitude at which to interpolate.
  * @param lat Latitude at which to interpolate.
  * @param var Pointer to store the interpolated variable value.
@@ -5703,6 +5703,10 @@ void intpol_check_cartesian(
  * factor. After initializing the interpolation parameters, it
  * calculates the interpolated variable value and stores it in the
  * memory location pointed to by `var`.
+ *
+ * Time and vertical weights are not clamped, allowing extrapolation from the
+ * selected intervals. This is intended primarily to tolerate small boundary
+ * excursions from integration, diffusion, or floating-point rounding.
  *
  * @note Ensure that all arrays (`height0`, `array0`, `height1`, `array1`, `ci`, `cw`)
  *       have sufficient memory allocated before calling this function.
@@ -5754,6 +5758,9 @@ void intpol_met_4d_zeta(
  * horizontally. The interpolated value is stored in the memory
  * location pointed to by `var`.
  *
+ * Pressures outside the level range are linearly extrapolated using the
+ * nearest level interval, primarily to tolerate small boundary excursions.
+ *
  * @note Ensure that the `array`, `ci`, and `cw` arrays have sufficient memory allocated
  *       before calling this function.
  *
@@ -5793,11 +5800,11 @@ void intpol_met_space_3d(
  * latitude. Next, it computes the interpolation weights for longitude
  * and latitude.
  *
- * The function interpolates horizontally and stores the interpolated
- * value in the memory location pointed to by `var`. If any of the
- * data values used in interpolation are not finite, the function
- * handles this situation by choosing a valid value or performing a
- * simple interpolation.
+ * The function uses bilinear interpolation when all four corners are finite.
+ * Otherwise, it returns the nearest corner according to the interpolation
+ * weights, even if that value is nonfinite. This preserves the spatial pattern
+ * of valid and missing data; selecting only finite corners would expand valid
+ * regions, for example for a second tropopause or land-sea classifications.
  *
  * @note Ensure that the `array`, `ci`, and `cw` arrays have sufficient memory allocated
  *       before calling this function.
@@ -5841,6 +5848,9 @@ void intpol_met_space_2d(
  * `ts`. Finally, it performs temporal interpolation using the
  * interpolated values at t0 and t1 along with the weighting factor to
  * compute the final interpolated value stored in `var`.
+ *
+ * Times outside the two meteorological timestamps are linearly extrapolated,
+ * primarily to tolerate small boundary excursions.
  *
  * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
  *       before calling this function.
@@ -5889,6 +5899,10 @@ void intpol_met_time_3d(
  * compute the final interpolated value stored in `var`.  If one of
  * the interpolated values is not finite, it selects the valid value
  * based on the weighting factor `wt`.
+ *
+ * When both spatial values are finite, times outside the two meteorological
+ * timestamps are linearly extrapolated, primarily to tolerate small boundary
+ * excursions.
  *
  * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
  *       before calling this function.
