@@ -3915,7 +3915,7 @@ void module_advect(
 
       /* Init... */
       INTPOL_INIT;
-      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0,
+      double dts, u[2], um = 0, v[2], vm = 0, w[2], wm = 0,
 	x[3] = { 0, 0, 0 };
 
       /* Loop over integration nodes... */
@@ -3928,7 +3928,7 @@ void module_advect(
 	  x[1] = atm->lat[ip];
 	  x[2] = atm->p[ip];
 	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+	  dts = 0.5 * cache->dt[ip];
 	  x[0] = atm->lon[ip] + DX2COORD(met0, dts * u[i - 1], atm->lat[ip]);
 	  x[1] = atm->lat[ip] + DY2COORD(met0, dts * v[i - 1]);
 	  x[2] = atm->p[ip] + dts * w[i - 1];
@@ -3959,11 +3959,7 @@ void module_advect(
 	}
 
 	/* Get mean wind... */
-	double k = 1.0;
-	if (ctl->advect == 2)
-	  k = (i == 0 ? 0.0 : 1.0);
-	else if (ctl->advect == 4)
-	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	const double k = (ctl->advect == 2 && i == 0 ? 0.0 : 1.0);
 	um += k * u[i];
 	vm += k * v[i];
 	wm += k * w[i];
@@ -3998,10 +3994,10 @@ void module_advect(
 			 &atm->q[qnt][ip], ci, cw, 1);
 
       /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, wdot[4],
+      double dts, u[2], um = 0, v[2], vm = 0, wdot[2],
 	wdotm = 0, x[3] = { 0, 0, 0 };
 
-      /* Loop over integration nodes (Runge–Kutta steps)... */
+      /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
 
 	/* Set position... */
@@ -4011,7 +4007,7 @@ void module_advect(
 	  x[1] = atm->lat[ip];
 	  x[2] = atm->q[qnt][ip];
 	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+	  dts = 0.5 * cache->dt[ip];
 	  x[0] = atm->lon[ip] + DX2COORD(met0, dts * u[i - 1], atm->lat[ip]);
 	  x[1] = atm->lat[ip] + DY2COORD(met0, dts * v[i - 1]);
 	  x[2] = atm->q[qnt][ip] + dts * wdot[i - 1];
@@ -4030,12 +4026,8 @@ void module_advect(
 			   met1, met1->zetal, met1->zeta_dotl,
 			   tm, x[2], x[0], x[1], &wdot[i], ci, cw, 0);
 
-	/* Compute Runge–Kutta weights... */
-	double k = 1.0;
-	if (ctl->advect == 2)
-	  k = (i == 0 ? 0.0 : 1.0);
-	else if (ctl->advect == 4)
-	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	/* Select Euler or midpoint wind... */
+	const double k = (ctl->advect == 2 && i == 0 ? 0.0 : 1.0);
 
 	um += k * u[i];
 	vm += k * v[i];
@@ -7584,8 +7576,8 @@ void mptrac_read_ctl(
 
   /* Advection parameters... */
   ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "2", NULL);
-  if (!(ctl->advect == 1 || ctl->advect == 2 || ctl->advect == 4))
-    ERRMSG("Set ADVECT to 1, 2, or 4!");
+  if (!(ctl->advect == 1 || ctl->advect == 2))
+    ERRMSG("Set ADVECT to 1 (Euler) or 2 (midpoint)!");
 
   /* Diffusion parameters... */
   ctl->diffusion

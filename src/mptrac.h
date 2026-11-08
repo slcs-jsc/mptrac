@@ -3040,7 +3040,7 @@ typedef struct {
   /*! Balloon position filename. */
   char balloon[LEN];
 
-  /*! Advection scheme (1=Euler, 2=midpoint, 4=Runge-Kutta). */
+  /*! Advection scheme (1=Euler, 2=midpoint). */
   int advect;
 
   /*! Vertical velocity of air parcels
@@ -6241,7 +6241,7 @@ void locate_vert(
  * - Modes 0 and 2 use omega on pressure and native model levels, respectively.
  * - Modes 1 and 3 integrate zeta and eta tendencies on native model levels.
  * - The function interpolates meteorological data either on pressure levels or model levels.
- * - The advection scheme supports different integration methods (e.g., two-stage, four-stage).
+ * - The advection scheme supports Euler and explicit midpoint integration.
  * - The function updates longitude and latitude; modes 0 and 2 update pressure
  *   directly, while modes 1 and 3 convert the updated coordinate to pressure.
  *

@@ -33,25 +33,6 @@ $$
 \end{align}
 $$
 
-As an alternative, the classical 4th-order Runge-Kutta method can be
-employed for the simulation, which has higher accuracy at higher
-computational costs. The method is defined by the equations:
-
-$$
-\begin{align}
-\vec{x}(t+\Delta t) = \vec{x}(t) + \frac{1}{6}\left(k_1 + 2k_2 + 2k_3 + k_4 \right)\Delta t\\
-\end{align}
-$$
-
-$$
-\begin{align}
- \vec{k_1} = \vec{v}(t, \vec{x}(t))\\
- \vec{k_2} = \vec{v}\left(t + \frac{\Delta t}{2}, \vec{x}(t) + \Delta t\frac{k_1}{2}\right)\\
- \vec{k_3} = \vec{v}\left(t + \frac{\Delta t}{2}, \vec{x}(t) + \Delta t\frac{k_2}{2}\right)\\
- \vec{k_4} = \vec{v}\left(t + \Delta t, \vec{x}(t) + \Delta t\,k_3\right)
-\end{align}
-$$
-
 Finally, MPTRAC can use the Euler method as well. The Euler method has
 low accuracy but is the fastest option available.
 
@@ -61,7 +42,6 @@ The integration method is selected with the parameter `ADVECT`.
 |-------------|-----------------------------------|
 | 1           | explicit Euler                    | 
 | 2 (default) | mid-point                         |
-| 4           |  classical 4th order Runge-Kutta  |
 
 `DT_MOD` must not exceed the meteorological interval `DT_MET`. Normally,
 `DT_MOD` should be much smaller than `DT_MET` for accurate temporal integration
