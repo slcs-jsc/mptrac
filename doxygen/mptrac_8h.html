@@ -11459,8 +11459,8 @@ Here is the call graph for this function:</div>
     <tr><td class="paramname">met1</td><td>Pointer to the meteorological data at the second time step. </td></tr>
     <tr><td class="paramname">height1</td><td>Array containing heights at the second time step. </td></tr>
     <tr><td class="paramname">array1</td><td>Array containing meteorological variable values at the second time step. </td></tr>
-    <tr><td class="paramname">ts</td><td>Interpolation time (fractional time between met0 and met1). </td></tr>
-    <tr><td class="paramname">height</td><td>Altitude at which to interpolate. </td></tr>
+    <tr><td class="paramname">ts</td><td>Absolute interpolation time [s] on the same time axis as met0 and met1. </td></tr>
+    <tr><td class="paramname">height</td><td>Vertical coordinate at which to interpolate (e.g., pressure or zeta). </td></tr>
     <tr><td class="paramname">lon</td><td>Longitude at which to interpolate. </td></tr>
     <tr><td class="paramname">lat</td><td>Latitude at which to interpolate. </td></tr>
     <tr><td class="paramname">var</td><td>Pointer to store the interpolated variable value. </td></tr>
@@ -11472,6 +11472,7 @@ Here is the call graph for this function:</div>
 </dl>
 <p>The function first restricts the longitude within the range [0, 360) degrees. It then calculates the horizontal indices (<code>ci[0]</code> and <code>ci[1]</code>) based on the provided longitude and latitude. Next, it locates the vertical indices for each edge of the column based on the provided height.</p>
 <p>The function then calculates the weighting factors for time, longitude, latitude, and altitude. It iterates over the interpolation process to determine the altitude weighting factor. After initializing the interpolation parameters, it calculates the interpolated variable value and stores it in the memory location pointed to by <code>var</code>.</p>
+<p>Time and vertical weights are not clamped, allowing extrapolation from the selected intervals. This is intended primarily to tolerate small boundary excursions from integration, diffusion, or floating-point rounding.</p>
 <dl class="section note"><dt>Note</dt><dd>Ensure that all arrays (<code>height0</code>, <code>array0</code>, <code>height1</code>, <code>array1</code>, <code>ci</code>, <code>cw</code>) have sufficient memory allocated before calling this function.</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Jan Clemens </dd></dl>
 
@@ -11737,6 +11738,7 @@ Here is the call graph for this function:</div>
 </dl>
 <p>The function first checks the longitude and adjusts it if necessary to ensure it falls within the valid range. It then calculates the interpolation indices based on the provided pressure level, longitude, and latitude. Next, it computes the interpolation weights for pressure, longitude, and latitude.</p>
 <p>The function interpolates vertically first and then horizontally. The interpolated value is stored in the memory location pointed to by <code>var</code>.</p>
+<p>Pressures outside the level range are linearly extrapolated using the nearest level interval, primarily to tolerate small boundary excursions.</p>
 <dl class="section note"><dt>Note</dt><dd>Ensure that the <code>array</code>, <code>ci</code>, and <code>cw</code> arrays have sufficient memory allocated before calling this function.</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
@@ -11876,7 +11878,7 @@ Here is the call graph for this function:</div>
   </dd>
 </dl>
 <p>The function first checks the longitude and adjusts it if necessary to ensure it falls within the valid range. It then calculates the interpolation indices based on the provided longitude and latitude. Next, it computes the interpolation weights for longitude and latitude.</p>
-<p>The function interpolates horizontally and stores the interpolated value in the memory location pointed to by <code>var</code>. If any of the data values used in interpolation are not finite, the function handles this situation by choosing a valid value or performing a simple interpolation.</p>
+<p>The function uses bilinear interpolation when all four corners are finite. Otherwise, it returns the nearest corner according to the interpolation weights, even if that value is nonfinite. This preserves the spatial pattern of valid and missing data; selecting only finite corners would expand valid regions, for example for a second tropopause or land-sea classifications.</p>
 <dl class="section note"><dt>Note</dt><dd>Ensure that the <code>array</code>, <code>ci</code>, and <code>cw</code> arrays have sufficient memory allocated before calling this function.</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
@@ -12042,6 +12044,7 @@ Here is the call graph for this function:</div>
   </dd>
 </dl>
 <p>The function first performs spatial interpolation for both time instances (t0 and t1) using the <code>intpol_met_space_3d</code> function. It then calculates the weighting factor <code>wt</code> based on the time stamp <code>ts</code>. Finally, it performs temporal interpolation using the interpolated values at t0 and t1 along with the weighting factor to compute the final interpolated value stored in <code>var</code>.</p>
+<p>Times outside the two meteorological timestamps are linearly extrapolated, primarily to tolerate small boundary excursions.</p>
 <dl class="section note"><dt>Note</dt><dd>Ensure that the <code>ci</code> and <code>cw</code> arrays have sufficient memory allocated before calling this function.</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
@@ -12164,6 +12167,7 @@ Here is the call graph for this function:</div>
   </dd>
 </dl>
 <p>The function first performs spatial interpolation for both time instances (t0 and t1) using the <code>intpol_met_space_2d</code> function. It then calculates the weighting factor <code>wt</code> based on the time stamp <code>ts</code>. Finally, it performs temporal interpolation using the interpolated values at t0 and t1 along with the weighting factor to compute the final interpolated value stored in <code>var</code>. If one of the interpolated values is not finite, it selects the valid value based on the weighting factor <code>wt</code>.</p>
+<p>When both spatial values are finite, times outside the two meteorological timestamps are linearly extrapolated, primarily to tolerate small boundary excursions.</p>
 <dl class="section note"><dt>Note</dt><dd>Ensure that the <code>ci</code> and <code>cw</code> arrays have sufficient memory allocated before calling this function.</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
@@ -32853,7 +32857,7 @@ Here is the call graph for this function:</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 8 2026 08:27:37 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+Generated on Sun Nov 8 2026 08:53:11 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
 </small></address>
 </div><!-- doc-content -->
 </body>
