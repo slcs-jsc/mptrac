@@ -44,13 +44,30 @@ The integration method is selected with the parameter `ADVECT`.
 | 2 (default) | mid-point                         |
 
 `DT_MOD` must not exceed the meteorological interval `DT_MET`. Normally,
-`DT_MOD` should be much smaller than `DT_MET` for accurate temporal integration
-and to limit extrapolation near meteorological time boundaries. This is an
-accuracy recommendation, not a stability requirement of the integration
-scheme. At each model step, `trac` warns if `DT_MOD` exceeds the first longitude
-grid spacing times 111132 m per degree divided by an assumed 150 m/s. This
-CFL-style warning uses neither the actual winds nor latitude or vertical grid
-spacing; it is not a meaningful distance check for UTM grids in metres.
+`DT_MOD` should be much smaller than `DT_MET` to resolve temporal changes in
+the winds and limit extrapolation near meteorological time boundaries. This is
+an accuracy recommendation, not a mathematical stability requirement.
+
+At the first model step, `trac` estimates a recommended maximum time step from
+the horizontal meteorological grid spacing:
+
+- Geographic grids: `abs(lon[1] - lon[0]) * 111132 / 150` seconds, using
+  longitude spacing in degrees and a reference speed of 150 m/s. No
+  latitude-dependent distance correction is applied.
+- Cartesian/UTM grids: `min(dx, dy) / 50` seconds, using the smallest adjacent
+  x and y grid spacings in metres and a reference speed of 50 m/s.
+
+The estimate roughly limits horizontal displacement to one grid cell per step
+at the assumed speed. Exceeding it produces one warning, not an error. It is
+an accuracy guideline rather than a strict CFL stability criterion; actual
+accuracy also depends on wind speed, spatial gradients, temporal variability,
+and the integration scheme. Strong gradients or extreme storms may require
+smaller steps, which can be assessed with timestep sensitivity studies.
+
+The estimate uses nominal meteorological grid spacing, which may differ from
+the effective resolution of the underlying atmospheric model. Interpolating
+onto a finer grid does not necessarily increase effective resolution or require
+a proportionally smaller model time step.
 
 #### Vertical coordinate and diabatic/kinematic velocities
 

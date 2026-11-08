@@ -145,10 +145,42 @@ int main(
       /* Get meteo data... */
       mptrac_get_met(ctl, clim, t, &met0, &met1, dd);
 
-      /* Check time step... */
-      if (ctl->dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
-	WARN("Violation of CFL criterion! Check DT_MOD!");
-
+      /* Recommend time step from horizontal grid spacing... */
+      if (t == ctl->t_start) {
+	double dt_rec;
+	if (met0->coord_type == 0)
+	  dt_rec = fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.;
+	else {
+	  double spacing = INFINITY;
+	  for (int ix = 1; ix < met0->nx; ix++) {
+	    const double dx = fabs(met0->lon[ix] - met0->lon[ix - 1]);
+	    if (!isfinite(dx) || dx <= 0) {
+	      spacing = NAN;
+	      break;
+	    }
+	    spacing = MIN(spacing, dx);
+	  }
+	  if (isfinite(spacing))
+	    for (int iy = 1; iy < met0->ny; iy++) {
+	      const double dy = fabs(met0->lat[iy] - met0->lat[iy - 1]);
+	      if (!isfinite(dy) || dy <= 0) {
+		spacing = NAN;
+		break;
+	      }
+	      spacing = MIN(spacing, dy);
+	    }
+	  dt_rec = spacing / 50.;
+	}
+	if (!isfinite(dt_rec) || dt_rec <= 0) {
+	  WARN
+	    ("Cannot recommend DT_MOD: invalid horizontal meteo grid spacing!");
+	} else if (ctl->dt_mod > dt_rec) {
+	  WARN
+	    ("DT_MOD=%g s may be too large for accurate trajectory integration; "
+	     "recommended maximum from horizontal meteo grid resolution is %g s.",
+	     ctl->dt_mod, dt_rec);
+	}
+      }
 #ifdef DD
       /* Set-up domain decomposition... */
       if ((t == ctl->t_start) && ctl->dd)
