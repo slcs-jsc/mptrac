@@ -1303,22 +1303,6 @@ midpoint method to solve the trajectory equation,</p>
   \vec{x}(t+\Delta t) = \vec{x}(t) + \vec{v}(\vec{x}(t) + \frac{\Delta t}{2}\vec{v}\left[\vec{x}(t), t\right], t+\frac{\Delta t}{2})  \Delta t.
 \end{align}
 \]</div>
-<p>As an alternative, the classical 4th-order Runge-Kutta method can be
-employed for the simulation, which has higher accuracy at higher
-computational costs. The method is defined by the equations:</p>
-<div class="arithmatex">\[
-\begin{align}
-\vec{x}(t+\Delta t) = \vec{x}(t) + \frac{1}{6}\left(k_1 + 2k_2 + 2k_3 + k_4 \right)\Delta t\\
-\end{align}
-\]</div>
-<div class="arithmatex">\[
-\begin{align}
- \vec{k_1} = \vec{v}(t, \vec{x}(t))\\
- \vec{k_2} = \vec{v}\left(t + \frac{\Delta t}{2}, \vec{x}(t) + \Delta t\frac{k_1}{2}\right)\\
- \vec{k_3} = \vec{v}\left(t + \frac{\Delta t}{2}, \vec{x}(t) + \Delta t\frac{k_2}{2}\right)\\
- \vec{k_4} = \vec{v}\left(t + \Delta t, \vec{x}(t) + \Delta t\,k_3\right)
-\end{align}
-\]</div>
 <p>Finally, MPTRAC can use the Euler method as well. The Euler method has
 low accuracy but is the fastest option available.</p>
 <p>The integration method is selected with the parameter <code>ADVECT</code>.</p>
@@ -1338,12 +1322,16 @@ low accuracy but is the fastest option available.</p>
 <td>2 (default)</td>
 <td>mid-point</td>
 </tr>
-<tr>
-<td>4</td>
-<td>classical 4th order Runge-Kutta</td>
-</tr>
 </tbody>
 </table>
+<p><code>DT_MOD</code> must not exceed the meteorological interval <code>DT_MET</code>. Normally,
+<code>DT_MOD</code> should be much smaller than <code>DT_MET</code> for accurate temporal integration
+and to limit extrapolation near meteorological time boundaries. This is an
+accuracy recommendation, not a stability requirement of the integration
+scheme. At each model step, <code>trac</code> warns if <code>DT_MOD</code> exceeds the first longitude
+grid spacing times 111132 m per degree divided by an assumed 150 m/s. This
+CFL-style warning uses neither the actual winds nor latitude or vertical grid
+spacing; it is not a meaningful distance check for UTM grids in metres.</p>
 <h4 id="vertical-coordinate-and-diabatickinematic-velocities">Vertical coordinate and diabatic/kinematic velocities</h4>
 <p>Besides the pressure coordinate with the pressure tendency as vertical
 velocity, MPTRAC applies the hybrid vertical coordinate <span class="arithmatex">\(\zeta\)</span> with
@@ -1358,8 +1346,8 @@ coordinate is smoothly transformed into the potential temperature
 <div class="arithmatex">\[
 \begin{equation}
     \zeta(p) = \begin{cases}
-                \theta(p) &amp; \text{if}\,\sigma &lt; \sigma_r \\
-                \theta(p) \sin{\left(\frac{1-\sigma(p)}{1-\sigma_r}\right)} &amp; \text{if}\,\sigma \geq \sigma_r
+                \theta(p) &amp; \text{if}\,\sigma \leq \sigma_r \\
+                \theta(p) \sin{\left(\frac{\pi}{2}\frac{1-\sigma(p)}{1-\sigma_r}\right)} &amp; \text{if}\,\sigma &gt; \sigma_r
                 \end{cases}
 \end{equation}
 \]</div>
