@@ -6918,6 +6918,11 @@ void mptrac_init(
   depo_t *depo,
   const int ntask) {
 
+  if (ctl->advect_vert_coord == 1)
+    for (int ip = 1; ip < atm->np; ip++)
+      if (atm->time[ip] != atm->time[0])
+	ERRMSG("Zeta advection requires identical particle initialization times!");
+
   /* Initialize timesteps... */
   module_timesteps_init(ctl, atm);
 

@@ -6226,8 +6226,8 @@ void locate_vert(
 /**
  * @brief Advances particle positions using different advection schemes.
  *
- * This function updates the positions of atmospheric particles using different 
- * advection schemes based on vertical velocity formulations (omega or zetadot). 
+ * This function updates particle positions using omega, zeta tendency, or eta
+ * tendency as the vertical velocity, according to `advect_vert_coord`.
  * The advection is performed over a number of integration nodes, using meteorological
  * data interpolated in time and space.
  *
@@ -6238,12 +6238,12 @@ void locate_vert(
  * @param[in,out] atm Pointer to the atmospheric data structure containing particle states.
  *
  * @details
- * - If `ctl->advect_vert_coord` is 0 or 2, the function uses omega vertical velocity.
- * - If `ctl->advect_vert_coord` is 1, the function uses zetadot vertical velocity.
+ * - Modes 0 and 2 use omega on pressure and native model levels, respectively.
+ * - Modes 1 and 3 integrate zeta and eta tendencies on native model levels.
  * - The function interpolates meteorological data either on pressure levels or model levels.
  * - The advection scheme supports different integration methods (e.g., two-stage, four-stage).
- * - The function updates longitude, latitude, and pressure (or zeta) for each particle.
- * - Special handling is applied to ensure `zeta` values remain non-negative.
+ * - The function updates longitude and latitude; modes 0 and 2 update pressure
+ *   directly, while modes 1 and 3 convert the updated coordinate to pressure.
  *
  * @author Lars Hoffmann
  * @author Jan Clemens
@@ -6272,8 +6272,9 @@ void module_advect(
  * @details
  * The function performs the following operations:
  * - Sets up a timer labeled "MODULE_ADVECT_INIT" within the "PHYSICS" category.
- * - If the zeta vertical coordinate system is specified (ctl->vert_coord_ap == 1), it initializes
+ * - If `ctl->advect_vert_coord == 1`, it initializes
  *   the pressure fields to be consistent with the zeta coordinate using 4D interpolation.
+ * - Initial particle times must be identical; `mptrac_init` checks this once.
  * 
  * @author Jan Clemens
  */

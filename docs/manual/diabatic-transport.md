@@ -27,6 +27,9 @@ NQ = 1
 QNT_NAME[0] = zeta
 ```
 
+All particles in the initial file must have the same initialization time in
+this mode; staggered releases are rejected.
+
 ## Eta-coordinate transport
 
 MPTRAC can also advect parcels with the model-level eta tendency

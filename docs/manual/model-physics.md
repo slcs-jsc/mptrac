@@ -63,6 +63,15 @@ The integration method is selected with the parameter `ADVECT`.
 | 2 (default) | mid-point                         |
 | 4           |  classical 4th order Runge-Kutta  |
 
+`DT_MOD` must not exceed the meteorological interval `DT_MET`. Normally,
+`DT_MOD` should be much smaller than `DT_MET` for accurate temporal integration
+and to limit extrapolation near meteorological time boundaries. This is an
+accuracy recommendation, not a stability requirement of the integration
+scheme. At each model step, `trac` warns if `DT_MOD` exceeds the first longitude
+grid spacing times 111132 m per degree divided by an assumed 150 m/s. This
+CFL-style warning uses neither the actual winds nor latitude or vertical grid
+spacing; it is not a meaningful distance check for UTM grids in metres.
+
 #### Vertical coordinate and diabatic/kinematic velocities
 
 Besides the pressure coordinate with the pressure tendency as vertical
@@ -79,8 +88,8 @@ $\theta(p)$ (see also Mahowald et al, 2004).
 $$
 \begin{equation}
     \zeta(p) = \begin{cases}
-                \theta(p) & \text{if}\,\sigma < \sigma_r \\
-                \theta(p) \sin{\left(\frac{1-\sigma(p)}{1-\sigma_r}\right)} & \text{if}\,\sigma \geq \sigma_r
+                \theta(p) & \text{if}\,\sigma \leq \sigma_r \\
+                \theta(p) \sin{\left(\frac{\pi}{2}\frac{1-\sigma(p)}{1-\sigma_r}\right)} & \text{if}\,\sigma > \sigma_r
                 \end{cases}
 \end{equation}
 $$
