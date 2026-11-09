@@ -7391,6 +7391,8 @@ void mptrac_read_ctl(
     ERRMSG("Set DIRECTION to -1 or 1!");
   ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "1e100", NULL);
   ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "180", NULL);
+  if (!isfinite(ctl->dt_mod) || ctl->dt_mod <= 0)
+    ERRMSG("DT_MOD must be finite and positive!");
 
   /* Meteo data... */
   scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
@@ -7572,6 +7574,34 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_TROPO_SPLINE", -1, "1", NULL);
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
+  const int meteo_sampled =
+    (ctl->qnt_ps >= 0 || ctl->qnt_ts >= 0 || ctl->qnt_zs >= 0
+	  || ctl->qnt_us >= 0 || ctl->qnt_vs >= 0 || ctl->qnt_ess >= 0
+	  || ctl->qnt_nss >= 0 || ctl->qnt_shf >= 0 || ctl->qnt_lsm >= 0
+	  || ctl->qnt_sst >= 0 || ctl->qnt_pbl >= 0 || ctl->qnt_pt >= 0
+	  || ctl->qnt_tt >= 0 || ctl->qnt_zt >= 0 || ctl->qnt_h2ot >= 0
+	  || ctl->qnt_zg >= 0 || ctl->qnt_p >= 0 || ctl->qnt_t >= 0
+	  || ctl->qnt_rho >= 0 || ctl->qnt_u >= 0 || ctl->qnt_v >= 0
+	  || ctl->qnt_w >= 0 || ctl->qnt_h2o >= 0 || ctl->qnt_o3 >= 0
+	  || ctl->qnt_lwc >= 0 || ctl->qnt_rwc >= 0 || ctl->qnt_iwc >= 0
+	  || ctl->qnt_swc >= 0 || ctl->qnt_cc >= 0 || ctl->qnt_pct >= 0
+	  || ctl->qnt_pcb >= 0 || ctl->qnt_cl >= 0 || ctl->qnt_plcl >= 0
+	  || ctl->qnt_plfc >= 0 || ctl->qnt_pel >= 0 || ctl->qnt_cape >= 0
+	  || ctl->qnt_cin >= 0 || ctl->qnt_o3c >= 0 || ctl->qnt_hno3 >= 0
+	  || ctl->qnt_oh >= 0 || ctl->qnt_h2o2 >= 0 || ctl->qnt_ho2 >= 0
+	  || ctl->qnt_o1d >= 0 || ctl->qnt_vh >= 0 || ctl->qnt_vz >= 0
+	  || ctl->qnt_psat >= 0 || ctl->qnt_psice >= 0 || ctl->qnt_pw >= 0
+	  || ctl->qnt_sh >= 0 || ctl->qnt_rh >= 0 || ctl->qnt_rhice >= 0
+	  || ctl->qnt_theta >= 0 || ctl->qnt_zeta >= 0
+	  || ctl->qnt_zeta_d >= 0 || ctl->qnt_eta >= 0
+	  || ctl->qnt_eta_d >= 0 || ctl->qnt_zeta_dot >= 0
+	  || ctl->qnt_eta_dot >= 0 || ctl->qnt_tvirt >= 0
+	  || ctl->qnt_lapse >= 0 || ctl->qnt_pv >= 0
+	  || ctl->qnt_tdew >= 0 || ctl->qnt_tice >= 0
+	  || ctl->qnt_tnat >= 0 || ctl->qnt_tsts >= 0);
+  if (meteo_sampled && ctl->met_dt_out >= ctl->dt_mod
+      && !DT_ALIGNED(ctl->met_dt_out, ctl->dt_mod))
+    WARN("MET_DT_OUT is not an integer multiple of DT_MOD; meteorological sampling may be skipped!");
   ctl->met_cache =
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
   ctl->met_mpi_share =
@@ -7640,6 +7670,12 @@ void mptrac_read_ctl(
   ctl->conv_cin
     = scan_ctl(filename, argc, argv, "CONV_CIN", -1, "-999", NULL);
   ctl->conv_dt = scan_ctl(filename, argc, argv, "CONV_DT", -1, "-999", NULL);
+  if (ctl->conv_cape >= 0 || ctl->conv_mix_pbl) {
+    if (!isfinite(ctl->conv_dt))
+      ERRMSG("CONV_DT must be finite!");
+    if (ctl->conv_dt > 0 && !DT_ALIGNED(ctl->conv_dt, ctl->dt_mod))
+      ERRMSG("CONV_DT must be an integer multiple of DT_MOD!");
+  }
   if (ctl->conv_cape >= 0 && ctl->met_cape == 0
       && (ctl->met_type == 0 || ctl->met_type == 6))
     ERRMSG("ECP with MET_CAPE=0 requires binary meteo data with EL pressure; netCDF and GRIB readers do not load EL!");
@@ -7783,6 +7819,8 @@ void mptrac_read_ctl(
   ctl->kpp_chem =
     (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
   ctl->dt_kpp = scan_ctl(filename, argc, argv, "DT_KPP", -1, "1800", NULL);
+  if (ctl->kpp_chem && !DT_ALIGNED(ctl->dt_kpp, ctl->dt_mod))
+    ERRMSG("DT_KPP must be a positive integer multiple of DT_MOD!");
 
   /* First order tracer chemistry... */
   ctl->tracer_chem =
@@ -7890,6 +7928,12 @@ void mptrac_read_ctl(
   if ((ctl->mixing_tau_trop > 0) != (ctl->mixing_tau_strat > 0)
       || ctl->mixing_tau_trop == 0 || ctl->mixing_tau_strat == 0)
     ERRMSG("Mixing times must either both be positive or both be disabled!");
+  if (ctl->mixing_tau_trop > 0) {
+    if (!isfinite(ctl->mixing_dt))
+      ERRMSG("MIXING_DT must be finite!");
+    if (ctl->mixing_dt > 0 && !DT_ALIGNED(ctl->mixing_dt, ctl->dt_mod))
+      ERRMSG("MIXING_DT must be an integer multiple of DT_MOD!");
+  }
   if (ctl->mixing_tau_trop > 0 && ctl->met_coord_type == 1)
     ERRMSG("Interparcel mixing requires geographic coordinates (MET_COORD_TYPE=0)!");
 
@@ -7934,6 +7978,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "ATM_GPFILE", -1, "-", ctl->atm_gpfile);
   ctl->atm_dt_out =
     scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
+  if (ctl->atm_basename[0] != '-' && ctl->atm_dt_out > 0
+      && !DT_ALIGNED(ctl->atm_dt_out, ctl->dt_mod))
+    WARN("ATM_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
   ctl->atm_filter =
     (int) scan_ctl(filename, argc, argv, "ATM_FILTER", -1, "0", NULL);
   ctl->atm_stride =
@@ -7957,6 +8004,9 @@ void mptrac_read_ctl(
 	   ctl->budget_basename);
   ctl->budget_dt_out =
     scan_ctl(filename, argc, argv, "BUDGET_DT_OUT", -1, "86400", NULL);
+  if (ctl->budget_basename[0] != '-' && ctl->budget_dt_out > 0
+      && !DT_ALIGNED(ctl->budget_dt_out, ctl->dt_mod))
+    WARN("BUDGET_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
   if (ctl->budget_basename[0] != '-' && ctl->budget_dt_out <= 0)
     ERRMSG("Invalid mass budget output settings!");
 
@@ -7965,6 +8015,9 @@ void mptrac_read_ctl(
 	   ctl->depo_basename);
   ctl->depo_dt_out =
     scan_ctl(filename, argc, argv, "DEPO_DT_OUT", -1, "86400", NULL);
+  if (ctl->depo_basename[0] != '-' && ctl->depo_dt_out > 0
+      && !DT_ALIGNED(ctl->depo_dt_out, ctl->dt_mod))
+    WARN("DEPO_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
   ctl->depo_type =
     (int) scan_ctl(filename, argc, argv, "DEPO_TYPE", -1, "0", NULL);
 
@@ -7973,6 +8026,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
     scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
+  if (ctl->csi_basename[0] != '-' && ctl->csi_dt_out > 0
+      && !DT_ALIGNED(ctl->csi_dt_out, ctl->dt_mod))
+    WARN("CSI_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
   scan_ctl(filename, argc, argv, "CSI_OBSFILE", -1, "-", ctl->csi_obsfile);
   ctl->csi_obsmin =
     scan_ctl(filename, argc, argv, "CSI_OBSMIN", -1, "0", NULL);
@@ -8005,6 +8061,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "ENS_BASENAME", -1, "-", ctl->ens_basename);
   ctl->ens_dt_out =
     scan_ctl(filename, argc, argv, "ENS_DT_OUT", -1, "86400", NULL);
+  if (ctl->ens_basename[0] != '-' && ctl->ens_dt_out > 0
+      && !DT_ALIGNED(ctl->ens_dt_out, ctl->dt_mod))
+    WARN("ENS_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
 
   /* Output of grid data... */
   scan_ctl(filename, argc, argv, "GRID_BASENAME", -1, "-",
@@ -8013,6 +8072,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "GRID_GPFILE", -1, "-", ctl->grid_gpfile);
   ctl->grid_dt_out =
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
+  if (ctl->grid_basename[0] != '-' && ctl->grid_dt_out > 0
+      && !DT_ALIGNED(ctl->grid_dt_out, ctl->dt_mod))
+    WARN("GRID_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
   ctl->grid_nc_level =
@@ -8103,6 +8165,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "VTK_BASENAME", -1, "-", ctl->vtk_basename);
   ctl->vtk_dt_out =
     scan_ctl(filename, argc, argv, "VTK_DT_OUT", -1, "86400", NULL);
+  if (ctl->vtk_basename[0] != '-' && ctl->vtk_dt_out > 0
+      && !DT_ALIGNED(ctl->vtk_dt_out, ctl->dt_mod))
+    WARN("VTK_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
   ctl->vtk_stride =
     (int) scan_ctl(filename, argc, argv, "VTK_STRIDE", -1, "1", NULL);
   ctl->vtk_scale =
@@ -8179,6 +8244,24 @@ void mptrac_read_ctl(
 	("Radioactive deposition is not supported with domain decomposition!");
   }
 #endif
+
+  if (fabs(ctl->dt_mod - nearbyint(ctl->dt_mod)) >
+      8 * DBL_EPSILON * ctl->dt_mod
+      && ((meteo_sampled && ctl->met_dt_out >= ctl->dt_mod)
+	  || ((ctl->conv_cape >= 0 || ctl->conv_mix_pbl)
+	      && ctl->conv_dt > 0)
+	  || (ctl->mixing_tau_trop > 0 && ctl->mixing_dt > 0)
+	  || (ctl->kpp_chem && ctl->dt_kpp > 0)
+	  || (ctl->atm_basename[0] != '-' && ctl->atm_dt_out > 0)
+	  || (ctl->budget_basename[0] != '-' && ctl->budget_dt_out > 0)
+	  || (ctl->depo_basename[0] != '-' && ctl->depo_dt_out > 0)
+	  || (ctl->csi_basename[0] != '-' && ctl->csi_dt_out > 0)
+	  || (ctl->ens_basename[0] != '-' && ctl->ens_dt_out > 0)
+	  || (ctl->grid_basename[0] != '-' && ctl->grid_dt_out > 0)
+	  || (ctl->vtk_basename[0] != '-' && ctl->vtk_dt_out > 0)
+	  || ctl->sort_dt > 0
+	  || (ctl->dd && ctl->dd_exchange_mode == 0 && ctl->dd_sort_dt > 0)))
+    WARN("Fractional DT_MOD may cause periodic events to be missed due to floating-point rounding in exact fmod comparisons!");
 }
 
 /*****************************************************************************/

@@ -48,6 +48,14 @@ The integration method is selected with the parameter `ADVECT`.
 the winds and limit extrapolation near meteorological time boundaries. This is
 an accuracy recommendation, not a mathematical stability requirement.
 
+Periodic convection, mixing, and KPP chemistry intervals must be integer
+multiples of `DT_MOD` when enabled; incompatible settings are rejected.
+Incompatible meteorological sampling and periodic output intervals produce
+warnings. Supported nonpositive interval settings retain their documented
+special behavior. MPTRAC aligns the simulation start time to the `DT_MOD` grid
+automatically. Fractional `DT_MOD` values can still miss events because
+periodic triggers compare floating-point remainders with zero exactly.
+
 At the first model step, `trac` estimates a recommended maximum time step from
 the horizontal meteorological grid spacing:
 
@@ -263,8 +271,7 @@ given in seconds. Their defaults are `-999`, so inter-parcel mixing is
 disabled by default. `MIXING_DT` controls the invocation interval and
 defaults to 3600 s. If it is non-positive, mixing is applied every model
 time step and `DT_MOD` is used as the interval in the exponential update. A
-positive `MIXING_DT` should be aligned with, and normally be an integer
-multiple of, `DT_MOD`.
+positive `MIXING_DT` must be an integer multiple of `DT_MOD`.
 
 The default mixing grid covers the globe from -5 to 85 km with
 $1^\circ \times 1^\circ \times 1$ km boxes. A useful starting point for
@@ -327,8 +334,7 @@ layer is located, with high CAPE above it.
 With `CONV_DT <= 0`, convection is evaluated every model timestep. A
 positive `CONV_DT` selects steps whose absolute model time is an exact
 multiple of that interval. Choose `CONV_DT` as an integer multiple of
-`DT_MOD` and align the start time with that interval; otherwise evaluations
-may occur less frequently than requested.
+`DT_MOD`; incompatible positive intervals are rejected.
 
 Separately, `CONV_MIX_PBL = 1` enables stochastic pressure redistribution
 between the surface and the PBL top. `CONV_PBL_TRANS` extends the upper

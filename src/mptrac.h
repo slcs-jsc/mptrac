@@ -171,6 +171,7 @@
    ------------------------------------------------------------ */
 
 #include <ctype.h>
+#include <float.h>
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
@@ -1121,6 +1122,13 @@
  */
 #define FMOD(x, y)				\
   ((x) - (int) ((x) / (y)) * (y))
+
+/* Arguments must be side-effect-free; each may be evaluated more than once. */
+#define DT_ALIGNED(dt, dt_mod) \
+  (isfinite(dt) && isfinite(dt_mod) && (dt_mod) > 0 && \
+   (dt) >= (dt_mod) && (dt) / (dt_mod) <= 0x1p52 && \
+   fabs((dt) / (dt_mod) - nearbyint((dt) / (dt_mod))) <= \
+   fmin(8 * DBL_EPSILON * ((dt) / (dt_mod)), 1e-8))
 
 /**
  * @brief Read data from a file stream and store it in memory.
