@@ -62,5 +62,5 @@ def compare(dd_root, serial_root, label):
 
 
 if __name__ == "__main__":
-    compare(Path(sys.argv[1]), Path(sys.argv[3]), "DD_EXCHANGE_MODE=0")
-    compare(Path(sys.argv[2]), Path(sys.argv[3]), "DD_EXCHANGE_MODE=1")
+    compare(Path(sys.argv[1]), Path(sys.argv[3]), "sort/push (DD_SORT_TYPE=1, DD_COMPACT_TYPE=0)")
+    compare(Path(sys.argv[2]), Path(sys.argv[3]), "compact (DD_SORT_TYPE=0, DD_COMPACT_TYPE=1)")

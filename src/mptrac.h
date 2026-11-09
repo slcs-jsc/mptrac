@@ -569,6 +569,22 @@
 #define NP 10000000
 #endif
 
+/*! Domain decomposition: no particle sorting (DD_SORT_TYPE). */
+#define DD_NOSORT 0
+
+/*! Domain decomposition: sort particles every DD_SORT_DT (DD_SORT_TYPE). */
+#define DD_SORT 1
+
+/*! Domain decomposition: compaction only if capacity is nearly exhausted. */
+#define DD_COMPACT_NEVER 0
+
+/*! Domain decomposition: periodic compaction (bit of DD_COMPACT_TYPE). */
+#define DD_COMPACT_PERIODIC 1
+
+/*! Domain decomposition: compaction above a hole fraction (bit of
+    DD_COMPACT_TYPE). */
+#define DD_COMPACT_THRESHOLD 2
+
 /*! Maximum number of quantities per data point. */
 #ifndef NQ
 #define NQ 15
@@ -3588,11 +3604,31 @@ typedef struct {
      fit within the global grid and local EX/EY array capacities. */
   int dd_halos_size;
 
-  /*! Sorting time interval for the compactification (DD_EXCHANGE_MODE=0). */
+  /*! Particle sorting during the exchange: 0=DD_NOSORT, 1=DD_SORT (default).
+     A sort also removes all holes, so it doubles as a compaction. */
+  int dd_sort_type;
+
+  /*! Sorting time interval [s]. Defaults to SORT_DT if that is positive,
+     otherwise to 1800 s. At these times, the regular spatial sort of the
+     physics driver is skipped, as the DD sort already does it. */
   double dd_sort_dt;
 
-  /*! Particle exchange: 0=sort/push (default), 1=direct pack/compact. */
-  int dd_exchange_mode;
+  /*! Compaction type, bit mask of DD_COMPACT_PERIODIC (every
+     DD_COMPACT_DT) and DD_COMPACT_THRESHOLD (hole fraction above
+     DD_COMPACT_FRAC). 0=DD_COMPACT_NEVER. Compaction is always forced if
+     the capacity headroom is used up. */
+  int dd_compact_type;
+
+  /*! Compaction time interval [s] for DD_COMPACT_PERIODIC. */
+  double dd_compact_dt;
+
+  /*! Hole fraction (holes / np) that triggers compaction for
+     DD_COMPACT_THRESHOLD. */
+  double dd_compact_frac;
+
+  /*! Fraction of the capacity NP that must remain free. If np exceeds
+     (1 - headroom) * NP, a compaction is forced. */
+  double dd_compact_headroom;
 
   /*! Whether the executable implements the domain decomposition. This flag is
      set by the trac tool; all other tools of MPTRAC always work on the full
@@ -4127,6 +4163,12 @@ typedef struct {
 
   /*! Auxiliary temporary array for sorting. */
   double tmp[NP];
+
+  /*! Free-list of vacated particle slots (below atm->np). */
+  int holes[NP];
+
+  /*! Number of entries in the free-list. */
+  int nholes;
 
 #endif
 
@@ -4964,8 +5006,15 @@ void dd_atm2particles(
  * @param[in]     nkeep     Number of particles retained on this rank.
  * @param[in]     npart     Number of particles sent to other ranks.
  *
+<<<<<<< HEAD
  * @note `dt` and `uvwp` are packed for outgoing particles and preserved for
  *       retained particles. Atomic index assignment in OpenACC builds may change
+=======
+ * @note Compaction removes all holes and resets the free-list
+ *       (`dd->nholes = 0`).
+ * @note `uvwp` is packed for outgoing particles and preserved for retained
+ *       particles. Atomic index assignment in OpenACC builds may change
+>>>>>>> 01c51d6e (Combine sort, compact and push, plus keep hole list.)
  *       particle order relative to the CPU implementation.
  *
  * @author Lars Hoffmann
@@ -5172,8 +5221,10 @@ void dd_normalize_lon_lat(
  * `q[iq]` into the atmospheric arrays and restores the individual time step
  * and all three `uvwp` components into the cache.
  *
- * After all particles have been copied, the total number of
- * atmospheric particles `atm->np` is increased by `npart`.
+ * Received particles first fill the vacated slots of the free-list
+ * `dd->holes` (consumed from its end). Only the remaining particles are
+ * appended at `atm->np`, which is increased accordingly, and
+ * `dd->nholes` is reduced by the number of filled slots.
  *
  * @param[in]     ctl         Pointer to the control structure
  *                            containing the number of quantities `nq`.
@@ -5184,13 +5235,16 @@ void dd_normalize_lon_lat(
  *                            appended to the atmospheric state.
  * @param[in]     npart       Number of valid particles stored in
  *                            @p particles.
+ * @param[in,out] dd          Domain decomposition structure providing the
+ *                            free-list `holes` and its length `nholes`.
  * @param[in,out] atm         Pointer to the atmospheric state. The
- *                            particle data are appended to its arrays,
- *                            and `atm->np` is incremented accordingly.
+ *                            particle data fill free slots or are appended
+ *                            to its arrays; `atm->np` is incremented by
+ *                            the number of appended particles.
  *
  * @note
- * - The routine appends particles starting at the current value of
- *   `atm->np`.
+ * - Particles beyond the free slots are appended starting at the current
+ *   value of `atm->np`.
  * - The routine aborts if the updated number of atmospheric particles
  *   exceeds the compile-time limit `NP`.
  * - When compiled with `_OPENACC`, particle data may be copied on the
@@ -5205,6 +5259,7 @@ void dd_particles2atm(
   cache_t * cache,
   const particle_t * particles,
   const int npart,
+  dd_t * dd,
   atm_t * atm);
 
 
@@ -5232,6 +5287,9 @@ void dd_particles2atm(
  * @param[in]     ctl    Pointer to the control structure containing the
  *                       quantity indices @c qnt_target_subdomain and
  *                       @c qnt_current_subdomain.
+ * @param[in,out] dd     Domain decomposition structure. The vacated slots
+ *                       are appended to the free-list `dd->holes` and
+ *                       `dd->nholes` is increased by @p npart.
  * @param[in,out] atm    Pointer to the atmospheric state. Selected particles
  *                       are copied to indices [atm->np, atm->np+npart) and
  *                       original entries are invalidated.
@@ -5257,6 +5315,7 @@ void dd_particles2atm(
  */
 void dd_push(
   const ctl_t * ctl,
+  dd_t * dd,
   atm_t * atm,
   cache_t * cache,
   int *npart);
@@ -5264,7 +5323,7 @@ void dd_push(
 /**
  * @brief Classify particles before direct packing and compaction.
  *
- * For DD_EXCHANGE_MODE=1, classify each active particle by its current
+ * For the compaction path, classify each active particle by its current
  * and target subdomain indices. Particles with either index negative are
  * invalid. Valid particles targeting the current MPI rank are retained;
  * the other valid particles are outgoing. The routine returns the two
@@ -5399,6 +5458,7 @@ void dd_read_met_nc_grid(
  *                       other MPI ranks.
  *
  * @note
+ * - The sort removes all holes and resets the free-list (`dd->nholes = 0`).
  * - The current MPI rank is obtained internally from `MPI_COMM_WORLD`.
  * - When compiled with `_OPENACC`, key generation, counting, and
  *   selected data movement may execute on the accelerator.
@@ -5415,6 +5475,43 @@ void dd_sort(
   atm_t * atm,
   dd_t * dd,
   int *npart);
+
+/**
+ * @brief Check whether the domain decomposition sort is due.
+ *
+ * @param[in] ctl  Control structure (`dd_sort_type`, `dd_sort_dt`).
+ * @param[in] t    Current simulation time [s].
+ * @return 1 if `dd_sort_type` is DD_SORT and `t` is a multiple of
+ *         `dd_sort_dt`, otherwise 0.
+ *
+ * @author Jan Clemens
+ */
+int dd_sort_due(
+  const ctl_t * ctl,
+  const double t);
+
+/**
+ * @brief Check whether a compaction is required in this time step.
+ *
+ * A compaction is required if
+ * - DD_COMPACT_PERIODIC is set and `t` is a multiple of `dd_compact_dt`,
+ * - DD_COMPACT_THRESHOLD is set and the hole fraction `dd->nholes / atm->np`
+ *   exceeds `dd_compact_frac`, or
+ * - `atm->np` exceeds `(1 - dd_compact_headroom) * NP` (always checked).
+ *
+ * @param[in] ctl  Control structure.
+ * @param[in] dd   Domain decomposition structure (free-list length).
+ * @param[in] atm  Atmospheric state.
+ * @param[in] t    Current simulation time [s].
+ * @return 1 if a compaction is due, otherwise 0.
+ *
+ * @author Jan Clemens
+ */
+int dd_compact_due(
+  const ctl_t * ctl,
+  const dd_t * dd,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Converts a given day of the year (DOY) to a date (month and day).
@@ -6455,8 +6552,14 @@ void module_convection(
  *
  * The routine performs the following steps:
  * 1. Determine the destination subdomain for each particle.
- * 2. With DD_EXCHANGE_MODE=0, use the original sort/push path; with mode 1,
- *    pack outgoing particles and compact retained particles without sorting.
+ * 2. Select one strategy for this time step:
+ *    - If ::dd_sort_due() holds, sort all particles (::dd_sort()). This also
+ *      removes all holes and replaces the spatial sort of ::module_sort().
+ *    - Otherwise, if ::dd_compact_due() holds, pack outgoing particles and
+ *      compact retained particles (::dd_count_outgoing(),
+ *      ::dd_pack_compact()).
+ *    - Otherwise, only push outgoing particles behind the end of the
+ *      arrays (::dd_push()) and record their slots as holes.
  * 3. Convert particle data from the atmospheric structure-of-arrays
  *    representation into a temporary particle buffer
  *    (array-of-structures).
@@ -7221,8 +7324,8 @@ void sort_uvwp(
  * resulting permutation is copied back to the device.
  * @note The calling physics driver invokes this routine when SORT_DT is
  * positive and the time matches the configured interval, independently of
- * DD_EXCHANGE_MODE. SORT_DT controls spatial sorting, whereas DD_SORT_DT
- * controls sorting for the legacy DD exchange path (mode 0).
+ * DD. With DD and DD_SORT_TYPE=1, the call is skipped at times when
+ * ::dd_sort_due() holds, as the DD sort already performs the spatial sort.
  * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere 
  * data structure to maintain consistency.
  *

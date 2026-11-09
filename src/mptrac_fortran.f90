@@ -553,8 +553,12 @@ MODULE mptrac_struct
      INTEGER(c_int) :: dd_subdomains_zonal
      INTEGER(c_int) :: dd_subdomains_meridional
      INTEGER(c_int) :: dd_halos_size
+     INTEGER(c_int) :: dd_sort_type
      REAL(c_double) :: dd_sort_dt
-     INTEGER(c_int) :: dd_exchange_mode
+     INTEGER(c_int) :: dd_compact_type
+     REAL(c_double) :: dd_compact_dt
+     REAL(c_double) :: dd_compact_frac
+     REAL(c_double) :: dd_compact_headroom
      INTEGER(c_int) :: dd_supported
   END TYPE ctl_t
 

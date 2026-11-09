@@ -69,16 +69,37 @@ grid, setup, close), `TIMER_READ_MET_SURFACE`, and
 are not synchronized elapsed times and should be compared alongside the
 existing total input timer.
 
-`DD_EXCHANGE_MODE=0` (the default) uses the sort/push exchange path;
-`DD_SORT_DT` controls periodic sorting and defaults to 1800 s.
-`DD_EXCHANGE_MODE=1` classifies particles, packs outgoing particles, and
-compacts retained particles without sorting. It also removes particles
-with invalid subdomain indices. In mode 1, `DD_SORT_DT` does not trigger
-DD exchange sorting. The general `SORT_DT` independently controls optional
-spatial particle sorting in the physics driver for either exchange mode.
-Both modes use the same subdomain assignment and MPI particle communication.
+Each time step, `module_dd` picks one of three strategies to remove
+particles that left the subdomain:
 
-With OpenACC, mode 1 performs classification, packing, and local
+1. **Sort** (`DD_SORT_TYPE=1`, the default) every `DD_SORT_DT` seconds. It
+   orders particles by meteorological grid box, places outgoing particles
+   behind the retained ones, and drops all holes. `DD_SORT_DT` defaults to
+   `SORT_DT` if that is positive, otherwise to 1800 s. At these times the
+   regular spatial sort of the physics driver is skipped, since the DD sort
+   already performs it, so one sort serves both purposes.
+   `DD_SORT_TYPE=0` disables the DD sort.
+2. **Compaction**, if a sort is not due but one of the compaction criteria
+   holds. It packs outgoing particles, drops all holes and moves retained
+   particles to the front without sorting. `DD_COMPACT_TYPE` is a bit mask:
+   `1` compacts every `DD_COMPACT_DT` seconds, `2` (the default) compacts
+   if the fraction of holes exceeds `DD_COMPACT_FRAC` (default 0.2), `3`
+   combines both, and `0` never compacts. Independent of this setting,
+   a compaction is forced if the particle count exceeds
+   `(1 - DD_COMPACT_HEADROOM) * NP` (default headroom 0.05).
+3. **Push** otherwise. Outgoing particles are copied behind the end of the
+   arrays and their slots are recorded in a free-list of holes. This is
+   cheap, and the holes are filled with arriving particles. Only surplus
+   arrivals are appended, and holes that stay empty are kept in the list.
+
+The optimal values depend on the resolution, `DD_SORT_DT`, and the
+architecture (CPU or GPU), so all of them are tunable. In all cases the
+particles outside of the subdomain at start-up are registered as holes.
+Particles with invalid subdomain indices are removed by sorting or
+compaction. All strategies share the same subdomain assignment and MPI
+particle communication.
+
+With OpenACC, compaction performs classification, packing, and local
 compaction on the GPU. The active particle and cache arrays remain on
 the device; only outgoing particle records are copied to the host for
 the current MPI exchange, and received records are copied to the GPU.
@@ -87,7 +108,7 @@ between ranks. `uvwp` is included in the MPI particle datatype and restored
 to the cache after each exchange. Particle files remain unchanged; `uvwp`
 is an internal state variable.
 
-The Fortran wrapper supports both DD exchange modes when built with
+The Fortran wrapper supports the DD exchange when built with
 `MPI=1 DD=1` and a matching MPI Fortran compiler (`MPIFC`).
 
 ### OpenMP and OpenACC within each rank

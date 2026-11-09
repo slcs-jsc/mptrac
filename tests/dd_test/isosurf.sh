@@ -33,7 +33,7 @@ for mode in 0 1; do
     DD_PARTICLES_LON_STRIDE=12 DD_PARTICLES_LAT_STRIDE=1 \
     DD_INIT_Z0=8 DD_INIT_Z1=12 DD_INIT_DZ=4 \
     DD_INIT_IDX_STRIDE=24 DD_WIND_ALPHA=0 \
-    DD_NP_MAX=100 DD_THRUST=0 DD_ISOSURF=3 DD_EXCHANGE_MODE=$mode \
+    DD_NP_MAX=100 DD_THRUST=0 DD_ISOSURF=3 DD_SORT_TYPE=$((1 - mode)) DD_COMPACT_TYPE=$mode \
         "$script_dir/run.sh" compile "${run_wind_arg[@]}" skip_compare \
         > "$work_dir/mode$mode.log" 2>&1
 done

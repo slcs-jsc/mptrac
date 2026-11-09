@@ -2110,7 +2110,6 @@ void dd_pack_compact(
   atm->np = nkeep;
 #pragma acc update device(atm->np)
 #else
-  (void) dd;
   (void) nkeep;
 
   /* Pack outgoing particles and fill gaps with the remaining local ones... */
@@ -2158,6 +2157,9 @@ void dd_pack_compact(
 	 rank, nlost);
   atm->np = nkeep_cpu;
 #endif
+
+  /* All holes have been removed by the compaction... */
+  dd->nholes = 0;
 }
 #endif
 
@@ -2376,9 +2378,12 @@ void dd_init(
   if (lower_bound != 0 || extent != (MPI_Aint) sizeof(particle_t))
     ERRMSG("Invalid MPI particle datatype extent!");
 
-  LOG(1, "DD: %d x %d subdomains | exchange mode %d | initial particles %d",
+  LOG(1, "DD: %d x %d subdomains | sort %d (dt= %g s) | compact %d "
+      "(dt= %g s, frac= %g, headroom= %g) | initial particles %d",
       ctl->dd_subdomains_zonal, ctl->dd_subdomains_meridional,
-      ctl->dd_exchange_mode, atm->np);
+      ctl->dd_sort_type, ctl->dd_sort_dt, ctl->dd_compact_type,
+      ctl->dd_compact_dt, ctl->dd_compact_frac, ctl->dd_compact_headroom,
+      atm->np);
 
   /* Discover node placement once when detailed logging is enabled. */
 #if LOGLEV >= 2
@@ -2408,6 +2413,29 @@ void dd_init(
 
   /* Check if particles are in subdomain... */
   dd_assign_subdomains(ctl, dd, atm, 1);
+
+  /* Particles outside of the subdomain are holes. Register them in the
+     free-list, so they are reused or removed by the next compaction... */
+  dd->nholes = 0;
+  int nholes[1] = { 0 };
+  const int np = atm->np;
+#ifdef _OPENACC
+#pragma acc data copy(nholes[0:1]) present(ctl, atm, dd)
+#pragma acc parallel loop
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if ((int) atm->q[ctl->qnt_current_subdomain][ip] == -1) {
+      int i;
+#ifdef _OPENACC
+#pragma acc atomic capture
+#endif
+      {
+	i = nholes[0];
+	nholes[0]++;
+      }
+      dd->holes[i] = ip;
+    }
+  dd->nholes = nholes[0];
 }
 #endif
 
@@ -2452,6 +2480,7 @@ void dd_particles2atm(
   cache_t *cache,
   const particle_t *particles,
   const int npart,
+  dd_t *dd,
   atm_t *atm) {
 
   /* Set timer... */
@@ -2461,33 +2490,42 @@ void dd_particles2atm(
   if (npart == 0)
     return;
 
+  /* Particles filling holes and particles being appended... */
+  const int nholes = dd->nholes;
+  const int nfill = MIN(npart, nholes);
+  const int nappend = npart - nfill;
+  const int np0 = atm->np;
+
   /* Check number of particles... */
-  if (atm->np + npart > NP)
+  if (np0 + nappend > NP)
     ERRMSG("Too many particles. Increase NP!");
 
+  /* The free-list is consumed from its end... */
 #ifdef _OPENACC
 #pragma acc enter data create(npart, particles[:npart])
 #pragma acc update device(particles[:npart], npart)
-#pragma acc data present(atm, ctl, cache, particles, npart)
+#pragma acc data present(atm, ctl, cache, dd, particles, npart)
 #pragma acc parallel loop
 #endif
-  for (int ip = atm->np; ip < atm->np + npart; ip++) {
-    atm->time[ip] = particles[ip - atm->np].time;
-    atm->lon[ip] = particles[ip - atm->np].lon;
-    atm->lat[ip] = particles[ip - atm->np].lat;
-    atm->p[ip] = particles[ip - atm->np].p;
-    cache->dt[ip] = particles[ip - atm->np].dt;
+  for (int i = 0; i < npart; i++) {
+    const int ip = (i < nfill) ? dd->holes[nholes - 1 - i] : np0 + (i - nfill);
+    atm->time[ip] = particles[i].time;
+    atm->lon[ip] = particles[i].lon;
+    atm->lat[ip] = particles[i].lat;
+    atm->p[ip] = particles[i].p;
     for (int iq = 0; iq < ctl->nq; iq++)
-      atm->q[iq][ip] = particles[ip - atm->np].q[iq];
-    for (int i = 0; i < 3; i++)
-      cache->uvwp[ip][i] = particles[ip - atm->np].uvwp[i];
+      atm->q[iq][ip] = particles[i].q[iq];
+    for (int j = 0; j < 3; j++)
+      cache->uvwp[ip][j] = particles[i].uvwp[j];
+    cache->dt[ip] = ctl->dt_mod;
   }
 #ifdef _OPENACC
 #pragma acc exit data delete(npart, particles)
 #endif
 
-  /* Reset size... */
-  atm->np += npart;
+  /* Reset sizes... */
+  dd->nholes = nholes - nfill;
+  atm->np += nappend;
 #ifdef _OPENACC
 #pragma acc update device(atm->np)
 #endif
@@ -2578,6 +2616,7 @@ void sort_uvwp(
 #ifdef DD
 void dd_push(
   const ctl_t *ctl,
+  dd_t *dd,
   atm_t *atm,
   cache_t *cache,
   int *npart) {
@@ -2586,6 +2625,7 @@ void dd_push(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   int counter = 0;
+  const int nholes0 = dd->nholes;
 
 #ifdef _OPENACC
   int *counter_ptr = (int *) acc_malloc(sizeof(int));
@@ -2597,9 +2637,10 @@ void dd_push(
   int *counter_ptr = &counter;
 #endif
 
-  /* Push non local particles behind the end of the atm... */
+  /* Push non local particles behind the end of the atm and register the
+     vacated slots in the free-list... */
 #ifdef _OPENACC
-#pragma acc parallel loop present(atm, cache, ctl) deviceptr(counter_ptr)
+#pragma acc parallel loop present(atm, cache, ctl, dd) deviceptr(counter_ptr)
 #else
 #pragma omp parallel for
 #endif
@@ -2619,6 +2660,8 @@ void dd_push(
       int global_index = atm->np + local_idx;
       if (global_index >= NP)
 	continue;
+      /* Register the vacated slot (nholes0 <= np, so index is < NP)... */
+      dd->holes[nholes0 + local_idx] = ip;
       /* Copy time, pressure, longitude, and latitude... */
       atm->time[global_index] = atm->time[ip];
       atm->p[global_index] = atm->p[ip];
@@ -2648,6 +2691,9 @@ void dd_push(
 
   if (atm->np + *npart > NP)
     ERRMSG("Too many particles during DD push. Increase NP!");
+
+  /* Update free-list length... */
+  dd->nholes = nholes0 + *npart;
 }
 #endif
 
@@ -2759,10 +2805,52 @@ void dd_sort(
 #pragma acc update device(atm->np)
 #endif
 
+  /* All holes have been removed by the sort... */
+  dd->nholes = 0;
+
   /* Free... */
 #ifdef _OPENACC
 #pragma acc exit data delete(amax)
 #endif
+}
+#endif
+
+/*****************************************************************************/
+
+#ifdef DD
+int dd_sort_due(
+  const ctl_t *ctl,
+  const double t) {
+
+  return ctl->dd && ctl->dd_sort_type == DD_SORT && ctl->dd_sort_dt > 0
+    && fmod(t, ctl->dd_sort_dt) == 0;
+}
+#endif
+
+/*****************************************************************************/
+
+#ifdef DD
+int dd_compact_due(
+  const ctl_t *ctl,
+  const dd_t *dd,
+  const atm_t *atm,
+  const double t) {
+
+  /* Periodic compaction... */
+  if ((ctl->dd_compact_type & DD_COMPACT_PERIODIC)
+      && ctl->dd_compact_dt > 0 && fmod(t, ctl->dd_compact_dt) == 0)
+    return 1;
+
+  /* Too many holes... */
+  if ((ctl->dd_compact_type & DD_COMPACT_THRESHOLD)
+      && dd->nholes > ctl->dd_compact_frac * atm->np)
+    return 1;
+
+  /* Capacity nearly exhausted... */
+  if (atm->np > (1. - ctl->dd_compact_headroom) * NP)
+    return 1;
+
+  return 0;
 }
 #endif
 
@@ -4494,16 +4582,15 @@ void module_dd(
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
 
-  if (ctl->dd_exchange_mode == 0) {
-    /* Original sort/push exchange path... */
-    if (fmod(t, ctl->dd_sort_dt) == 0)
-      dd_sort(ctl, *met, cache, atm, dd, &npart);
-    else
-      dd_push(ctl, atm, cache, &npart);
-  } else {
-    /* Count outgoing particles for direct packing and compaction... */
+  /* Select strategy: sort (also removes holes), compact, or push... */
+  int packed = 0;
+  if (dd_sort_due(ctl, t))
+    dd_sort(ctl, *met, cache, atm, dd, &npart);
+  else if (dd_compact_due(ctl, dd, atm, t)) {
     dd_count_outgoing(ctl, atm, dd, &nkeep, &npart);
-  }
+    packed = 1;
+  } else
+    dd_push(ctl, dd, atm, cache, &npart);
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   if (npart > capacity) {
@@ -4517,10 +4604,10 @@ void module_dd(
   }
 
   /* Transform from struct of array to array of struct... */
-  if (ctl->dd_exchange_mode == 0)
-    dd_atm2particles(ctl, cache, atm, particles, npart);
-  else
+  if (packed)
     dd_pack_compact(ctl, cache, atm, dd, particles, nkeep, npart);
+  else
+    dd_atm2particles(ctl, cache, atm, particles, npart);
 
   SELECT_TIMER("SYNC", "DD");
   MPI_Barrier(MPI_COMM_WORLD);
@@ -4529,7 +4616,7 @@ void module_dd(
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
   /* Transform from array of struct to struct of array... */
-  dd_particles2atm(ctl, cache, particles, npart, atm);
+  dd_particles2atm(ctl, cache, particles, npart, dd, atm);
 
   /* Free local particle array... */
   free(particles);
@@ -6664,6 +6751,7 @@ void mptrac_alloc(
        dd_init() has created it... */
 #ifdef DD
     (*dd)->MPI_Particle = MPI_DATATYPE_NULL;
+    (*dd)->nholes = 0;
 #endif
   }
 
@@ -8206,12 +8294,34 @@ void mptrac_read_ctl(
 		   (ctl->dd == 1) ? "2" : "1", NULL);
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
+  ctl->dd_sort_type =
+    (int) scan_ctl(filename, argc, argv, "DD_SORT_TYPE", -1, "1", NULL);
+  if (ctl->dd_sort_type != DD_NOSORT && ctl->dd_sort_type != DD_SORT)
+    ERRMSG("Set DD_SORT_TYPE to 0 (no sort) or 1 (sort)!");
   ctl->dd_sort_dt =
-    (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "1800", NULL);
-  ctl->dd_exchange_mode =
-    (int) scan_ctl(filename, argc, argv, "DD_EXCHANGE_MODE", -1, "0", NULL);
-  if (ctl->dd_exchange_mode < 0 || ctl->dd_exchange_mode > 1)
-    ERRMSG("Set DD_EXCHANGE_MODE to 0 (sort/push) or 1 (no sort)!");
+    (double) scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "-999", NULL);
+  if (ctl->dd_sort_dt <= 0)
+    ctl->dd_sort_dt = (ctl->sort_dt > 0) ? ctl->sort_dt : 1800;
+  ctl->dd_compact_type =
+    (int) scan_ctl(filename, argc, argv, "DD_COMPACT_TYPE", -1, "2", NULL);
+  if (ctl->dd_compact_type < 0 || ctl->dd_compact_type > 3)
+    ERRMSG("Set DD_COMPACT_TYPE to 0 (never), 1 (periodic), "
+	   "2 (threshold), or 3 (both)!");
+  ctl->dd_compact_dt =
+    (double) scan_ctl(filename, argc, argv, "DD_COMPACT_DT", -1, "-999",
+		      NULL);
+  if ((ctl->dd_compact_type & DD_COMPACT_PERIODIC) && ctl->dd_compact_dt <= 0)
+    ERRMSG("Set DD_COMPACT_DT > 0 for periodic compaction!");
+  ctl->dd_compact_frac =
+    (double) scan_ctl(filename, argc, argv, "DD_COMPACT_FRAC", -1, "0.2",
+		      NULL);
+  if (ctl->dd_compact_frac < 0)
+    ERRMSG("Set DD_COMPACT_FRAC >= 0!");
+  ctl->dd_compact_headroom =
+    (double) scan_ctl(filename, argc, argv, "DD_COMPACT_HEADROOM", -1, "0.05",
+		      NULL);
+  if (ctl->dd_compact_headroom < 0 || ctl->dd_compact_headroom >= 1)
+    ERRMSG("Set DD_COMPACT_HEADROOM in [0,1)!");
   if (ctl->met_nc_read_mode == 1 &&
       (!ctl->dd || ctl->met_type != 0 || ctl->met_convention != 0))
     ERRMSG("MET_NC_READ_MODE=1 requires MPI DD, NetCDF, and MET_CONVENTION=0!");
@@ -8451,8 +8561,12 @@ void mptrac_run_timestep(
   /* Set time steps of air parcels... */
   module_timesteps(ctl, cache, *met0, atm, t);
 
-  /* Sort particles... */
-  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
+  /* Sort particles (skipped if the DD sort does it at this time)... */
+  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0
+#ifdef DD
+      && !dd_sort_due(ctl, t)
+#endif
+    )
     module_sort(ctl, *met0, cache, atm);
 
   /* Check positions (initial)... */

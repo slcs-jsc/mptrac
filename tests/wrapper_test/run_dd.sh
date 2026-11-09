@@ -35,7 +35,7 @@ echo "Build wind generator for the global grid..."
 
 echo "Generate DD fixture..."
 if ! (cd "$test_root/tests/dd_test" && WIND_EXEC="$test_root/wind" \
-    DD_EXCHANGE_MODE=1 ./run.sh skip_run skip_compare) \
+    DD_SORT_TYPE=0 DD_COMPACT_TYPE=1 ./run.sh skip_run skip_compare) \
     > "$test_root/fixture.log" 2>&1; then
     tail -n 40 "$test_root/fixture.log"
     if [[ -f "$test_root/tests/dd_test/data/wind_generation.log" ]]; then

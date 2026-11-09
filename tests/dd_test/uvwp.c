@@ -108,7 +108,7 @@ int main(
   if (sort)
     dd_sort(ctl, met, cache, atm, dd, &npart);
   else if (push)
-    dd_push(ctl, atm, cache, &npart);
+    dd_push(ctl, dd, atm, cache, &npart);
   else
     dd_count_outgoing(ctl, atm, dd, &nkeep, &npart);
   if (npart != 2)
@@ -122,7 +122,7 @@ int main(
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
   if (npart != 2)
     MPI_Abort(MPI_COMM_WORLD, 7);
-  dd_particles2atm(ctl, cache, particles, npart, atm);
+  dd_particles2atm(ctl, cache, particles, npart, dd, atm);
   mptrac_update_host(NULL, cache, NULL, NULL, NULL, atm);
 
   int seen[8] = { 0 };

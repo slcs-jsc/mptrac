@@ -8,7 +8,10 @@ set -e
 #   skip_wind: Skip wind data generation
 #   skip_run: Skip MPTRAC simulation run
 #   skip_compare: Skip result comparison
-# Set DD_EXCHANGE_MODE=0 or 1 to select the exchange path (default: 0).
+# DD_SORT_TYPE (0/1, default 1), DD_COMPACT_TYPE (0=never, 1=periodic,
+# 2=threshold, 3=both; default 0), and DD_COMPACT_DT (default DT_MOD) select
+# the sort and compaction strategy. Sorting off plus DD_COMPACT_TYPE=1 compacts
+# every step.
 # Set DD_USE_GPU=1 for an OpenACC build on a GPU node (default: 0).
 # DD_DOMAINS_LON/LAT, DD_PARTICLES_LON_STRIDE/LAT_STRIDE, and DD_NP_MAX
 # configure non-default layouts and particle counts for benchmark runs.
@@ -25,8 +28,8 @@ set -e
 # DD_BENCHMARK=1 selects binary particle I/O, sparse output, and a configurable
 # particle-capacity margin. See benchmark.sh for automated matrix runs.
 # From tests/dd_test, for example:
-#   DD_EXCHANGE_MODE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
-#   DD_EXCHANGE_MODE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
+#   DD_SORT_TYPE=0 DD_COMPACT_TYPE=1 DD_SAVE_DIR=data.cpu ./run.sh compile skip_wind
+#   DD_SORT_TYPE=0 DD_COMPACT_TYPE=1 DD_USE_GPU=1 DD_COMPARE_DIR=data.cpu ./run.sh compile skip_wind
 # Add "hpc" on a GPU node using the configured Slurm launcher.
 # Arguments can be provided in any order
 
@@ -117,7 +120,8 @@ else
     domains_lon=${DD_DOMAINS_LON:-3}
     domains_lat=${DD_DOMAINS_LAT:-3}
 fi
-dd_exchange_mode=${DD_EXCHANGE_MODE:-0}
+dd_sort_type=${DD_SORT_TYPE:-1}
+dd_compact_type=${DD_COMPACT_TYPE:-0}
 use_thrust=${DD_THRUST:-0}
 isosurf=${DD_ISOSURF:-0}
 if [[ $isosurf -eq 3 ]]; then
@@ -371,7 +375,9 @@ ISOSURF = ${isosurf}
 DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
-DD_EXCHANGE_MODE = ${dd_exchange_mode}
+DD_SORT_TYPE = ${dd_sort_type}
+DD_COMPACT_TYPE = ${dd_compact_type}
+DD_COMPACT_DT = ${DD_COMPACT_DT:-${dt_mod}}
 DD_SORT_DT = ${DD_SORT_DT:-1800}
 NAP_MAX = ${npmax}
 EOF
@@ -492,7 +498,9 @@ ISOSURF = ${isosurf}
 DD_HALOS_SIZE = 2
 DD_SUBDOMAINS_MERIDIONAL = ${domains_lat}
 DD_SUBDOMAINS_ZONAL = ${domains_lon}
-DD_EXCHANGE_MODE = ${dd_exchange_mode}
+DD_SORT_TYPE = ${dd_sort_type}
+DD_COMPACT_TYPE = ${dd_compact_type}
+DD_COMPACT_DT = ${DD_COMPACT_DT:-${dt_mod}}
 DD_SORT_DT = ${DD_SORT_DT:-1800}
 NAP_MAX = ${npmax}
 EOF

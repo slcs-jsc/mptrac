@@ -45,7 +45,8 @@ fi
 export DD_MET_NX=$met_nx DD_MET_NY=$met_ny DD_MET_NZ=$met_nz DD_MET_EP=$met_ep
 
 counts=${DD_BENCH_COUNTS:-100000,1000000,10000000}
-modes=${DD_BENCH_MODES:-${DD_EXCHANGE_MODE:-0,1}}
+# Benchmark modes: 0=sort/push, 1=compact every step without sorting.
+modes=${DD_BENCH_MODES:-0,1}
 repeats=${DD_BENCH_REPEATS:-1}
 disk_limit=${DD_BENCH_MAX_DISK_GIB:-64}
 memory_limit=${DD_BENCH_MAX_PARTICLE_MEMORY_GIB:-24}
@@ -376,7 +377,11 @@ PY
                     exit 1
                 fi
                 mkdir -p "$case_dir"
-                export DD_EXCHANGE_MODE=$mode
+                case $mode in
+                    0) export DD_SORT_TYPE=1 DD_COMPACT_TYPE=0 ;;
+                    1) export DD_SORT_TYPE=0 DD_COMPACT_TYPE=1 ;;
+                    *) echo "[ERROR] Unknown benchmark mode: $mode" >&2; exit 1 ;;
+                esac
                 setup_args=(skip_run)
                 compile_key="$capacity:$layout"
                 if [[ $compiled_key != "$compile_key" ]]; then

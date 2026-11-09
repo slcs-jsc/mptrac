@@ -6,8 +6,8 @@ measurements. Commands below assume the repository root as the working directory
 ## DD performance benchmark
 
 `tests/dd_test/benchmark.sh` runs a matrix of the sort/push exchange path
-(`DD_EXCHANGE_MODE=0`) and the sort-free compaction path
-(`DD_EXCHANGE_MODE=1`). It uses the existing DD setup in `run.sh` with
+(benchmark mode 0: `DD_SORT_TYPE=1`, `DD_COMPACT_TYPE=0`) and the
+sort-free compaction path (mode 1: `DD_SORT_TYPE=0`, `DD_COMPACT_TYPE=1`). It uses the existing DD setup in `run.sh` with
 `DD_BENCHMARK=1` in the test script. This setting selects benchmark input and
 output; MPTRAC diagnostics use the regular compile-time `LOGLEV`. The normal
 regression mode and its reference files are unchanged. By default the
@@ -157,7 +157,7 @@ scratch space. Set `DD_BENCH_DRY_RUN=1` first to print capacity and disk
 estimates without compiling or running. Start with a small matrix. The same
 script accepts
 `DD_DOMAINS_LON`, `DD_DOMAINS_LAT`, `DD_SIMULATION_HOURS`, `DD_SORT_DT`,
-`DD_EXCHANGE_MODE` through `DD_BENCH_MODES`, `DD_DIFFUSION`,
+the benchmark mode (see above) through `DD_BENCH_MODES`, `DD_DIFFUSION`,
 `DD_TURB_MESOX`, `DD_TURB_MESOZ`, and the `DD_WIND_PERT_*` parameters.
 `DD_THRUST=1` selects GPU Thrust sorting in mode 0; set it to 0 to compare
 the GSL sorting backend. The ordinary `run.sh` test defaults to
@@ -328,7 +328,7 @@ test "$status" -eq 0
 ## Fortran wrapper DD test
 
 The DD branch of `wrapper_test` compares `trac_fortran` with `trac` using
-exchange mode 1. Build from `src/` with the DD test dimensions:
+`DD_SORT_TYPE=0` and `DD_COMPACT_TYPE=1`. Build from `src/` with the DD test dimensions:
 
 ```bash
 make clean
