@@ -1517,7 +1517,8 @@ variates drawn from the standard normal distribution.</p>
 <h2 id="inter-parcel-mixing">Inter-parcel mixing</h2>
 <p>Lagrangian air parcels do not exchange their carried quantities unless an
 explicit mixing process is applied. The inter-parcel mixing module groups
-active particles into configurable longitude, latitude, and altitude boxes
+active particles into configurable geographic longitude, latitude, and
+altitude boxes
 and relaxes each supported quantity towards its local box mean. The update
 for particle <span class="arithmatex">\(i\)</span> is</p>
 <div class="arithmatex">\[
@@ -1528,9 +1529,12 @@ q_i^\prime = q_i + \alpha_i (\overline{q}_\alpha-q_i),
 \overline{q}_\alpha =
 \frac{\sum_i \alpha_i q_i}{\sum_i \alpha_i}
 \]</div>
-<p>conserves the sum of the mixed quantity within each box. Boxes containing
-only one particle are unaffected. Consequently, the effective mixing also
-depends on particle density and box size.</p>
+<p>conserves the unweighted sum of the mixed quantity within each box and
+ensemble. Air-mass-weighted conservation requires additional assumptions,
+such as equal represented air masses. Particles with zero individual time
+steps do not participate. Boxes containing only one particle are unaffected.
+Consequently, the effective mixing also depends on particle density and box
+size.</p>
 <p>Users specify e-folding times rather than per-call exchange fractions. The
 tropospheric weight <span class="arithmatex">\(w_i\)</span> is used to interpolate the mixing rates,</p>
 <div class="arithmatex">\[
@@ -1560,6 +1564,10 @@ MIXING_TAU_STRAT = 31557600  # 1 year
 e-folding times produce faster relaxation, whereas larger boxes mix particles
 over larger spatial scales. The mixing times, box dimensions, and particle
 density should therefore be varied together in sensitivity studies.</p>
+<p>Mixing currently requires geographic coordinates; Cartesian/UTM mixing is
+unsupported. With MPI domain decomposition, box means use only particles on
+the local rank. Subdomain boundaries follow the meteorological grid and may
+split mixing boxes; particle migration occurs after mixing in each step.</p>
 <h2 id="convection">Convection</h2>
 <p>The convection parameterization implemented in MPTRAC introduces the
 concept of the Extreme Convection Parametrization (ECP) to efficiently
