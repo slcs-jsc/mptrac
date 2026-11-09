@@ -1567,7 +1567,7 @@ density should therefore be varied together in sensitivity studies.</p>
 <p>Mixing currently requires geographic coordinates; Cartesian/UTM mixing is
 unsupported. With MPI domain decomposition, box means use only particles on
 the local rank. Subdomain boundaries follow the meteorological grid and may
-split mixing boxes; particle migration occurs after mixing in each step.</p>
+split mixing boxes. Particle migration occurs before mixing in each step.</p>
 <h2 id="convection">Convection</h2>
 <p>The convection parameterization implemented in MPTRAC introduces the
 concept of the Extreme Convection Parametrization (ECP) to efficiently

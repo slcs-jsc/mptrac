@@ -117,6 +117,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a6e14963baf037c1f5306ed747f0c0fc2" id="r_a6e14963baf037c1f5306ed747f0c0fc2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6e14963baf037c1f5306ed747f0c0fc2">lat</a></td></tr>
 <tr class="memdesc:a6e14963baf037c1f5306ed747f0c0fc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Latitude [deg].  <br /></td></tr>
 <tr class="separator:a6e14963baf037c1f5306ed747f0c0fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae74e8f671aaf97052ab523836ea84bdd" id="r_ae74e8f671aaf97052ab523836ea84bdd"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae74e8f671aaf97052ab523836ea84bdd">dt</a></td></tr>
+<tr class="memdesc:ae74e8f671aaf97052ab523836ea84bdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Individual time step [s].  <br /></td></tr>
+<tr class="separator:ae74e8f671aaf97052ab523836ea84bdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adabeda2e4d6dfb8b74685e488c5fb031" id="r_adabeda2e4d6dfb8b74685e488c5fb031"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adabeda2e4d6dfb8b74685e488c5fb031">q</a> [<a class="el" href="mptrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>]</td></tr>
 <tr class="memdesc:adabeda2e4d6dfb8b74685e488c5fb031"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quantity data (for various, user-defined attributes).  <br /></td></tr>
 <tr class="separator:adabeda2e4d6dfb8b74685e488c5fb031"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -126,9 +129,9 @@ Data Fields</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Particle data. </p>
-<p>This structure contains information related to a single air parcel, including time, pressure, position, quantities, and the turbulent velocity state needed when the particle migrates between MPI ranks. </p>
+<p>This structure contains information related to a single air parcel, including time, pressure, position, quantities, and the turbulent velocity state and individual time step needed when the particle migrates between MPI ranks. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03633">3633</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03634">3634</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="a79ce74828014dd2521ceeedbd857d1a6" name="a79ce74828014dd2521ceeedbd857d1a6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a79ce74828014dd2521ceeedbd857d1a6">&#9670;&#160;</a></span>time</h2>
@@ -144,7 +147,7 @@ Data Fields</h2></td></tr>
 
 <p>Time [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03636">3636</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03637">3637</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -162,7 +165,7 @@ Data Fields</h2></td></tr>
 
 <p>Pressure [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03639">3639</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03640">3640</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -180,7 +183,7 @@ Data Fields</h2></td></tr>
 
 <p>Longitude [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03642">3642</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03643">3643</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -198,7 +201,25 @@ Data Fields</h2></td></tr>
 
 <p>Latitude [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03645">3645</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03646">3646</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+
+</div>
+</div>
+<a id="ae74e8f671aaf97052ab523836ea84bdd" name="ae74e8f671aaf97052ab523836ea84bdd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae74e8f671aaf97052ab523836ea84bdd">&#9670;&#160;</a></span>dt</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double particle_t::dt</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Individual time step [s]. </p>
+
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03649">3649</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -216,7 +237,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity data (for various, user-defined attributes). </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03648">3648</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03652">3652</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -234,7 +255,7 @@ Data Fields</h2></td></tr>
 
 <p>Correlated velocity perturbations: horizontal [m/s], mesoscale vertical [hPa/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03651">3651</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03655">3655</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
 </div>
 </div>
@@ -244,7 +265,7 @@ Data Fields</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 9 2026 19:42:52 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+Generated on Mon Nov 9 2026 20:28:53 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
 </small></address>
 </div><!-- doc-content -->
 </body>
