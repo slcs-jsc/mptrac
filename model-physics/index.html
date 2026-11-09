@@ -1569,30 +1569,20 @@ unsupported. With MPI domain decomposition, box means use only particles on
 the local rank. Subdomain boundaries follow the meteorological grid and may
 split mixing boxes. Particle migration occurs before mixing in each step.</p>
 <h2 id="convection">Convection</h2>
-<p>The convection parameterization implemented in MPTRAC introduces the
-concept of the Extreme Convection Parametrization (ECP) to efficiently
-simulate convective effects within Lagrangian transport models. This
-method is based on the assumption that convective events create
-well-mixed columns of air, and it leverages convective available
-potential energy (CAPE), convective inhibition (CIN) and equilibrium
-level (EL) data from meteorological fields to capture this behavior.</p>
-<p>The fundamental idea underlying the ECP approach involves several key
-steps. First, the meteorological fields are used to interpolate
-gridded CAPE, CIN and EL values to the horizontal positions of
-individual air parcels within the Lagrangian model. Then, user-defined
-thresholds of <span class="arithmatex">\(\sf{CAPE_0}\)</span> and <span class="arithmatex">\(\sf{CIN_0}\)</span> are applied globally. If
-the interpolated CAPE value of an air parcel surpasses the
-<span class="arithmatex">\(\sf{CAPE_0}\)</span> threshold or the interpolated CIN value is below the
-<span class="arithmatex">\(\sf{CIN_0}\)</span> threshold and the parcel's position is below the EL, the
-model triggers a convective event.</p>
-<p>During a convective event, air parcels affected by the event are
-subject to random vertical redistribution within the atmospheric
-column, spanning from the Earth's surface to the equilibrium
-level. This vertical redistribution takes into account air density to
-ensure the creation of a well-mixed column of air. Importantly, this
-redistribution process adheres to mass conservation principles,
-maintaining both the number of air parcels and their collective mass
-constant.</p>
+<p>MPTRAC's Extreme Convection Parameterization (ECP) represents unresolved
+convection by randomly redistributing particles vertically in a column.
+It uses convective available potential energy (CAPE) and equilibrium-level
+(EL) pressure from meteorological fields. Convective inhibition (CIN) is
+an optional additional filter.</p>
+<p>At each scheduled evaluation, ECP acts on an active particle at or below
+the EL when its interpolated CAPE is at least <code>CONV_CAPE</code>, the EL pressure is
+finite and between zero and surface pressure, and, if <code>CONV_CIN &gt; 0</code>,
+its interpolated CIN is finite and at most <code>CONV_CIN</code>. A nonpositive
+<code>CONV_CIN</code> disables the CIN filter.</p>
+<p>During a convective event, particle pressure is redrawn between surface
+and EL pressure using the established density-weighted method for a
+well-mixed column. The routine does not directly change particle number
+or tracer mass. Particles with zero individual timestep do not participate.</p>
 <p>In subsequent time steps of the model, the trajectories of air parcels
 are continued from their new vertical positions, assigned during the
 convective mixing event. This dynamic approach enables the model to
@@ -1601,23 +1591,32 @@ accounting for the vertical mixing effects they induce.</p>
 <p>The ECP method within MPTRAC is versatile and accommodates different
 simulation scenarios based on the chosen threshold <span class="arithmatex">\(\sf{CAPE_0}\)</span>. By
 setting <span class="arithmatex">\(\sf{CAPE_0}\)</span> to zero, the model implements the "extreme
-convection" approach, where convection is simulated wherever CAPE
-exists below the EL. This represents an upper-limit scenario for the
-effects of unresolved convection in the meteorological fields. On the
-other hand, by turning off the ECP entirely, only explicitly resolved
-convective updrafts of the meteorological fields are considered,
-representing a lower-limit scenario. Intermediate states can be
-simulated by selecting specific values for threshold
+convection" approach, where convection is simulated wherever CAPE meets
+the zero threshold below a valid EL. This represents an upper-limit
+scenario for the effects of unresolved convection in the meteorological
+fields. Turning off ECP leaves explicitly resolved convective
+updrafts and any other enabled vertical processes. Intermediate states
+can be simulated by selecting specific values for threshold
 <span class="arithmatex">\(\sf{CAPE_0}\)</span>. The parameter <span class="arithmatex">\(\sf{CIN_0}\)</span> can be used to prevent
 triggered convection in regions where a larger lower-level inversion
 layer is located, with high CAPE above it.</p>
-<p>The frequency of applying the ECP can be customized to the
-simulation's requirements. It can be implemented every model time step
-or at user-defined intervals that match typical convective
-timescales. This adaptability adds to the flexibility of the ECP
-method, making it suitable for a variety of simulation contexts.</p>
-<p>The convection parameterisation is set off per default, i.e. values
-are set to -999.</p>
+<p>With <code>CONV_DT &lt;= 0</code>, convection is evaluated every model timestep. A
+positive <code>CONV_DT</code> selects steps whose absolute model time is an exact
+multiple of that interval. Choose <code>CONV_DT</code> as an integer multiple of
+<code>DT_MOD</code> and align the start time with that interval; otherwise evaluations
+may occur less frequently than requested.</p>
+<p>Separately, <code>CONV_MIX_PBL = 1</code> enables stochastic pressure redistribution
+between the surface and the PBL top. <code>CONV_PBL_TRANS</code> extends the upper
+boundary by a fraction of the PBL pressure thickness above that top.
+This option is separate from the PBL Langevin diffusion scheme and does
+not require CAPE or EL. If both convection options are enabled, the
+lower-pressure upper boundary is used.</p>
+<p>For netCDF and GRIB input, <code>MET_CAPE = 1</code> computes CAPE, CIN and EL from
+meteorological profiles on geographic grids. Binary meteorological input
+contains these fields. With <code>MET_CAPE = 0</code>, the netCDF and GRIB readers do
+not load EL, so ECP cannot use that combination; PBL-only redistribution
+remains available.</p>
+<p>Convection is off by default.</p>
 <table>
 <thead>
 <tr>
@@ -1629,18 +1628,28 @@ are set to -999.</p>
 <tbody>
 <tr>
 <td>CONV_CAPE</td>
-<td>CAPE threshold</td>
+<td>CAPE threshold [J/kg]; negative disables ECP</td>
 <td>-999</td>
 </tr>
 <tr>
 <td>CONV_CIN</td>
-<td>CIN threshold</td>
+<td>Maximum CIN when positive [J/kg]; nonpositive disables the filter</td>
 <td>-999</td>
 </tr>
 <tr>
 <td>CONV_DT</td>
-<td>evaluation interval</td>
+<td>Evaluation interval [s]; nonpositive evaluates every step</td>
 <td>-999</td>
+</tr>
+<tr>
+<td>CONV_MIX_PBL</td>
+<td>Enable PBL pressure redistribution</td>
+<td>0</td>
+</tr>
+<tr>
+<td>CONV_PBL_TRANS</td>
+<td>Fractional extension above the PBL top</td>
+<td>0</td>
 </tr>
 </tbody>
 </table>
