@@ -3628,7 +3628,8 @@ typedef struct {
  * 
  * This structure contains information related to a single air parcel,
  * including time, pressure, position, quantities, and the turbulent
- * velocity state needed when the particle migrates between MPI ranks.
+ * velocity state and individual time step needed when the particle migrates
+ * between MPI ranks.
  */
 typedef struct {
 
@@ -3643,6 +3644,9 @@ typedef struct {
 
   /*! Latitude [deg]. */
   double lat;
+
+  /*! Individual time step [s]. */
+  double dt;
 
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ];
@@ -4877,8 +4881,8 @@ void dd_assign_subdomains(
  * - `atm->q[ctl->qnt_current_subdomain][ip] >= 0`.
  *
  * For each selected entry, the particle coordinates (`time`, `lon`,
- * `lat`, `p`), all quantities `q[iq]`, and `cache->uvwp[ip]` are copied into
- * `particles[ip - atm->np]`.
+ * `lat`, `p`), all quantities `q[iq]`, `cache->dt[ip]`, and `cache->uvwp[ip]`
+ * are copied into `particles[ip - atm->np]`.
  *
  * After copying, the atmospheric entry is marked as inactive for local
  * ownership by setting `atm->q[ctl->qnt_current_subdomain][ip] = -1`, and the
@@ -4952,8 +4956,8 @@ void dd_atm2particles(
  * @param[in]     nkeep     Number of particles retained on this rank.
  * @param[in]     npart     Number of particles sent to other ranks.
  *
- * @note `uvwp` is packed for outgoing particles and preserved for retained
- *       particles. Atomic index assignment in OpenACC builds may change
+ * @note `dt` and `uvwp` are packed for outgoing particles and preserved for
+ *       retained particles. Atomic index assignment in OpenACC builds may change
  *       particle order relative to the CPU implementation.
  *
  * @author Lars Hoffmann
@@ -5157,20 +5161,17 @@ void dd_normalize_lon_lat(
  *
  * For each transferred particle, the routine copies the particle
  * coordinates (`time`, `lon`, `lat`, `p`) and all particle quantities
- * `q[iq]` into the atmospheric arrays and restores all three `uvwp`
- * components into the cache. The cached time-step value `cache->dt[ip]`
- * is initialized to `ctl->dt_mod` for each appended particle.
+ * `q[iq]` into the atmospheric arrays and restores the individual time step
+ * and all three `uvwp` components into the cache.
  *
  * After all particles have been copied, the total number of
  * atmospheric particles `atm->np` is increased by `npart`.
  *
  * @param[in]     ctl         Pointer to the control structure
- *                            containing the number of quantities
- *                            `nq` and the model time step `dt_mod`.
+ *                            containing the number of quantities `nq`.
  * @param[in,out] cache       Pointer to the cache structure. The
- *                            cached time-step values for appended
- *                            particles are initialized to `ctl->dt_mod`,
- *                            and `uvwp` is restored from @p particles.
+ *                            cached time-step values and `uvwp` are
+ *                            restored from @p particles.
  * @param[in]     particles   Buffer containing the particles to be
  *                            appended to the atmospheric state.
  * @param[in]     npart       Number of valid particles stored in

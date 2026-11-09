@@ -1,4 +1,4 @@
-/* Direct MPI regression for particle-specific turbulent velocity state. */
+/* Direct MPI regression for particle-specific timestep and velocity state. */
 #include "mptrac.h"
 
 static float expected_uvwp(
@@ -23,6 +23,8 @@ int main(
   const int compact = strcmp(argv[1], "compact") == 0;
   if (!sort && !push && !compact)
     MPI_Abort(MPI_COMM_WORLD, 2);
+
+  const double expected_dt[8] = { 0, 0, 600, 600, 150, 150, -90, -90 };
 
 #ifdef _OPENACC
   const int devices = acc_get_num_devices(acc_device_nvidia);
@@ -69,7 +71,7 @@ int main(
     atm->lon[ip] = rank == 0 ? 20. + 20. * ip : 200. + 20. * ip;
     atm->lat[ip] = 0;
     atm->q[0][ip] = id;
-    cache->dt[ip] = 120;
+    cache->dt[ip] = expected_dt[id];
     for (int j = 0; j < 3; j++)
       cache->uvwp[ip][j] = expected_uvwp(id, j);
   }
@@ -87,7 +89,7 @@ int main(
       || extent != (MPI_Aint) sizeof(particle_t)
       || true_extent != (MPI_Aint) (offsetof(particle_t, uvwp)
 				     + sizeof(((particle_t *) 0)->uvwp))
-      || type_size != (int) ((4 + NQ) * sizeof(double)
+      || type_size != (int) ((5 + NQ) * sizeof(double)
 			    + 3 * sizeof(float)))
     MPI_Abort(MPI_COMM_WORLD, 4);
 
@@ -133,6 +135,9 @@ int main(
     if ((id / 4 == rank && id % 2 != 0)
 	|| (id / 4 != rank && id % 2 != 1))
       MPI_Abort(MPI_COMM_WORLD, 9);
+    const double dt = expected_dt[id];
+    if (memcmp(&cache->dt[ip], &dt, sizeof(double)) != 0)
+      MPI_Abort(MPI_COMM_WORLD, 12);
     for (int j = 0; j < 3; j++) {
       const float expected = expected_uvwp(id, j);
       if (memcmp(&cache->uvwp[ip][j], &expected, sizeof(float)) != 0)

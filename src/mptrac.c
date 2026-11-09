@@ -2029,6 +2029,7 @@ void dd_atm2particles(
       particles[ip - atm->np].lon = atm->lon[ip];
       particles[ip - atm->np].lat = atm->lat[ip];
       particles[ip - atm->np].p = atm->p[ip];
+      particles[ip - atm->np].dt = cache->dt[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
       for (int i = 0; i < 3; i++)
@@ -2077,6 +2078,7 @@ void dd_pack_compact(
       particles[i].p = atm->p[ip];
       particles[i].lon = atm->lon[ip];
       particles[i].lat = atm->lat[ip];
+      particles[i].dt = cache->dt[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[i].q[iq] = atm->q[iq][ip];
       for (int j = 0; j < 3; j++)
@@ -2126,6 +2128,7 @@ void dd_pack_compact(
       particles[nsend].p = atm->p[ip];
       particles[nsend].lon = atm->lon[ip];
       particles[nsend].lat = atm->lat[ip];
+      particles[nsend].dt = cache->dt[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[nsend].q[iq] = atm->q[iq][ip];
       for (int i = 0; i < 3; i++)
@@ -2350,17 +2353,18 @@ void dd_init(
     ERRMSG("Number of tasks and subdomains is not identical!");
 
   /* Register the MPI_Particle data type... */
-  const MPI_Datatype types[6] =
-    { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+  const MPI_Datatype types[7] =
+    { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
     MPI_FLOAT };
-  const int blocklengths[6] = { 1, 1, 1, 1, NQ, 3 };
-  const MPI_Aint displacements[6] =
+  const int blocklengths[7] = { 1, 1, 1, 1, 1, NQ, 3 };
+  const MPI_Aint displacements[7] =
     { offsetof(particle_t, time), offsetof(particle_t, p),
     offsetof(particle_t, lon), offsetof(particle_t, lat),
-    offsetof(particle_t, q), offsetof(particle_t, uvwp)
+      offsetof(particle_t, dt), offsetof(particle_t, q),
+      offsetof(particle_t, uvwp)
   };
   MPI_Datatype fields;
-  MPI_Type_create_struct(6, blocklengths, displacements, types, &fields);
+  MPI_Type_create_struct(7, blocklengths, displacements, types, &fields);
   /* The trailing float array can leave padding in particle_t. Alltoallv
      counts and displacements must advance by the full C structure size. */
   MPI_Type_create_resized(fields, 0, (MPI_Aint) sizeof(particle_t),
@@ -2472,11 +2476,11 @@ void dd_particles2atm(
     atm->lon[ip] = particles[ip - atm->np].lon;
     atm->lat[ip] = particles[ip - atm->np].lat;
     atm->p[ip] = particles[ip - atm->np].p;
+    cache->dt[ip] = particles[ip - atm->np].dt;
     for (int iq = 0; iq < ctl->nq; iq++)
       atm->q[iq][ip] = particles[ip - atm->np].q[iq];
     for (int i = 0; i < 3; i++)
       cache->uvwp[ip][i] = particles[ip - atm->np].uvwp[i];
-    cache->dt[ip] = ctl->dt_mod;
   }
 #ifdef _OPENACC
 #pragma acc exit data delete(npart, particles)
@@ -8402,6 +8406,14 @@ void mptrac_run_timestep(
   /* Check positions (final)... */
   module_position(cache, *met0, *met1, atm, 1);
 
+  /* Domain decomposition... */
+#ifdef DD
+  if (ctl->dd)
+    module_dd(t, ctl, cache, dd, atm, met0);
+#else
+  (void) dd;
+#endif
+
   /* Interpolate meteo data... */
   if (ctl->met_dt_out > 0
       && (ctl->met_dt_out < ctl->dt_mod || fmod(t, ctl->met_dt_out) == 0))
@@ -8448,14 +8460,6 @@ void mptrac_run_timestep(
   /* Radioactive decay... */
   if (ctl->radio_decay)
     module_radio_decay(ctl, cache, atm);
-
-  /* Domain decomposition... */
-#ifdef DD
-  if (ctl->dd)
-    module_dd(t, ctl, cache, dd, atm, met0);
-#else
-  (void) dd;
-#endif
 
   /* Radioactive deposition... */
   if (ctl->radio_depo)

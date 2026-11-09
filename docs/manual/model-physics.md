@@ -284,7 +284,7 @@ density should therefore be varied together in sensitivity studies.
 Mixing currently requires geographic coordinates; Cartesian/UTM mixing is
 unsupported. With MPI domain decomposition, box means use only particles on
 the local rank. Subdomain boundaries follow the meteorological grid and may
-split mixing boxes; particle migration occurs after mixing in each step.
+split mixing boxes. Particle migration occurs before mixing in each step.
 
 ## Convection
 
