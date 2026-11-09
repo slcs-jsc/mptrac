@@ -1328,6 +1328,13 @@ low accuracy but is the fastest option available.</p>
 <code>DT_MOD</code> should be much smaller than <code>DT_MET</code> to resolve temporal changes in
 the winds and limit extrapolation near meteorological time boundaries. This is
 an accuracy recommendation, not a mathematical stability requirement.</p>
+<p>Periodic convection, mixing, and KPP chemistry intervals must be integer
+multiples of <code>DT_MOD</code> when enabled; incompatible settings are rejected.
+Incompatible meteorological sampling and periodic output intervals produce
+warnings. Supported nonpositive interval settings retain their documented
+special behavior. MPTRAC aligns the simulation start time to the <code>DT_MOD</code> grid
+automatically. Fractional <code>DT_MOD</code> values can still miss events because
+periodic triggers compare floating-point remainders with zero exactly.</p>
 <p>At the first model step, <code>trac</code> estimates a recommended maximum time step from
 the horizontal meteorological grid spacing:</p>
 <ul>
@@ -1551,8 +1558,7 @@ given in seconds. Their defaults are <code>-999</code>, so inter-parcel mixing i
 disabled by default. <code>MIXING_DT</code> controls the invocation interval and
 defaults to 3600 s. If it is non-positive, mixing is applied every model
 time step and <code>DT_MOD</code> is used as the interval in the exponential update. A
-positive <code>MIXING_DT</code> should be aligned with, and normally be an integer
-multiple of, <code>DT_MOD</code>.</p>
+positive <code>MIXING_DT</code> must be an integer multiple of <code>DT_MOD</code>.</p>
 <p>The default mixing grid covers the globe from -5 to 85 km with
 <span class="arithmatex">\(1^\circ \times 1^\circ \times 1\)</span> km boxes. A useful starting point for
 sensitivity studies on this grid is</p>
@@ -1603,8 +1609,7 @@ layer is located, with high CAPE above it.</p>
 <p>With <code>CONV_DT &lt;= 0</code>, convection is evaluated every model timestep. A
 positive <code>CONV_DT</code> selects steps whose absolute model time is an exact
 multiple of that interval. Choose <code>CONV_DT</code> as an integer multiple of
-<code>DT_MOD</code> and align the start time with that interval; otherwise evaluations
-may occur less frequently than requested.</p>
+<code>DT_MOD</code>; incompatible positive intervals are rejected.</p>
 <p>Separately, <code>CONV_MIX_PBL = 1</code> enables stochastic pressure redistribution
 between the surface and the PBL top. <code>CONV_PBL_TRANS</code> extends the upper
 boundary by a fraction of the PBL pressure thickness above that top.
