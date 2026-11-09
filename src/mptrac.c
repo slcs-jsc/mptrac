@@ -5496,12 +5496,16 @@ void module_meteo(
 
 void module_mixing(
   const ctl_t *ctl,
+  const cache_t *cache,
   const clim_t *clim,
   atm_t *atm,
   const double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_MIXING", "PHYSICS");
+
+  if (atm->np == 0)
+    return;
 
   /* Allocate... */
   const int np = atm->np;
@@ -5526,12 +5530,16 @@ void module_mixing(
   /* Get indices... */
 #ifdef _OPENACC
 #pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],mixparam[0:np])
-#pragma acc data present(ctl,clim,atm,ixs,iys,izs,mixparam)
+#pragma acc data present(ctl,cache,clim,atm,ixs,iys,izs,mixparam)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
+    if (cache->dt[ip] == 0) {
+      izs[ip] = -1;
+      continue;
+    }
     const double zpart = Z(atm->p[ip]);
     if (atm->time[ip] < t0 || atm->time[ip] > t1
 	|| atm->lon[ip] < ctl->mixing_lon0
@@ -7874,6 +7882,8 @@ void mptrac_read_ctl(
   if ((ctl->mixing_tau_trop > 0) != (ctl->mixing_tau_strat > 0)
       || ctl->mixing_tau_trop == 0 || ctl->mixing_tau_strat == 0)
     ERRMSG("Mixing times must either both be positive or both be disabled!");
+  if (ctl->mixing_tau_trop > 0 && ctl->met_coord_type == 1)
+    ERRMSG("Interparcel mixing requires geographic coordinates (MET_COORD_TYPE=0)!");
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
@@ -8416,7 +8426,7 @@ void mptrac_run_timestep(
   /* Interparcel mixing... */
   if (ctl->mixing_tau_trop > 0 && ctl->mixing_tau_strat > 0
       && (ctl->mixing_dt <= 0 || fmod(t, ctl->mixing_dt) == 0))
-    module_mixing(ctl, clim, atm, t);
+    module_mixing(ctl, cache, clim, atm, t);
 
   /* Calculate the tracer vmr in the chemistry grid... */
   if (ctl->oh_chem_reaction != 0 || ctl->h2o2_chem_reaction != 0

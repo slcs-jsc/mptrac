@@ -222,7 +222,8 @@ variates drawn from the standard normal distribution.
 
 Lagrangian air parcels do not exchange their carried quantities unless an
 explicit mixing process is applied. The inter-parcel mixing module groups
-active particles into configurable longitude, latitude, and altitude boxes
+active particles into configurable geographic longitude, latitude, and
+altitude boxes
 and relaxes each supported quantity towards its local box mean. The update
 for particle $i$ is
 
@@ -237,9 +238,12 @@ $$
 \frac{\sum_i \alpha_i q_i}{\sum_i \alpha_i}
 $$
 
-conserves the sum of the mixed quantity within each box. Boxes containing
-only one particle are unaffected. Consequently, the effective mixing also
-depends on particle density and box size.
+conserves the unweighted sum of the mixed quantity within each box and
+ensemble. Air-mass-weighted conservation requires additional assumptions,
+such as equal represented air masses. Particles with zero individual time
+steps do not participate. Boxes containing only one particle are unaffected.
+Consequently, the effective mixing also depends on particle density and box
+size.
 
 Users specify e-folding times rather than per-call exchange fractions. The
 tropospheric weight $w_i$ is used to interpolate the mixing rates,
@@ -276,6 +280,11 @@ These are example values rather than universal atmospheric constants. Shorter
 e-folding times produce faster relaxation, whereas larger boxes mix particles
 over larger spatial scales. The mixing times, box dimensions, and particle
 density should therefore be varied together in sensitivity studies.
+
+Mixing currently requires geographic coordinates; Cartesian/UTM mixing is
+unsupported. With MPI domain decomposition, box means use only particles on
+the local rank. Subdomain boundaries follow the meteorological grid and may
+split mixing boxes; particle migration occurs after mixing in each step.
 
 ## Convection
 

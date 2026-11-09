@@ -6859,9 +6859,12 @@ void module_meteo(
  * interparcel mixing based on the given meteorological and
  * climatological data. It calculates the indices of grid boxes and
  * performs mixing for various quantities such as mass, volume mixing
- * ratio, and other chemical species concentrations.
+ * ratio, and other chemical species concentrations. Only particles
+ * with nonzero individual time steps participate. Geographic mixing
+ * boxes are evaluated locally on each MPI rank.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure containing individual time steps.
  * @param clim Pointer to the climate data structure containing climatological data.
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param t Time at which mixing is performed.
@@ -6871,6 +6874,7 @@ void module_meteo(
  */
 void module_mixing(
   const ctl_t * ctl,
+  const cache_t * cache,
   const clim_t * clim,
   atm_t * atm,
   const double t);
@@ -6881,8 +6885,10 @@ void module_mixing(
  * This function computes the mixing-parameter-weighted mean of a specified
  * quantity within each subgrid box (and optionally for each ensemble member)
  * and applies a mixing adjustment to particle values based on the computed
- * local mean. The weighted mean conserves the sum of the quantity when the
- * mixing parameter varies between particles.
+ * local mean. The weighted mean conserves the unweighted sum of the quantity
+ * within each rank-local box and ensemble when the mixing parameter varies
+ * between particles. Air-mass-weighted conservation requires additional
+ * assumptions about the mass represented by each particle.
  *
  * The mixing accounts for differences in tropospheric and stratospheric mixing
  * via a weighted parameterization. It supports both ensemble and non-ensemble
