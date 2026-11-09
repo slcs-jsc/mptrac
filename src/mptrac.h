@@ -6416,23 +6416,18 @@ void module_chem_init(
 /**
  * @brief Performs convective mixing of atmospheric particles.
  *
- * This function adjusts the pressure of atmospheric particles based on 
- * boundary layer (PBL) mixing and convective conditions driven by CAPE 
- * (Convective Available Potential Energy) and CIN (Convective Inhibition).
- * It uses meteorological data and random numbers for vertical mixing 
- * calculations.
+ * Randomly redistributes particle pressure within a PBL or CAPE/EL column.
+ * A positive CIN threshold additionally limits ECP to columns with CIN at
+ * or below that threshold. ECP requires a finite EL pressure above the
+ * surface; PBL-only redistribution does not require EL. Particles with
+ * zero individual timestep are skipped. Particle number and tracer mass
+ * are not directly changed.
  *
  * @param[in] ctl     Pointer to the control structure with simulation settings.
  * @param[in,out] cache Pointer to the cache structure for temporary data and random numbers.
- * @param[in,out] met0 Pointer to the meteorological data at the initial timestep.
- * @param[in,out] met1 Pointer to the meteorological data at the subsequent timestep.
+ * @param[in] met0 Pointer to the earlier meteorological data.
+ * @param[in] met1 Pointer to the later meteorological data.
  * @param[in,out] atm  Pointer to the atmospheric data structure with particle properties.
- *
- * @note
- * - This function modifies the `atm` structure in place.
- * - Interpolates CAPE, CIN, and other meteorological parameters.
- * - Determines the pressure range for PBL and convective mixing.
- * - Updates the pressure of particles based on calculated mixing.
  *
  * @author Lars Hoffmann
  */

@@ -4450,7 +4450,8 @@ void module_convection(
 
       /* Set pressure range... */
       if (isfinite(cape) && cape >= ctl->conv_cape
-	  && (ctl->conv_cin <= 0 || (isfinite(cin) && cin >= ctl->conv_cin)))
+	  && (ctl->conv_cin <= 0 || (isfinite(cin) && cin <= ctl->conv_cin))
+	  && isfinite(pel) && pel > 0 && pel < ps)
 	ptop = MIN(ptop, pel);
     }
 
@@ -7639,6 +7640,9 @@ void mptrac_read_ctl(
   ctl->conv_cin
     = scan_ctl(filename, argc, argv, "CONV_CIN", -1, "-999", NULL);
   ctl->conv_dt = scan_ctl(filename, argc, argv, "CONV_DT", -1, "-999", NULL);
+  if (ctl->conv_cape >= 0 && ctl->met_cape == 0
+      && (ctl->met_type == 0 || ctl->met_type == 6))
+    ERRMSG("ECP with MET_CAPE=0 requires binary meteo data with EL pressure; netCDF and GRIB readers do not load EL!");
 
   /* Boundary conditions... */
   ctl->bound_mass =
