@@ -1671,31 +1671,33 @@ the first step, we calculate the density of dry air,</p>
   \rho=\frac{p}{RT},
 \end{equation}
 \]</div>
-<p>using the atmospheric pressure <span class="arithmatex">\(p\)</span>, temperature <span class="arithmatex">\(T\)</span>, and the specific
-gas constant <span class="arithmatex">\(R\)</span> of dry air. The dynamic viscosity of air,</p>
+<p>using the atmospheric pressure <span class="arithmatex">\(p\)</span> in Pa, temperature <span class="arithmatex">\(T\)</span>, and the specific
+gas constant <span class="arithmatex">\(R\)</span> of dry air. Particle pressures are stored in hPa and
+converted to Pa for this calculation. The dynamic viscosity of air,</p>
 <div class="arithmatex">\[
 \begin{equation}
-  \eta=1.832515 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\sf{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
+  \eta=1.8325 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\sf{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
   \end{equation}
 \]</div>
 <p>and the thermal velocity of an air molecule,</p>
 <div class="arithmatex">\[
 \begin{equation}
-  v=\sqrt{\rho RT}, 
+  v=\sqrt{\frac{8k_B T}{\pi m_{\rm air}}}=\sqrt{\frac{8RT}{\pi}},
 \end{equation}
 \]</div>
-<p>are used to calculate the mean free path of an air molecule <span class="arithmatex">\(\lambda\)</span>,
+<p>where <span class="arithmatex">\(k_B\)</span> is Boltzmann's constant and <span class="arithmatex">\(m_{\rm air}\)</span> is the mass of an air
+molecule, are used to calculate the mean free path <span class="arithmatex">\(\lambda\)</span>,
 as well as the Knudsen number <span class="arithmatex">\(K_n\)</span> for air,</p>
 <div class="arithmatex">\[
 \begin{equation}
-  \lambda=\frac{\rho}{2\eta v} \quad \text{and} \quad K_n=\frac{\lambda}{r_p},
+  \lambda=\frac{2\eta}{\rho v} \quad \text{and} \quad K_n=\frac{\lambda}{r_p},
 \end{equation}
 \]</div>
 <p>where <span class="arithmatex">\(r_p\)</span> refers to the particle radius. The Cunningham slipflow
 correction is calculated from</p>
 <div class="arithmatex">\[
 \begin{equation}
-  G=1+K \left [1.249+0.42 \exp \left ( \frac{-0.87}{K} \right ) \right]
+  G=1+K_n \left [1.249+0.42 \exp \left ( \frac{-0.87}{K_n} \right ) \right]
 \end{equation}
 \]</div>
 <p>Finally, the sedimentation velocity is obtained by means of Stokes law
@@ -1706,9 +1708,18 @@ and from the slip-flow correction,</p>
 \end{equation}
 \]</div>
 <p>with particle density <span class="arithmatex">\(\rho_p\)</span> and conventional standard gravitational
-acceleration g. Note that <span class="arithmatex">\(r_p\)</span> and <span class="arithmatex">\(\rho_p\)</span> can be specified
-individually for each air parcel. A larger set of parcels can be used
-to represent a size distribution of aerosol or cloud particles.</p>
+acceleration <span class="arithmatex">\(g\)</span>. The radius <span class="arithmatex">\(r_p\)</span> is specified in micrometres and
+<span class="arithmatex">\(\rho_p\)</span> in kg/m³. Both can be specified individually for each air parcel;
+a larger set of parcels can represent a size distribution. Invalid,
+nonpositive, or nonfinite radius or density gives zero settling velocity.
+The spherical-particle Stokes–Cunningham approximation is intended for
+small particle Reynolds numbers, approximately <span class="arithmatex">\(Re_p \leq 1\)</span>.</p>
+<p>The signed particle timestep <span class="arithmatex">\(\Delta t\)</span> changes pressure by
+<span class="arithmatex">\(\Delta p=p v_s\Delta t/(1000 H_0)\)</span>, where <span class="arithmatex">\(p\)</span> is in hPa, <span class="arithmatex">\(v_s\)</span> in m/s,
+and the fixed scale height <span class="arithmatex">\(H_0=7\)</span> km. This linearized approximation
+increases pressure for positive settling velocity in forward time.
+Sedimentation does not directly change tracer mass; dry deposition is
+handled separately.</p>
 <h2 id="wet-deposition">Wet deposition</h2>
 <p>Wet deposition causes the removal of trace gases and aerosol particles
 from the atmosphere within or below clouds by mixing with suspended
