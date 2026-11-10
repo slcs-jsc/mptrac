@@ -462,6 +462,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dry-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#radionuclide-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -981,6 +992,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dry-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#radionuclide-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1069,6 +1091,12 @@ pressure-to-temperature ratio (<code>2</code>), and K for potential temperature 
 Existing particle files without this quantity need a configuration that
 provides a free quantity slot; <code>NQ</code> and other quantity indices are not
 changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require it.</p>
+<h2 id="dry-deposition">Dry deposition</h2>
+<p><code>DRY_DEPO_MODE</code> selects dry deposition: <code>0</code> disables it (default), <code>1</code>
+uses the positive prescribed velocity <code>DRY_DEPO_VDEP</code> in m/s, and <code>2</code>
+calculates aerosol velocity from the particle quantities <code>rp</code> and <code>rhop</code>.
+<code>DRY_DEPO_VDEP</code> is ignored in mode 2 and does not activate deposition.
+Both active modes use <code>DRY_DEPO_DP</code> as the surface-layer thickness in hPa.</p>
 <h2 id="radionuclide-deposition">Radionuclide deposition</h2>
 <p>Radionuclide decay and deposition require the activity quantities to be part
 of the air-parcel data. The recognized quantity names are <code>Apb210</code>, <code>Abe7</code>,

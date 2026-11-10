@@ -1844,30 +1844,29 @@ the following table are included as default parameters in MPTRAC.</p>
 </tbody>
 </table>
 <h2 id="dry-deposition">Dry deposition</h2>
-<p>Dry deposition leads to a loss of mass of aerosol particles or trace
-gases by gravitational settling or chemical and physical interactions
-with the surface of the dry phase. In the parametrization implemented
-in MPTRAC, dry deposition is calculated for air parcels located in the
-lowermost <span class="arithmatex">\(\Delta_p=\)</span> 30 hPa layer above the surface. This corresponds
-to a layer width of <span class="arithmatex">\(\Delta z \approx\)</span> 200 m at standard conditions.</p>
-<p>For aerosol particles, the deposition velocity <span class="arithmatex">\(v_{dep}\)</span> will be
-calculated as described in Hoffmann et al. (2022) as a function of
-surface pressure <span class="arithmatex">\(p\)</span> and temperature <span class="arithmatex">\(T\)</span> as well as particle radius
-<span class="arithmatex">\(r_p\)</span> and particle density <span class="arithmatex">\(\rho\)</span>. For trace gases, the deposition
-velocity <span class="arithmatex">\(v_{dep}\)</span> needs to be specified as a control
-parameter. Currently, this parameter is set to a constant value across
-the globe for each trace gas. For future applications with a stronger
-focus on the boundary layer, <span class="arithmatex">\(v_{dep}\)</span> will need to vary
-geographically to account for dependence on the surface
-characteristics and atmospheric conditions.</p>
-<p>For both particles and gases, the loss of mass is calculated based on
-the deposition velocity <span class="arithmatex">\(v_{dep}\)</span>, the model time step <span class="arithmatex">\(\Delta t\)</span>, and
-the surface layer width <span class="arithmatex">\(\Delta z\)</span> from</p>
+<p>Dry deposition reduces particle-associated tracer mass or volume mixing
+ratio; sedimentation separately changes particle position. Set
+<code>DRY_DEPO_MODE=0</code> (the default) to disable dry deposition, <code>1</code> to use the
+prescribed velocity <code>DRY_DEPO_VDEP</code> (m/s), or <code>2</code> to calculate an aerosol
+velocity from particle radius <code>rp</code> and density <code>rhop</code> using <code>sedi()</code>.
+<code>DRY_DEPO_VDEP</code> does not activate deposition and is ignored in mode 2.
+Both active modes use the lowermost <code>DRY_DEPO_DP</code> hPa layer above the
+local surface (default 30 hPa, about 200 m at standard conditions).</p>
+<p>In mode 2, the aerosol velocity <span class="arithmatex">\(v_{dep}\)</span> is calculated from particle
+pressure, interpolated atmospheric temperature, radius, and density as
+described in Hoffmann et al. (2022). Nonpositive calculated velocities
+produce no dry-deposition loss. In mode 1, <span class="arithmatex">\(v_{dep}\)</span> is the prescribed
+constant velocity, including when aerosol quantities are present.</p>
+<p>For both modes, the loss uses the deposition velocity <span class="arithmatex">\(v_{dep}\)</span>, each
+particle's signed time step <span class="arithmatex">\(\Delta t\)</span>, and the surface layer depth
+<span class="arithmatex">\(\Delta z\)</span> from the fixed scale-height pressure conversion:</p>
 <div class="arithmatex">\[
 \begin{equation}
-  m(t+\Delta t)=M(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
+  m(t+\Delta t)=m(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
 \end{equation}
 \]</div>
+<p>For negative time steps, the exponential mathematically reverses the
+forward loss and may increase airborne mass.</p>
 <h2 id="hydroxyl-chemistry">Hydroxyl chemistry</h2>
 <p>The hydroxyl radical (OH) is an important oxidant in the atmosphere,
 causing the decomposition of many gas-phase species. The oxidation of
