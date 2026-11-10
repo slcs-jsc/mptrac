@@ -2719,12 +2719,21 @@ void dd_sort(
 #endif
   for (int ip = 0; ip < np; ip++) {
     if ((int) atm->q[ctl->qnt_current_subdomain][ip] != -1) {
-      if ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank)
+      if ((int) atm->q[ctl->qnt_target_subdomain][ip] == rank) {
+
+	/* Wrap the longitude into the range of the local meteo grid, as
+	   the interpolation does. Particles use -180...180 deg, but the
+	   grid may span 0...360 deg, which would put all particles at
+	   negative longitudes into the first grid column... */
+	double lon = atm->lon[ip], lat = atm->lat[ip];
+	if (met0->coord_type == 0)
+	  intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny,
+			       atm->lon[ip], atm->lat[ip], &lon, &lat);
 	dd->sort_key[ip] =
-	  (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) *
-		     met0->ny + locate_irr(met0->lat, met0->ny, atm->lat[ip]))
+	  (double) ((locate_reg(met0->lon, met0->nx, lon) *
+		     met0->ny + locate_irr(met0->lat, met0->ny, lat))
 		    * met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
-      else
+      } else
 	dd->sort_key[ip] = amax + 1;
     } else {
       dd->sort_key[ip] = amax + 2;
