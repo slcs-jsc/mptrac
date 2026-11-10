@@ -375,12 +375,13 @@ $$
 \end{equation}
 $$
 
-using the atmospheric pressure $p$, temperature $T$, and the specific
-gas constant $R$ of dry air. The dynamic viscosity of air,
+using the atmospheric pressure $p$ in Pa, temperature $T$, and the specific
+gas constant $R$ of dry air. Particle pressures are stored in hPa and
+converted to Pa for this calculation. The dynamic viscosity of air,
 
 $$
 \begin{equation}
-  \eta=1.832515 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\sf{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
+  \eta=1.8325 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\sf{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
   \end{equation}
 $$
 
@@ -388,16 +389,17 @@ and the thermal velocity of an air molecule,
 
 $$
 \begin{equation}
-  v=\sqrt{\rho RT}, 
+  v=\sqrt{\frac{8k_B T}{\pi m_{\rm air}}}=\sqrt{\frac{8RT}{\pi}},
 \end{equation}
 $$
 
-are used to calculate the mean free path of an air molecule $\lambda$,
+where $k_B$ is Boltzmann's constant and $m_{\rm air}$ is the mass of an air
+molecule, are used to calculate the mean free path $\lambda$,
 as well as the Knudsen number $K_n$ for air,
 
 $$
 \begin{equation}
-  \lambda=\frac{\rho}{2\eta v} \quad \text{and} \quad K_n=\frac{\lambda}{r_p},
+  \lambda=\frac{2\eta}{\rho v} \quad \text{and} \quad K_n=\frac{\lambda}{r_p},
 \end{equation}
 $$
 
@@ -406,7 +408,7 @@ correction is calculated from
 
 $$
 \begin{equation}
-  G=1+K \left [1.249+0.42 \exp \left ( \frac{-0.87}{K} \right ) \right]
+  G=1+K_n \left [1.249+0.42 \exp \left ( \frac{-0.87}{K_n} \right ) \right]
 \end{equation}
 $$
  
@@ -420,9 +422,19 @@ $$
 $$
 
 with particle density $\rho_p$ and conventional standard gravitational
-acceleration g. Note that $r_p$ and $\rho_p$ can be specified
-individually for each air parcel. A larger set of parcels can be used
-to represent a size distribution of aerosol or cloud particles.
+acceleration $g$. The radius $r_p$ is specified in micrometres and
+$\rho_p$ in kg/m³. Both can be specified individually for each air parcel;
+a larger set of parcels can represent a size distribution. Invalid,
+nonpositive, or nonfinite radius or density gives zero settling velocity.
+The spherical-particle Stokes–Cunningham approximation is intended for
+small particle Reynolds numbers, approximately $Re_p \leq 1$.
+
+The signed particle timestep $\Delta t$ changes pressure by
+$\Delta p=p v_s\Delta t/(1000 H_0)$, where $p$ is in hPa, $v_s$ in m/s,
+and the fixed scale height $H_0=7$ km. This linearized approximation
+increases pressure for positive settling velocity in forward time.
+Sedimentation does not directly change tracer mass; dry deposition is
+handled separately.
 
 ## Wet deposition
 

@@ -6239,7 +6239,7 @@ void module_sedi(
 			    atm->q[ctl->qnt_rhop][ip]);
 
     /* Calculate pressure change... */
-    atm->p[ip] += DZ2DP(v_s * cache->dt[ip] / 1000., atm->p[ip]);
+    atm->p[ip] -= DZ2DP(v_s * cache->dt[ip] / 1000., atm->p[ip]);
   }
 }
 
@@ -13403,6 +13403,9 @@ double sedi(
   const double T,
   const double rp,
   const double rhop) {
+
+  if (!isfinite(rp) || rp <= 0. || !isfinite(rhop) || rhop <= 0.)
+    return 0.;
 
   /* Convert particle radius from microns to m... */
   const double rp_help = rp * 1e-6;

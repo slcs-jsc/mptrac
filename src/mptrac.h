@@ -9307,6 +9307,7 @@ double scan_ctl(
  * - Computes the sedimentation velocity of the particle based on the difference in densities between the particle and air, incorporating the slip-flow correction.
  *
  * @note This function assumes that the ideal gas law and Stokes' law are applicable for calculating the sedimentation velocity of the particle.
+ * @note Nonpositive or nonfinite particle radius or density gives zero velocity.
  *
  * @author Lars Hoffmann
  */
