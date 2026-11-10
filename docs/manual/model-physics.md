@@ -513,33 +513,33 @@ the following table are included as default parameters in MPTRAC.
 
 ## Dry deposition
 
-Dry deposition leads to a loss of mass of aerosol particles or trace
-gases by gravitational settling or chemical and physical interactions
-with the surface of the dry phase. In the parametrization implemented
-in MPTRAC, dry deposition is calculated for air parcels located in the
-lowermost $\Delta_p=$ 30 hPa layer above the surface. This corresponds
-to a layer width of $\Delta z \approx$ 200 m at standard conditions.
+Dry deposition reduces particle-associated tracer mass or volume mixing
+ratio; sedimentation separately changes particle position. Set
+`DRY_DEPO_MODE=0` (the default) to disable dry deposition, `1` to use the
+prescribed velocity `DRY_DEPO_VDEP` (m/s), or `2` to calculate an aerosol
+velocity from particle radius `rp` and density `rhop` using `sedi()`.
+`DRY_DEPO_VDEP` does not activate deposition and is ignored in mode 2.
+Both active modes use the lowermost `DRY_DEPO_DP` hPa layer above the
+local surface (default 30 hPa, about 200 m at standard conditions).
 
-For aerosol particles, the deposition velocity $v_{dep}$ will be
-calculated as described in Hoffmann et al. (2022) as a function of
-surface pressure $p$ and temperature $T$ as well as particle radius
-$r_p$ and particle density $\rho$. For trace gases, the deposition
-velocity $v_{dep}$ needs to be specified as a control
-parameter. Currently, this parameter is set to a constant value across
-the globe for each trace gas. For future applications with a stronger
-focus on the boundary layer, $v_{dep}$ will need to vary
-geographically to account for dependence on the surface
-characteristics and atmospheric conditions.
+In mode 2, the aerosol velocity $v_{dep}$ is calculated from particle
+pressure, interpolated atmospheric temperature, radius, and density as
+described in Hoffmann et al. (2022). Nonpositive calculated velocities
+produce no dry-deposition loss. In mode 1, $v_{dep}$ is the prescribed
+constant velocity, including when aerosol quantities are present.
 
-For both particles and gases, the loss of mass is calculated based on
-the deposition velocity $v_{dep}$, the model time step $\Delta t$, and
-the surface layer width $\Delta z$ from
+For both modes, the loss uses the deposition velocity $v_{dep}$, each
+particle's signed time step $\Delta t$, and the surface layer depth
+$\Delta z$ from the fixed scale-height pressure conversion:
 
 $$
 \begin{equation}
-  m(t+\Delta t)=M(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
+  m(t+\Delta t)=m(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
 \end{equation}
 $$
+
+For negative time steps, the exponential mathematically reverses the
+forward loss and may increase airborne mass.
 
 ## Hydroxyl chemistry
 

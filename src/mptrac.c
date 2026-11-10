@@ -5070,6 +5070,8 @@ void module_dry_depo(
     double ps;
     INTPOL_INIT;
     INTPOL_2D(ps, 1);
+    if (!isfinite(ps) || ps <= 0. || ps - ctl->dry_depo_dp <= 0.)
+      continue;
 
     /* Check whether particle is above the surface layer... */
     if (atm->p[ip] < ps - ctl->dry_depo_dp)
@@ -5077,10 +5079,12 @@ void module_dry_depo(
 
     /* Set depth of surface layer... */
     const double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
+    if (!isfinite(dz) || dz <= 0.)
+      continue;
 
-    /* Calculate sedimentation velocity for particles... */
+    /* Calculate aerosol deposition velocity... */
     double v_dep;
-    if (ctl->qnt_rp > 0 && ctl->qnt_rhop > 0) {
+    if (ctl->dry_depo_mode == 2) {
 
       /* Get temperature... */
       double t;
@@ -5089,9 +5093,11 @@ void module_dry_depo(
       /* Set deposition velocity... */
       v_dep = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
 		   atm->q[ctl->qnt_rhop][ip]);
+      if (!isfinite(v_dep) || v_dep <= 0.)
+	continue;
     }
 
-    /* Use explicit sedimentation velocity for gases... */
+    /* Use prescribed deposition velocity... */
     else
       v_dep = ctl->dry_depo_vdep;
 
@@ -7865,10 +7871,25 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
 
   /* Dry deposition... */
+  const double dry_depo_mode =
+    scan_ctl(filename, argc, argv, "DRY_DEPO_MODE", -1, "0", NULL);
+  if (dry_depo_mode != 0. && dry_depo_mode != 1. && dry_depo_mode != 2.)
+    ERRMSG("Set DRY_DEPO_MODE to 0 (off), 1 (prescribed), or 2 (aerosol)!");
+  ctl->dry_depo_mode = (int) dry_depo_mode;
   ctl->dry_depo_vdep =
     scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
   ctl->dry_depo_dp =
     scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
+  if (ctl->dry_depo_mode > 0) {
+    if (!isfinite(ctl->dry_depo_dp) || ctl->dry_depo_dp <= 0.)
+      ERRMSG("DRY_DEPO_DP must be finite and positive!");
+    if (ctl->dry_depo_mode == 1
+	&& (!isfinite(ctl->dry_depo_vdep) || ctl->dry_depo_vdep <= 0.))
+      ERRMSG("DRY_DEPO_VDEP must be finite and positive in mode 1!");
+    if (ctl->dry_depo_mode == 2
+	&& (ctl->qnt_rp < 0 || ctl->qnt_rhop < 0))
+      ERRMSG("DRY_DEPO_MODE=2 requires quantities rp and rhop!");
+  }
 
   /* Climatological data... */
   scan_ctl(filename, argc, argv, "CLIM_PHOTO", -1,
@@ -8567,7 +8588,7 @@ void mptrac_run_timestep(
     module_wet_depo(ctl, cache, *met0, *met1, atm);
 
   /* Dry deposition... */
-  if (ctl->dry_depo_vdep > 0)
+  if (ctl->dry_depo_mode > 0)
     module_dry_depo(ctl, cache, *met0, *met1, atm);
 
   /* Check boundary conditions (final)... */

@@ -3310,10 +3310,13 @@ typedef struct {
   /*! Coefficients for wet deposition below cloud: retention ratio. */
   double wet_depo_bc_ret_ratio;
 
+  /*! Dry deposition mode: 0=off, 1=prescribed velocity, 2=aerosol velocity. */
+  int dry_depo_mode;
+
   /*! Dry deposition surface layer [hPa]. */
   double dry_depo_dp;
 
-  /*! Dry deposition velocity [m/s]. */
+  /*! Prescribed dry deposition velocity for mode 1 [m/s]. */
   double dry_depo_vdep;
 
   /*! H2O volume mixing ratio for PSC analysis. */
@@ -6678,13 +6681,12 @@ void module_diff_turb(
 /**
  * @brief Simulate dry deposition of atmospheric particles.
  *
- * This function simulates the dry deposition of atmospheric
- * particles, including both particulate matter and gases. It
- * calculates the sedimentation velocity for particles based on the
- * atmospheric properties and applies it to determine the loss of mass
- * or volume mixing ratio due to deposition. The function loops over
- * each particle and calculates the loss of mass or volume mixing
- * ratio based on the deposition velocity and time step.
+ * Mode 1 uses a prescribed deposition velocity; mode 2 calculates aerosol
+ * velocity with sedi() from particle pressure, temperature, radius, and
+ * density. Within the surface pressure layer, mass and volume mixing ratio
+ * follow exponential loss using each particle's signed timestep. Negative
+ * timesteps mathematically reverse the loss. Invalid local surface pressure
+ * or layer depth leaves the particle unchanged.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param cache Pointer to the cache structure for temporary data and random numbers.

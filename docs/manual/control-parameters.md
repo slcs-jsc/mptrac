@@ -73,6 +73,14 @@ Existing particle files without this quantity need a configuration that
 provides a free quantity slot; `NQ` and other quantity indices are not
 changed automatically. `ISOSURF=0` and `4` do not require it.
 
+## Dry deposition
+
+`DRY_DEPO_MODE` selects dry deposition: `0` disables it (default), `1`
+uses the positive prescribed velocity `DRY_DEPO_VDEP` in m/s, and `2`
+calculates aerosol velocity from the particle quantities `rp` and `rhop`.
+`DRY_DEPO_VDEP` is ignored in mode 2 and does not activate deposition.
+Both active modes use `DRY_DEPO_DP` as the surface-layer thickness in hPa.
+
 ## Radionuclide deposition
 
 Radionuclide decay and deposition require the activity quantities to be part
