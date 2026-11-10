@@ -5006,15 +5006,10 @@ void dd_atm2particles(
  * @param[in]     nkeep     Number of particles retained on this rank.
  * @param[in]     npart     Number of particles sent to other ranks.
  *
-<<<<<<< HEAD
- * @note `dt` and `uvwp` are packed for outgoing particles and preserved for
- *       retained particles. Atomic index assignment in OpenACC builds may change
-=======
  * @note Compaction removes all holes and resets the free-list
  *       (`dd->nholes = 0`).
  * @note `uvwp` is packed for outgoing particles and preserved for retained
  *       particles. Atomic index assignment in OpenACC builds may change
->>>>>>> 01c51d6e (Combine sort, compact and push, plus keep hole list.)
  *       particle order relative to the CPU implementation.
  *
  * @author Lars Hoffmann

@@ -4580,9 +4580,11 @@ void module_dd(
   particle_t *particles = NULL;
 
   /* Assign particles to new subdomains... */
+  printf("Assign subdomains...\n");
   dd_assign_subdomains(ctl, dd, atm, 0);
 
   /* Select strategy: sort (also removes holes), compact, or push... */
+  printf("Sort, compact or push...\n");
   int packed = 0;
   if (dd_sort_due(ctl, t))
     dd_sort(ctl, *met, cache, atm, dd, &npart);
@@ -4593,6 +4595,7 @@ void module_dd(
     dd_push(ctl, dd, atm, cache, &npart);
 
   /* Ensure particle buffer is large enough for outgoing particles... */
+  printf("Adapt particle buffer if necessary.\n");
   if (npart > capacity) {
     const int newcap = npart + npart / 2 + 1;
     particle_t *tmp =
@@ -4604,18 +4607,22 @@ void module_dd(
   }
 
   /* Transform from struct of array to array of struct... */
+  printf("SoA to AoS\n");
   if (packed)
     dd_pack_compact(ctl, cache, atm, dd, particles, nkeep, npart);
   else
     dd_atm2particles(ctl, cache, atm, particles, npart);
 
   SELECT_TIMER("SYNC", "DD");
+  printf("Sync\n");
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* Perform the communication... */
+  printf("Communicate\n");
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
   /* Transform from array of struct to struct of array... */
+  printf("AoS to SoA\n");
   dd_particles2atm(ctl, cache, particles, npart, dd, atm);
 
   /* Free local particle array... */
@@ -8370,7 +8377,7 @@ void mptrac_read_ctl(
 	  || (ctl->grid_basename[0] != '-' && ctl->grid_dt_out > 0)
 	  || (ctl->vtk_basename[0] != '-' && ctl->vtk_dt_out > 0)
 	  || ctl->sort_dt > 0
-	  || (ctl->dd && ctl->dd_exchange_mode == 0 && ctl->dd_sort_dt > 0)))
+	  || (ctl->dd && ctl->dd_sort_dt > 0)))
     WARN("Fractional DT_MOD may cause periodic events to be missed due to floating-point rounding in exact fmod comparisons!");
 }
 
@@ -11654,26 +11661,23 @@ int read_met_nc_3d(
     /* Use default NetCDF parallel I/O behavior */
     SELECT_TIMER("MET_READ", "INPUT");
 #ifdef DD
-    NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
+    NC(nc_var_par_access(ncid, varid, NC_COLLECTIVE));
 #endif
     NC(nc_get_vara_float
        (ncid, varid, help_subdomain_start, help_subdomain_count, help));
 
-    /* Read halos separately at boundaries... */
+    /* Read halos separately at boundaries (all tasks must take part in
+       the collective call, interior tasks with zero counts)... */
     float *help_halo;
     ALLOC(help_halo, float,
 	  dd->halo_bnd_count[0] * dd->halo_bnd_count[1] *
 	  dd->halo_bnd_count[2] * dd->halo_bnd_count[3]);
 
 #ifdef DD
-    NC(nc_var_par_access(ncid, varid, NC_INDEPENDENT));
+    NC(nc_var_par_access(ncid, varid, NC_COLLECTIVE));
 #endif
-    if (dd->halo_bnd_count[1] > 0 && dd->halo_bnd_count[2] > 0
-	&& dd->halo_bnd_count[3] > 0) {
-      NC(nc_get_vara_float
-	 (ncid, varid, help_halo_bnd_start, help_halo_bnd_count,
-	  help_halo));
-    }
+    NC(nc_get_vara_float
+       (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
 
     SELECT_TIMER("MET_CONVERT", "INPUT");
 
