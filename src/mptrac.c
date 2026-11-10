@@ -5063,6 +5063,8 @@ void module_dry_depo(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
+  const double p_factor = exp(-ctl->dry_depo_dz / (1000. * H0));
+
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
@@ -5070,16 +5072,11 @@ void module_dry_depo(
     double ps;
     INTPOL_INIT;
     INTPOL_2D(ps, 1);
-    if (!isfinite(ps) || ps <= 0. || ps - ctl->dry_depo_dp <= 0.)
+    if (!isfinite(ps) || ps <= 0.)
       continue;
 
     /* Check whether particle is above the surface layer... */
-    if (atm->p[ip] < ps - ctl->dry_depo_dp)
-      continue;
-
-    /* Set depth of surface layer... */
-    const double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
-    if (!isfinite(dz) || dz <= 0.)
+    if (atm->p[ip] < ps * p_factor)
       continue;
 
     /* Calculate aerosol deposition velocity... */
@@ -5102,14 +5099,14 @@ void module_dry_depo(
       v_dep = ctl->dry_depo_vdep;
 
     /* Calculate loss of mass based on deposition velocity... */
-    const double aux = exp(-cache->dt[ip] * v_dep / dz);
+    const double aux = exp(-cache->dt[ip] * v_dep / ctl->dry_depo_dz);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_dry >= 0)
 	atm->q[ctl->qnt_mloss_dry][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += v_dep / dz;
+	atm->q[ctl->qnt_loss_rate][ip] += v_dep / ctl->dry_depo_dz;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -5929,6 +5926,7 @@ void module_radio_depo(
   /* Set horizontal grid increments... */
   const double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
   const double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+  const double p_factor = exp(-ctl->dry_depo_dz / (1000. * H0));
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -5946,14 +5944,12 @@ void module_radio_depo(
 
     /* Calculate dry deposition rate [s^-1]... */
     double dry_pb210 = 0, dry_be7 = 0, dry_cs137 = 0, dry_i131 = 0;
-    if (atm->p[ip] >= ps - ctl->dry_depo_dp) {
-      const double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
-      if (dz > 0) {
-	dry_pb210 = RADIO_DRY_VDEP_PB210 / dz;
-	dry_be7 = RADIO_DRY_VDEP_BE7 / dz;
-	dry_cs137 = RADIO_DRY_VDEP_CS137 / dz;
-	dry_i131 = RADIO_DRY_VDEP_I131 / dz;
-      }
+    if (isfinite(ps) && ps > 0. && atm->p[ip] >= ps * p_factor) {
+      const double dz = ctl->dry_depo_dz;
+      dry_pb210 = RADIO_DRY_VDEP_PB210 / dz;
+      dry_be7 = RADIO_DRY_VDEP_BE7 / dz;
+      dry_cs137 = RADIO_DRY_VDEP_CS137 / dz;
+      dry_i131 = RADIO_DRY_VDEP_I131 / dz;
     }
 
     /* Calculate wet deposition rate [s^-1]... */
@@ -7878,11 +7874,13 @@ void mptrac_read_ctl(
   ctl->dry_depo_mode = (int) dry_depo_mode;
   ctl->dry_depo_vdep =
     scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
-  ctl->dry_depo_dp =
-    scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
+  ctl->dry_depo_dz =
+    scan_ctl(filename, argc, argv, "DRY_DEPO_DZ", -1, "30", NULL);
+  if (ctl->dry_depo_mode > 0 || ctl->radio_depo > 0) {
+    if (!isfinite(ctl->dry_depo_dz) || ctl->dry_depo_dz <= 0.)
+      ERRMSG("DRY_DEPO_DZ must be finite and positive!");
+  }
   if (ctl->dry_depo_mode > 0) {
-    if (!isfinite(ctl->dry_depo_dp) || ctl->dry_depo_dp <= 0.)
-      ERRMSG("DRY_DEPO_DP must be finite and positive!");
     if (ctl->dry_depo_mode == 1
 	&& (!isfinite(ctl->dry_depo_vdep) || ctl->dry_depo_vdep <= 0.))
       ERRMSG("DRY_DEPO_VDEP must be finite and positive in mode 1!");

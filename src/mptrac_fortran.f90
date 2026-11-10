@@ -467,7 +467,7 @@ MODULE mptrac_struct
      REAL(c_double) :: wet_depo_ic_ret_ratio
      REAL(c_double) :: wet_depo_bc_ret_ratio
      INTEGER(c_int) :: dry_depo_mode
-     REAL(c_double) :: dry_depo_dp
+     REAL(c_double) :: dry_depo_dz
      REAL(c_double) :: dry_depo_vdep
      REAL(c_double) :: psc_h2o
      REAL(c_double) :: psc_hno3

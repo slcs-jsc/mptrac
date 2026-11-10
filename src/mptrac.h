@@ -3313,8 +3313,8 @@ typedef struct {
   /*! Dry deposition mode: 0=off, 1=prescribed velocity, 2=aerosol velocity. */
   int dry_depo_mode;
 
-  /*! Dry deposition surface layer [hPa]. */
-  double dry_depo_dp;
+  /*! Geometric dry-deposition layer thickness above the surface [m]. */
+  double dry_depo_dz;
 
   /*! Prescribed dry deposition velocity for mode 1 [m/s]. */
   double dry_depo_vdep;
@@ -6683,10 +6683,10 @@ void module_diff_turb(
  *
  * Mode 1 uses a prescribed deposition velocity; mode 2 calculates aerosol
  * velocity with sedi() from particle pressure, temperature, radius, and
- * density. Within the surface pressure layer, mass and volume mixing ratio
+ * density. Within the geometric surface layer, mass and volume mixing ratio
  * follow exponential loss using each particle's signed timestep. Negative
  * timesteps mathematically reverse the loss. Invalid local surface pressure
- * or layer depth leaves the particle unchanged.
+ * leaves the particle unchanged.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param cache Pointer to the cache structure for temporary data and random numbers.
@@ -7094,8 +7094,9 @@ void module_radio_decay(
 /**
  * @brief Deposit supported radionuclides from air parcels onto the ground grid.
  *
- * Applies fixed dry-deposition velocities in the surface layer and
- * precipitation-dependent wet scavenging to Apb210, Abe7, Acs137, and Ai131.
+ * Applies fixed dry-deposition velocities within DRY_DEPO_DZ metres above
+ * the local surface and precipitation-dependent wet scavenging to Apb210,
+ * Abe7, Acs137, and Ai131.
  * Air-parcel activities are reduced exponentially and the removed activity is
  * accumulated in @p depo. When RADIO_DECAY is enabled, ground inventories are
  * referenced to the simulation start for decay-correct output. Backward or
@@ -7110,6 +7111,8 @@ void module_radio_decay(
  * @param[in] met1 Meteorological field at the later bracketing time.
  * @param[in,out] atm Air-parcel positions and activities [Bq].
  * @param[in,out] depo Cumulative ground inventories [Bq per grid cell].
+ *
+ * @author Lars Hoffmann
  */
 void module_radio_depo(
   const ctl_t * ctl,

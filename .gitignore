@@ -81,6 +81,7 @@ tests/cli_test/data/
 tests/cms_test/data/
 tests/compress_test/data/
 tests/coord_test/data/
+tests/depo_test/data/
 tests/dd_test/data/
 tests/dd_test/dd_benchmark/
 tests/dt_test/data/

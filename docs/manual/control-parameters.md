@@ -79,7 +79,9 @@ changed automatically. `ISOSURF=0` and `4` do not require it.
 uses the positive prescribed velocity `DRY_DEPO_VDEP` in m/s, and `2`
 calculates aerosol velocity from the particle quantities `rp` and `rhop`.
 `DRY_DEPO_VDEP` is ignored in mode 2 and does not activate deposition.
-Both active modes use `DRY_DEPO_DP` as the surface-layer thickness in hPa.
+Both active modes and `RADIO_DEPO` use `DRY_DEPO_DZ` as the geometric
+surface-layer thickness in metres (default 30 m). This replaces the old
+pressure-based `DRY_DEPO_DP` parameter; old values cannot be reused as metres.
 
 ## Radionuclide deposition
 

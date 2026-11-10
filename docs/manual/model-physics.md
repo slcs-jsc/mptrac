@@ -519,8 +519,9 @@ ratio; sedimentation separately changes particle position. Set
 prescribed velocity `DRY_DEPO_VDEP` (m/s), or `2` to calculate an aerosol
 velocity from particle radius `rp` and density `rhop` using `sedi()`.
 `DRY_DEPO_VDEP` does not activate deposition and is ignored in mode 2.
-Both active modes use the lowermost `DRY_DEPO_DP` hPa layer above the
-local surface (default 30 hPa, about 200 m at standard conditions).
+Both active modes use the lowermost `DRY_DEPO_DZ` metres above the local
+surface (default 30 m). This replaces the former pressure-thickness
+parameter `DRY_DEPO_DP`; the two layers and their results differ.
 
 In mode 2, the aerosol velocity $v_{dep}$ is calculated from particle
 pressure, interpolated atmospheric temperature, radius, and density as
@@ -530,7 +531,7 @@ constant velocity, including when aerosol quantities are present.
 
 For both modes, the loss uses the deposition velocity $v_{dep}$, each
 particle's signed time step $\Delta t$, and the surface layer depth
-$\Delta z$ from the fixed scale-height pressure conversion:
+$\Delta z=\texttt{DRY\_DEPO\_DZ}$:
 
 $$
 \begin{equation}
@@ -540,6 +541,10 @@ $$
 
 For negative time steps, the exponential mathematically reverses the
 forward loss and may increase airborne mass.
+The layer boundary is evaluated in pressure coordinates with the fixed
+scale height $H_0$: $p_{\mathrm{limit}}=p_s\exp[-\Delta z/(1000H_0)]$,
+where $H_0$ is in km, $\Delta z$ is in m, and $p_s$ is local surface
+pressure. This is layer-averaged loss, not explicit surface contact.
 
 ## Hydroxyl chemistry
 
@@ -641,8 +646,9 @@ separately when `RADIO_DECAY=1`, using the half-lives defined in `mptrac.h`.
 Rn-222 and Xe-133 undergo airborne decay but are not included in the
 deposition inventories.
 
-Dry deposition is applied to parcels within `DRY_DEPO_DP` hPa of the surface.
-For the corresponding layer thickness $\Delta z$, the rate is
+Radioactive dry deposition uses the same `DRY_DEPO_DZ` metre layer above
+the local surface, independently of `DRY_DEPO_MODE`. For its thickness
+$\Delta z$, the rate is
 $k_\mathrm{dry}=v_\mathrm{d}/\Delta z$. The fixed deposition velocities are
 0.002 m s$^{-1}$ for Pb-210 and Cs-137, 0.001 m s$^{-1}$ for Be-7, and
 0.0005 m s$^{-1}$ for aerosol-bound I-131.
