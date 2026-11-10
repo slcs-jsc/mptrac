@@ -1096,7 +1096,9 @@ changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require 
 uses the positive prescribed velocity <code>DRY_DEPO_VDEP</code> in m/s, and <code>2</code>
 calculates aerosol velocity from the particle quantities <code>rp</code> and <code>rhop</code>.
 <code>DRY_DEPO_VDEP</code> is ignored in mode 2 and does not activate deposition.
-Both active modes use <code>DRY_DEPO_DP</code> as the surface-layer thickness in hPa.</p>
+Both active modes and <code>RADIO_DEPO</code> use <code>DRY_DEPO_DZ</code> as the geometric
+surface-layer thickness in metres (default 30 m). This replaces the old
+pressure-based <code>DRY_DEPO_DP</code> parameter; old values cannot be reused as metres.</p>
 <h2 id="radionuclide-deposition">Radionuclide deposition</h2>
 <p>Radionuclide decay and deposition require the activity quantities to be part
 of the air-parcel data. The recognized quantity names are <code>Apb210</code>, <code>Abe7</code>,

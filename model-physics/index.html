@@ -1850,8 +1850,9 @@ ratio; sedimentation separately changes particle position. Set
 prescribed velocity <code>DRY_DEPO_VDEP</code> (m/s), or <code>2</code> to calculate an aerosol
 velocity from particle radius <code>rp</code> and density <code>rhop</code> using <code>sedi()</code>.
 <code>DRY_DEPO_VDEP</code> does not activate deposition and is ignored in mode 2.
-Both active modes use the lowermost <code>DRY_DEPO_DP</code> hPa layer above the
-local surface (default 30 hPa, about 200 m at standard conditions).</p>
+Both active modes use the lowermost <code>DRY_DEPO_DZ</code> metres above the local
+surface (default 30 m). This replaces the former pressure-thickness
+parameter <code>DRY_DEPO_DP</code>; the two layers and their results differ.</p>
 <p>In mode 2, the aerosol velocity <span class="arithmatex">\(v_{dep}\)</span> is calculated from particle
 pressure, interpolated atmospheric temperature, radius, and density as
 described in Hoffmann et al. (2022). Nonpositive calculated velocities
@@ -1859,14 +1860,18 @@ produce no dry-deposition loss. In mode 1, <span class="arithmatex">\(v_{dep}\)<
 constant velocity, including when aerosol quantities are present.</p>
 <p>For both modes, the loss uses the deposition velocity <span class="arithmatex">\(v_{dep}\)</span>, each
 particle's signed time step <span class="arithmatex">\(\Delta t\)</span>, and the surface layer depth
-<span class="arithmatex">\(\Delta z\)</span> from the fixed scale-height pressure conversion:</p>
+<span class="arithmatex">\(\Delta z=\texttt{DRY\_DEPO\_DZ}\)</span>:</p>
 <div class="arithmatex">\[
 \begin{equation}
   m(t+\Delta t)=m(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
 \end{equation}
 \]</div>
 <p>For negative time steps, the exponential mathematically reverses the
-forward loss and may increase airborne mass.</p>
+forward loss and may increase airborne mass.
+The layer boundary is evaluated in pressure coordinates with the fixed
+scale height <span class="arithmatex">\(H_0\)</span>: <span class="arithmatex">\(p_{\mathrm{limit}}=p_s\exp[-\Delta z/(1000H_0)]\)</span>,
+where <span class="arithmatex">\(H_0\)</span> is in km, <span class="arithmatex">\(\Delta z\)</span> is in m, and <span class="arithmatex">\(p_s\)</span> is local surface
+pressure. This is layer-averaged loss, not explicit surface contact.</p>
 <h2 id="hydroxyl-chemistry">Hydroxyl chemistry</h2>
 <p>The hydroxyl radical (OH) is an important oxidant in the atmosphere,
 causing the decomposition of many gas-phase species. The oxidation of
@@ -1966,8 +1971,9 @@ A(t+\Delta t)=A(t)\exp[-(k_\mathrm{dry}+k_\mathrm{wet})\Delta t].
 separately when <code>RADIO_DECAY=1</code>, using the half-lives defined in <code>mptrac.h</code>.
 Rn-222 and Xe-133 undergo airborne decay but are not included in the
 deposition inventories.</p>
-<p>Dry deposition is applied to parcels within <code>DRY_DEPO_DP</code> hPa of the surface.
-For the corresponding layer thickness <span class="arithmatex">\(\Delta z\)</span>, the rate is
+<p>Radioactive dry deposition uses the same <code>DRY_DEPO_DZ</code> metre layer above
+the local surface, independently of <code>DRY_DEPO_MODE</code>. For its thickness
+<span class="arithmatex">\(\Delta z\)</span>, the rate is
 <span class="arithmatex">\(k_\mathrm{dry}=v_\mathrm{d}/\Delta z\)</span>. The fixed deposition velocities are
 0.002 m s<span class="arithmatex">\(^{-1}\)</span> for Pb-210 and Cs-137, 0.001 m s<span class="arithmatex">\(^{-1}\)</span> for Be-7, and
 0.0005 m s<span class="arithmatex">\(^{-1}\)</span> for aerosol-bound I-131.</p>

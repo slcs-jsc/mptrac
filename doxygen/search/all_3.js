@@ -42,7 +42,7 @@ var searchData=
   ['doy2day_39',['doy2day',['../mptrac_8c.html#ab49cba44fc2caf4c419798b0ffc47f77',1,'doy2day(const int year, const int doy, int *mon, int *day):&#160;mptrac.c'],['../mptrac_8h.html#ab49cba44fc2caf4c419798b0ffc47f77',1,'doy2day(const int year, const int doy, int *mon, int *day):&#160;mptrac.c']]],
   ['doy2day_2ec_40',['doy2day.c',['../doy2day_8c.html',1,'']]],
   ['dp2dz_41',['DP2DZ',['../mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a',1,'mptrac.h']]],
-  ['dry_5fdepo_5fdp_42',['dry_depo_dp',['../structctl__t.html#a60da7ce4a7b610712585fde03773bf7f',1,'ctl_t']]],
+  ['dry_5fdepo_5fdz_42',['dry_depo_dz',['../structctl__t.html#a05a631e70733a27496f455a81406c1a4',1,'ctl_t']]],
   ['dry_5fdepo_5fmode_43',['dry_depo_mode',['../structctl__t.html#aea4d4d33f82672f3f2f39aa66e15f251',1,'ctl_t']]],
   ['dry_5fdepo_5fvdep_44',['dry_depo_vdep',['../structctl__t.html#acadcfbb95971c47b377fbd4443c68723',1,'ctl_t']]],
   ['dt_45',['dt',['../structparticle__t.html#ae74e8f671aaf97052ab523836ea84bdd',1,'particle_t::dt'],['../structcache__t.html#a2ea05d5c51e9149cac55020d5c1b8c92',1,'cache_t::dt']]],
