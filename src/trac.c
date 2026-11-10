@@ -72,9 +72,6 @@ int main(
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  /* Use line-buffered output, so progress is visible if a job hangs... */
-  setvbuf(stdout, NULL, _IOLBF, 0);
 #ifdef _OPENACC
   const int num_devices = acc_get_num_devices(acc_device_nvidia);
   if (num_devices <= 0)

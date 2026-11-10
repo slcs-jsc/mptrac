@@ -2624,23 +2624,17 @@ void dd_push(
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int counter = 0;
+  /* The counter lives in a small data region (as in dd_count_outgoing),
+     which avoids a device allocation and free in every call... */
+  int counts[1] = { 0 };
   const int nholes0 = dd->nholes;
-
-#ifdef _OPENACC
-  int *counter_ptr = (int *) acc_malloc(sizeof(int));
-  if (counter_ptr == NULL) {
-    ERRMSG("Failed to allocate device counter memory!");
-  }
-  acc_memcpy_to_device(counter_ptr, &counter, sizeof(int));
-#else
-  int *counter_ptr = &counter;
-#endif
 
   /* Push non local particles behind the end of the atm and register the
      vacated slots in the free-list... */
+  SELECT_TIMER("DD_PUSH_KERNEL", "DD");
 #ifdef _OPENACC
-#pragma acc parallel loop present(atm, cache, ctl, dd) deviceptr(counter_ptr)
+#pragma acc data copy(counts[0:1]) present(atm, cache, ctl, dd)
+#pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for
 #endif
@@ -2654,8 +2648,8 @@ void dd_push(
 #pragma omp atomic capture
 #endif
       {
-	local_idx = *counter_ptr;
-	(*counter_ptr)++;
+	local_idx = counts[0];
+	counts[0]++;
       }
       int global_index = atm->np + local_idx;
       if (global_index >= NP)
@@ -2681,13 +2675,7 @@ void dd_push(
 	cache->uvwp[global_index][i] = cache->uvwp[ip][i];
     }
   }
-
-#ifdef _OPENACC
-  acc_memcpy_from_device(npart, counter_ptr, sizeof(int));
-  acc_free(counter_ptr);
-#else
-  *npart = counter;
-#endif
+  *npart = counts[0];
 
   if (atm->np + *npart > NP)
     ERRMSG("Too many particles during DD push. Increase NP!");
@@ -4580,11 +4568,9 @@ void module_dd(
   particle_t *particles = NULL;
 
   /* Assign particles to new subdomains... */
-  printf("Assign subdomains...\n");
   dd_assign_subdomains(ctl, dd, atm, 0);
 
   /* Select strategy: sort (also removes holes), compact, or push... */
-  printf("Sort, compact or push...\n");
   int packed = 0;
   if (dd_sort_due(ctl, t))
     dd_sort(ctl, *met, cache, atm, dd, &npart);
@@ -4595,7 +4581,7 @@ void module_dd(
     dd_push(ctl, dd, atm, cache, &npart);
 
   /* Ensure particle buffer is large enough for outgoing particles... */
-  printf("Adapt particle buffer if necessary.\n");
+  SELECT_TIMER("DD_PUSH_ALLOC", "DD");
   if (npart > capacity) {
     const int newcap = npart + npart / 2 + 1;
     particle_t *tmp =
@@ -4607,22 +4593,18 @@ void module_dd(
   }
 
   /* Transform from struct of array to array of struct... */
-  printf("SoA to AoS\n");
   if (packed)
     dd_pack_compact(ctl, cache, atm, dd, particles, nkeep, npart);
   else
     dd_atm2particles(ctl, cache, atm, particles, npart);
 
   SELECT_TIMER("SYNC", "DD");
-  printf("Sync\n");
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* Perform the communication... */
-  printf("Communicate\n");
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
   /* Transform from array of struct to struct of array... */
-  printf("AoS to SoA\n");
   dd_particles2atm(ctl, cache, particles, npart, dd, atm);
 
   /* Free local particle array... */
