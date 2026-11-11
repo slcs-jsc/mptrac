@@ -2016,9 +2016,7 @@ void dd_atm2particles(
 
   /* Select the particles that will be send... */
 #ifdef _OPENACC
-#pragma acc enter data create(npart, particles[:npart])
-#pragma acc update device(npart, particles[:npart])
-#pragma acc parallel loop present(atm, ctl, particles, cache, npart)
+#pragma acc parallel loop present(atm, ctl, particles, cache)
 #endif
   for (int ip = atm->np; ip < atm->np + npart; ip++)
     if (((int) (atm->q[ctl->qnt_target_subdomain][ip]) != rank)
@@ -2038,10 +2036,6 @@ void dd_atm2particles(
       atm->q[ctl->qnt_current_subdomain][ip] = -1;
       cache->dt[ip] = 0;
     }
-#ifdef _OPENACC
-#pragma acc update host( particles[:npart])
-#pragma acc exit data delete(npart, particles)
-#endif
 }
 #endif
 
@@ -2070,7 +2064,6 @@ void dd_pack_compact(
      since the latter overwrites source slots. */
   if (npart > 0) {
     SELECT_TIMER("DD_GPU_PACK", "DD");
-#pragma acc enter data create(particles[0:npart])
 #pragma acc parallel loop present(ctl, atm, cache, dd, particles)
     for (int i = 0; i < npart; i++) {
       const int ip = dd->perm[np - 1 - i];
@@ -2084,9 +2077,6 @@ void dd_pack_compact(
       for (int j = 0; j < 3; j++)
 	particles[i].uvwp[j] = cache->uvwp[ip][j];
     }
-    SELECT_TIMER("DD_GPU_SEND_D2H", "DD");
-#pragma acc update self(particles[0:npart])
-#pragma acc exit data delete(particles[0:npart])
   }
 
   /* sort_array stages one field in dd->tmp before writing it back.
@@ -2213,40 +2203,55 @@ void dd_communicate_particles(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  const int np_out = *npart;
+  const int qdest = ctl->qnt_target_subdomain;
+  const int qcurr = ctl->qnt_current_subdomain;
+
   int *send_counts, *recv_counts;
   int *send_displs, *recv_displs;
   int *offsets;
 
-  particle_t *sendbuf = NULL;
-  particle_t *recvbuf = NULL;
+  ALLOC(send_counts, int, size);
+  ALLOC(recv_counts, int, size);
+  ALLOC(send_displs, int, size);
+  ALLOC(recv_displs, int,size);
+  ALLOC(offsets, int,size);
+  for (int i = 0; i < size; i++)
+    send_counts[i] = 0;
 
-  ALLOC(send_counts, int,
-	size);
-  ALLOC(recv_counts, int,
-	size);
-  ALLOC(send_displs, int,
-	size);
-  ALLOC(recv_displs, int,
-	size);
-  ALLOC(offsets, int,
-	size);
-
+  SELECT_TIMER("DD_COMM_COUNT", "DD");
   /* Count particles per destination rank... */
+  particle_t *parts = *particles;
+#ifdef _OPENACC
+  /* The particle buffer is device-resident (see module_dd())... */
+#pragma acc enter data copyin(send_counts[:size])
+#pragma acc parallel loop present(send_counts[:size], parts[:np_out])
+#else
 #pragma omp parallel for
-  for (int ip = 0; ip < *npart; ip++) {
-    const int dest = (int) (*particles)[ip].q[ctl->qnt_target_subdomain];
+#endif
+  for (int ip = 0; ip < np_out; ip++) {
+    const int dest = (int) parts[ip].q[qdest];
     if (dest == rank)
       continue;
+#ifndef _OPENACC
     if (dest < 0 || dest >= size)
       ERRMSG("Invalid destination rank!");
 #pragma omp atomic
+#else
+#pragma acc atomic update
+#endif
     send_counts[dest]++;
   }
+#ifdef _OPENACC
+#pragma acc update host(send_counts[:size])
+#pragma acc exit data delete(send_counts[:size])
+#endif
 
   /* Compute send displacements... */
   int nsend = 0;
   for (int i = 0; i < size; i++) {
     send_displs[i] = nsend;
+    offsets[i] = nsend;
     nsend += send_counts[i];
   }
 #if LOGLEV >= 3
@@ -2266,6 +2271,7 @@ void dd_communicate_particles(
   }
 #endif
 
+  SELECT_TIMER("DD_COMM_COUNTS_MPI", "DD");
   /* Exchange particle counts... */
   MPI_Alltoall(send_counts, 1, MPI_INT,
 	       recv_counts, 1, MPI_INT, MPI_COMM_WORLD);
@@ -2276,55 +2282,97 @@ void dd_communicate_particles(
     recv_displs[i] = nrecv;
     nrecv += recv_counts[i];
   }
-  if (nsend > 0)
-    ALLOC(sendbuf, particle_t, nsend);
-  if (nrecv > 0)
-    ALLOC(recvbuf, particle_t, nrecv);
-  for (int i = 0; i < size; i++)
-    offsets[i] = send_displs[i];
 
-  /* Pack particles into send buffer... */
-  for (int ip = 0; ip < *npart; ip++) {
-    const int dest = (int) (*particles)[ip].q[ctl->qnt_target_subdomain];
+  SELECT_TIMER("DD_COMM_PACK", "DD");
+  /* Pack particles into the send buffer (device memory with OpenACC)... */
+  static particle_t *sendbuf = NULL;
+  static int sendcap = 0;
+  if (nsend >= sendcap) {
+    const int newcap = nsend + nsend / 2 + 1;
+#ifdef _OPENACC
+    if (sendcap > 0) {
+#pragma acc exit data delete(sendbuf[:sendcap])
+    }
+#endif
+    particle_t *tmp = realloc(sendbuf, (size_t) newcap * sizeof(particle_t));
+    if (!tmp)
+      ERRMSG("Out of memory!");
+    sendbuf = tmp;
+    sendcap = newcap;
+#ifdef _OPENACC
+#pragma acc enter data create(sendbuf[:sendcap])
+#endif
+  }
+#ifdef _OPENACC
+#pragma acc enter data copyin(offsets[:size])
+#pragma acc parallel loop present(offsets[:size], parts[:np_out], sendbuf[:sendcap])
+#endif
+  for (int ip = 0; ip < np_out; ip++) {
+    const int dest = (int) parts[ip].q[qdest];
     if (dest == rank)
       continue;
-    memcpy(&sendbuf[offsets[dest]], &(*particles)[ip], sizeof(particle_t));
+#ifdef _OPENACC
+    int slot;
+#pragma acc atomic capture
+    {
+      slot = offsets[dest];
+      offsets[dest]++;
+    }
+    sendbuf[slot] = parts[ip];
+#else
+    memcpy(&sendbuf[offsets[dest]], &parts[ip], sizeof(particle_t));
     offsets[dest]++;
+#endif
   }
+#ifdef _OPENACC
+#pragma acc exit data delete(offsets[:size])
+#endif
 
-  /* Exchange particle data... */
-  MPI_Alltoallv(sendbuf,
-		send_counts,
-		send_displs,
-		dd->MPI_Particle,
-		recvbuf,
-		recv_counts, recv_displs, dd->MPI_Particle, MPI_COMM_WORLD);
-
-  /* Resize particle buffer if necessary... */
+  SELECT_TIMER("DD_COMM_RESIZE", "DD");
+  /* Resize particle buffer (used as receive buffer) if necessary... */
   if (nrecv > *capacity) {
     const int newcap = nrecv + nrecv / 2 + 1;
+#ifdef _OPENACC
+#pragma acc exit data delete(parts[:*capacity])
+#endif
     particle_t *tmp =
       realloc(*particles, (size_t) newcap * sizeof(particle_t));
     if (!tmp)
       ERRMSG("Out of memory!");
     *particles = tmp;
     *capacity = newcap;
+    parts = tmp;
+#ifdef _OPENACC
+#pragma acc enter data create(parts[:newcap])
+#endif
   }
 
-  /* Copy received particles... */
+  SELECT_TIMER("DD_COMM_ALLTOALLV", "DD");
+  /* Exchange particle data, directly from/to device buffers if GPU-aware... */
+#ifdef _OPENACC
+#pragma acc host_data use_device(parts, sendbuf)
+#endif
+  MPI_Alltoallv(sendbuf,
+		send_counts,
+		send_displs,
+		dd->MPI_Particle,
+		parts,
+		recv_counts, recv_displs, dd->MPI_Particle, MPI_COMM_WORLD);
+
+  SELECT_TIMER("DD_COMM_UNPACK", "DD");
+  /* Reset subdomains of received particles... */
+#ifdef _OPENACC
+#pragma acc parallel loop present(parts[:nrecv])
+#else
 #pragma omp parallel for
+#endif
   for (int ip = 0; ip < nrecv; ip++) {
-    (*particles)[ip] = recvbuf[ip];
-    (*particles)[ip].q[ctl->qnt_target_subdomain] = rank;
-    (*particles)[ip].q[ctl->qnt_current_subdomain] = rank;
+    parts[ip].q[qdest] = rank;
+    parts[ip].q[qcurr] = rank;
   }
   *npart = nrecv;
 
   /* Free temporary buffers... */
-  if (sendbuf)
-    free(sendbuf);
-  if (recvbuf)
-    free(recvbuf);
   free(send_counts);
   free(recv_counts);
   free(send_displs);
@@ -2354,24 +2402,13 @@ void dd_init(
   if (size != ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal)
     ERRMSG("Number of tasks and subdomains is not identical!");
 
-  /* Register the MPI_Particle data type... */
-  const MPI_Datatype types[7] =
-    { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
-    MPI_FLOAT };
-  const int blocklengths[7] = { 1, 1, 1, 1, 1, NQ, 3 };
-  const MPI_Aint displacements[7] =
-    { offsetof(particle_t, time), offsetof(particle_t, p),
-    offsetof(particle_t, lon), offsetof(particle_t, lat),
-      offsetof(particle_t, dt), offsetof(particle_t, q),
-      offsetof(particle_t, uvwp)
-  };
-  MPI_Datatype fields;
-  MPI_Type_create_struct(7, blocklengths, displacements, types, &fields);
-  /* The trailing float array can leave padding in particle_t. Alltoallv
-     counts and displacements must advance by the full C structure size. */
-  MPI_Type_create_resized(fields, 0, (MPI_Aint) sizeof(particle_t),
-			  &dd->MPI_Particle);
-  MPI_Type_free(&fields);
+  /* Register the MPI_Particle data type as one contiguous block of bytes.
+     (All ranks run the same binary on the same architecture.) A derived
+     struct type with mixed double/float blocks makes GPU-aware MPI pack
+     every particle field by field on the device, which is extremely slow.
+     A contiguous type allows a plain device-to-device copy. The extent
+     is the full C structure size, including any trailing padding... */
+  MPI_Type_contiguous((int) sizeof(particle_t), MPI_BYTE, &dd->MPI_Particle);
   MPI_Type_commit(&dd->MPI_Particle);
   MPI_Aint lower_bound, extent;
   MPI_Type_get_extent(dd->MPI_Particle, &lower_bound, &extent);
@@ -2502,9 +2539,7 @@ void dd_particles2atm(
 
   /* The free-list is consumed from its end... */
 #ifdef _OPENACC
-#pragma acc enter data create(npart, particles[:npart])
-#pragma acc update device(particles[:npart], npart)
-#pragma acc data present(atm, ctl, cache, dd, particles, npart)
+#pragma acc data present(atm, ctl, cache, dd, particles)
 #pragma acc parallel loop
 #endif
   for (int i = 0; i < npart; i++) {
@@ -2519,9 +2554,6 @@ void dd_particles2atm(
       cache->uvwp[ip][j] = particles[i].uvwp[j];
     cache->dt[ip] = ctl->dt_mod;
   }
-#ifdef _OPENACC
-#pragma acc exit data delete(npart, particles)
-#endif
 
   /* Reset sizes... */
   dd->nholes = nholes - nfill;
@@ -4573,8 +4605,12 @@ void module_dd(
   met_t **met) {
 
   /* Initialize particles locally... */
-  int npart = 0, nkeep = 0, capacity = 0;
-  particle_t *particles = NULL;
+  int npart = 0, nkeep = 0;
+
+  /* Persistent exchange buffer, grown on demand and (with OpenACC) kept on
+     the device, so that no allocation takes place in the time loop... */
+  static int capacity = 0;
+  static particle_t *particles = NULL;
 
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
@@ -4591,14 +4627,22 @@ void module_dd(
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   SELECT_TIMER("DD_PUSH_ALLOC", "DD");
-  if (npart > capacity) {
+  if (npart >= capacity) {
     const int newcap = npart + npart / 2 + 1;
+#ifdef _OPENACC
+    if (capacity > 0) {
+#pragma acc exit data delete(particles[:capacity])
+    }
+#endif
     particle_t *tmp =
       realloc(particles, (size_t) newcap * sizeof(particle_t));
     if (!tmp)
       ERRMSG("Out of memory!");
     particles = tmp;
     capacity = newcap;
+#ifdef _OPENACC
+#pragma acc enter data create(particles[:capacity])
+#endif
   }
 
   /* Transform from struct of array to array of struct... */
@@ -4615,9 +4659,6 @@ void module_dd(
 
   /* Transform from array of struct to struct of array... */
   dd_particles2atm(ctl, cache, particles, npart, dd, atm);
-
-  /* Free local particle array... */
-  free(particles);
 }
 #endif
 

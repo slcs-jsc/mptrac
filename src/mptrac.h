@@ -5077,10 +5077,6 @@ int dd_calc_subdomain_from_coords(
  * `ctl->qnt_target_subdomain` and `ctl->qnt_current_subdomain` are reset to the
  * current MPI rank.
  *
- * If the receive buffer exceeds the currently allocated particle
- * capacity, the particle array is automatically resized using
- * `realloc()`.
- *
  * @param[in]     ctl        Pointer to the control structure containing
  *                           the quantity indices `qnt_target_subdomain` and
  *                           `qnt_current_subdomain`.
@@ -5098,8 +5094,7 @@ int dd_calc_subdomain_from_coords(
  *                           replaced by the number of particles
  *                           received by the current MPI rank.
  * @param[in,out] capacity   Allocated capacity of the particle buffer.
- *                           If necessary, the routine increases this
- *                           value when resizing the particle array.
+ *                           It is increased if the buffer is resized.
  *
  * @note
  * - Particles whose destination rank equals the current MPI rank are
@@ -5108,6 +5103,9 @@ int dd_calc_subdomain_from_coords(
  *   must refer to a valid MPI rank.
  * - Temporary communication buffers are allocated internally and freed
  *   before returning.
+ * - In OpenACC builds, @p particles must be present on the device. The
+ *   counting, packing and unpacking run on the device and MPI is called
+ *   on device buffers (GPU-aware MPI, no host staging).
  *
  * @author Jan Clemens
  * @author Lars Hoffmann
