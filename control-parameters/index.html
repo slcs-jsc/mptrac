@@ -1135,9 +1135,11 @@ Both active modes and <code>RADIO_DEPO</code> use <code>DRY_DEPO_DZ</code> as th
 surface-layer thickness in metres (default 30 m). This replaces the old
 pressure-based <code>DRY_DEPO_DP</code> parameter; old values cannot be reused as metres.</p>
 <h2 id="radionuclide-deposition">Radionuclide deposition</h2>
-<p>Radionuclide decay and deposition require the activity quantities to be part
-of the air-parcel data. The recognized quantity names are <code>Apb210</code>, <code>Abe7</code>,
-<code>Acs137</code>, and <code>Ai131</code>; their values are activities in Bq per air parcel.</p>
+<p>Radionuclide activities are stored in Bq per air parcel. <code>RADIO_DECAY</code>
+recognizes <code>Arn222</code>, <code>Apb210</code>, <code>Abe7</code>, <code>Acs137</code>, <code>Ai131</code>, and <code>Axe133</code>;
+<code>RADIO_DEPO</code> applies only to <code>Apb210</code>, <code>Abe7</code>, <code>Acs137</code>, and <code>Ai131</code>.
+Both switches accept only <code>0</code> or <code>1</code>. Deposition uses positive individual
+timesteps only; decay also uses negative timesteps mathematically.</p>
 <table>
 <thead>
 <tr>
