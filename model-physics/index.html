@@ -1763,7 +1763,9 @@ depth in metres, calculated from <span class="arithmatex">\(p_{ct}\)</span> and 
 <span class="arithmatex">\(T^\ominus=298.15\)</span> K. Selected species defaults are listed below;
 Sander (2023) provides a current Henry-law compilation. Setting
 <code>WET_DEPO_SO2_PH</code> to a positive pH applies an SO<span class="arithmatex">\(_2\)</span> dissociation
-correction to in-cloud Henry-law scavenging only. For negative individual
+correction to in-cloud Henry-law scavenging only, as described by
+<a href="https://doi.org/10.5194/gmd-16-5197-2023">Liu et al. (2023)</a> in their
+improved treatment of SO<span class="arithmatex">\(_2\)</span> depletion. For negative individual
 timesteps, MPTRAC mathematically reverses the mass update
 <span class="arithmatex">\(m_{\rm new}=m_{\rm old}\exp(-\Lambda\Delta t)\)</span>.</p>
 <table>
