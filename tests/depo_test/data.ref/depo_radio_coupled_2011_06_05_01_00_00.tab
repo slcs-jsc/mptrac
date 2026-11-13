@@ -1,0 +1,10 @@
+# $1 = time [s]
+# $2 = longitude [deg]
+# $3 = latitude [deg]
+# $4 = area [m^2]
+# $5 = deposited Pb-210 activity [Bq/m^2]
+# $6 = deposited Be-7 activity [Bq/m^2]
+# $7 = deposited Cs-137 activity [Bq/m^2]
+# $8 = deposited I-131 activity [Bq/m^2]
+
+360550800.00 -82.5 12.5 1.20577e+10 0 0 0 4.81238e-09
