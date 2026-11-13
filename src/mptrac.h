@@ -3280,7 +3280,7 @@ typedef struct {
   /*! RADIO_DEPO switch for radionuclide deposition (0=off, 1=on, default: 0). */
   int radio_depo;
 
-  /*! Coefficients for precipitation calculation. */
+  /*! Positive coefficients for the column-condensate precipitation proxy. */
   double wet_depo_pre[2];
 
   /*! Coefficient A for wet deposition below cloud (exponential form). */
@@ -3295,10 +3295,10 @@ typedef struct {
   /*! Coefficient B for wet deposition in cloud (exponential form). */
   double wet_depo_ic_b;
 
-  /*! Coefficients for wet deposition in cloud (Henry's law: Hb, Cb). */
+  /*! In-cloud Henry coefficients (reference solubility, temperature coefficient). */
   double wet_depo_ic_h[2];
 
-  /*! Coefficients for wet deposition below cloud (Henry's law: Hb, Cb). */
+  /*! Below-cloud Henry coefficients (reference solubility, temperature coefficient). */
   double wet_depo_bc_h[2];
 
   /*! pH value used to calculate effective Henry constant of SO2. */
@@ -7353,11 +7353,16 @@ void module_tracer_chem(
  * based on precipitation rate and scavenging coefficients inside and below cloud layers.
  * @note It estimates the exponential decay of mass or volume mixing ratio over time 
  * due to wet deposition.
- * @note For exponential form A and B coefficients see Bakels et al. (2024, Table B2).
+ * @note Positive empirical A takes precedence over Henry coefficients in each
+ * cloud branch; an unconfigured branch has zero scavenging. For empirical
+ * coefficient examples see Bakels et al. (2024).
  * @note For Henry's law constants see Sander (2023) or https://henrys-law.org/.
  * @note Some species (e.g. SO2) require an effective Henry constant to account not only
  * for physical solubility in water but also for chemical reactions, such as hydrolysis
  * and ionization, which significantly enhance dissolution in aqueous solutions.
+ * The SO2 pH correction applies to the in-cloud Henry branch only. The mass
+ * update uses each particle's signed timestep; negative timesteps reverse
+ * the exponential loss mathematically.
  *
  * @author Lars Hoffmann
  * @author Mingzhao Liu

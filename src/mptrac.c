@@ -6515,7 +6515,7 @@ void module_wet_depo(
     INTPOL_2D(cl, 0);
     const double Is =
       pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
-    if (Is < 0.01)
+    if (!isfinite(Is) || Is < 0.01)
       continue;
 
     /* Check whether particle is inside or below cloud... */
@@ -6529,6 +6529,8 @@ void module_wet_depo(
     /* Get temperature... */
     double t;
     INTPOL_3D(t, 0);
+    if (!isfinite(t) || t <= 0.)
+      continue;
 
     /* Calculate in-cloud scavenging coefficient... */
     double lambda = 0;
@@ -6569,6 +6571,8 @@ void module_wet_depo(
 
 	/* Estimate depth of cloud layer... */
 	const double dz = 1e3 * (Z(pct) - Z(pcb));
+	if (!isfinite(dz) || dz <= 0.)
+	  continue;
 
 	/* Calculate scavenging coefficient... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -6598,6 +6602,8 @@ void module_wet_depo(
 
 	/* Estimate depth of cloud layer... */
 	const double dz = 1e3 * (Z(pct) - Z(pcb));
+	if (!isfinite(dz) || dz <= 0.)
+	  continue;
 
 	/* Calculate scavenging coefficient... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -6605,6 +6611,8 @@ void module_wet_depo(
     }
 
     /* Calculate exponential decay of mass... */
+    if (!isfinite(lambda) || lambda < 0.)
+      continue;
     const double aux = exp(-cache->dt[ip] * lambda);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_wet >= 0)
@@ -7842,7 +7850,7 @@ void mptrac_read_ctl(
     ctl->wet_depo_ic_h[ip] =
       scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, defstr, NULL);
   }
-  for (int ip = 0; ip < 1; ip++) {
+  for (int ip = 0; ip < 2; ip++) {
     sprintf(defstr, "%g", ctl->wet_depo_bc_h[ip]);
     ctl->wet_depo_bc_h[ip] =
       scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, defstr, NULL);
@@ -7865,6 +7873,47 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "WET_DEPO_IC_RET_RATIO", -1, "1", NULL);
   ctl->wet_depo_bc_ret_ratio =
     scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
+  if (!isfinite(ctl->wet_depo_ic_a) || ctl->wet_depo_ic_a < 0.
+      || !isfinite(ctl->wet_depo_bc_a) || ctl->wet_depo_bc_a < 0.
+      || !isfinite(ctl->wet_depo_ic_h[0]) || ctl->wet_depo_ic_h[0] < 0.
+      || !isfinite(ctl->wet_depo_bc_h[0]) || ctl->wet_depo_bc_h[0] < 0.)
+    ERRMSG
+      ("Wet-deposition activation coefficients must be finite and nonnegative!");
+  const int wet_ic = ctl->wet_depo_ic_a > 0. || ctl->wet_depo_ic_h[0] > 0.;
+  const int wet_bc = ctl->wet_depo_bc_a > 0. || ctl->wet_depo_bc_h[0] > 0.;
+  if (wet_ic || wet_bc || ctl->radio_depo > 0) {
+    for (int ip = 0; ip < 2; ip++)
+      if (!isfinite(ctl->wet_depo_pre[ip]) || ctl->wet_depo_pre[ip] <= 0.)
+	ERRMSG("WET_DEPO_PRE coefficients must be finite and positive!");
+  }
+  if ((wet_ic || ctl->radio_depo > 0)
+      && (!isfinite(ctl->wet_depo_ic_ret_ratio)
+	  || ctl->wet_depo_ic_ret_ratio < 0.
+	  || ctl->wet_depo_ic_ret_ratio > 1.))
+    ERRMSG("WET_DEPO_IC_RET_RATIO must be finite and within [0, 1]!");
+  if ((wet_bc || ctl->radio_depo > 0)
+      && (!isfinite(ctl->wet_depo_bc_ret_ratio)
+	  || ctl->wet_depo_bc_ret_ratio < 0.
+	  || ctl->wet_depo_bc_ret_ratio > 1.))
+    ERRMSG("WET_DEPO_BC_RET_RATIO must be finite and within [0, 1]!");
+  if (ctl->wet_depo_ic_a > 0. && !isfinite(ctl->wet_depo_ic_b))
+    ERRMSG("WET_DEPO_IC_B must be finite when WET_DEPO_IC_A is positive!");
+  if (ctl->wet_depo_bc_a > 0. && !isfinite(ctl->wet_depo_bc_b))
+    ERRMSG("WET_DEPO_BC_B must be finite when WET_DEPO_BC_A is positive!");
+  if (ctl->wet_depo_ic_a == 0. && ctl->wet_depo_ic_h[0] > 0.
+      && !isfinite(ctl->wet_depo_ic_h[1]))
+    ERRMSG("WET_DEPO_IC_H[1] must be finite for Henry-law scavenging!");
+  if (ctl->wet_depo_bc_a == 0. && ctl->wet_depo_bc_h[0] > 0.
+      && !isfinite(ctl->wet_depo_bc_h[1]))
+    ERRMSG("WET_DEPO_BC_H[1] must be finite for Henry-law scavenging!");
+  if (ctl->wet_depo_ic_a == 0. && ctl->wet_depo_ic_h[0] > 0.
+      && !isfinite(ctl->wet_depo_so2_ph))
+    ERRMSG("WET_DEPO_SO2_PH must be finite for in-cloud Henry-law scavenging!");
+  if (ctl->wet_depo_so2_ph > 0. && ctl->wet_depo_ic_a == 0.
+      && ctl->wet_depo_ic_h[0] > 0.
+      && ctl->species[0] != '-' && strcasecmp(ctl->species, "SO2") != 0)
+    ERRMSG
+      ("WET_DEPO_SO2_PH requires SPECIES=SO2 for in-cloud Henry-law scavenging!");
 
   /* Dry deposition... */
   const double dry_depo_mode =
@@ -8581,8 +8630,8 @@ void mptrac_run_timestep(
   }
 
   /* Wet deposition... */
-  if ((ctl->wet_depo_ic_a > 0 || ctl->wet_depo_ic_h[0] > 0)
-      && (ctl->wet_depo_bc_a > 0 || ctl->wet_depo_bc_h[0] > 0))
+  if (ctl->wet_depo_ic_a > 0 || ctl->wet_depo_ic_h[0] > 0
+      || ctl->wet_depo_bc_a > 0 || ctl->wet_depo_bc_h[0] > 0)
     module_wet_depo(ctl, cache, *met0, *met1, atm);
 
   /* Dry deposition... */

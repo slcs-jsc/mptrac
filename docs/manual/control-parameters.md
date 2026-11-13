@@ -73,6 +73,21 @@ Existing particle files without this quantity need a configuration that
 provides a free quantity slot; `NQ` and other quantity indices are not
 changed automatically. `ISOSURF=0` and `4` do not require it.
 
+## Wet deposition
+
+In-cloud and below-cloud scavenging can be configured independently.
+For each branch, a positive `WET_DEPO_IC_A` or `WET_DEPO_BC_A` selects
+empirical aerosol scavenging and takes precedence over the corresponding
+positive Henry-law coefficient `WET_DEPO_IC_H[0]` or `WET_DEPO_BC_H[0]`.
+If neither coefficient is positive, that branch is disabled. The Henry-law
+temperature coefficients are `[1]`; `SPECIES` supplies defaults that can
+be overridden. `WET_DEPO_PRE[0]=0.5` and `WET_DEPO_PRE[1]=0.36` define
+the empirical precipitation proxy from column condensate. Radioactive
+wet deposition uses these precipitation coefficients independently of
+general wet-deposition activation. A positive `WET_DEPO_SO2_PH` applies
+the SO$_2$ pH correction only to in-cloud Henry-law scavenging; when a
+different species is named, this combination is rejected.
+
 ## Dry deposition
 
 `DRY_DEPO_MODE` selects dry deposition: `0` disables it (default), `1`

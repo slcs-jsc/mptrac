@@ -438,64 +438,63 @@ handled separately.
 
 ## Wet deposition
 
-Wet deposition causes the removal of trace gases and aerosol particles
-from the atmosphere within or below clouds by mixing with suspended
-water and following washout through rain, snow, or fog. Wet deposition
-in MPTRAC is calculated based on the following four steps:
+Wet deposition removes trace gases and aerosol particles within or below
+clouds. MPTRAC calculates it in four steps:
 
-(1) it is determined whether an air parcel is located below a cloud
-top. The cloud-top pressure $p_{ct}$ is determined from the
-meteorological data as the highest vertical level where cloud water or
-ice (i.e., CLWC, CRWC, CIWC, or CSWC) is existent.
+(1) A parcel must be below the diagnosed cloud top. Cloud-top and
+cloud-bottom pressures $p_{ct}$ and $p_{cb}$ are diagnosed from cloud
+cover and cloud liquid, rain, ice, or snow water content.
  
-(2) the wet deposition parametrization determines an estimate of the
-subgrid-scale precipitation rate $I_s$, which is needed to calculate
-the scavenging coefficient $\Lambda$. The precipitation rate $I_s$ (in
-units of $\rm{mm h^{-1}}$) is calculated from the total column cloud
-water $c_l$ (in units of $\rm{kg m^{-2}}$) by means of a correlation
-function reported by Pisso et al. (2019),
+(2) Column-integrated condensate $c_l$ (kg m$^{-2}$) provides an
+empirical precipitation proxy $I_s$ (mm h$^{-1}$), obtained by inverting
+the relationship reported by Pisso et al. (2019). The default values are
+$a_{\rm pre}=0.5$ kg m$^{-2}$(mm h$^{-1}$)$^{-b_{\rm pre}}$
+and dimensionless $b_{\rm pre}=0.36$:
 
 $$
 \begin{equation}
- I_s= (2c_l)^{1/0.36},
+ I_s=\left(\frac{c_l}{a_{\rm pre}}\right)^{1/b_{\rm pre}}.
 \end{equation}
 $$
 
-(3) it is inferred whether the air parcel is located within or below
-the cloud because scavenging coefficients will be different under
-these conditions. The position of the air parcel within or below the
-cloud is determined by interpolating the cloud water content to the
-position of the air parcel and by testing whether the interpolated
-values are larger than zero.
+(3) Positive local cloud liquid, rain, ice, or snow water content selects
+in-cloud scavenging; otherwise below-cloud scavenging is used. Wet
+deposition requires $I_s\geq0.01$ mm h$^{-1}$.
 
-(4) the scavenging coefficient $\Lambda$ is calculated based on the
-precipitation rate $I_s$,
+(4) Each branch independently selects empirical aerosol scavenging if
+$A>0$, otherwise Henry-law gas scavenging if $H^\ominus>0$. An
+unconfigured branch has zero scavenging. The rates are
 
 $$
 \begin{equation}
- \Lambda=HRT I_s \Delta z_c^{-1},
+ \Lambda_{\rm aerosol}=A I_s^B\eta,\qquad
+ \Lambda_{\rm gas}=\frac{H(T)RT\eta}{\Delta z_c}
+                    \frac{I_s}{3.6\times10^6},
 \end{equation}
 $$
 
-where H is Henry’s law constant, R is the universal gas constant, and
-$\Delta z_c$ is the depth of the cloud layer, which is calculated from
-$p_{ct}$ and $p_{cb}$. Henry’s law constant is obtained from
+where $A$ has units s$^{-1}$(mm h$^{-1}$)$^{-B}$, $B$ and the retention
+factor $\eta$ are dimensionless, $H$ has units mol m$^{-3}$ Pa$^{-1}$,
+$R$ is the universal gas constant, and $\Delta z_c$ is the cloud-layer
+depth in metres, calculated from $p_{ct}$ and $p_{cb}$. The factor
+$3.6\times10^6$ converts mm h$^{-1}$ to m s$^{-1}$. Henry's constant is
 
 $$
 \begin{equation}
-  H(T)=H^\ominus \exp \left [\frac{\Lambda_{sol}H}{R} \left (\frac{1}{T}-\frac{1}{T^\ominus}  \right ) \right] 
+  H(T)=H^\ominus\exp\left[C\left(\frac{1}{T}-\frac{1}{T^\ominus}\right)\right],
 \end{equation}
 $$
 
-The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of
-dissolution $\Delta_{sol}H$ at the reference temperature
-$T^\ominus=298.15~K$ need to be specified as control
-parameters. Values for a wide range of species are tabulated by Sander
-(2015). The values of selected species of interest are summarized in
-the following table are included as default parameters in MPTRAC.
+with $C=-\Delta_{\rm sol}H/R$ in kelvin and
+$T^\ominus=298.15$ K. Selected species defaults are listed below;
+Sander (2023) provides a current Henry-law compilation. Setting
+`WET_DEPO_SO2_PH` to a positive pH applies an SO$_2$ dissociation
+correction to in-cloud Henry-law scavenging only. For negative individual
+timesteps, MPTRAC mathematically reverses the mass update
+$m_{\rm new}=m_{\rm old}\exp(-\Lambda\Delta t)$.
 
 
-| Species      | $H^\ominus$ (at 298.15 K) | $-\frac{\Delta_{sol}H}{R}$ |
+| Species      | $H^\ominus$ (mol m$^{-3}$ Pa$^{-1}$ at 298.15 K) | $C$ (K) |
 | ------------ | ------------------ | ------|
 | $\sf{CF_2Cl_2}$ |  3.0 $\cdot 10^{-5}$ | 3500 |   
 | $\sf{CFCl_3}$  | 1.1 $\cdot 10^{-4}$ | 3300 |
