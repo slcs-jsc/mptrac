@@ -5962,32 +5962,45 @@ void module_radio_depo(
       if (cl > 0) {
 	const double Is =
 	  pow(cl / ctl->wet_depo_pre[0], 1. / ctl->wet_depo_pre[1]);
-	if (Is >= 0.01) {
+	if (isfinite(Is) && Is >= 0.01) {
 	  double lwc, rwc, iwc, swc, t;
 	  INTPOL_3D(lwc, 1);
 	  INTPOL_3D(rwc, 0);
 	  INTPOL_3D(iwc, 0);
 	  INTPOL_3D(swc, 0);
 	  INTPOL_3D(t, 0);
-	  const int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
-	  double eta;
-	  if (inside) {
-	    if (t > WET_DEPO_T_LIQUID)
-	      eta = 1;
-	    else if (t <= WET_DEPO_T_ICE)
-	      eta = ctl->wet_depo_ic_ret_ratio;
-	    else
-	      eta = LIN(WET_DEPO_T_LIQUID, 1, WET_DEPO_T_ICE,
-			ctl->wet_depo_ic_ret_ratio, t);
-	  } else
-	    eta = (t > WET_DEPO_T_LIQUID_BC ? 1 : ctl->wet_depo_bc_ret_ratio);
-	  wet_pb210 = RADIO_WET_COEFF_PB210 * Is * eta;
-	  wet_be7 = RADIO_WET_COEFF_BE7 * Is * eta;
-	  wet_cs137 = RADIO_WET_COEFF_CS137 * Is * eta;
-	  wet_i131 = RADIO_WET_COEFF_I131 * Is * eta;
+	  if (isfinite(t) && t > 0.) {
+	    const int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
+	    double eta;
+	    if (inside) {
+	      if (t > WET_DEPO_T_LIQUID)
+		eta = 1;
+	      else if (t <= WET_DEPO_T_ICE)
+		eta = ctl->wet_depo_ic_ret_ratio;
+	      else
+		eta = LIN(WET_DEPO_T_LIQUID, 1, WET_DEPO_T_ICE,
+			  ctl->wet_depo_ic_ret_ratio, t);
+	    } else
+	      eta =
+		(t > WET_DEPO_T_LIQUID_BC ? 1 : ctl->wet_depo_bc_ret_ratio);
+	    wet_pb210 = RADIO_WET_COEFF_PB210 * Is * eta;
+	    wet_be7 = RADIO_WET_COEFF_BE7 * Is * eta;
+	    wet_cs137 = RADIO_WET_COEFF_CS137 * Is * eta;
+	    wet_i131 = RADIO_WET_COEFF_I131 * Is * eta;
+	  }
 	}
       }
     }
+
+    /* Ignore invalid wet rates without suppressing valid dry deposition... */
+    if (!isfinite(wet_pb210) || wet_pb210 < 0.)
+      wet_pb210 = 0.;
+    if (!isfinite(wet_be7) || wet_be7 < 0.)
+      wet_be7 = 0.;
+    if (!isfinite(wet_cs137) || wet_cs137 < 0.)
+      wet_cs137 = 0.;
+    if (!isfinite(wet_i131) || wet_i131 < 0.)
+      wet_i131 = 0.;
 
     /* Get deposition grid index... */
     const int ingrid =
@@ -6002,9 +6015,10 @@ void module_radio_depo(
     const double tref = atm->time[ip] - ctl->t_start;
 
     /* Deposit Pb-210... */
-    if (ctl->qnt_Apb210 >= 0) {
+    const double rate_pb210 = dry_pb210 + wet_pb210;
+    if (ctl->qnt_Apb210 >= 0 && isfinite(rate_pb210) && rate_pb210 >= 0.) {
       const double old = atm->q[ctl->qnt_Apb210][ip];
-      const double aux = exp(-dt * (dry_pb210 + wet_pb210));
+      const double aux = exp(-dt * rate_pb210);
       const double lost = old * (1. - aux);
       const double deposited = lost
 	* (ctl->radio_decay ? exp(lambda_pb210 * tref) : 1.0);
@@ -6020,9 +6034,10 @@ void module_radio_depo(
     }
 
     /* Deposit Be-7... */
-    if (ctl->qnt_Abe7 >= 0) {
+    const double rate_be7 = dry_be7 + wet_be7;
+    if (ctl->qnt_Abe7 >= 0 && isfinite(rate_be7) && rate_be7 >= 0.) {
       const double old = atm->q[ctl->qnt_Abe7][ip];
-      const double aux = exp(-dt * (dry_be7 + wet_be7));
+      const double aux = exp(-dt * rate_be7);
       const double lost = old * (1. - aux);
       const double deposited = lost
 	* (ctl->radio_decay ? exp(lambda_be7 * tref) : 1.0);
@@ -6038,9 +6053,10 @@ void module_radio_depo(
     }
 
     /* Deposit Cs-137... */
-    if (ctl->qnt_Acs137 >= 0) {
+    const double rate_cs137 = dry_cs137 + wet_cs137;
+    if (ctl->qnt_Acs137 >= 0 && isfinite(rate_cs137) && rate_cs137 >= 0.) {
       const double old = atm->q[ctl->qnt_Acs137][ip];
-      const double aux = exp(-dt * (dry_cs137 + wet_cs137));
+      const double aux = exp(-dt * rate_cs137);
       const double lost = old * (1. - aux);
       const double deposited = lost
 	* (ctl->radio_decay ? exp(lambda_cs137 * tref) : 1.0);
@@ -6056,9 +6072,10 @@ void module_radio_depo(
     }
 
     /* Deposit aerosol-bound I-131... */
-    if (ctl->qnt_Ai131 >= 0) {
+    const double rate_i131 = dry_i131 + wet_i131;
+    if (ctl->qnt_Ai131 >= 0 && isfinite(rate_i131) && rate_i131 >= 0.) {
       const double old = atm->q[ctl->qnt_Ai131][ip];
-      const double aux = exp(-dt * (dry_i131 + wet_i131));
+      const double aux = exp(-dt * rate_i131);
       const double lost = old * (1. - aux);
       const double deposited = lost
 	* (ctl->radio_decay ? exp(lambda_i131 * tref) : 1.0);
@@ -7837,10 +7854,16 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "TRACER_CHEM", -1, "0", NULL);
 
   /* Radioactive decay... */
-  ctl->radio_decay =
-    (int) scan_ctl(filename, argc, argv, "RADIO_DECAY", -1, "0", NULL);
-  ctl->radio_depo =
-    (int) scan_ctl(filename, argc, argv, "RADIO_DEPO", -1, "0", NULL);
+  const double radio_decay =
+    scan_ctl(filename, argc, argv, "RADIO_DECAY", -1, "0", NULL);
+  const double radio_depo =
+    scan_ctl(filename, argc, argv, "RADIO_DEPO", -1, "0", NULL);
+  if (radio_decay != 0. && radio_decay != 1.)
+    ERRMSG("RADIO_DECAY must be 0 or 1!");
+  if (radio_depo != 0. && radio_depo != 1.)
+    ERRMSG("RADIO_DEPO must be 0 or 1!");
+  ctl->radio_decay = (int) radio_decay;
+  ctl->radio_depo = (int) radio_depo;
   if (ctl->radio_depo && ctl->met_coord_type != 0)
     ERRMSG("Radioactive deposition requires a lat/lon meteorological grid!");
 

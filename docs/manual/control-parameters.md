@@ -100,9 +100,11 @@ pressure-based `DRY_DEPO_DP` parameter; old values cannot be reused as metres.
 
 ## Radionuclide deposition
 
-Radionuclide decay and deposition require the activity quantities to be part
-of the air-parcel data. The recognized quantity names are `Apb210`, `Abe7`,
-`Acs137`, and `Ai131`; their values are activities in Bq per air parcel.
+Radionuclide activities are stored in Bq per air parcel. `RADIO_DECAY`
+recognizes `Arn222`, `Apb210`, `Abe7`, `Acs137`, `Ai131`, and `Axe133`;
+`RADIO_DEPO` applies only to `Apb210`, `Abe7`, `Acs137`, and `Ai131`.
+Both switches accept only `0` or `1`. Deposition uses positive individual
+timesteps only; decay also uses negative timesteps mathematically.
 
 | Parameter | Meaning | Default |
 |-----------|---------|---------|

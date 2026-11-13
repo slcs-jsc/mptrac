@@ -510,22 +510,22 @@
 #define RADIO_DRY_VDEP_I131 0.0005
 #endif
 
-/*! Wet deposition coefficient of Pb-210 [s^-1]. */
+/*! Wet deposition coefficient of Pb-210 [s^-1 (mm h^-1)^-1]. */
 #ifndef RADIO_WET_COEFF_PB210
 #define RADIO_WET_COEFF_PB210 1e-4
 #endif
 
-/*! Wet deposition coefficient of Be-7 [s^-1]. */
+/*! Wet deposition coefficient of Be-7 [s^-1 (mm h^-1)^-1]. */
 #ifndef RADIO_WET_COEFF_BE7
 #define RADIO_WET_COEFF_BE7 5e-5
 #endif
 
-/*! Wet deposition coefficient of Cs-137 [s^-1]. */
+/*! Wet deposition coefficient of Cs-137 [s^-1 (mm h^-1)^-1]. */
 #ifndef RADIO_WET_COEFF_CS137
 #define RADIO_WET_COEFF_CS137 1e-4
 #endif
 
-/*! Wet deposition coefficient of aerosol-bound I-131 [s^-1]. */
+/*! Wet deposition coefficient of aerosol-bound I-131 [s^-1 (mm h^-1)^-1]. */
 #ifndef RADIO_WET_COEFF_I131
 #define RADIO_WET_COEFF_I131 5e-5
 #endif
@@ -7055,8 +7055,8 @@ void module_rng(
 /**
  * @brief Apply radioactive decay to atmospheric tracer species.
  *
- * This routine updates the concentrations of radioactive tracers carried by
- * atmospheric particles by applying exponential decay over the current
+ * This routine updates radionuclide activities [Bq] carried by atmospheric
+ * particles by applying exponential decay over the current
  * particle timestep. The decay constants are derived from the half-lives of
  * the respective isotopes.
  *
@@ -7068,13 +7068,14 @@ void module_rng(
  * - I-131
  * - Xe-133
  *
- * For each particle, the tracer mixing ratios are reduced according to
- * \f$ q(t+\Delta t) = q(t) \exp(-\lambda \Delta t) \f$, where
+ * For each particle, activity follows
+ * \f$ A(t+\Delta t) = A(t) \exp(-\lambda \Delta t) \f$, where
  * \f$\lambda\f$ is the decay constant and \f$\Delta t\f$ is the particle
  * timestep.
  *
  * Additionally, the decay of Rn-222 contributes to the production of Pb-210
- * via a simplified parent–daughter relationship.
+ * via a simplified parent–daughter relationship. Negative particle timesteps
+ * mathematically reverse the exponential decay.
  *
  * The update is performed only if the corresponding tracer index in
  * the control structure is non-negative.

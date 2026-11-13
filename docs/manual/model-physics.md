@@ -631,10 +631,16 @@ range around the tropopause.
 
 ### Radionuclide decay and deposition
 
-For the explicitly supported radionuclides, `RADIO_DECAY` controls decay in
-both airborne activity and deposited ground inventories. The half-lives used
-for both phases are 22.3 years for Pb-210, 53.22 days for Be-7, 30.05 years
-for Cs-137, and 8.02 days for I-131.
+Particle activities are in Bq. `RADIO_DECAY` applies to `Arn222`, `Apb210`,
+`Abe7`, `Acs137`, `Ai131`, and `Axe133`. Only Pb-210, Be-7, Cs-137, and
+aerosol-bound I-131 have deposition parameterizations. The half-lives are
+3.8235 days for Rn-222, 22.3 years for Pb-210, 53.22 days for Be-7,
+30.05 years for Cs-137, 8.02 days for I-131, and 5.2474 days for Xe-133.
+For each individual signed timestep, airborne decay follows
+$A(t+\Delta t)=A(t)\exp[-(\ln 2)\Delta t/T_{1/2}]$. Negative timesteps
+mathematically reverse this decay. Rn-222 decay also produces Pb-210 through
+a simplified parent–daughter update; Rn-222 and Xe-133 have no deposition
+inventories.
 
 The activity $A$ of a parcel is reduced over a model time step according to
 
@@ -642,10 +648,8 @@ $$
 A(t+\Delta t)=A(t)\exp[-(k_\mathrm{dry}+k_\mathrm{wet})\Delta t].
 $$
 
-This equation describes deposition loss only. Radioactive decay is applied
-separately when `RADIO_DECAY=1`, using the half-lives defined in `mptrac.h`.
-Rn-222 and Xe-133 undergo airborne decay but are not included in the
-deposition inventories.
+This equation describes deposition loss only. `RADIO_DEPO` applies it only
+for positive individual timesteps; radioactive decay is a separate process.
 
 Radioactive dry deposition uses the same `DRY_DEPO_DZ` metre layer above
 the local surface, independently of `DRY_DEPO_MODE`. For its thickness
@@ -664,7 +668,10 @@ $$
 is at least 0.01. Here, $c_l$ is total column cloud water and $p_0$ and $p_1$
 are `WET_DEPO_PRE[0]` and `WET_DEPO_PRE[1]`. The wet rates are
 $10^{-4} I_s \eta$ s$^{-1}$ for Pb-210 and Cs-137 and
-$5\times10^{-5} I_s \eta$ s$^{-1}$ for Be-7 and I-131. The retention factor
+$5\times10^{-5} I_s \eta$ s$^{-1}$ for Be-7 and I-131. Equivalently,
+$k_\mathrm{wet}=c_i I_s\eta$, where the empirical defaults $c_i$ have units
+s$^{-1}$(mm h$^{-1}$)$^{-1}$; their original provenance has not been
+established. The retention factor
 $\eta$ uses `WET_DEPO_IC_RET_RATIO` in cold in-cloud conditions and
 `WET_DEPO_BC_RET_RATIO` below cold clouds, with temperature interpolation for
 mixed-phase clouds.
@@ -675,11 +682,13 @@ defined as `RADIO_HALF_LIFE_*`, `RADIO_DRY_VDEP_*`, and
 `#ifndef` and can be replaced at compile time, for example with
 `make DEFINES="-DRADIO_DRY_VDEP_CS137=0.0015"`.
 
-Deposited activities are accumulated on the grid selected by the `GRID_*`
-parameters and can be written with the `DEPO_*` output parameters. Deposited
-ground inventories are not contained in atmospheric restart files. A run
-started from such a restart therefore begins with zero ground inventory; only
-deposition occurring after the restart is reported.
+Deposited activities are accumulated in Bq per cell on the `GRID_*` grid and
+written by `DEPO_*` as Bq m$^{-2}$. With `RADIO_DECAY=1`, deposited activity
+continues to decay at output time; without decay, output is cumulative
+deposition. Activity deposited outside the configured grid is removed from
+air but not recorded in the ground inventory. Ground inventories are not
+contained in atmospheric restart files, so a restarted run begins with zero
+ground inventory.
 
 The radionuclide deposition module currently requires a latitude/longitude
 meteorological grid (`MET_COORD_TYPE=0`). Domain-decomposed simulations are
