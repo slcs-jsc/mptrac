@@ -489,7 +489,9 @@ with $C=-\Delta_{\rm sol}H/R$ in kelvin and
 $T^\ominus=298.15$ K. Selected species defaults are listed below;
 Sander (2023) provides a current Henry-law compilation. Setting
 `WET_DEPO_SO2_PH` to a positive pH applies an SO$_2$ dissociation
-correction to in-cloud Henry-law scavenging only. For negative individual
+correction to in-cloud Henry-law scavenging only, as described by
+[Liu et al. (2023)](https://doi.org/10.5194/gmd-16-5197-2023) in their
+improved treatment of SO$_2$ depletion. For negative individual
 timesteps, MPTRAC mathematically reverses the mass update
 $m_{\rm new}=m_{\rm old}\exp(-\Lambda\Delta t)$.
 

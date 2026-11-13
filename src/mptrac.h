@@ -7360,8 +7360,9 @@ void module_tracer_chem(
  * @note Some species (e.g. SO2) require an effective Henry constant to account not only
  * for physical solubility in water but also for chemical reactions, such as hydrolysis
  * and ionization, which significantly enhance dissolution in aqueous solutions.
- * The SO2 pH correction applies to the in-cloud Henry branch only. The mass
- * update uses each particle's signed timestep; negative timesteps reverse
+ * The SO2 pH correction applies to the in-cloud Henry branch only; see
+ * Liu et al. (2023), https://doi.org/10.5194/gmd-16-5197-2023.
+ * The mass update uses each particle's signed timestep; negative timesteps reverse
  * the exponential loss mathematically.
  *
  * @author Lars Hoffmann
