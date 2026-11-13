@@ -462,6 +462,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#wet-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wet deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dry-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -992,6 +1003,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#wet-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wet deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dry-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1091,6 +1113,19 @@ pressure-to-temperature ratio (<code>2</code>), and K for potential temperature 
 Existing particle files without this quantity need a configuration that
 provides a free quantity slot; <code>NQ</code> and other quantity indices are not
 changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require it.</p>
+<h2 id="wet-deposition">Wet deposition</h2>
+<p>In-cloud and below-cloud scavenging can be configured independently.
+For each branch, a positive <code>WET_DEPO_IC_A</code> or <code>WET_DEPO_BC_A</code> selects
+empirical aerosol scavenging and takes precedence over the corresponding
+positive Henry-law coefficient <code>WET_DEPO_IC_H[0]</code> or <code>WET_DEPO_BC_H[0]</code>.
+If neither coefficient is positive, that branch is disabled. The Henry-law
+temperature coefficients are <code>[1]</code>; <code>SPECIES</code> supplies defaults that can
+be overridden. <code>WET_DEPO_PRE[0]=0.5</code> and <code>WET_DEPO_PRE[1]=0.36</code> define
+the empirical precipitation proxy from column condensate. Radioactive
+wet deposition uses these precipitation coefficients independently of
+general wet-deposition activation. A positive <code>WET_DEPO_SO2_PH</code> applies
+the SO<span class="arithmatex">\(_2\)</span> pH correction only to in-cloud Henry-law scavenging; when a
+different species is named, this combination is rejected.</p>
 <h2 id="dry-deposition">Dry deposition</h2>
 <p><code>DRY_DEPO_MODE</code> selects dry deposition: <code>0</code> disables it (default), <code>1</code>
 uses the positive prescribed velocity <code>DRY_DEPO_VDEP</code> in m/s, and <code>2</code>

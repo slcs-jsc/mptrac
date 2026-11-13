@@ -856,7 +856,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:ae89c11dcb9144ff377e7e417f652e70e"><td class="mdescLeft">&#160;</td><td class="mdescRight">RADIO_DEPO switch for radionuclide deposition (0=off, 1=on, default: 0).  <br /></td></tr>
 <tr class="separator:ae89c11dcb9144ff377e7e417f652e70e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a96e4c97eb8f6a2b81d7ddb7a3ce4ae81" id="r_a96e4c97eb8f6a2b81d7ddb7a3ce4ae81"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a96e4c97eb8f6a2b81d7ddb7a3ce4ae81">wet_depo_pre</a> [2]</td></tr>
-<tr class="memdesc:a96e4c97eb8f6a2b81d7ddb7a3ce4ae81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coefficients for precipitation calculation.  <br /></td></tr>
+<tr class="memdesc:a96e4c97eb8f6a2b81d7ddb7a3ce4ae81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Positive coefficients for the column-condensate precipitation proxy.  <br /></td></tr>
 <tr class="separator:a96e4c97eb8f6a2b81d7ddb7a3ce4ae81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1550c0159a3a3374a1ebccef46604ad8" id="r_a1550c0159a3a3374a1ebccef46604ad8"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1550c0159a3a3374a1ebccef46604ad8">wet_depo_bc_a</a></td></tr>
 <tr class="memdesc:a1550c0159a3a3374a1ebccef46604ad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coefficient A for wet deposition below cloud (exponential form).  <br /></td></tr>
@@ -871,10 +871,10 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:ae48763f1caad155cb48c8bcb536061c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coefficient B for wet deposition in cloud (exponential form).  <br /></td></tr>
 <tr class="separator:ae48763f1caad155cb48c8bcb536061c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad33a970fead17226fb2b208975bee8a2" id="r_ad33a970fead17226fb2b208975bee8a2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad33a970fead17226fb2b208975bee8a2">wet_depo_ic_h</a> [2]</td></tr>
-<tr class="memdesc:ad33a970fead17226fb2b208975bee8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coefficients for wet deposition in cloud (Henry's law: Hb, Cb).  <br /></td></tr>
+<tr class="memdesc:ad33a970fead17226fb2b208975bee8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">In-cloud Henry coefficients (reference solubility, temperature coefficient).  <br /></td></tr>
 <tr class="separator:ad33a970fead17226fb2b208975bee8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a0cd464bdd8eac81b99b88a93e21536" id="r_a9a0cd464bdd8eac81b99b88a93e21536"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a0cd464bdd8eac81b99b88a93e21536">wet_depo_bc_h</a> [2]</td></tr>
-<tr class="memdesc:a9a0cd464bdd8eac81b99b88a93e21536"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coefficients for wet deposition below cloud (Henry's law: Hb, Cb).  <br /></td></tr>
+<tr class="memdesc:a9a0cd464bdd8eac81b99b88a93e21536"><td class="mdescLeft">&#160;</td><td class="mdescRight">Below-cloud Henry coefficients (reference solubility, temperature coefficient).  <br /></td></tr>
 <tr class="separator:a9a0cd464bdd8eac81b99b88a93e21536"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ac7339d5350bb6d64df67a8df70c4b8" id="r_a5ac7339d5350bb6d64df67a8df70c4b8"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5ac7339d5350bb6d64df67a8df70c4b8">wet_depo_so2_ph</a></td></tr>
 <tr class="memdesc:a5ac7339d5350bb6d64df67a8df70c4b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">pH value used to calculate effective Henry constant of SO2.  <br /></td></tr>
@@ -5677,7 +5677,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Coefficients for precipitation calculation. </p>
+<p>Positive coefficients for the column-condensate precipitation proxy. </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03284">3284</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
@@ -5767,7 +5767,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Coefficients for wet deposition in cloud (Henry's law: Hb, Cb). </p>
+<p>In-cloud Henry coefficients (reference solubility, temperature coefficient). </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03299">3299</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
@@ -5785,7 +5785,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Coefficients for wet deposition below cloud (Henry's law: Hb, Cb). </p>
+<p>Below-cloud Henry coefficients (reference solubility, temperature coefficient). </p>
 
 <p class="definition">Definition at line <a class="el" href="mptrac_8h_source.html#l03302">3302</a> of file <a class="el" href="mptrac_8h_source.html">mptrac.h</a>.</p>
 
@@ -7492,7 +7492,7 @@ Data Fields</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 11 2026 08:17:11 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+Generated on Fri Nov 13 2026 20:30:49 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
 </small></address>
 </div><!-- doc-content -->
 </body>
