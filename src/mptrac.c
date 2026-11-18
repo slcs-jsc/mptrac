@@ -149,6 +149,8 @@ void clim_oh_diurnal_correction(
 	}
 
 	/* Apply scaling factor to OH data... */
+	if (!isfinite(sum) || sum <= 0)
+	  ERRMSG("Invalid OH_CHEM_BETA diurnal normalization!");
 	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
       }
 }
@@ -4182,6 +4184,7 @@ void module_bound_cond(
 
 void module_chem_grid(
   const ctl_t *ctl,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm,
@@ -4232,7 +4235,7 @@ void module_chem_grid(
   /* Set vertical coordinates... */
 #ifdef _OPENACC
 #pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],z[0:nz],press[0:nz],mass[0:ngrid*nens],area[0:ny],lon[0:nx],lat[0:ny])
-#pragma acc data present(ctl,met0,met1,atm,ixs,iys,izs,z,press,mass,area,lon,lat)
+#pragma acc data present(ctl,cache,met0,met1,atm,ixs,iys,izs,z,press,mass,area,lon,lat)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -4260,6 +4263,10 @@ void module_chem_grid(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
+    if (cache->dt[ip] == 0) {
+      izs[ip] = -1;
+      continue;
+    }
     const double zpart = Z(atm->p[ip]);
     if (atm->time[ip] < t0 || atm->time[ip] > t1
 	|| atm->lon[ip] < ctl->chemgrid_lon0
@@ -4269,6 +4276,13 @@ void module_chem_grid(
 	|| zpart < ctl->chemgrid_z0 || zpart >= ctl->chemgrid_z1) {
       izs[ip] = -1;
       continue;
+    }
+    if (ensemble_mode) {
+      const double ens = atm->q[ctl->qnt_ens][ip];
+      if (!isfinite(ens) || ens < 0 || ens >= nens || ens != (int) ens) {
+	izs[ip] = -1;
+	continue;
+      }
     }
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
@@ -5135,24 +5149,33 @@ void module_h2o2_chem(
 
   /* Parameter of SO2 correction... */
   const double low = pow(1. / SO2_CORR_A, 1. / SO2_CORR_B);
+  const int so2_correction = ctl->qnt_Cx >= 0
+    && (ctl->species[0] == '-' || strcasecmp(ctl->species, "SO2") == 0);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     /* Check whether particle is inside cloud... */
     double lwc, rwc;
     INTPOL_INIT;
     INTPOL_3D(lwc, 1);
     INTPOL_3D(rwc, 0);
+    if (!isfinite(lwc) || !isfinite(rwc) || lwc < 0 || rwc < 0)
+      continue;
     if (!(lwc > 0 || rwc > 0))
       continue;
 
     /* Get temperature... */
     double t;
     INTPOL_3D(t, 0);
+    if (!isfinite(t) || t <= 0)
+      continue;
 
     /* Get molecular density... */
     const double M = MOLEC_DENS(atm->p[ip], t);
+    if (!isfinite(M) || M <= 0)
+      continue;
 
     /* Reaction rate (Berglen et al., 2004)... */
     const double k = H2O2_SO2_RATE_REF * exp(-H2O2_SO2_RATE_TEMP / RI * (1. / t - 1. / CHEM_REF_TEMP));	/* Maass (1999), M^(-2) */
@@ -5171,12 +5194,18 @@ void module_h2o2_chem(
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
     double cor = 1.0;
-    if (ctl->qnt_Cx >= 0)
+    if (so2_correction) {
+      if (!isfinite(atm->q[ctl->qnt_Cx][ip]))
+	continue;
       cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? SO2_CORR_A * pow(atm->q[ctl->qnt_Cx][ip], SO2_CORR_B) : 1;
+    }
 
-    const double h2o2 = H_h2o2
-      * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
+    const double h2o2_vmr =
+      clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    if (!isfinite(h2o2_vmr) || h2o2_vmr < 0)
+      continue;
+    const double h2o2 = H_h2o2 * h2o2_vmr
       * M * cor * 1000. / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
@@ -5185,7 +5214,11 @@ void module_h2o2_chem(
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
+    if (!isfinite(rate_coef) || rate_coef < 0)
+      continue;
     const double aux = exp(-cache->dt[ip] * rate_coef);
+    if (!isfinite(aux))
+      continue;
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
@@ -5724,6 +5757,8 @@ void module_oh_chem(
   const double a = 4.71572206e-08;
   const double b = -8.28782867e-01;
   const double low = pow(1. / a, 1. / b);
+  const int so2_correction = ctl->qnt_Cx >= 0
+    && (ctl->species[0] == '-' || strcasecmp(ctl->species, "SO2") == 0);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -5733,9 +5768,13 @@ void module_oh_chem(
     double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+    if (!isfinite(t) || t <= 0)
+      continue;
 
     /* Calculate molecular density... */
     const double M = MOLEC_DENS(atm->p[ip], t);
+    if (!isfinite(M) || M <= 0)
+      continue;
 
     /* Use constant reaction rate... */
     double k = NAN;
@@ -5760,20 +5799,31 @@ void module_oh_chem(
       const double c = log10(k0 * M / ki);
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
+    if (!isfinite(k) || k < 0)
+      continue;
 
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
     double cor = 1;
-    if (ctl->qnt_Cx >= 0)
+    if (so2_correction) {
+      if (!isfinite(atm->q[ctl->qnt_Cx][ip]))
+	continue;
       cor =
 	atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
+    }
 
     /* Calculate exponential decay... */
-    const double rate_coef =
-      k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
-		  atm->lat[ip], atm->p[ip]) * M * cor;
+    const double oh = clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
+			      atm->lat[ip], atm->p[ip]);
+    if (!isfinite(oh) || oh < 0)
+      continue;
+    const double rate_coef = k * oh * M * cor;
+    if (!isfinite(rate_coef) || rate_coef < 0)
+      continue;
     const double aux = exp(-cache->dt[ip] * rate_coef);
+    if (!isfinite(aux))
+      continue;
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
 	atm->q[ctl->qnt_mloss_oh][ip]
@@ -7088,13 +7138,20 @@ void mptrac_read_clim(
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-') {
     read_clim_zm(ctl->clim_oh_filename, "OH", &clim->oh);
-    if (ctl->oh_chem_beta > 0)
-      clim_oh_diurnal_correction(ctl, clim);
   }
+  if (ctl->oh_chem_reaction > 0
+      && (clim->oh.ntime < 2 || clim->oh.nlat < 2 || clim->oh.np < 2))
+    ERRMSG("OH_CHEM_REACTION requires a valid CLIM_OH_FILENAME climatology!");
+  if (ctl->oh_chem_beta > 0 && clim->oh.ntime >= 2)
+    clim_oh_diurnal_correction(ctl, clim);
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
     read_clim_zm(ctl->clim_h2o2_filename, "H2O2", &clim->h2o2);
+  if (ctl->h2o2_chem_reaction > 0
+      && (clim->h2o2.ntime < 2 || clim->h2o2.nlat < 2
+	  || clim->h2o2.np < 2))
+    ERRMSG("H2O2_CHEM_REACTION requires a valid CLIM_H2O2_FILENAME climatology!");
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
@@ -7850,9 +7907,12 @@ void mptrac_read_ctl(
 
   /* OH chemistry... */
   sprintf(defstr, "%d", ctl->oh_chem_reaction);
-  ctl->oh_chem_reaction =
-    (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, defstr,
-		   NULL);
+  const double oh_chem_reaction =
+    scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, defstr, NULL);
+  if (oh_chem_reaction != 0. && oh_chem_reaction != 1.
+      && oh_chem_reaction != 2. && oh_chem_reaction != 3.)
+    ERRMSG("OH_CHEM_REACTION must be 0, 1, 2, or 3!");
+  ctl->oh_chem_reaction = (int) oh_chem_reaction;
   for (int ip = 0; ip < 4; ip++) {
     sprintf(defstr, "%g", ctl->oh_chem[ip]);
     ctl->oh_chem[ip] =
@@ -7860,10 +7920,26 @@ void mptrac_read_ctl(
   }
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
+  if (ctl->oh_chem_reaction > 0) {
+    if (!isfinite(ctl->oh_chem_beta))
+      ERRMSG("OH_CHEM_BETA must be finite!");
+    if (!isfinite(ctl->oh_chem[0]) || ctl->oh_chem[0] < 0
+	|| (ctl->oh_chem_reaction == 3 && ctl->oh_chem[0] == 0))
+      ERRMSG("Invalid OH_CHEM[0] for selected reaction!");
+    if (ctl->oh_chem_reaction >= 2 && !isfinite(ctl->oh_chem[1]))
+      ERRMSG("OH_CHEM[1] must be finite!");
+    if (ctl->oh_chem_reaction == 3
+	&& (!isfinite(ctl->oh_chem[2]) || ctl->oh_chem[2] <= 0
+	    || !isfinite(ctl->oh_chem[3])))
+      ERRMSG("Termolecular OH_CHEM[2] must be positive and [3] finite!");
+  }
 
   /* H2O2 chemistry... */
-  ctl->h2o2_chem_reaction =
-    (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
+  const double h2o2_chem_reaction =
+    scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
+  if (h2o2_chem_reaction != 0. && h2o2_chem_reaction != 1.)
+    ERRMSG("H2O2_CHEM_REACTION must be 0 or 1!");
+  ctl->h2o2_chem_reaction = (int) h2o2_chem_reaction;
 
   /* KPP chemistry... */
   ctl->kpp_chem =
@@ -8651,7 +8727,7 @@ void mptrac_run_timestep(
   /* Calculate the tracer vmr in the chemistry grid... */
   if (ctl->oh_chem_reaction != 0 || ctl->h2o2_chem_reaction != 0
       || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0))
-    module_chem_grid(ctl, *met0, *met1, atm, t);
+    module_chem_grid(ctl, cache, *met0, *met1, atm, t);
 
   /* OH chemistry... */
   if (ctl->oh_chem_reaction != 0)

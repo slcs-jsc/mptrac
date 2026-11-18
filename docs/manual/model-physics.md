@@ -574,8 +574,8 @@ different gas-phase species with OH can be classified into two main
 categories, bimolecular reactions (e.g., reactions of $\sf{CH_4}$ or
 $\sf{NH_3}$), and termolecular reactions (e.g., CO or $\sf{SO_2}$).
 
-For bimolecular reactions, the rate constant is calculated from
-Arrhenius law,
+`OH_CHEM_REACTION=1` uses a constant bimolecular coefficient;
+`OH_CHEM_REACTION=2` uses the Arrhenius form
 
 $$
 \begin{equation}
@@ -583,11 +583,13 @@ $$
 \end{equation}
 $$
 
-with Avogadro constant $N_A$. For the calculation of the second-order
-rate constant k see Eq. 25 in Hoffmann et al. (2022).
+where $A$ is in cm$^3$ molecule$^{-1}$ s$^{-1}$ and $E/R$ is in K.
+Both modes multiply the coefficient by OH number density to obtain a
+first-order loss rate. The modes and their coefficients can describe
+species other than SO$_2$.
 
-For the calculation of k the low- and high-pressure limits of the
-reaction rate constant are given by
+`OH_CHEM_REACTION=3` uses the existing termolecular falloff expression
+with low- and high-pressure limits
 
 $$
 \begin{equation}
@@ -609,7 +611,10 @@ $\sf{CH}_4+\sf{OH} \to \sf{CH}_3+\rm{H_2O}$ | 2.45 $\cdot 10^{-12}$ | 1775 |
 $\sf{NH}_3+\sf{OH} \to \sf{H_2O}+\rm{NH}_2$ | 1.7 $\cdot 10^{-12}$ | 710 |
 $\sf{O}_3+\sf{OH} \to \sf{HO}_2+\rm{O}_2$ | 1.7 $\cdot 10^{-12}$ | 940 |
 
-Where A is in $\sf{cm^{-3}}\sf{molec^{-1}} \sf{s^{-1}}$ and E/R in K.
+Here $A$ is in cm$^3$ molecule$^{-1}$ s$^{-1}$ and $E/R$ is in K.
+The low-pressure coefficient $k_0$ is in cm$^6$ molecule$^{-2}$ s$^{-1}$;
+$k_\infty$ is in cm$^3$ molecule$^{-1}$ s$^{-1}$. The falloff correction
+uses a broadening factor of 0.6.
 
 Based on the bimolecular reaction rate k=k(T) or the termolecular
 reaction rate k=k(T, [M]), the loss of mass of the gas-phase species
@@ -627,6 +632,40 @@ et al. (2014). This approach is suitable for global simulations
 covering at least several days, as hydroxyl concentrations may vary
 significantly between day and nighttime as well as the local
 atmospheric composition.
+
+If `Cx` is configured, MPTRAC estimates a local dimensionless tracer mole
+fraction from particle mass on `CHEMGRID`. For `SPECIES=SO2`, an empirical
+high-concentration plume correction reduces the effective OH abundance;
+this correction also remains active when `SPECIES` is unspecified for
+compatibility with existing configurations. An explicitly selected other
+species uses the configured OH kinetics without the SO$_2$ plume
+correction. The correction coefficients apply to the *numerical mole
+fraction*, not to a value converted to ppbv, and represent the empirical
+oxidant-availability fit of [Liu et al. (2025)](https://doi.org/10.5194/acp-25-4403-2025).
+
+## Aqueous SO2 oxidation by H2O2
+
+`H2O2_CHEM_REACTION=1` applies a simplified, SO$_2$-specific oxidation
+rate where liquid cloud or rain water is present. It uses a monthly
+H$_2$O$_2$ mixing-ratio climatology, SO$_2$ dissolution and first
+dissociation, and the local liquid-water volume fraction. The Henry
+constants stored in MPTRAC have units mol m$^{-3}$ Pa$^{-1}$, so their
+products with $RT$ are dimensionless. The aqueous reaction coefficient
+has units L$^2$ mol$^{-2}$ s$^{-1}$ and follows
+
+$$
+k(T)=9.1\times10^7\exp\!\left[-\frac{29700}{R}
+\left(\frac1T-\frac1{298.15}\right)\right].
+$$
+
+The resulting effective first-order loss rate multiplies the SO$_2$
+tracer mass or VMR by $\exp(-\lambda\Delta t)$; H$_2$O$_2$ is prescribed
+and is not depleted by this module. If `Cx` is configured, the same
+SO$_2$ plume limitation as above applies. The aqueous approximation is
+described by [Liu et al. (2023)](https://doi.org/10.5194/gmd-16-5197-2023);
+the reaction-rate temperature dependence uses the positive activation
+energy reported by Maaß et al. (1999). The published Liu et al. equation
+displays the opposite exponent sign; MPTRAC retains its existing rate.
 
 ## Long-lived tracer chemistry
 

@@ -97,6 +97,26 @@ and `BOUND_P1` define the region where it is reset to particle time; optional
 `BOUND_DPS`, `BOUND_DZS`, `BOUND_ZETAS`, and `BOUND_PBL` further restrict that
 region. Compute elapsed age externally as observation time minus `aoa`.
 
+## OH and H2O2 chemistry
+
+`OH_CHEM_REACTION=0` disables OH chemistry. Modes `1`, `2`, and `3`
+select a constant bimolecular coefficient, an Arrhenius coefficient,
+and termolecular falloff, respectively. `OH_CHEM[0]` is the coefficient
+in mode 1; modes 2 and 3 also use `[1]`, and mode 3 uses `[2]` and `[3]`
+for the high-pressure limit and its temperature exponent. The two
+limiting coefficients in mode 3 must be positive. The active OH modes
+require a valid `CLIM_OH_FILENAME`; `OH_CHEM_BETA` controls optional
+diurnal variation. These kinetics may be configured for species other
+than SO$_2$.
+
+`H2O2_CHEM_REACTION=1` selects the SO$_2$-specific aqueous oxidation
+approximation and requires a valid `CLIM_H2O2_FILENAME`; `0` disables it.
+If quantity `Cx` is configured, the empirical high-SO$_2$ correction
+applies for `SPECIES=SO2` or unspecified `SPECIES`. It does not apply
+to an explicitly selected different species. `Cx` stores a dimensionless
+mole fraction, not a numerical ppbv value. The correction coefficients
+are calibrated for that mole-fraction input.
+
 ## Wet deposition
 
 In-cloud and below-cloud scavenging can be configured independently.

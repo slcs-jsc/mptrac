@@ -355,7 +355,7 @@
 #define H2O2_SO2_RATE_TEMP 29700.
 #endif
 
-/*! Henry constant of SO2 at CHEM_REF_TEMP [mol/(L atm)]. */
+/*! SO2 Henry constant at CHEM_REF_TEMP [mol/(m^3 Pa)]. */
 #ifndef SO2_HENRY_REF
 #define SO2_HENRY_REF 1.3e-2
 #endif
@@ -365,7 +365,7 @@
 #define SO2_HENRY_TEMP 2900.
 #endif
 
-/*! Henry constant of H2O2 at CHEM_REF_TEMP [mol/(L atm)]. */
+/*! H2O2 Henry constant at CHEM_REF_TEMP [mol/(m^3 Pa)]. */
 #ifndef H2O2_HENRY_REF
 #define H2O2_HENRY_REF 8.3e2
 #endif
@@ -375,7 +375,7 @@
 #define H2O2_HENRY_TEMP 7600.
 #endif
 
-/*! Scale factor of the high-SO2 correction [1]. */
+/*! Scale factor of the high-SO2 correction for fractional SO2 mole fraction. */
 #ifndef SO2_CORR_A
 #define SO2_CORR_A 3.12541941e-06
 #endif
@@ -6360,6 +6360,8 @@ void module_bound_cond(
  * @param[in]  ctl   Pointer to the control structure containing configuration
  *                   parameters, including grid dimensions, tracer indices, and
  *                   simulation mode.
+ * @param[in]  cache Pointer to individual particle timesteps; zero-step
+ *                   particles are excluded from the chemistry grid.
  * @param[in]  met0  Pointer to the meteorological data at the beginning of the
  *                   interpolation interval.
  * @param[in]  met1  Pointer to the meteorological data at the end of the
@@ -6374,7 +6376,7 @@ void module_bound_cond(
  *   ensemble member via `ctl->qnt_ens`.
  * - Grid box volume mixing ratios are computed assuming ideal gas law and a
  *   layered spherical grid.
- * - The output quantity (e.g., `qnt_Cx`) is given in ppbv.
+ * - The output quantity `qnt_Cx` is a dimensionless mole fraction, not ppbv.
  *
  * @see intpol_met_time_3d()
  * @see P(), Z(), RHO()
@@ -6385,6 +6387,7 @@ void module_bound_cond(
  */
 void module_chem_grid(
   const ctl_t * ctl,
+  const cache_t * cache,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -6705,13 +6708,12 @@ void module_dry_depo(
   atm_t * atm);
 
 /**
- * @brief Perform chemical reactions involving H2O2 within cloud particles.
+ * @brief Apply aqueous H2O2 oxidation of SO2 in liquid cloud water.
  *
- * This function simulates chemical reactions involving hydrogen
- * peroxide (H2O2) within cloud particles. It calculates the change in
- * H2O2 concentration over time due to chemical reactions. The
- * reaction rates are determined based on temperature and cloud
- * properties such as liquid water content.
+ * This function reduces the transported SO2 mass or VMR using a
+ * pseudo-first-order aqueous oxidation rate. It uses prescribed H2O2
+ * climatology, SO2 solubility and dissociation, and liquid cloud and
+ * rain water. H2O2 itself is not updated.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param cache Pointer to the cache structure for temporary data and random numbers.
@@ -6723,12 +6725,11 @@ void module_dry_depo(
  * @note The function assumes that the necessary control structure (ctl), climatological
  *       data structure (clim), meteorological data structures (met0, met1), and atmospheric
  *       data structure (atm) have been initialized and are accessible.
- * @note Chemical reactions involving H2O2 are simulated for particles within clouds, as
- *       indicated by a positive liquid water content (LWC).
- * @note The function calculates reaction rates based on temperature and cloud properties,
- *       including the liquid water content (LWC) and the concentration of SO2.
- * @note The exponential decay of H2O2 concentration due to chemical reactions is calculated
- *       using the reaction rate coefficient and the time step (dt) for each particle.
+ * @note Positive liquid cloud water or rain water activates this SO2-specific
+ *       approximation. Its optional high-concentration correction uses the
+ *       dimensionless SO2 mole fraction stored in `Cx`.
+ * @note The aqueous reaction coefficient uses
+ *       k(T) = k(298.15 K) exp[-E/R (1/T - 1/298.15 K)].
  * @note If the particle has a quantity flag for either mass (ctl->qnt_m) or volume mixing
  *       ratio (ctl->qnt_vmr), the function updates the quantity based on the exponential decay.
  * @note If the particle has a loss rate quantity flag (ctl->qnt_loss_rate), the function
@@ -6930,13 +6931,16 @@ void module_mixing_help(
 /**
  * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
  *
- * This function calculates the OH chemistry for each atmospheric
+ * This function calculates generic OH chemistry for each atmospheric
  * particle based on the specified reaction mechanism and updates the
  * particle quantities accordingly.  The OH chemistry includes
  * bimolecular and termolecular reactions, and the reaction rates are
  * calculated based on the provided climatological data and
  * atmospheric conditions. The function supports both mass and volume
  * mixing ratio quantities for the particles.
+ * The empirical high-concentration SO2 correction applies when `Cx` is
+ * configured and `SPECIES` is SO2 or unspecified; it is not used for an
+ * explicitly selected different species.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param cache Pointer to the cache structure for temporary data and random numbers.
