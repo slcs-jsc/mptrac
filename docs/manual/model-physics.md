@@ -609,6 +609,34 @@ covering at least several days, as hydroxyl concentrations may vary
 significantly between day and nighttime as well as the local
 atmospheric composition.
 
+## Long-lived tracer chemistry
+
+With `TRACER_CHEM=1`, MPTRAC updates the species-specific volume mixing
+ratios of CCl$_4$, CFC-11, CFC-12, and N$_2$O using photolysis and
+reaction with O($^1$D):
+
+$$
+C(t+\Delta t)=C(t)\exp\!\left[-\left(J+A\exp(-B/T)[\mathrm{O}(^1\mathrm{D})]\right)\Delta t\right].
+$$
+
+Here $J$ is the climatological photolysis frequency (s$^{-1}$), $A$ is
+the reaction coefficient (cm$^3$ molecule$^{-1}$ s$^{-1}$), $B$ is its
+temperature parameter (K), $T$ is air temperature (K), and
+$[\mathrm{O}(^1\mathrm{D})]$ is molecular number density (molecules
+cm$^{-3}$) derived from the O($^1$D) mixing-ratio climatology. The
+photolysis lookup also uses solar zenith angle and total-column ozone.
+The individual particle timestep $\Delta t$ is signed; negative steps
+mathematically reverse the prescribed loss. The halocarbon coefficients
+account for parent-preserving O($^1$D) quenching, following the
+evaluated reaction channels and direct CFC-11 reactive-rate measurements
+(NASA/JPL Evaluation 19-5; Baasandorj et al., 2013). For CFC-12, JPL
+lists 14% physical quenching, 76% ClO-producing reactions, and 10% other
+product-forming reactions. Both product-forming channels destroy CFC-12,
+giving a parent-loss fraction of 0.86. SPARC (2013) quotes a 0.76 yield
+associated with ClO formation; that yield alone does not include the
+other product-forming channel.
+This module updates neither generic tracer mass nor `mloss_decay`.
+
 ## Exponential decay
 
 A rather generic module was implemented in MPTRAC, to simulate the
@@ -622,12 +650,16 @@ m(t+\Delta t)=m(t)\mathrm{exp} \left ( -\frac{\Delta t}{t_e} \right ).
 \end{equation}
 $$
 
-The e-folding lifetime $t_e$ of the species needs to be specified as a
-control parameter. As typical lifetimes may differ, we implemented an
-option to specify separate lifetimes for the troposphere and
-stratosphere. A smooth transition between the tropospheric and
-stratospheric lifetime is created within a 1 km log-pressure altitude
-range around the tropopause.
+The e-folding lifetime $t_e$ is specified by `TDEC_TROP` and
+`TDEC_STRAT`, both in seconds. Both zero values disable this module;
+both must be finite and positive to enable it. MPTRAC blends the two
+lifetimes as $t_e=w\,\texttt{TDEC\_TROP}+(1-w)\,\texttt{TDEC\_STRAT}$,
+with a smooth transition over a 1 km log-pressure altitude range around
+the tropopause. It applies the factor to configured generic mass `m`
+and volume mixing ratio `vmr`; for mass it also accumulates
+`mloss_decay` and `loss_rate` when present. This process is independent
+of `TRACER_CHEM` and of the radionuclide activity-decay module. Signed
+individual timesteps mathematically reverse loss in backward runs.
 
 ### Radionuclide decay and deposition
 

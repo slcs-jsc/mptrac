@@ -4096,7 +4096,7 @@ void module_bound_cond(
   SELECT_TIMER("MODULE_BOUND_COND", "PHYSICS");
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->qnt_Cccl4
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->qnt_Cccl4 < 0
       && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0
       && ctl->qnt_Cn2o < 0 && ctl->qnt_Csf6 < 0 && ctl->qnt_aoa < 0)
     return;
@@ -6443,9 +6443,13 @@ void module_tracer_chem(
     double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+    if (!isfinite(t) || t <= 0.)
+      continue;
 
     /* Get molecular density... */
     const double M = MOLEC_DENS(atm->p[ip], t);
+    if (!isfinite(M) || M <= 0.)
+      continue;
 
     /* Get total column ozone... */
     double o3c;
@@ -6458,6 +6462,8 @@ void module_tracer_chem(
     /* Get O(1D) volume mixing ratio... */
     const double o1d =
       clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    if (!isfinite(o1d) || o1d < 0.)
+      continue;
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
@@ -6465,7 +6471,9 @@ void module_tracer_chem(
 	ARRHENIUS(O1D_RATE_CCL4_A, O1D_RATE_CCL4_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl4][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      if (isfinite(K_hv) && K_hv >= 0. && isfinite(K_o1d)
+	  && K_o1d >= 0.)
+	atm->q[ctl->qnt_Cccl4][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
@@ -6474,7 +6482,9 @@ void module_tracer_chem(
 	ARRHENIUS(O1D_RATE_CFC11_A, O1D_RATE_CFC11_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      if (isfinite(K_hv) && K_hv >= 0. && isfinite(K_o1d)
+	  && K_o1d >= 0.)
+	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
@@ -6483,7 +6493,9 @@ void module_tracer_chem(
 	ARRHENIUS(O1D_RATE_CFC12_A, O1D_RATE_CFC12_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      if (isfinite(K_hv) && K_hv >= 0. && isfinite(K_o1d)
+	  && K_o1d >= 0.)
+	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
@@ -6492,7 +6504,9 @@ void module_tracer_chem(
 	ARRHENIUS(O1D_RATE_N2O_A, O1D_RATE_N2O_B, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cn2o][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      if (isfinite(K_hv) && K_hv >= 0. && isfinite(K_o1d)
+	  && K_o1d >= 0.)
+	atm->q[ctl->qnt_Cn2o][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
   }
 }
@@ -7089,6 +7103,13 @@ void mptrac_read_clim(
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
     read_clim_zm(ctl->clim_o1d_filename, "O1D", &clim->o1d);
+  if (ctl->tracer_chem && (ctl->qnt_Cccl4 >= 0 || ctl->qnt_Cccl3f >= 0
+		   || ctl->qnt_Cccl2f2 >= 0 || ctl->qnt_Cn2o >= 0)) {
+    if (clim->photo.np < 2 || clim->photo.nsza < 2 || clim->photo.no3c < 2)
+      ERRMSG("TRACER_CHEM requires a valid CLIM_PHOTO climatology!");
+    if (clim->o1d.ntime < 2 || clim->o1d.nlat < 2 || clim->o1d.np < 2)
+      ERRMSG("TRACER_CHEM requires a valid CLIM_O1D_FILENAME climatology!");
+  }
 
   /* Read CFC-10 time series... */
   if (ctl->clim_ccl4_timeseries[0] != '-')
@@ -7850,8 +7871,11 @@ void mptrac_read_ctl(
     ERRMSG("DT_KPP must be a positive integer multiple of DT_MOD!");
 
   /* First order tracer chemistry... */
-  ctl->tracer_chem =
-    (int) scan_ctl(filename, argc, argv, "TRACER_CHEM", -1, "0", NULL);
+  const double tracer_chem =
+    scan_ctl(filename, argc, argv, "TRACER_CHEM", -1, "0", NULL);
+  if (tracer_chem != 0. && tracer_chem != 1.)
+    ERRMSG("TRACER_CHEM must be 0 or 1!");
+  ctl->tracer_chem = (int) tracer_chem;
 
   /* Radioactive decay... */
   const double radio_decay =
@@ -8058,6 +8082,10 @@ void mptrac_read_ctl(
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
+  if (!((ctl->tdec_trop == 0. && ctl->tdec_strat == 0.)
+	|| (isfinite(ctl->tdec_trop) && ctl->tdec_trop > 0.
+	    && isfinite(ctl->tdec_strat) && ctl->tdec_strat > 0.)))
+    ERRMSG("TDEC_TROP and TDEC_STRAT must both be zero or finite and positive!");
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);

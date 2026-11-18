@@ -385,9 +385,9 @@
 #define SO2_CORR_B -5.72532259e-01
 #endif
 
-/*! O(1D) reaction pre-factor for CCl4 [cm^3/s]. */
+/*! O(1D) parent-destruction pre-factor for CCl4 [cm^3 molecule^-1 s^-1]. */
 #ifndef O1D_RATE_CCL4_A
-#define O1D_RATE_CCL4_A 3.30e-10
+#define O1D_RATE_CCL4_A 2.607e-10
 #endif
 
 /*! O(1D) reaction temperature parameter for CCl4 [K]. */
@@ -395,9 +395,9 @@
 #define O1D_RATE_CCL4_B 0.
 #endif
 
-/*! O(1D) reaction pre-factor for CFC-11 [cm^3/s]. */
+/*! O(1D) parent-destruction pre-factor for CFC-11 [cm^3 molecule^-1 s^-1]. */
 #ifndef O1D_RATE_CFC11_A
-#define O1D_RATE_CFC11_A 2.30e-10
+#define O1D_RATE_CFC11_A 2.070e-10
 #endif
 
 /*! O(1D) reaction temperature parameter for CFC-11 [K]. */
@@ -405,9 +405,9 @@
 #define O1D_RATE_CFC11_B 0.
 #endif
 
-/*! O(1D) reaction pre-factor for CFC-12 [cm^3/s]. */
+/*! O(1D) parent-destruction pre-factor for CFC-12 [cm^3 molecule^-1 s^-1]. */
 #ifndef O1D_RATE_CFC12_A
-#define O1D_RATE_CFC12_A 1.40e-10
+#define O1D_RATE_CFC12_A 1.204e-10
 #endif
 
 /*! O(1D) reaction temperature parameter for CFC-12 [K]. */
@@ -415,7 +415,7 @@
 #define O1D_RATE_CFC12_B -25.
 #endif
 
-/*! O(1D) reaction pre-factor for N2O [cm^3/s]. */
+/*! O(1D) parent-destruction pre-factor for N2O [cm^3 molecule^-1 s^-1]. */
 #ifndef O1D_RATE_N2O_A
 #define O1D_RATE_N2O_A 1.19e-10
 #endif
@@ -1489,14 +1489,13 @@
   (((a)<(b))?(a):(b))
 
 /**
- * @brief Calculate the density of a gas molecule.
+ * @brief Calculate the molecular number density of air.
  *
- * This macro calculates the density of a gas molecule using the
- * provided pressure and temperature values.
+ * This macro calculates molecular number density from the ideal gas law.
  *
- * @param p Pressure of the gas in Pascals.
- * @param t Temperature of the gas in Kelvin.
- * @return Density of the gas molecule in kg/m^3.
+ * @param p Air pressure in hPa.
+ * @param t Air temperature in K.
+ * @return Air molecular number density in molecules/cm^3.
  *
  * @author Lars Hoffmann
  */

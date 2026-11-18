@@ -73,6 +73,22 @@ Existing particle files without this quantity need a configuration that
 provides a free quantity slot; `NQ` and other quantity indices are not
 changed automatically. `ISOSURF=0` and `4` do not require it.
 
+## Long-lived tracer chemistry and decay
+
+`TRACER_CHEM` accepts `0` (default, disabled) or `1`. When enabled with
+`Cccl4`, `Cccl3f`, `Cccl2f2`, or `Cn2o` configured, it requires the
+photolysis file `CLIM_PHOTO` and O($^1$D) file `CLIM_O1D_FILENAME`.
+Their default paths point to the bundled climatologies. It updates
+those species-specific mixing ratios using signed particle timesteps.
+Prescribed lower-boundary time series can reset these concentrations
+where the boundary criteria apply, independently of chemistry.
+
+`TDEC_TROP` and `TDEC_STRAT` are generic e-folding lifetimes in seconds.
+Both default to zero, disabling generic decay. Set both to finite,
+positive values to enable it; a single positive lifetime is invalid.
+Generic decay updates `m` and/or `vmr` and, when configured, mass-loss
+diagnostics. It is independent of `TRACER_CHEM` and `RADIO_DECAY`.
+
 ## Wet deposition
 
 In-cloud and below-cloud scavenging can be configured independently.

@@ -30,6 +30,25 @@ scientific publications:
   one. Specific DOIs for each release of MPTRAC can be found on the
   Zenodo web site.
 
+For the long-lived tracer O($^1$D) chemistry described in the manual:
+
+- Burkholder, J. B., Sander, S. P., Abbatt, J. P. D., Barker, J. R., Cappa,
+  C., Crounse, J. D., Dibble, T. S., Huie, R. E., Kolb, C. E., Kurylo,
+  M. J., Orkin, V. L., Percival, C. J., Wilmouth, D. M., and Wine, P. H.: Chemical
+  Kinetics and Photochemical Data for Use in Atmospheric Studies,
+  Evaluation Number 19, JPL Publication 19-5, 2020,
+  <https://jpldataeval.jpl.nasa.gov/pdf/NASA-JPL%20Evaluation%2019-5.pdf>.
+
+- Baasandorj, M., Fleming, E. L., Jackman, C. H., and Burkholder,
+  J. B.: O($^1$D) kinetic study of key ozone depleting substances and
+  greenhouse gases, J. Phys. Chem. A, 117, 2434–2445,
+  <https://doi.org/10.1021/jp312781c>, 2013.
+
+- SPARC: Lifetimes of Stratospheric Ozone-Depleting Substances, Their
+  Replacements, and Related Species, Report No. 6, Chapter 3,
+  Supplement 2, 2013,
+  <https://aparc-climate.org/publications/sparc-report-no-6/>.
+
 This is a list of papers and theses in which MPTRAC was applied:
 
 - Smoydzin, L., Bense, V., Bozem, H., Joppe, P., Kunkel, D., Lachnitt,
