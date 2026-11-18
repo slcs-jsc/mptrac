@@ -484,6 +484,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#oh-and-h2o2-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OH and H2O2 chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wet-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1047,6 +1058,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#oh-and-h2o2-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OH and H2O2 chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wet-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1176,6 +1198,23 @@ seconds since 2000-01-01 00:00 UTC. <code>BOUND_LAT0</code>, <code>BOUND_LAT1</c
 and <code>BOUND_P1</code> define the region where it is reset to particle time; optional
 <code>BOUND_DPS</code>, <code>BOUND_DZS</code>, <code>BOUND_ZETAS</code>, and <code>BOUND_PBL</code> further restrict that
 region. Compute elapsed age externally as observation time minus <code>aoa</code>.</p>
+<h2 id="oh-and-h2o2-chemistry">OH and H2O2 chemistry</h2>
+<p><code>OH_CHEM_REACTION=0</code> disables OH chemistry. Modes <code>1</code>, <code>2</code>, and <code>3</code>
+select a constant bimolecular coefficient, an Arrhenius coefficient,
+and termolecular falloff, respectively. <code>OH_CHEM[0]</code> is the coefficient
+in mode 1; modes 2 and 3 also use <code>[1]</code>, and mode 3 uses <code>[2]</code> and <code>[3]</code>
+for the high-pressure limit and its temperature exponent. The two
+limiting coefficients in mode 3 must be positive. The active OH modes
+require a valid <code>CLIM_OH_FILENAME</code>; <code>OH_CHEM_BETA</code> controls optional
+diurnal variation. These kinetics may be configured for species other
+than SO<span class="arithmatex">\(_2\)</span>.</p>
+<p><code>H2O2_CHEM_REACTION=1</code> selects the SO<span class="arithmatex">\(_2\)</span>-specific aqueous oxidation
+approximation and requires a valid <code>CLIM_H2O2_FILENAME</code>; <code>0</code> disables it.
+If quantity <code>Cx</code> is configured, the empirical high-SO<span class="arithmatex">\(_2\)</span> correction
+applies for <code>SPECIES=SO2</code> or unspecified <code>SPECIES</code>. It does not apply
+to an explicitly selected different species. <code>Cx</code> stores a dimensionless
+mole fraction, not a numerical ppbv value. The correction coefficients
+are calibrated for that mole-fraction input.</p>
 <h2 id="wet-deposition">Wet deposition</h2>
 <p>In-cloud and below-cloud scavenging can be configured independently.
 For each branch, a positive <code>WET_DEPO_IC_A</code> or <code>WET_DEPO_BC_A</code> selects

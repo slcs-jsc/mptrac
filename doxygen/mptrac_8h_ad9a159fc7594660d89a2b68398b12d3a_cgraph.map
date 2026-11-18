@@ -6,7 +6,7 @@
 <area shape="poly" id="edge6_Node000001_Node000012" title=" " alt="" coords="79,753,91,712,114,655,148,594,170,565,195,540,199,537,202,541,198,544,174,569,153,597,119,658,97,714,84,755"/>
 <area shape="rect" id="Node000013" href="$mptrac_8c.html#a7c775417ba44bae7a915616cc9df4615" title="Apply boundary conditions to particles based on meteorological and climatological data." alt="" coords="197,5,337,31"/>
 <area shape="poly" id="edge8_Node000001_Node000013" title=" " alt="" coords="76,754,84,623,103,412,119,301,139,196,164,110,178,75,195,49,205,38,209,41,199,52,183,78,169,111,144,198,124,301,108,413,89,623,82,754"/>
-<area shape="rect" id="Node000015" href="$mptrac_8c.html#a6882c1e1af3a10c5f53662d353c8c1d8" title="Computes gridded chemical tracer concentrations (volume mixing ratio) from individual air parcel mass..." alt="" coords="202,705,332,731"/>
+<area shape="rect" id="Node000015" href="$mptrac_8c.html#a8b4a85d2a3e33af8d2337d00888e90bd" title="Computes gridded chemical tracer concentrations (volume mixing ratio) from individual air parcel mass..." alt="" coords="202,705,332,731"/>
 <area shape="poly" id="edge11_Node000001_Node000015" title=" " alt="" coords="129,751,199,733,200,738,130,757"/>
 <area shape="rect" id="Node000016" href="$mptrac_8c.html#a2a04fee6c403d3d912d89d9666c0fd7b" title="Initializes the chemistry modules by setting atmospheric composition." alt="" coords="204,456,330,482"/>
 <area shape="poly" id="edge13_Node000001_Node000016" title=" " alt="" coords="78,754,87,705,108,635,123,596,143,558,166,522,195,491,198,489,201,493,199,495,171,526,147,561,128,599,113,637,92,707,83,755"/>
@@ -24,7 +24,7 @@
 <area shape="poly" id="edge43_Node000001_Node000040" title=" " alt="" coords="98,779,142,808,198,840,209,845,207,850,195,845,140,813,95,783"/>
 <area shape="rect" id="Node000042" href="$mptrac_8c.html#af237449d9c3c8fec9e5f062cdc579105" title="Simulate dry deposition of atmospheric particles." alt="" coords="206,1051,328,1076"/>
 <area shape="poly" id="edge47_Node000001_Node000042" title=" " alt="" coords="83,780,93,828,113,897,128,935,148,972,171,1007,199,1038,201,1040,198,1044,195,1041,167,1010,143,975,124,937,108,899,87,829,78,781"/>
-<area shape="rect" id="Node000044" href="$mptrac_8c.html#adeecfbf32977d527d934a778edd84f38" title="Perform chemical reactions involving H2O2 within cloud particles." alt="" coords="392,157,530,183"/>
+<area shape="rect" id="Node000044" href="$mptrac_8c.html#adeecfbf32977d527d934a778edd84f38" title="Apply aqueous H2O2 oxidation of SO2 in liquid cloud water." alt="" coords="392,157,530,183"/>
 <area shape="poly" id="edge49_Node000001_Node000044" title=" " alt="" coords="77,754,91,661,115,519,132,445,151,376,172,319,195,279,234,242,281,215,330,195,377,181,378,186,332,200,283,220,237,247,199,282,176,321,156,378,137,446,121,520,96,662,83,754"/>
 <area shape="rect" id="Node000045" href="$mptrac_8c.html#ae194c1be6a486d2bd92f5794637d53e2" title="Apply the isosurface module to adjust atmospheric properties." alt="" coords="619,57,728,83"/>
 <area shape="poly" id="edge51_Node000001_Node000045" title=" " alt="" coords="76,754,85,640,106,461,122,366,142,279,166,206,180,178,195,156,237,118,287,90,341,70,398,58,455,52,510,51,604,57,603,62,510,56,455,58,399,64,343,76,289,95,241,122,199,160,184,181,171,208,147,280,127,367,112,462,91,641,82,755"/>

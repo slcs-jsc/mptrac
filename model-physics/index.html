@@ -662,6 +662,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#aqueous-so2-oxidation-by-h2o2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aqueous SO2 oxidation by H2O2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#long-lived-tracer-chemistry" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1245,6 +1256,17 @@
     <span class="md-ellipsis">
       
         Hydroxyl chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aqueous-so2-oxidation-by-h2o2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aqueous SO2 oxidation by H2O2
       
     </span>
   </a>
@@ -1939,17 +1961,19 @@ causing the decomposition of many gas-phase species. The oxidation of
 different gas-phase species with OH can be classified into two main
 categories, bimolecular reactions (e.g., reactions of <span class="arithmatex">\(\sf{CH_4}\)</span> or
 <span class="arithmatex">\(\sf{NH_3}\)</span>), and termolecular reactions (e.g., CO or <span class="arithmatex">\(\sf{SO_2}\)</span>).</p>
-<p>For bimolecular reactions, the rate constant is calculated from
-Arrhenius law,</p>
+<p><code>OH_CHEM_REACTION=1</code> uses a constant bimolecular coefficient;
+<code>OH_CHEM_REACTION=2</code> uses the Arrhenius form</p>
 <div class="arithmatex">\[
 \begin{equation}
   k(T)=A \times \mathrm{exp} \left ( -\frac{E}{RT} \right )
 \end{equation}
 \]</div>
-<p>with Avogadro constant <span class="arithmatex">\(N_A\)</span>. For the calculation of the second-order
-rate constant k see Eq. 25 in Hoffmann et al. (2022).</p>
-<p>For the calculation of k the low- and high-pressure limits of the
-reaction rate constant are given by</p>
+<p>where <span class="arithmatex">\(A\)</span> is in cm<span class="arithmatex">\(^3\)</span> molecule<span class="arithmatex">\(^{-1}\)</span> s<span class="arithmatex">\(^{-1}\)</span> and <span class="arithmatex">\(E/R\)</span> is in K.
+Both modes multiply the coefficient by OH number density to obtain a
+first-order loss rate. The modes and their coefficients can describe
+species other than SO<span class="arithmatex">\(_2\)</span>.</p>
+<p><code>OH_CHEM_REACTION=3</code> uses the existing termolecular falloff expression
+with low- and high-pressure limits</p>
 <div class="arithmatex">\[
 \begin{equation}
   k_0=k_0^{298} \left ( \frac{T}{298} \right )^{-n}, \quad
@@ -1988,7 +2012,10 @@ implemented directly into MPTRAC are listed in the table.</p>
 </tr>
 </tbody>
 </table>
-<p>Where A is in <span class="arithmatex">\(\sf{cm^{-3}}\sf{molec^{-1}} \sf{s^{-1}}\)</span> and E/R in K.</p>
+<p>Here <span class="arithmatex">\(A\)</span> is in cm<span class="arithmatex">\(^3\)</span> molecule<span class="arithmatex">\(^{-1}\)</span> s<span class="arithmatex">\(^{-1}\)</span> and <span class="arithmatex">\(E/R\)</span> is in K.
+The low-pressure coefficient <span class="arithmatex">\(k_0\)</span> is in cm<span class="arithmatex">\(^6\)</span> molecule<span class="arithmatex">\(^{-2}\)</span> s<span class="arithmatex">\(^{-1}\)</span>;
+<span class="arithmatex">\(k_\infty\)</span> is in cm<span class="arithmatex">\(^3\)</span> molecule<span class="arithmatex">\(^{-1}\)</span> s<span class="arithmatex">\(^{-1}\)</span>. The falloff correction
+uses a broadening factor of 0.6.</p>
 <p>Based on the bimolecular reaction rate k=k(T) or the termolecular
 reaction rate k=k(T, [M]), the loss of mass of the gas-phase species
 over time is calculated from</p>
@@ -2003,6 +2030,35 @@ et al. (2014). This approach is suitable for global simulations
 covering at least several days, as hydroxyl concentrations may vary
 significantly between day and nighttime as well as the local
 atmospheric composition.</p>
+<p>If <code>Cx</code> is configured, MPTRAC estimates a local dimensionless tracer mole
+fraction from particle mass on <code>CHEMGRID</code>. For <code>SPECIES=SO2</code>, an empirical
+high-concentration plume correction reduces the effective OH abundance;
+this correction also remains active when <code>SPECIES</code> is unspecified for
+compatibility with existing configurations. An explicitly selected other
+species uses the configured OH kinetics without the SO<span class="arithmatex">\(_2\)</span> plume
+correction. The correction coefficients apply to the <em>numerical mole
+fraction</em>, not to a value converted to ppbv, and represent the empirical
+oxidant-availability fit of <a href="https://doi.org/10.5194/acp-25-4403-2025">Liu et al. (2025)</a>.</p>
+<h2 id="aqueous-so2-oxidation-by-h2o2">Aqueous SO2 oxidation by H2O2</h2>
+<p><code>H2O2_CHEM_REACTION=1</code> applies a simplified, SO<span class="arithmatex">\(_2\)</span>-specific oxidation
+rate where liquid cloud or rain water is present. It uses a monthly
+H<span class="arithmatex">\(_2\)</span>O<span class="arithmatex">\(_2\)</span> mixing-ratio climatology, SO<span class="arithmatex">\(_2\)</span> dissolution and first
+dissociation, and the local liquid-water volume fraction. The Henry
+constants stored in MPTRAC have units mol m<span class="arithmatex">\(^{-3}\)</span> Pa<span class="arithmatex">\(^{-1}\)</span>, so their
+products with <span class="arithmatex">\(RT\)</span> are dimensionless. The aqueous reaction coefficient
+has units L<span class="arithmatex">\(^2\)</span> mol<span class="arithmatex">\(^{-2}\)</span> s<span class="arithmatex">\(^{-1}\)</span> and follows</p>
+<div class="arithmatex">\[
+k(T)=9.1\times10^7\exp\!\left[-\frac{29700}{R}
+\left(\frac1T-\frac1{298.15}\right)\right].
+\]</div>
+<p>The resulting effective first-order loss rate multiplies the SO<span class="arithmatex">\(_2\)</span>
+tracer mass or VMR by <span class="arithmatex">\(\exp(-\lambda\Delta t)\)</span>; H<span class="arithmatex">\(_2\)</span>O<span class="arithmatex">\(_2\)</span> is prescribed
+and is not depleted by this module. If <code>Cx</code> is configured, the same
+SO<span class="arithmatex">\(_2\)</span> plume limitation as above applies. The aqueous approximation is
+described by <a href="https://doi.org/10.5194/gmd-16-5197-2023">Liu et al. (2023)</a>;
+the reaction-rate temperature dependence uses the positive activation
+energy reported by Maaß et al. (1999). The published Liu et al. equation
+displays the opposite exponent sign; MPTRAC retains its existing rate.</p>
 <h2 id="long-lived-tracer-chemistry">Long-lived tracer chemistry</h2>
 <p>With <code>TRACER_CHEM=1</code>, MPTRAC updates the species-specific volume mixing
 ratios of CCl<span class="arithmatex">\(_4\)</span>, CFC-11, CFC-12, and N<span class="arithmatex">\(_2\)</span>O using photolysis and
