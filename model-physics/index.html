@@ -651,6 +651,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#long-lived-tracer-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long-lived tracer chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exponential-decay" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1212,6 +1223,17 @@
     <span class="md-ellipsis">
       
         Hydroxyl chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#long-lived-tracer-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long-lived tracer chemistry
       
     </span>
   </a>
@@ -1943,6 +1965,30 @@ et al. (2014). This approach is suitable for global simulations
 covering at least several days, as hydroxyl concentrations may vary
 significantly between day and nighttime as well as the local
 atmospheric composition.</p>
+<h2 id="long-lived-tracer-chemistry">Long-lived tracer chemistry</h2>
+<p>With <code>TRACER_CHEM=1</code>, MPTRAC updates the species-specific volume mixing
+ratios of CCl<span class="arithmatex">\(_4\)</span>, CFC-11, CFC-12, and N<span class="arithmatex">\(_2\)</span>O using photolysis and
+reaction with O(<span class="arithmatex">\(^1\)</span>D):</p>
+<div class="arithmatex">\[
+C(t+\Delta t)=C(t)\exp\!\left[-\left(J+A\exp(-B/T)[\mathrm{O}(^1\mathrm{D})]\right)\Delta t\right].
+\]</div>
+<p>Here <span class="arithmatex">\(J\)</span> is the climatological photolysis frequency (s<span class="arithmatex">\(^{-1}\)</span>), <span class="arithmatex">\(A\)</span> is
+the reaction coefficient (cm<span class="arithmatex">\(^3\)</span> molecule<span class="arithmatex">\(^{-1}\)</span> s<span class="arithmatex">\(^{-1}\)</span>), <span class="arithmatex">\(B\)</span> is its
+temperature parameter (K), <span class="arithmatex">\(T\)</span> is air temperature (K), and
+<span class="arithmatex">\([\mathrm{O}(^1\mathrm{D})]\)</span> is molecular number density (molecules
+cm<span class="arithmatex">\(^{-3}\)</span>) derived from the O(<span class="arithmatex">\(^1\)</span>D) mixing-ratio climatology. The
+photolysis lookup also uses solar zenith angle and total-column ozone.
+The individual particle timestep <span class="arithmatex">\(\Delta t\)</span> is signed; negative steps
+mathematically reverse the prescribed loss. The halocarbon coefficients
+account for parent-preserving O(<span class="arithmatex">\(^1\)</span>D) quenching, following the
+evaluated reaction channels and direct CFC-11 reactive-rate measurements
+(NASA/JPL Evaluation 19-5; Baasandorj et al., 2013). For CFC-12, JPL
+lists 14% physical quenching, 76% ClO-producing reactions, and 10% other
+product-forming reactions. Both product-forming channels destroy CFC-12,
+giving a parent-loss fraction of 0.86. SPARC (2013) quotes a 0.76 yield
+associated with ClO formation; that yield alone does not include the
+other product-forming channel.
+This module updates neither generic tracer mass nor <code>mloss_decay</code>.</p>
 <h2 id="exponential-decay">Exponential decay</h2>
 <p>A rather generic module was implemented in MPTRAC, to simulate the
 loss of mass of an air parcel over a model time step <span class="arithmatex">\(\Delta t\)</span> due to
@@ -1953,12 +1999,16 @@ radioactivity,</p>
 m(t+\Delta t)=m(t)\mathrm{exp} \left ( -\frac{\Delta t}{t_e} \right ).
 \end{equation}
 \]</div>
-<p>The e-folding lifetime <span class="arithmatex">\(t_e\)</span> of the species needs to be specified as a
-control parameter. As typical lifetimes may differ, we implemented an
-option to specify separate lifetimes for the troposphere and
-stratosphere. A smooth transition between the tropospheric and
-stratospheric lifetime is created within a 1 km log-pressure altitude
-range around the tropopause.</p>
+<p>The e-folding lifetime <span class="arithmatex">\(t_e\)</span> is specified by <code>TDEC_TROP</code> and
+<code>TDEC_STRAT</code>, both in seconds. Both zero values disable this module;
+both must be finite and positive to enable it. MPTRAC blends the two
+lifetimes as <span class="arithmatex">\(t_e=w\,\texttt{TDEC\_TROP}+(1-w)\,\texttt{TDEC\_STRAT}\)</span>,
+with a smooth transition over a 1 km log-pressure altitude range around
+the tropopause. It applies the factor to configured generic mass <code>m</code>
+and volume mixing ratio <code>vmr</code>; for mass it also accumulates
+<code>mloss_decay</code> and <code>loss_rate</code> when present. This process is independent
+of <code>TRACER_CHEM</code> and of the radionuclide activity-decay module. Signed
+individual timesteps mathematically reverse loss in backward runs.</p>
 <h3 id="radionuclide-decay-and-deposition">Radionuclide decay and deposition</h3>
 <p>Particle activities are in Bq. <code>RADIO_DECAY</code> applies to <code>Arn222</code>, <code>Apb210</code>,
 <code>Abe7</code>, <code>Acs137</code>, <code>Ai131</code>, and <code>Axe133</code>. Only Pb-210, Be-7, Cs-137, and
