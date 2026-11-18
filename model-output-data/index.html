@@ -1201,6 +1201,11 @@ control file, <code>ATM_TYPE</code> sets the file format for reading and writing
 The default MPTRAC output filename pattern for time-resolved particle
 output is <code>&lt;ATM_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>, i.e. output file
 names include seconds explicitly.</p>
+<p>If configured, <code>aoa</code> is a reference-contact timestamp in the same time
+coordinate as the particle time (seconds since 2000-01-01 00:00 UTC).
+Its output unit is seconds; elapsed age is particle observation time minus
+<code>aoa</code>. Grid and ensemble means of <code>aoa</code> remain mean timestamps, rather than
+elapsed ages; their standard deviations are spreads in seconds.</p>
 <p>For ASCII particle data, the second column contains the log-pressure altitude</p>
 <div class="arithmatex">\[
 z = H_0 \ln\left(\frac{P_0}{p}\right),
@@ -1259,6 +1264,10 @@ using the <code>GRID_*</code> control parameters.  Gridded data can be written i
 either ASCII or netCDF format, depending on the setting of the
 <code>GRID_TYPE</code> parameter. Time-resolved grid output files follow the
 pattern <code>&lt;GRID_BASENAME&gt;_YYYY_MM_DD_HH_MM_SS.&lt;ext&gt;</code>.</p>
+<p>With <code>GRID_KERNEL</code>, reported quantity means and standard deviations use
+kernel weights normalized by their sum in each cell. The particle count
+remains unweighted, while column density uses the weighted mass sum.
+Cells with no positive total kernel weight have undefined quantity statistics.</p>
 <table>
 <thead>
 <tr>

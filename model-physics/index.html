@@ -596,6 +596,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#age-of-air-reference-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Age-of-air reference clock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#convection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1175,6 +1186,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#age-of-air-reference-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Age-of-air reference clock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#convection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1596,6 +1618,22 @@ density should therefore be varied together in sensitivity studies.</p>
 unsupported. With MPI domain decomposition, box means use only particles on
 the local rank. Subdomain boundaries follow the meteorological grid and may
 split mixing boxes. Particle migration occurs before mixing in each step.</p>
+<h2 id="age-of-air-reference-clock">Age-of-air reference clock</h2>
+<p>The particle quantity <code>aoa</code> stores a reference-contact timestamp, in seconds
+since 2000-01-01 00:00 UTC; it does not store elapsed age. At observation
+time <span class="arithmatex">\(t\)</span>, the transit time relative to that reference is <span class="arithmatex">\(t-\mathrm{aoa}\)</span>.
+Particle initialization sets <code>aoa</code> to the particle time. In a forward run,
+the configured boundary region (<code>BOUND_LAT0/1</code>, <code>BOUND_P0/1</code>, and optional
+surface-layer criteria) resets it to the time of the last sampled contact.
+Without such resets, it normally remains the initialization or release time.
+Contacts are resolved at model timestep intervals, rather than at the exact
+crossing time. Backward trajectories need a separately defined reference:
+repeated contacts overwrite the timestamp as integration proceeds backward.</p>
+<p>Inter-parcel mixing also mixes <code>aoa</code>. At a common observation time, linear
+mixing of timestamps is equivalent to linear mixing of elapsed ages when the
+particle representation and mixing weights reflect the intended air fractions.
+The resulting <code>aoa</code> is an effective mean clock timestamp, not an individual
+particle's literal last contact time. It does not retain the full age spectrum.</p>
 <h2 id="convection">Convection</h2>
 <p>MPTRAC's Extreme Convection Parameterization (ECP) represents unresolved
 convection by randomly redistributing particles vertically in a column.

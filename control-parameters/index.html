@@ -473,6 +473,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#age-of-air-reference-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Age-of-air reference clock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wet-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1025,6 +1036,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#age-of-air-reference-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Age-of-air reference clock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wet-deposition" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1148,6 +1170,12 @@ Both default to zero, disabling generic decay. Set both to finite,
 positive values to enable it; a single positive lifetime is invalid.
 Generic decay updates <code>m</code> and/or <code>vmr</code> and, when configured, mass-loss
 diagnostics. It is independent of <code>TRACER_CHEM</code> and <code>RADIO_DECAY</code>.</p>
+<h2 id="age-of-air-reference-clock">Age-of-air reference clock</h2>
+<p>Configure <code>aoa</code> as a particle quantity to store a reference timestamp in
+seconds since 2000-01-01 00:00 UTC. <code>BOUND_LAT0</code>, <code>BOUND_LAT1</code>, <code>BOUND_P0</code>,
+and <code>BOUND_P1</code> define the region where it is reset to particle time; optional
+<code>BOUND_DPS</code>, <code>BOUND_DZS</code>, <code>BOUND_ZETAS</code>, and <code>BOUND_PBL</code> further restrict that
+region. Compute elapsed age externally as observation time minus <code>aoa</code>.</p>
 <h2 id="wet-deposition">Wet deposition</h2>
 <p>In-cloud and below-cloud scavenging can be configured independently.
 For each branch, a positive <code>WET_DEPO_IC_A</code> or <code>WET_DEPO_BC_A</code> selects
