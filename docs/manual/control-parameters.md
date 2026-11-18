@@ -89,6 +89,14 @@ positive values to enable it; a single positive lifetime is invalid.
 Generic decay updates `m` and/or `vmr` and, when configured, mass-loss
 diagnostics. It is independent of `TRACER_CHEM` and `RADIO_DECAY`.
 
+## Age-of-air reference clock
+
+Configure `aoa` as a particle quantity to store a reference timestamp in
+seconds since 2000-01-01 00:00 UTC. `BOUND_LAT0`, `BOUND_LAT1`, `BOUND_P0`,
+and `BOUND_P1` define the region where it is reset to particle time; optional
+`BOUND_DPS`, `BOUND_DZS`, `BOUND_ZETAS`, and `BOUND_PBL` further restrict that
+region. Compute elapsed age externally as observation time minus `aoa`.
+
 ## Wet deposition
 
 In-cloud and below-cloud scavenging can be configured independently.

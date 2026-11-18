@@ -2816,7 +2816,8 @@ typedef struct {
   /*! Quantity array index for SF6 volume mixing ratio (chemistry code). */
   int qnt_Csf6;
 
-  /*! Quantity array index for age of air. */
+  /*! Quantity array index for the age-of-air reference timestamp
+     [s since 2000-01-01 00:00 UTC]. */
   int qnt_aoa;
 
   /*! Quantity array index for radioactive activity of Rn-222. */
@@ -6304,8 +6305,8 @@ void module_advect_init(
  * parameters, and climatological data. It loops over each particle
  * and checks whether it satisfies the specified boundary
  * conditions. If a particle satisfies the conditions, its properties
- * such as mass, volume mixing ratio, and age of air are updated
- * accordingly.
+ * such as mass, volume mixing ratio, and the age-of-air reference
+ * timestamp are updated accordingly.
  *
  * It checks for quantity flags to determine which properties need to
  * be updated. If the latitude or pressure of a particle falls outside
@@ -6319,8 +6320,9 @@ void module_advect_init(
  * ratio if the corresponding flags are set. It retrieves volume
  * mixing ratio values for various trace gases (e.g., CFC-10, CFC-11,
  * N2O, SF6) from climatological time series data and updates the
- * particle properties accordingly.  Additionally, it updates the age
- * of air for each particle based on the current simulation time.
+ * particle properties accordingly. Additionally, it resets `aoa` to the
+ * current particle time [s since 2000-01-01 00:00 UTC]. Elapsed age is
+ * observation time minus this reference timestamp.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param cache Pointer to the cache structure for temporary data and random numbers.
@@ -8221,9 +8223,9 @@ void read_clim_zm(
  * This function reads kernel function data from a specified file,
  * populating the provided arrays `kz` and `kw` with the parsed
  * data. It also updates the variable pointed to by `nk` with the
- * number of data points read. The function ensures that the height
- * levels are in ascending order and performs checks for the number of
- * height levels read.
+ * number of data points read. Heights must be finite and strictly
+ * increasing. Weights must be finite and nonnegative, with at least one
+ * positive weight.
  *
  * @param filename  A string containing the path to the file containing kernel function data.
  * @param kz        A double array to store the height levels of the kernel function.
@@ -9879,7 +9881,8 @@ void write_depo_nc(
  *   coordinates.
  * - Sets a time interval for output data processing.
  * - Calculates grid box indices for atmospheric model data.
- * - Averages data within each grid box.
+ * - Computes kernel-weighted quantity means and standard deviations within
+ *   each grid box when GRID_KERNEL is set; an empty total weight gives NaN.
  * - Calculates column density and volume mixing ratio.
  * - Writes data to the output file either in ASCII or netCDF format based
  *   on the specified `grid_type` in the control parameters.

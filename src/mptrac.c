@@ -7374,7 +7374,9 @@ void mptrac_read_ctl(
 	      "ppv")
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O volume mixing ratio", "ppv")
       SET_QNT(qnt_Csf6, "Csf6", "SF6 volume mixing ratio", "ppv")
-      SET_QNT(qnt_aoa, "aoa", "age of air", "s")
+      SET_QNT(qnt_aoa, "aoa",
+	      "age-of-air reference timestamp (s since 2000-01-01 00:00 UTC)",
+	      "s")
       SET_QNT(qnt_Arn222, "Arn222", "Rn-222 activity", "Bq")
       SET_QNT(qnt_Apb210, "Apb210", "Pb-210 activity", "Bq")
       SET_QNT(qnt_Abe7, "Abe7", "Be-7 activity", "Bq")
@@ -9573,8 +9575,12 @@ void read_kernel(
   int n = 0;
   while (fgets(line, LEN, in))
     if (sscanf(line, "%lg %lg", &kz[n], &kw[n]) == 2) {
-      if (n > 0 && kz[n] < kz[n - 1])
-	ERRMSG("Height levels must be ascending!");
+      if (!isfinite(kz[n]) || !isfinite(kw[n]))
+	ERRMSG("Kernel heights and weights must be finite!");
+      if (kw[n] < 0)
+	ERRMSG("Kernel weights must be nonnegative!");
+      if (n > 0 && kz[n] <= kz[n - 1])
+	ERRMSG("Kernel heights must be strictly increasing!");
       if ((++n) >= EP)
 	ERRMSG("Too many height levels!");
     }
@@ -9589,6 +9595,8 @@ void read_kernel(
 
   /* Normalize kernel function... */
   const double kmax = gsl_stats_max(kw, 1, (size_t) n);
+  if (kmax <= 0)
+    ERRMSG("Kernel requires at least one positive weight!");
   for (int iz = 0; iz < n; iz++)
     kw[iz] /= kmax;
 }
@@ -14630,16 +14638,17 @@ void write_ens(
       ERRMSG("Ensemble ID is out of range!");
 
     /* Get means... */
+    const int ens = (int) atm->q[ctl->qnt_ens][ip];
     geo2cart(0, atm->lon[ip], atm->lat[ip], x);
     for (int iq = 0; iq < ctl->nq; iq++) {
-      qm[iq][ctl->qnt_ens] += atm->q[iq][ip];
-      qs[iq][ctl->qnt_ens] += SQR(atm->q[iq][ip]);
+      qm[iq][ens] += atm->q[iq][ip];
+      qs[iq][ens] += SQR(atm->q[iq][ip]);
     }
-    xm[ctl->qnt_ens][0] += x[0];
-    xm[ctl->qnt_ens][1] += x[1];
-    xm[ctl->qnt_ens][2] += x[2];
-    zm[ctl->qnt_ens] += Z(atm->p[ip]);
-    n[ctl->qnt_ens]++;
+    xm[ens][0] += x[0];
+    xm[ens][1] += x[1];
+    xm[ens][2] += x[2];
+    zm[ens] += Z(atm->p[ip]);
+    n[ens]++;
   }
 
   /* Create file... */
@@ -14875,7 +14884,8 @@ void write_grid(
 
   static int nk;
 
-  double *cd, *mean[NQ], *sigma[NQ], *vmr_impl, *z, *lon, *lat, *area, *press;
+  double *cd, *mean[NQ], *sigma[NQ], *vmr_impl, *z, *lon, *lat, *area, *press,
+    *weight;
 
   int *ixs, *iys, *izs, *np;
 
@@ -14886,12 +14896,10 @@ void write_grid(
   LOG(1, "Write grid data: %s", filename);
 
   /* Init... */
-  if (t == ctl->t_start) {
-
-    /* Read kernel data... */
-    if (ctl->grid_kernel[0] != '-')
-      read_kernel(ctl->grid_kernel, kz, kw, &nk);
-  }
+  if (ctl->grid_kernel[0] == '-')
+    nk = 0;
+  else if (nk == 0 || t == ctl->t_start)
+    read_kernel(ctl->grid_kernel, kz, kw, &nk);
 
   /* Allocate... */
   ALLOC(cd, double,
@@ -14915,6 +14923,8 @@ void write_grid(
   ALLOC(press, double,
 	ctl->grid_nz);
   ALLOC(np, int,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(weight, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(ixs, int,
 	atm->np);
@@ -14976,9 +14986,10 @@ void write_grid(
 	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
       const double kernel = kernel_weight(kz, kw, nk, atm->p[ip]);
       np[idx]++;
+      weight[idx] += kernel;
       for (int iq = 0; iq < ctl->nq; iq++) {
 	mean[iq][idx] += kernel * atm->q[iq][ip];
-	sigma[iq][idx] += SQR(kernel * atm->q[iq][ip]);
+	sigma[iq][idx] += kernel * SQR(atm->q[iq][ip]);
       }
     }
 
@@ -15016,10 +15027,10 @@ void write_grid(
 	}
 
 	/* Calculate mean... */
-	if (np[idx] > 0)
+	if (weight[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
-	    mean[iq][idx] /= np[idx];
-	    const double var = sigma[iq][idx] / np[idx] - SQR(mean[iq][idx]);
+	    mean[iq][idx] /= weight[idx];
+	    const double var = sigma[iq][idx] / weight[idx] - SQR(mean[iq][idx]);
 	    sigma[iq][idx] = (var > 0 ? sqrt(var) : 0);
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
@@ -15055,6 +15066,7 @@ void write_grid(
   free(area);
   free(press);
   free(np);
+  free(weight);
   free(ixs);
   free(iys);
   free(izs);

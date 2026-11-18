@@ -293,6 +293,25 @@ unsupported. With MPI domain decomposition, box means use only particles on
 the local rank. Subdomain boundaries follow the meteorological grid and may
 split mixing boxes. Particle migration occurs before mixing in each step.
 
+## Age-of-air reference clock
+
+The particle quantity `aoa` stores a reference-contact timestamp, in seconds
+since 2000-01-01 00:00 UTC; it does not store elapsed age. At observation
+time $t$, the transit time relative to that reference is $t-\mathrm{aoa}$.
+Particle initialization sets `aoa` to the particle time. In a forward run,
+the configured boundary region (`BOUND_LAT0/1`, `BOUND_P0/1`, and optional
+surface-layer criteria) resets it to the time of the last sampled contact.
+Without such resets, it normally remains the initialization or release time.
+Contacts are resolved at model timestep intervals, rather than at the exact
+crossing time. Backward trajectories need a separately defined reference:
+repeated contacts overwrite the timestamp as integration proceeds backward.
+
+Inter-parcel mixing also mixes `aoa`. At a common observation time, linear
+mixing of timestamps is equivalent to linear mixing of elapsed ages when the
+particle representation and mixing weights reflect the intended air fractions.
+The resulting `aoa` is an effective mean clock timestamp, not an individual
+particle's literal last contact time. It does not retain the full age spectrum.
+
 ## Convection
 
 MPTRAC's Extreme Convection Parameterization (ECP) represents unresolved
