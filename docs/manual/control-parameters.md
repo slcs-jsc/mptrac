@@ -82,6 +82,11 @@ mesoscale Langevin turbulence. In this configuration, `TURB_MESOX` and
 When Hanna-PBL is disabled, both retain their default of 0.16. Setting
 `DIFFUSION=0` leaves these turbulence settings inactive. Hanna-PBL
 remains compatible with fixed-`K` diffusion outside the PBL.
+`DT_PBL` sets the maximum internal Hanna-PBL timestep in seconds
+(default `2`). It must be finite and positive when Hanna-PBL diffusion
+is active. All particles use a common number of substeps, while each
+retains its signed individual timestep. Smaller values increase the
+temporal resolution and computational cost.
 
 ## Long-lived tracer chemistry and decay
 

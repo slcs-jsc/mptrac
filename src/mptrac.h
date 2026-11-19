@@ -3064,6 +3064,9 @@ typedef struct {
   /*! PBL turbulence scheme (0=none, 1=closure). */
   int turb_pbl_scheme;
 
+  /*! Maximum internal Hanna-PBL timestep [s] (default: 2 s). */
+  double dt_pbl;
+
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
   double turb_dx_pbl;
 
@@ -6602,6 +6605,8 @@ void module_diff_meso(
  * - Calculates turbulent velocity variances (`sig_u`, `sig_w`), their vertical derivatives, 
  *   and Lagrangian timescales (`tau_u`, `tau_w`).
  * - Updates particle velocity perturbations and positions using turbulent diffusion equations.
+ * - Uses ensemble-wide substeps of at most `DT_PBL` seconds, preserving each
+ *   particle's signed individual timestep and refreshing random numbers each substep.
  *
  * The function uses OpenACC directives for GPU acceleration.
  * 

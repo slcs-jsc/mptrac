@@ -176,6 +176,7 @@ be used:
 |TURB_DZ_STRAT|Stratosphere|vertical|$0.1~\rm{m^2~s^{-1}}$|
 |TURB_PBL_TRANS|PBL transition layer|fraction of PBL depth|$0$|
 |TURB_PBL_SCHEME|optional PBL-specific turbulence scheme ($0$=off, $1$=closure)|-|$0$|
+|DT_PBL|maximum internal Hanna-PBL timestep|s|$2$|
 
 If `TURB_PBL_SCHEME=1`, MPTRAC applies a simplified
 Hanna/FLEXPART-style PBL closure only inside the diagnosed PBL, while
@@ -186,6 +187,17 @@ in east/north coordinates. For nearly calm winds, east/north serves as
 the along/cross basis. The closure reflects particles at the surface
 and diagnosed PBL top. It has not been fully validated against the
 reference formulation.
+
+For each model step, the Hanna closure divides the largest absolute
+individual particle timestep by `DT_PBL` to choose one common number of
+internal substeps. Each particle uses its own signed timestep divided by
+that number. At every substep, MPTRAC draws new Gaussian perturbations,
+recomputes the local height-dependent turbulence statistics, advances the
+particle, and applies the existing surface and PBL-top reflections.
+Meteorological time interpolation remains at the model-step level.
+Reducing `DT_PBL` generally improves temporal resolution but increases
+random-number generation and CPU/GPU kernel work; it does not by itself
+establish the well-mixed condition.
 
 Hanna-PBL and mesoscale Langevin turbulence use the same cached
 velocity state and cannot be combined. With Hanna-PBL enabled,

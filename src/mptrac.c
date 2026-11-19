@@ -4678,11 +4678,33 @@ void module_diff_pbl(
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFF_PBL", "PHYSICS");
 
-  /* Create random numbers... */
-  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
+  /* Use the largest active particle timestep for a common substep count. */
+  double dt_max = 0.0;
+#ifdef _OPENACC
+#pragma acc parallel loop present(cache) reduction(max:dt_max)
+#else
+#pragma omp parallel for reduction(max:dt_max)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    dt_max = MAX(dt_max, fabs(cache->dt[ip]));
 
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  /* No stochastic update is needed if every particle is inactive. */
+  if (dt_max == 0.0)
+    return;
+
+  const double required = ceil(dt_max / ctl->dt_pbl);
+  if (!isfinite(required) || required > INT_MAX)
+    ERRMSG("Too many Hanna-PBL substeps; increase DT_PBL!");
+  const int nsub = (required > 1.0 ? (int) required : 1);
+
+  for (int isub = 0; isub < nsub; isub++) {
+
+    /* Draw independent Gaussian perturbations for this ensemble substep. */
+    module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
+
+    /* Re-evaluate local PBL statistics at the updated particle position. */
+    PARTICLE_LOOP(0, atm->np, 1,
+		  "acc data present(ctl,cache,met0,met1,atm)") {
 
     double pbl, ps, dsigw_dz = 0.0, sig_u = 0.0, sig_v = 0.0, sig_w = 0.0;
     double tau_u = 0.0, tau_v = 0.0, tau_w = 0.0;
@@ -4855,7 +4877,7 @@ void module_diff_pbl(
 
     /* Update along-wind and cross-wind perturbations [m/s], retaining
        the cached velocity in geographic east/north coordinates. */
-    const double dt = cache->dt[ip];
+    const double dt = cache->dt[ip] / nsub;
     const double dt_abs = fabs(dt);
 
     const double wind = hypot(u, v);
@@ -4918,6 +4940,7 @@ void module_diff_pbl(
 
     /* Enforce exact pressure limits of the local PBL column. */
     atm->p[ip] = CLAMP(atm->p[ip], pbl, ps);
+    }
   }
 }
 
@@ -7759,6 +7782,10 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "TURB_PBL_SCHEME", -1, "0", NULL);
   if (ctl->turb_pbl_scheme < 0 || ctl->turb_pbl_scheme > 1)
     ERRMSG("Set TURB_PBL_SCHEME to 0 or 1!");
+  ctl->dt_pbl = scan_ctl(filename, argc, argv, "DT_PBL", -1, "2", NULL);
+  if (ctl->diffusion && ctl->turb_pbl_scheme == 1
+      && (!isfinite(ctl->dt_pbl) || ctl->dt_pbl <= 0.0))
+    ERRMSG("DT_PBL must be finite and positive when Hanna-PBL diffusion is active!");
   ctl->turb_dx_pbl =
     scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "50", NULL);
   ctl->turb_dx_trop =
