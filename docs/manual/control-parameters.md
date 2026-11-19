@@ -73,6 +73,16 @@ Existing particle files without this quantity need a configuration that
 provides a free quantity slot; `NQ` and other quantity indices are not
 changed automatically. `ISOSURF=0` and `4` do not require it.
 
+## PBL turbulence
+
+With `DIFFUSION=1` and `TURB_PBL_SCHEME=1`, the Hanna-PBL closure uses
+along-wind and cross-wind velocity fluctuations and cannot run with
+mesoscale Langevin turbulence. In this configuration, `TURB_MESOX` and
+`TURB_MESOZ` default to zero; an explicit nonzero value is rejected.
+When Hanna-PBL is disabled, both retain their default of 0.16. Setting
+`DIFFUSION=0` leaves these turbulence settings inactive. Hanna-PBL
+remains compatible with fixed-`K` diffusion outside the PBL.
+
 ## Long-lived tracer chemistry and decay
 
 `TRACER_CHEM` accepts `0` (default, disabled) or `1`. When enabled with

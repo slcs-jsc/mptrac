@@ -4730,6 +4730,9 @@ void module_diff_pbl(
     INTPOL_2D(nss, 0);
     INTPOL_3D(t, 1);
     INTPOL_3D(h2o, 0);
+    double u, v;
+    INTPOL_3D(u, 0);
+    INTPOL_3D(v, 0);
 
     /* Restore particle pressure before any continue/update path. */
     atm->p[ip] = p_save;
@@ -4850,21 +4853,28 @@ void module_diff_pbl(
 	  && sig_w > 0.0 && tau_u > 0.0 && tau_v > 0.0 && tau_w > 0.0))
       continue;
 
-    /* Update horizontal perturbation [m/s]. */
+    /* Update along-wind and cross-wind perturbations [m/s], retaining
+       the cached velocity in geographic east/north coordinates. */
     const double dt = cache->dt[ip];
     const double dt_abs = fabs(dt);
+
+    const double wind = hypot(u, v);
+    const double cos_dir = isfinite(wind) && wind > 1e-6 ? u / wind : 1.0;
+    const double sin_dir = isfinite(wind) && wind > 1e-6 ? v / wind : 0.0;
+    const double along =
+      cos_dir * cache->uvwp[ip][0] + sin_dir * cache->uvwp[ip][1];
+    const double cross =
+      -sin_dir * cache->uvwp[ip][0] + cos_dir * cache->uvwp[ip][1];
 
     const double ru = exp(-dt_abs / tau_u);
     const double ru2 = sqrt(MAX(0.0, 1.0 - SQR(ru)));
     const double rv = exp(-dt_abs / tau_v);
     const double rv2 = sqrt(MAX(0.0, 1.0 - SQR(rv)));
 
-    cache->uvwp[ip][0]
-      = (float) (cache->uvwp[ip][0] * ru + sig_u * ru2 * cache->rs[3 * ip]);
-
-    cache->uvwp[ip][1]
-      = (float) (cache->uvwp[ip][1] * rv
-		 + sig_v * rv2 * cache->rs[3 * ip + 1]);
+    const double along_new = along * ru + sig_u * ru2 * cache->rs[3 * ip];
+    const double cross_new = cross * rv + sig_v * rv2 * cache->rs[3 * ip + 1];
+    cache->uvwp[ip][0] = (float) (cos_dir * along_new - sin_dir * cross_new);
+    cache->uvwp[ip][1] = (float) (sin_dir * along_new + cos_dir * cross_new);
 
     /* Update vertical perturbation [m/s].
        The drift term is d(sig_w^2)/dz + sig_w^2/rho * d(rho)/dz.
@@ -7762,9 +7772,15 @@ void mptrac_read_ctl(
   ctl->turb_dz_strat =
     scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
   ctl->turb_mesox =
-    scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0.16", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESOX", -1,
+	     ctl->turb_pbl_scheme == 1 ? "0" : "0.16", NULL);
   ctl->turb_mesoz =
-    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1,
+	     ctl->turb_pbl_scheme == 1 ? "0" : "0.16", NULL);
+  if (ctl->diffusion && ctl->turb_pbl_scheme == 1
+      && (ctl->turb_mesox != 0 || ctl->turb_mesoz != 0))
+    ERRMSG
+      ("Hanna PBL turbulence cannot be combined with nonzero TURB_MESOX or TURB_MESOZ!");
   ctl->turb_pbl_trans =
     scan_ctl(filename, argc, argv, "TURB_PBL_TRANS", -1, "0", NULL);
   if (ctl->turb_pbl_trans < 0 || ctl->turb_pbl_trans > 1)
