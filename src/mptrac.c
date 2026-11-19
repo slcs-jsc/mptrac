@@ -3250,7 +3250,7 @@ void intpol_met_4d_zeta(
       / (height_top - height_bot);
   }
 
-  /* Calculate the needed array values... */
+  /* Interpolate the eight surrounding model-level values in time... */
   const double array000 = cw[3] * (array1[ci[0]][ci[1]][ci[2]]
 				   - array0[ci[0]][ci[1]][ci[2]])
     + array0[ci[0]][ci[1]][ci[2]];
@@ -3276,6 +3276,7 @@ void intpol_met_4d_zeta(
 				   - array0[ci[0] + 1][ci[1] + 1][ci[2] + 1])
     + array0[ci[0] + 1][ci[1] + 1][ci[2] + 1];
 
+  /* Interpolate horizontally on the lower and upper levels... */
   const double array00 = cw[0] * (array100 - array000) + array000;
   const double array10 = cw[0] * (array110 - array010) + array010;
   const double array01 = cw[0] * (array101 - array001) + array001;
@@ -4256,7 +4257,7 @@ void module_chem_grid(
   const double t0 = tt - 0.5 * ctl->dt_mod;
   const double t1 = tt + 0.5 * ctl->dt_mod;
 
-  /* Get indices... */
+  /* Select active particles inside the chemistry grid and valid ensembles... */
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
@@ -4813,6 +4814,7 @@ void module_diff_pbl(
       sig_u = MAX(ust * pow(MAX(12.0 - 0.5 * zi / ol, 0.0), 1.0 / 3.0), 1e-6);
       sig_v = sig_u;
 
+      /* Use the piecewise vertical-variance profile and its gradient... */
       if (zeta < 0.03) {
 	const double arg = MAX(3.0 * zeta - ol / zi, 1e-12);
 	sig_w = 0.96 * wstar * pow(arg, 1.0 / 3.0);
@@ -5529,6 +5531,8 @@ void module_meteo(
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
     SET_ATM(qnt_o3c, o3c);
+
+    /* Add prescribed chemical climatologies at the particle position... */
     const double lat_ref =
       ctl->met_coord_type == 0 ? atm->lat[ip] : ctl->met_utm_ref_lat;
     SET_ATM(qnt_hno3,
@@ -5539,6 +5543,8 @@ void module_meteo(
 			      lat_ref, atm->p[ip]));
     SET_ATM(qnt_ho2, clim_zm(&clim->ho2, atm->time[ip], lat_ref, atm->p[ip]));
     SET_ATM(qnt_o1d, clim_zm(&clim->o1d, atm->time[ip], lat_ref, atm->p[ip]));
+
+    /* Diagnose wind speed, vertical speed, and thermodynamic quantities... */
     SET_ATM(qnt_vh, sqrt(u * u + v * v));
     SET_ATM(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     SET_ATM(qnt_psat, PSAT(t));
@@ -5606,7 +5612,7 @@ void module_mixing(
   const double t1 = t + 0.5 * ctl->dt_mod;
   const double dt_mix = ctl->mixing_dt > 0 ? ctl->mixing_dt : ctl->dt_mod;
 
-  /* Get indices... */
+  /* Select active particles and calculate their local mixing fractions... */
 #ifdef _OPENACC
 #pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],mixparam[0:np])
 #pragma acc data present(ctl,cache,clim,atm,ixs,iys,izs,mixparam)
@@ -6057,6 +6063,7 @@ void module_radio_depo(
 	  INTPOL_3D(swc, 0);
 	  INTPOL_3D(t, 0);
 	  if (isfinite(t) && t > 0.) {
+	    /* Select cloud-regime and temperature-dependent retention... */
 	    const int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
 	    double eta;
 	    if (inside) {
@@ -10458,6 +10465,7 @@ void read_met_geopot(
 	int iy1 = MIN(iy + dy - 1, met->ny - 1);
 	for (int ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ++ix2) {
 	  int ix3 = ix2;
+	  /* Wrap the smoothing stencil across the longitude boundary... */
 	  if (ix3 < 0)
 	    ix3 += met->nx;
 	  else if (ix3 >= met->nx)
@@ -13190,6 +13198,7 @@ void read_met_sample(
 	for (int ix2 = ix - ctl->met_sx + 1; ix2 <= ix + ctl->met_sx - 1;
 	     ix2++) {
 	  int ix3 = ix2;
+	  /* Wrap the smoothing stencil across the longitude boundary... */
 	  if (ix3 < 0)
 	    ix3 += met->nx;
 	  else if (ix3 >= met->nx)
@@ -13230,6 +13239,7 @@ void read_met_sample(
 	      wsum += w;
 	    }
 	}
+	/* Normalize the tapered stencil, including at grid edges... */
 	help->ps[ix][iy] /= wsum;
 	help->zs[ix][iy] /= wsum;
 	help->ts[ix][iy] /= wsum;
@@ -15383,6 +15393,7 @@ void write_grid_nc(
   NC_PUT_DOUBLE("area", area, 0);
   NC_PUT_DOUBLE("dz", &dz, 0);
 
+  /* Reorder internal lon/lat/z arrays to netCDF z/lat/lon order... */
   for (int ix = 0; ix < ctl->grid_nx; ix++)
     for (int iy = 0; iy < ctl->grid_ny; iy++)
       for (int iz = 0; iz < ctl->grid_nz; iz++)
