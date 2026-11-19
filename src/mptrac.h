@@ -6813,16 +6813,12 @@ void module_isosurf(
  * @param atm Pointer to the atmospheric data structure containing particle information.
  *
  * @note The function initializes a timer to measure the execution time of the chemical simulation.
- * @note Chemical integration using KPP is performed for particles with a positive time step (dt > 0).
- * @note For each particle, the function allocates memory for variable (VAR) and fixed (FIX) arrays,
- *       sets the range of time steps (STEPMIN and STEPMAX), and defines relative and absolute tolerances.
- * @note The chemical system is initialized for each particle using the kpp_chem_initialize function.
- * @note Chemical integration is performed over a specified time step (ctl->dt_kpp) using the INTEGRATE
- *       macro, which is part of the KPP integration scheme.
- * @note The function outputs the integrated chemical concentrations back to the atmospheric data structure
- *       using the kpp_chem_output2atm function.
- * @note Memory allocated for the variable (VAR) and fixed (FIX) arrays is freed after the integration is
- *       completed for each particle.
+ * @note Particles with a zero individual time step are skipped. Other particles
+ *       are integrated over ctl->dt_kpp, regardless of timestep sign or a
+ *       release within the KPP interval.
+ * @note KPP initialization converts mixing ratios to molecular number densities.
+ *       Results are written back only after a successful solver step with a
+ *       finite, nonnegative SO2 concentration.
  *
  * @author Mingzhao Liu
  */

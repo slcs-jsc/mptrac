@@ -18,7 +18,7 @@ t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
-NQ = 12
+NQ = 11
 QNT_NAME[0] = m
 QNT_NAME[1] = Cx 
 QNT_NAME[2] = Co1d 
@@ -28,16 +28,13 @@ QNT_NAME[5] = Co3p
 QNT_NAME[6] = Cho2 
 QNT_NAME[7] = Coh 
 QNT_NAME[8] = Ch2o2
-QNT_NAME[9] = Cho2
-QNT_NAME[10] = mloss_kpp
-QNT_NAME[11] = mloss_wet
+QNT_NAME[9] = mloss_kpp
+QNT_NAME[10] = mloss_wet
 METBASE = ../data/ei
 MET_DT_OUT = 86400.0
 KPP_CHEM = 1
 DT_KPP = 7200
 MIXING_DT = 7200
-MIXING_TAU_TROP = 1
-MIXING_TAU_STRAT = 1
 CHEMGRID_LON0 = -90
 CHEMGRID_LON1 = 60
 CHEMGRID_LAT0 = -60

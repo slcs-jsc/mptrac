@@ -5398,8 +5398,13 @@ void module_kpp_chem(
     ipar[0] = 0;		/* 0: F=F(y), i.e. independent of t (autonomous); 0:F=F(t,y), i.e. depends on t (non-autonomous) */
     ipar[1] = 1;		/* 0: NVAR-dimentional vector of tolerances; 1:scalar tolerances */
     ipar[3] = 4;		/* choice of the method:Rodas3 */
-    Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
-	       atol, rtol, &FunTemplate, &JacTemplate, rpar, ipar);
+    const int status = Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
+				   atol, rtol, &FunTemplate, &JacTemplate, rpar, ipar);
+    int valid = status == 1;
+    for (int i = 0; i < nvar && valid; i++)
+      valid = isfinite(var[i]);
+    if (!valid || var[ind_so2] < 0)
+      continue;
 
     /* Save results.. */
     kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
@@ -7947,6 +7952,8 @@ void mptrac_read_ctl(
   ctl->dt_kpp = scan_ctl(filename, argc, argv, "DT_KPP", -1, "1800", NULL);
   if (ctl->kpp_chem && !DT_ALIGNED(ctl->dt_kpp, ctl->dt_mod))
     ERRMSG("DT_KPP must be a positive integer multiple of DT_MOD!");
+  if (ctl->kpp_chem && (ctl->qnt_m < 0 || ctl->qnt_Cx < 0))
+    ERRMSG("KPP_CHEM requires quantities m and Cx!");
 
   /* First order tracer chemistry... */
   const double tracer_chem =

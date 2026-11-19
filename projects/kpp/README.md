@@ -61,13 +61,13 @@ The KPP package has been implemented in the libs folder. Execute  `/libs/build.s
 
 2. **Build the chemical integrator:**
   To build the solver using the KPP, run the provided build_KPP.sh script. This will generate the necessary C code and compile it with two parameter: 1) the directory of the folder where the kpp definition file is in, 2) the switch of GPU compilation:
-  ```./build_KPP.sh <directory> <1:GPU on; 0:GPU off>```
+  ```./build_KPP.sh <directory relative to this script> <1:GPU on; 0:GPU off>```
 
   Example:
   
-  ```./build.sh chem 0```
+  ```./build_KPP.sh chem 0```
 
-  The script will generate the chemical integration code from the chem.kpp and chem.eqn files, then compile it into an executable.
+  The script generates C code from `chem.kpp` and `chem.eqn`, builds `libkpp.a`, and copies the library and headers to `libs/build/`.
 
 3. **Compile the source code of MPTRAC with `KPP=1`:** Go to the `src` directory and compile the code with the KPP mode switched on:
 ```
@@ -75,4 +75,8 @@ cd ../../src
 make clean
 make KPP=1
 ```
+
+  Clean before switching `KPP`, compiler, or GPU build options; Make does not track command-line flag changes. Build the KPP library with the matching CPU or GPU compiler first.
+
+The current MPTRAC interface skips particles with a zero individual timestep, but integrates every other particle over the full `DT_KPP`. Releases partway through a KPP interval and backward trajectories therefore need separate timestep validation. GPU KPP execution has not been validated by the regular GPU builds.
 
