@@ -1546,7 +1546,21 @@ be used:</p>
 </tr>
 </tbody>
 </table>
-<p>If <code>TURB_PBL_SCHEME=1</code>, MPTRAC applies a simplified Hanna/FLEXPART-style PBL closure only inside the diagnosed PBL, while the fixed-<code>K</code> background diffusion remains active outside the PBL. The current closure uses hard reflection at the surface and at the diagnosed PBL top.</p>
+<p>If <code>TURB_PBL_SCHEME=1</code>, MPTRAC applies a simplified
+Hanna/FLEXPART-style PBL closure only inside the diagnosed PBL, while
+fixed-<code>K</code> diffusion remains active outside it. Horizontal velocity
+fluctuations and their Lagrangian timescales are defined along and
+across the local mean wind; MPTRAC stores the resulting perturbations
+in east/north coordinates. For nearly calm winds, east/north serves as
+the along/cross basis. The closure reflects particles at the surface
+and diagnosed PBL top. It has not been fully validated against the
+reference formulation.</p>
+<p>Hanna-PBL and mesoscale Langevin turbulence use the same cached
+velocity state and cannot be combined. With Hanna-PBL enabled,
+<code>TURB_MESOX</code> and <code>TURB_MESOZ</code> default to zero; explicitly setting either
+to a nonzero value is rejected when <code>DIFFUSION=1</code>. Without Hanna-PBL,
+both retain their default of 0.16. Hanna can still be combined with
+fixed-<code>K</code> diffusion outside the PBL.</p>
 <p>The current implementation interprets surface sensible heat flux in ECMWF
 convention, that is, positive downward and negative upward. Accordingly,
 negative <code>SHF</code> drives unstable daytime conditions in the closure.</p>
@@ -1581,12 +1595,13 @@ increment is proportional to the grid-scale standard deviation
 <span class="arithmatex">\(\sigma_i\)</span> of the wind or vertical velocity and to a user-defined
 scaling factor <span class="arithmatex">\(f_i\)</span> for the corresponding component. In MPTRAC these
 scaling factors are specified directly through the control parameters
-<code>TURB_MESOX</code> (horizontal) and <code>TURB_MESOZ</code> (vertical). Their default
-value is 16%, following a choice made for the FLEXPART model (Stohl et
-al., 2005). For each air parcel, the grid-scale standard deviation is
-calculated from the neighbouring eight grid boxes and two time steps of
-the meteorological data. As before, <span class="arithmatex">\(\vec{\xi}\)</span> is a vector of random
-variates drawn from the standard normal distribution.</p>
+<code>TURB_MESOX</code> (horizontal) and <code>TURB_MESOZ</code> (vertical). Without the
+Hanna-PBL closure, their default value is 16%, following a choice made
+for the FLEXPART model (Stohl et al., 2005). For each air parcel, the
+grid-scale standard deviation is calculated from the neighbouring eight
+grid boxes and two time steps of the meteorological data. As before,
+<span class="arithmatex">\(\vec{\xi}\)</span> is a vector of random variates drawn from the standard
+normal distribution.</p>
 <h2 id="inter-parcel-mixing">Inter-parcel mixing</h2>
 <p>Lagrangian air parcels do not exchange their carried quantities unless an
 explicit mixing process is applied. The inter-parcel mixing module groups

@@ -462,6 +462,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pbl-turbulence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PBL turbulence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#long-lived-tracer-chemistry-and-decay" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1036,6 +1047,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pbl-turbulence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PBL turbulence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#long-lived-tracer-chemistry-and-decay" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1179,6 +1201,14 @@ pressure-to-temperature ratio (<code>2</code>), and K for potential temperature 
 Existing particle files without this quantity need a configuration that
 provides a free quantity slot; <code>NQ</code> and other quantity indices are not
 changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require it.</p>
+<h2 id="pbl-turbulence">PBL turbulence</h2>
+<p>With <code>DIFFUSION=1</code> and <code>TURB_PBL_SCHEME=1</code>, the Hanna-PBL closure uses
+along-wind and cross-wind velocity fluctuations and cannot run with
+mesoscale Langevin turbulence. In this configuration, <code>TURB_MESOX</code> and
+<code>TURB_MESOZ</code> default to zero; an explicit nonzero value is rejected.
+When Hanna-PBL is disabled, both retain their default of 0.16. Setting
+<code>DIFFUSION=0</code> leaves these turbulence settings inactive. Hanna-PBL
+remains compatible with fixed-<code>K</code> diffusion outside the PBL.</p>
 <h2 id="long-lived-tracer-chemistry-and-decay">Long-lived tracer chemistry and decay</h2>
 <p><code>TRACER_CHEM</code> accepts <code>0</code> (default, disabled) or <code>1</code>. When enabled with
 <code>Cccl4</code>, <code>Cccl3f</code>, <code>Cccl2f2</code>, or <code>Cn2o</code> configured, it requires the
