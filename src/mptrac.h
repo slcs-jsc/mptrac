@@ -3256,7 +3256,7 @@ typedef struct {
   /*! Upper latitude of chemistry grid [deg]. */
   double chemgrid_lat1;
 
-  /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
+  /*! OH reaction type (0=off, 1=constant, 2=bimolecular, 3=termolecular). */
   int oh_chem_reaction;
 
   /*! Coefficients for OH reaction rate (A, E/R or k0, n, kinf, m). */

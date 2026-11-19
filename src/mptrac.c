@@ -4174,7 +4174,7 @@ void module_bound_cond(
     if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
       atm->q[ctl->qnt_Csf6][ip] = clim_ts(&clim->sf6, atm->time[ip]);
 
-    /* Set age of air... */
+    /* Reset age-clock reference to the current particle time... */
     if (ctl->qnt_aoa >= 0)
       atm->q[ctl->qnt_aoa][ip] = atm->time[ip];
   }
@@ -4252,7 +4252,7 @@ void module_chem_grid(
   for (int i = 0; i < ngrid * nens; i++)
     mass[i] = 0;
 
-  /* Set time interval for output... */
+  /* Set particle-time window for chemistry-grid sampling... */
   const double t0 = tt - 0.5 * ctl->dt_mod;
   const double t1 = tt + 0.5 * ctl->dt_mod;
 
@@ -5224,8 +5224,7 @@ void module_h2o2_chem(
       H2O2_HENRY_REF * exp(H2O2_HENRY_TEMP
 			   * (1. / t - 1. / CHEM_REF_TEMP)) * RI * t;
 
-    /* Correction factor for high SO2 concentration
-       (if qnt_Cx is defined, the correction is switched on)... */
+    /* Apply plume correction for Cx with SO2 or unspecified species... */
     double cor = 1.0;
     if (so2_correction) {
       if (!isfinite(atm->q[ctl->qnt_Cx][ip]))
@@ -5234,6 +5233,7 @@ void module_h2o2_chem(
 	low ? SO2_CORR_A * pow(atm->q[ctl->qnt_Cx][ip], SO2_CORR_B) : 1;
     }
 
+    /* Convert climatological H2O2 to dissolved concentration [mol/L]... */
     const double h2o2_vmr =
       clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]);
     if (!isfinite(h2o2_vmr) || h2o2_vmr < 0)
@@ -5840,8 +5840,7 @@ void module_oh_chem(
     if (!isfinite(k) || k < 0)
       continue;
 
-    /* Correction factor for high SO2 concentration
-       (if qnt_Cx is defined, the correction is switched on)... */
+    /* Apply plume correction for Cx with SO2 or unspecified species... */
     double cor = 1;
     if (so2_correction) {
       if (!isfinite(atm->q[ctl->qnt_Cx][ip]))
@@ -5969,7 +5968,7 @@ void module_radio_decay(
       const double lost = old * (1.0 - aux);
       atm->q[ctl->qnt_Arn222][ip] = old * aux;
 
-      /* Parent-daughter process for Pb-210... */
+      /* Approximate Pb-210 activity produced by decayed Rn-222... */
       if (ctl->qnt_Apb210 >= 0)
 	atm->q[ctl->qnt_Apb210][ip] += lost * lambda_pb210 / lambda_rn222;
     }
@@ -6100,6 +6099,8 @@ void module_radio_depo(
     const int iy = ingrid
       ? (int) ((atm->lat[ip] - ctl->grid_lat0) / dlat) : 0;
     const int idx = (ingrid ? ARRAY_2D(ix, iy, ctl->grid_ny) : 0);
+
+    /* Reference deposited Bq to model start for output-time decay... */
     const double tref = atm->time[ip] - ctl->t_start;
 
     /* Deposit Pb-210... */
@@ -9719,7 +9720,7 @@ void read_kernel(
   if (n < 2)
     ERRMSG("Not enough height levels!");
 
-  /* Normalize kernel function... */
+  /* Preserve relative weights by scaling the maximum to one... */
   const double kmax = gsl_stats_max(kw, 1, (size_t) n);
   if (kmax <= 0)
     ERRMSG("Kernel requires at least one positive weight!");
@@ -14763,7 +14764,7 @@ void write_ens(
     if (atm->q[ctl->qnt_ens][ip] < 0 || atm->q[ctl->qnt_ens][ip] >= NENS)
       ERRMSG("Ensemble ID is out of range!");
 
-    /* Get means... */
+    /* Accumulate ensemble sums and squared sums... */
     const int ens = (int) atm->q[ctl->qnt_ens][ip];
     geo2cart(0, atm->lon[ip], atm->lat[ip], x);
     for (int iq = 0; iq < ctl->nq; iq++) {
@@ -15105,7 +15106,7 @@ void write_grid(
       izs[ip] = -1;
   }
 
-  /* Average data... */
+  /* Count particles and accumulate kernel-weighted quantity moments... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
       const int idx =
@@ -15152,7 +15153,7 @@ void write_grid(
 	  }
 	}
 
-	/* Calculate mean... */
+	/* Normalize weighted means and variances by total kernel weight... */
 	if (weight[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] /= weight[idx];
