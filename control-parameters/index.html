@@ -1208,7 +1208,12 @@ mesoscale Langevin turbulence. In this configuration, <code>TURB_MESOX</code> an
 <code>TURB_MESOZ</code> default to zero; an explicit nonzero value is rejected.
 When Hanna-PBL is disabled, both retain their default of 0.16. Setting
 <code>DIFFUSION=0</code> leaves these turbulence settings inactive. Hanna-PBL
-remains compatible with fixed-<code>K</code> diffusion outside the PBL.</p>
+remains compatible with fixed-<code>K</code> diffusion outside the PBL.
+<code>DT_PBL</code> sets the maximum internal Hanna-PBL timestep in seconds
+(default <code>2</code>). It must be finite and positive when Hanna-PBL diffusion
+is active. All particles use a common number of substeps, while each
+retains its signed individual timestep. Smaller values increase the
+temporal resolution and computational cost.</p>
 <h2 id="long-lived-tracer-chemistry-and-decay">Long-lived tracer chemistry and decay</h2>
 <p><code>TRACER_CHEM</code> accepts <code>0</code> (default, disabled) or <code>1</code>. When enabled with
 <code>Cccl4</code>, <code>Cccl3f</code>, <code>Cccl2f2</code>, or <code>Cn2o</code> configured, it requires the

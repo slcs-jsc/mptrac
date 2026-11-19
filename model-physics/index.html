@@ -1544,6 +1544,12 @@ be used:</p>
 <td>-</td>
 <td><span class="arithmatex">\(0\)</span></td>
 </tr>
+<tr>
+<td>DT_PBL</td>
+<td>maximum internal Hanna-PBL timestep</td>
+<td>s</td>
+<td><span class="arithmatex">\(2\)</span></td>
+</tr>
 </tbody>
 </table>
 <p>If <code>TURB_PBL_SCHEME=1</code>, MPTRAC applies a simplified
@@ -1555,6 +1561,16 @@ in east/north coordinates. For nearly calm winds, east/north serves as
 the along/cross basis. The closure reflects particles at the surface
 and diagnosed PBL top. It has not been fully validated against the
 reference formulation.</p>
+<p>For each model step, the Hanna closure divides the largest absolute
+individual particle timestep by <code>DT_PBL</code> to choose one common number of
+internal substeps. Each particle uses its own signed timestep divided by
+that number. At every substep, MPTRAC draws new Gaussian perturbations,
+recomputes the local height-dependent turbulence statistics, advances the
+particle, and applies the existing surface and PBL-top reflections.
+Meteorological time interpolation remains at the model-step level.
+Reducing <code>DT_PBL</code> generally improves temporal resolution but increases
+random-number generation and CPU/GPU kernel work; it does not by itself
+establish the well-mixed condition.</p>
 <p>Hanna-PBL and mesoscale Langevin turbulence use the same cached
 velocity state and cannot be combined. With Hanna-PBL enabled,
 <code>TURB_MESOX</code> and <code>TURB_MESOZ</code> default to zero; explicitly setting either
