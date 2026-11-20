@@ -185,8 +185,16 @@ fluctuations and their Lagrangian timescales are defined along and
 across the local mean wind; MPTRAC stores the resulting perturbations
 in east/north coordinates. For nearly calm winds, east/north serves as
 the along/cross basis. The closure reflects particles at the surface
-and diagnosed PBL top. It has not been fully validated against the
-reference formulation.
+and diagnosed PBL top. With Hanna enabled, Fixed-`K` particles
+starting above the PBL also reflect at its top; turbulent transport does
+not cross the interface in either direction. Resolved advection,
+convection, and changes in diagnosed PBL height can still move particles
+between the two regimes. Fixed-`K`-only runs retain their existing
+`TURB_PBL_TRANS` blending. With Hanna enabled, that parameter still blends
+diffusivities immediately above the reflecting top; its default is zero.
+The Hanna velocity cache is cleared while particles are above the PBL, so
+re-entry after PBL-height changes starts without a stale PBL velocity.
+The closure has not been fully validated against the reference formulation.
 
 For each model step, the Hanna closure divides the largest absolute
 individual particle timestep by `DT_PBL` to choose one common number of

@@ -4714,9 +4714,13 @@ void module_diff_pbl(
     INTPOL_INIT;
     INTPOL_2D(pbl, 1);
 
-    /* Let the background diffusion scheme handle particles above the PBL. */
-    if (atm->p[ip] < pbl)
+    /* Clear Hanna velocities outside the PBL before a later re-entry. */
+    if (atm->p[ip] < pbl) {
+      cache->uvwp[ip][0] = 0.0f;
+      cache->uvwp[ip][1] = 0.0f;
+      cache->uvwp[ip][2] = 0.0f;
       continue;
+    }
 
     /* Get surface pressure... */
     INTPOL_2D(ps, 0);
@@ -4982,6 +4986,12 @@ void module_diff_turb(
     /* Pressure at model top [hPa]. */
     const double ptop = met0->p[met0->np - 1];
 
+    /* A valid PBL top is required for the reflective Hanna partition. */
+    if (ctl->turb_pbl_scheme == 1
+	&& !(isfinite(ps) && isfinite(pbl) && ps > pbl
+	     && pbl > ptop && ptop > 0.0))
+      continue;
+
     /* Get weighting factors at current particle position... */
     const double wpbl = pbl_weight(ctl, atm, ip, pbl, ps);
     const double wtrop = tropo_weight(ctl, clim, atm, ip) * (1.0 - wpbl);
@@ -5076,18 +5086,34 @@ void module_diff_turb(
       /* Update particle pressure... */
       double ptrial = p_save + DZ2DP(dz_tot, p_save);
 
-      /* Reflect at surface and model top.
-         The transformation p -> pb^2 / p corresponds to reflection in
-         logarithmic pressure / approximate height coordinates.  Use repeated
-         reflection for robustness in case a large random step crosses more
-         than one boundary. */
-      for (int iter = 0; iter < 10; iter++) {
-	if (ptrial > ps)
-	  ptrial = ps * ps / ptrial;
-	else if (ptrial < ptop)
-	  ptrial = ptop * ptop / ptrial;
-	else
-	  break;
+      /* Keep Fixed-K particles that started above the PBL above its top.
+         Fold the trial height into [z_PBL, z_model_top] so even large
+         displacements undergo all required reflections. */
+      if (ctl->turb_pbl_scheme == 1) {
+	if (!(ptrial < pbl && ptrial >= ptop)) {
+	  const double z_pbl = Z(pbl);
+	  const double height = Z(ptop) - z_pbl;
+	  double z_rel = fmod(Z(p_save) + dz_tot - z_pbl, 2.0 * height);
+	  if (z_rel < 0.0)
+	    z_rel += 2.0 * height;
+	  if (z_rel > height)
+	    z_rel = 2.0 * height - z_rel;
+	  ptrial = MIN(P(z_pbl + z_rel), nextafter(pbl, 0.0));
+	}
+      } else {
+	/* Reflect at surface and model top.
+	   The transformation p -> pb^2 / p corresponds to reflection in
+	   logarithmic pressure / approximate height coordinates.  Use repeated
+	   reflection for robustness in case a large random step crosses more
+	   than one boundary. */
+	for (int iter = 0; iter < 10; iter++) {
+	  if (ptrial > ps)
+	    ptrial = ps * ps / ptrial;
+	  else if (ptrial < ptop)
+	    ptrial = ptop * ptop / ptrial;
+	  else
+	    break;
+	}
       }
 
       /* Final safety clamp in case of an exceptionally large displacement... */
