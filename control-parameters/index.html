@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -1209,6 +1209,11 @@ mesoscale Langevin turbulence. In this configuration, <code>TURB_MESOX</code> an
 When Hanna-PBL is disabled, both retain their default of 0.16. Setting
 <code>DIFFUSION=0</code> leaves these turbulence settings inactive. Hanna-PBL
 remains compatible with fixed-<code>K</code> diffusion outside the PBL.
+Hanna turbulence and vertical fixed-<code>K</code> diffusion reflect at the PBL top
+from their respective sides. Changing PBL height, resolved advection,
+and convection can still change a particle's regime.
+<code>TURB_PBL_TRANS</code> retains its Fixed-<code>K</code>-only behavior; with Hanna enabled it
+only blends Fixed-<code>K</code> diffusivity above the reflecting boundary.
 <code>DT_PBL</code> sets the maximum internal Hanna-PBL timestep in seconds
 (default <code>2</code>). It must be finite and positive when Hanna-PBL diffusion
 is active. All particles use a common number of substeps, while each
