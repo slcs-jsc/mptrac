@@ -46,5 +46,5 @@ To update the [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
 - [Testing and code quality](testing.md): regression tests, static analysis, coverage, and automated checks.
 - [Parallelization](parallelization.md): MPI, OpenMP, and OpenACC.
 - [Profiling and benchmarking](profiling.md): timers and CPU/GPU profiling.
-- [Release management](releases.md): release policy and checklist shared with JURASSIC.
+- [Release management](releases.md): release policy and checklist.
 - [High-level interface](high-level-interface.md) and [Fortran wrapper](fortran-wrapper.md): integration APIs.
