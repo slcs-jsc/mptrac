@@ -1,65 +1,36 @@
 # Contributing to MPTRAC
 
-Thank you for your interest in contributing to the Massive-Parallel Trajectory Calculations (MPTRAC) project. MPTRAC is a Lagrangian particle dispersion model designed to analyze atmospheric transport processes in the free troposphere and stratosphere. ([GitHub Repository](https://github.com/slcs-jsc/mptrac))
-
-To ensure a smooth and collaborative contribution process, please adhere to the following guidelines:
+Thank you for contributing to MPTRAC, a Lagrangian atmospheric transport and dispersion model. Bug reports, documentation improvements, tests, and code contributions are welcome.
 
 ## Code of Conduct
 
-We are committed to fostering an open and welcoming environment. All participants, including contributors and maintainers, are expected to uphold our Code of Conduct, ensuring a harassment-free experience for everyone.
+Please follow the project's [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## How to Contribute
+## Reporting issues
 
-### Reporting Issues
+Open a [GitHub issue](https://github.com/slcs-jsc/mptrac/issues) and include a clear description, steps to reproduce (if relevant), the version or commit, input settings, error messages or logs, and the compiler, platform, and execution environment. For MPI or GPU issues, include the relevant rank, thread, accelerator, and build configuration.
 
-If you encounter bugs, have feature requests, or seek clarification, please submit an issue through our [GitHub Issues](https://github.com/slcs-jsc/mptrac/issues) page. Provide detailed information to help us address the issue effectively:
+## Submitting changes
 
-- A clear and descriptive title.
-- Steps to reproduce the issue (for bug reports).
-- Any relevant logs or error messages.
-- The version of MPTRAC you're using and your computing environment.
+1. Fork the repository, clone your fork, and create a focused branch.
+2. Make the change, following the existing C style. Add or adjust relevant tests and documentation.
+3. Run the applicable checks, inspect the diff, and commit with a descriptive message.
+4. Push your branch and open a pull request explaining the motivation, affected workflows, tests performed, and any intended numerical or reference-data changes.
 
-### Submitting Changes
+For example, from the source directory, run the default regression suite **without parallel make**:
 
-1. **Fork the Repository:** Click the "Fork" button at the top right corner of the [MPTRAC GitHub page](https://github.com/slcs-jsc/mptrac) to create your own copy of the repository.
+```bash
+make check
+```
 
-2. **Clone Your Fork:**
-   ```bash
-   git clone https://github.com/your-username/mptrac.git
-   ```
+See [Testing and code quality](docs/manual/testing.md) for targeted tests, reference-data review, CI, GPU nightly builds, static analysis, and coverage. Do not update reference results solely to make a test pass.
 
-3. **Create a New Branch:**
-   ```bash
-   cd mptrac
-   git checkout -b your-branch-name
-   ```
+## Building and coding standards
 
-4. **Implement Your Changes:** Make your modifications, ensuring adherence to the project's coding standards.
+See [Building from source](docs/manual/building.md) for compilation and installation, [Code development](docs/manual/code-development.md) for formatting and documentation, and [Code structure](docs/manual/code-structure.md) for the architecture. Review the [parallelization guide](docs/manual/parallelization.md) when modifying MPI, OpenMP, or OpenACC code.
 
-5. **Commit Your Changes:** Write clear and concise commit messages:
-   ```bash
-   git add .
-   git commit -m "Brief description of changes"
-   ```
-
-6. **Push to Your Fork:**
-   ```bash
-   git push origin your-branch-name
-   ```
-
-7. **Submit a Pull Request:**
-   - Go to the original [MPTRAC repository](https://github.com/slcs-jsc/mptrac).
-   - Click on "New Pull Request" and select your branch.
-   - Provide a detailed description of your changes to facilitate the review process.
-
-## Coding Standards
-
-- **Style Guide:** Maintain consistency with the existing codebase. Follow standard coding practices relevant to the programming languages used in MPTRAC.
-- **Documentation:** Document new functions, classes, and modules thoroughly. Update existing documentation as necessary.
-- **Testing:** Ensure that your changes are accompanied by appropriate tests. Run tests before submitting a pull request.
+Keep changes focused and avoid unrelated formatting. Document changed behavior and public interfaces, and include relevant tests.
 
 ## License
 
-By contributing to MPTRAC, you agree that your contributions will be licensed under the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
-
-We appreciate your contributions and dedication to enhancing MPTRAC. Thank you for collaborating with us to advance atmospheric transport modeling!
+Contributions are licensed under the [GNU General Public License v3.0](COPYING).
