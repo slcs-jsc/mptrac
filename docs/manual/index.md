@@ -1,77 +1,57 @@
 # Welcome to MPTRAC!
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
-particle dispersion model for the analysis of atmospheric transport
-processes in the free troposphere and stratosphere. The model is
-designed for execution on parallel computing systems and supports
-large ensembles of trajectory simulations for research and operational
-applications.
+Massive-Parallel Trajectory Calculations (MPTRAC) is an open-source
+Lagrangian particle transport and dispersion model. Driven by
+meteorological reanalysis or forecast data, it tracks atmospheric
+air parcels and represents transport, mixing, and selected physical
+and chemical processes. MPTRAC is primarily designed for applications
+in the free troposphere and stratosphere, including volcanic plumes,
+wildfire emissions, and long-range transport.
 
 ![Lagrangian transport simulation of convective transport](img/convection_lowres.jpg)
 
-## Features
+## Key features
 
-MPTRAC provides various capabilities for Lagrangian atmospheric
-transport simulations, including:
-
-- **Trajectory calculations**: Air parcel trajectories are computed by
-  solving the kinematic equation of motion using horizontal wind and
-  vertical velocity fields from global reanalysis or forecast datasets.
-  Simulations target the free troposphere and stratosphere.
-
-- **Stochastic perturbations and mixing**: Mesoscale diffusion and
-  subgrid-scale wind variability are represented using a Langevin
-  formulation. An inter-parcel exchange scheme is available to model
-  mixing between neighboring particles.
-
-- **Physical and chemical process modules**: Optional parameterizations
-  are available for convection, sedimentation, exponential decay,
-  gas-phase and aqueous-phase chemistry, and wet and dry deposition.
-
-- **Meteorological data preprocessing**: Meteorological input data can
-  be preprocessed to derive variables such as boundary layer height,
-  convective available potential energy (CAPE), geopotential height,
-  potential vorticity, and tropopause diagnostics.
-
-- **Output and visualization options**: The model supports multiple
-  output formats, including particle trajectories, gridded fields,
-  ensemble statistics, vertical profiles, point samples, and station
-  data. Visualization is supported through interfaces to Gnuplot and
-  ParaView.
-
-- **Parallel execution**: MPI can run independent simulations or split
-  one simulation across spatial subdomains. OpenMP and OpenACC provide
-  CPU and GPU parallelism within each rank.
-
-- **Open-source development**: MPTRAC is distributed under the GNU
-  General Public License (GPL) and developed in an open repository,
-  allowing users to inspect, modify, and contribute to the codebase.
+- **Trajectory simulations:** Forward and backward transport driven by
+  meteorological wind and vertical velocity fields.
+- **Dispersion and processes:** Diffusion, mixing, convection,
+  sedimentation, chemistry, decay, and deposition.
+- **Meteorological tools:** Preprocessing and diagnostics for
+  reanalysis and forecast data.
+- **Analysis and output:** Particle, grid, ensemble, profile, and
+  sampling outputs for subsequent analysis and visualization.
+- **Parallel computing:** Hybrid MPI, OpenMP, and OpenACC execution
+  on CPUs and GPUs, including spatial domain decomposition.
+- **Open source and integration:** C implementation under the GNU GPL v3,
+  with a high-level API and Fortran wrapper.
 
 ![Geophysical modules and main software components of MPTRAC](img/mptrac_modules.png)
 
-## Getting Started
+## Getting started
 
-Installation instructions are provided in the [installation
-guide](installation.md), which describes how to set up MPTRAC on local
-systems and HPC environments. The [quick start guide](quickstart.md)
-introduces the basic workflow and input structure required to run
-simple trajectory simulations, helping new users become familiar with
-the model's core functionality and input structure.
+Use [Installation](installation.md) to set up MPTRAC and
+[Quickstart](quickstart.md) to run a first trajectory simulation.
+The [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de)
+provides a browser-based introduction without local installation.
 
-MPTRAC can also be run through a browser-based interface, the [MPTRAC
-Web Runner](https://mptrac.jsc.fz-juelich.de). This interface allows
-users to run simulations without local installation and is commonly
-used for teaching, demonstrations, and exploratory studies.
+## Explore the documentation
 
-Contributions, questions, and feedback from the research community are
-welcome. Further information on development and usage can be found
-throughout this manual. If you have questions, feedback, or require
-support, please feel free to reach out.
+- **Scientific background:** [Model physics](model-physics.md) and
+  [Diabatic transport](diabatic-transport.md).
+- **Using the model:** [Applications and workflows](applications.md),
+  [Control parameters](control-parameters.md), and
+  [Meteorological input data](meteorological-input-data.md).
+- **HPC and development:** [Parallelization](parallelization.md),
+  [Code development](code-development.md), and
+  [Testing and code quality](testing.md).
+
+## Citation and contributions
+
+Please consult [References](references.md) for scientific publications
+and the [contribution guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md)
+if you would like to report an issue or contribute.
 
 ## Contact
 
-Dr. Lars Hoffmann
-
+Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>  
 Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany
-
-e-mail: <l.hoffmann@fz-juelich.de>
