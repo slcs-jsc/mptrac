@@ -26,11 +26,15 @@ nav:
         - Diabatic transport: diabatic-transport.md
         - Tropopause data: tropopause-data.md
     - Developer manual:
-        - Code development: code-development.md
-        - Fortran wrapper: fortran-wrapper.md
-        - High-level interface: high-level-interface.md
+        - Code development & contributions: code-development.md
+        - Code structure: code-structure.md
+        - Building from source: building.md
+        - Testing & code quality: testing.md
         - Parallelization: parallelization.md
-        - Profiling: profiling.md
+        - Profiling & benchmarking: profiling.md
+        - High-level interface: high-level-interface.md
+        - Fortran wrapper: fortran-wrapper.md
+        - Release management: releases.md
     - Further information:
         - References: references.md
         - Links: links.md
