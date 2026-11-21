@@ -1165,49 +1165,71 @@
 
 <h1 id="welcome-to-mptrac">Welcome to MPTRAC!</h1>
 <p>Massive-Parallel Trajectory Calculations (MPTRAC) is an open-source
-Lagrangian particle transport and dispersion model. Driven by
-meteorological reanalysis or forecast data, it tracks atmospheric
-air parcels and represents transport, mixing, and selected physical
-and chemical processes. MPTRAC is primarily designed for applications
-in the free troposphere and stratosphere, including volcanic plumes,
-wildfire emissions, and long-range transport.</p>
+Lagrangian transport and dispersion model for atmospheric air parcels.
+Driven by meteorological reanalysis and forecast data, it follows
+individual parcels through the atmosphere and represents transport,
+dispersion, mixing, and selected physical and chemical processes.
+MPTRAC is primarily designed for the free troposphere and stratosphere.</p>
+<p>The model supports applications such as volcanic plume tracking,
+wildfire emission transport, and studies of long-range atmospheric
+transport. Its hybrid parallel implementation is designed for large
+particle ensembles on multicore computers and GPU-based HPC systems.</p>
 <p><img alt="Lagrangian transport simulation of convective transport" src="img/convection_lowres.jpg" /></p>
 <h2 id="key-features">Key features</h2>
 <ul>
-<li><strong>Trajectory simulations:</strong> Forward and backward transport driven by
-  meteorological wind and vertical velocity fields.</li>
-<li><strong>Dispersion and processes:</strong> Diffusion, mixing, convection,
-  sedimentation, chemistry, decay, and deposition.</li>
-<li><strong>Meteorological tools:</strong> Preprocessing and diagnostics for
-  reanalysis and forecast data.</li>
-<li><strong>Analysis and output:</strong> Particle, grid, ensemble, profile, and
-  sampling outputs for subsequent analysis and visualization.</li>
-<li><strong>Parallel computing:</strong> Hybrid MPI, OpenMP, and OpenACC execution
-  on CPUs and GPUs, including spatial domain decomposition.</li>
-<li><strong>Open source and integration:</strong> C implementation under the GNU GPL v3,
-  with a high-level API and Fortran wrapper.</li>
+<li><strong>Lagrangian trajectories:</strong> Calculates air parcel transport using
+  horizontal winds and vertical velocities from meteorological
+  reanalyses and forecasts.</li>
+<li><strong>Dispersion and mixing:</strong> Represents unresolved wind fluctuations
+  and diffusion, including Langevin-based parameterizations and
+  optional inter-parcel mixing.</li>
+<li><strong>Physical and chemical processes:</strong> Offers modules for convection,
+  sedimentation, decay, gas-phase and aqueous-phase chemistry, and
+  wet and dry deposition.</li>
+<li><strong>Meteorological preprocessing:</strong> Derives supporting quantities,
+  including boundary-layer diagnostics, geopotential heights,
+  convective indices, and tropopause information.</li>
+<li><strong>Output and analysis:</strong> Produces particle trajectories, gridded
+  fields, ensemble statistics, profiles, and sampling outputs for
+  subsequent analysis and visualization.</li>
+<li><strong>Parallel computing:</strong> Combines MPI, OpenMP, and OpenACC for
+  CPU and GPU execution, including MPI spatial domain decomposition.</li>
+<li><strong>Integration and open source:</strong> Provides a C high-level interface
+  and a Fortran wrapper and is distributed under the GNU GPL v3.</li>
 </ul>
 <p><img alt="Geophysical modules and main software components of MPTRAC" src="img/mptrac_modules.png" /></p>
+<p>MPTRAC supports a broad range of transport studies, but individual
+parameterizations have distinct assumptions and validation status.
+In particular, planetary boundary-layer processes remain an active
+development area. The <a href="model-physics/">Model physics</a> chapter
+describes the available formulations.</p>
 <h2 id="getting-started">Getting started</h2>
-<p>Use <a href="installation/">Installation</a> to set up MPTRAC and
-<a href="quickstart/">Quickstart</a> to run a first trajectory simulation.
-The <a href="https://mptrac.jsc.fz-juelich.de">MPTRAC Web Runner</a>
-provides a browser-based introduction without local installation.</p>
+<p>The <a href="installation/">Installation</a> guide covers local and HPC
+setups. Follow the <a href="quickstart/">Quickstart</a> to prepare a basic
+trajectory simulation. For demonstrations or exploratory studies
+without local installation, try the
+<a href="https://mptrac.jsc.fz-juelich.de">MPTRAC Web Runner</a>.</p>
 <h2 id="explore-the-documentation">Explore the documentation</h2>
-<ul>
-<li><strong>Scientific background:</strong> <a href="model-physics/">Model physics</a> and
-  <a href="diabatic-transport/">Diabatic transport</a>.</li>
-<li><strong>Using the model:</strong> <a href="applications/">Applications and workflows</a>,
-  <a href="control-parameters/">Control parameters</a>, and
-  <a href="meteorological-input-data/">Meteorological input data</a>.</li>
-<li><strong>HPC and development:</strong> <a href="parallelization/">Parallelization</a>,
-  <a href="code-development/">Code development</a>, and
-  <a href="testing/">Testing and code quality</a>.</li>
-</ul>
+<p><strong>Understand the model.</strong> Start with <a href="model-physics/">Model physics</a>
+for the transport and process parameterizations, or
+<a href="diabatic-transport/">Diabatic transport</a> for the corresponding
+vertical-coordinate approach. <a href="applications/">Applications</a>
+provides examples of scientific workflows.</p>
+<p><strong>Prepare and analyze simulations.</strong> The user manual explains
+<a href="control-parameters/">Control parameters</a>,
+<a href="meteorological-input-data/">Meteorological input data</a>, and
+<a href="model-output-data/">Model output data</a>.</p>
+<p><strong>Develop or extend MPTRAC.</strong> The
+<a href="code-development/">Developer manual</a> provides entry points to
+<a href="code-structure/">Code structure</a>,
+<a href="building/">Building from source</a>,
+<a href="testing/">Testing and code quality</a>, and
+<a href="parallelization/">Parallelization</a>.</p>
 <h2 id="citation-and-contributions">Citation and contributions</h2>
-<p>Please consult <a href="references/">References</a> for scientific publications
-and the <a href="https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md">contribution guidelines</a>
-if you would like to report an issue or contribute.</p>
+<p>If you use MPTRAC in research, please consult the
+<a href="references/">References</a> for relevant publications.
+Source code, releases, and contribution guidelines are available in
+the <a href="https://github.com/slcs-jsc/mptrac">GitHub repository</a>.</p>
 <h2 id="contact">Contact</h2>
 <p>Dr. Lars Hoffmann, <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#108;&#46;&#104;&#111;&#102;&#102;&#109;&#97;&#110;&#110;&#64;&#102;&#122;&#45;&#106;&#117;&#101;&#108;&#105;&#99;&#104;&#46;&#100;&#101;">&#108;&#46;&#104;&#111;&#102;&#102;&#109;&#97;&#110;&#110;&#64;&#102;&#122;&#45;&#106;&#117;&#101;&#108;&#105;&#99;&#104;&#46;&#100;&#101;</a><br />
 Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany</p>
