@@ -1177,25 +1177,52 @@ particle ensembles on multicore computers and GPU-based HPC systems.</p>
 <p><img alt="Lagrangian transport simulation of convective transport" src="img/convection_lowres.jpg" /></p>
 <h2 id="key-features">Key features</h2>
 <ul>
-<li><strong>Lagrangian trajectories:</strong> Calculates air parcel transport using
-  horizontal winds and vertical velocities from meteorological
-  reanalyses and forecasts.</li>
-<li><strong>Dispersion and mixing:</strong> Represents unresolved wind fluctuations
-  and diffusion, including Langevin-based parameterizations and
-  optional inter-parcel mixing.</li>
-<li><strong>Physical and chemical processes:</strong> Offers modules for convection,
-  sedimentation, decay, gas-phase and aqueous-phase chemistry, and
-  wet and dry deposition.</li>
-<li><strong>Meteorological preprocessing:</strong> Derives supporting quantities,
-  including boundary-layer diagnostics, geopotential heights,
-  convective indices, and tropopause information.</li>
-<li><strong>Output and analysis:</strong> Produces particle trajectories, gridded
-  fields, ensemble statistics, profiles, and sampling outputs for
-  subsequent analysis and visualization.</li>
-<li><strong>Parallel computing:</strong> Combines MPI, OpenMP, and OpenACC for
-  CPU and GPU execution, including MPI spatial domain decomposition.</li>
-<li><strong>Integration and open source:</strong> Provides a C high-level interface
-  and a Fortran wrapper and is distributed under the GNU GPL v3.</li>
+<li>
+<p><strong>Lagrangian trajectories:</strong> MPTRAC follows individual air parcels
+  through meteorological wind and vertical velocity fields from
+  reanalysis or forecast datasets. This particle-based approach is
+  suited to investigating transport pathways, source–receptor
+  relationships, and the evolution of atmospheric plumes.</p>
+</li>
+<li>
+<p><strong>Dispersion and mixing:</strong> Stochastic parameterizations represent
+  unresolved wind fluctuations and turbulent dispersion, including
+  Langevin-based approaches. Optional inter-parcel exchange allows
+  simulations to account for mixing between nearby air parcels.</p>
+</li>
+<li>
+<p><strong>Physical and chemical processes:</strong> Modular parameterizations
+  describe convection, sedimentation, radioactive or exponential
+  decay, gas-phase and aqueous-phase chemistry, and wet and dry
+  deposition. Processes can be selected according to the scientific
+  application and the available input data.</p>
+</li>
+<li>
+<p><strong>Meteorological preprocessing:</strong> MPTRAC derives additional fields
+  from meteorological inputs, such as boundary-layer diagnostics,
+  geopotential heights, convective indices, and tropopause
+  information. These quantities support trajectory calculations and
+  the optional physical process modules.</p>
+</li>
+<li>
+<p><strong>Output and analysis:</strong> Simulations can produce particle
+  trajectories, gridded distributions, ensemble statistics, vertical
+  profiles, and sampling outputs. The results support subsequent
+  visualization, comparison with observations, and quantitative
+  transport analyses.</p>
+</li>
+<li>
+<p><strong>Parallel computing:</strong> MPTRAC combines MPI, OpenMP, and OpenACC
+  for execution on multicore CPUs and accelerators. MPI can distribute
+  independent simulations or decompose a single particle simulation
+  into spatial domains, enabling large-scale HPC applications.</p>
+</li>
+<li>
+<p><strong>Integration and open source:</strong> The model provides a C high-level
+  interface and a Fortran wrapper for coupling transport calculations
+  to other software. Its source code is available under the GNU GPL
+  v3, together with documentation and developer tools.</p>
+</li>
 </ul>
 <p><img alt="Geophysical modules and main software components of MPTRAC" src="img/mptrac_modules.png" /></p>
 <p>MPTRAC supports a broad range of transport studies, but individual
