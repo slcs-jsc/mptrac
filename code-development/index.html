@@ -14,7 +14,7 @@
         <link rel="prev" href="../tropopause-data/">
       
       
-        <link rel="next" href="../fortran-wrapper/">
+        <link rel="next" href="../code-structure/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Code development - MPTRAC</title>
+        <title>Code development & contributions - MPTRAC</title>
       
     
     
@@ -101,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Code development
+              Code development & contributions
             
           </span>
         </div>
@@ -618,7 +618,7 @@
   <span class="md-ellipsis">
     
   
-    Code development
+    Code development & contributions
   
 
     
@@ -636,7 +636,7 @@
   <span class="md-ellipsis">
     
   
-    Code development
+    Code development & contributions
   
 
     
@@ -662,61 +662,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#compilation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compilation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#static-code-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Static code analysis
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coverage-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coverage testing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#automated-testing-and-code-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Automated testing and code analysis
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#code-formatting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -739,60 +684,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#releases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Releases
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Releases">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#release-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release checklist
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cleaning-the-git-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cleaning the git repository
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#further-reading" class="md-nav__link">
     <span class="md-ellipsis">
       
         Further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-developer-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related developer pages
       
     </span>
   </a>
@@ -815,14 +721,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../fortran-wrapper/" class="md-nav__link">
+      <a href="../code-structure/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Fortran wrapper
+    Code structure
   
 
     
@@ -843,14 +749,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-level-interface/" class="md-nav__link">
+      <a href="../building/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    High-level interface
+    Building from source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing & code quality
   
 
     
@@ -906,7 +840,91 @@
   <span class="md-ellipsis">
     
   
-    Profiling
+    Profiling & benchmarking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-level-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    High-level interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fortran-wrapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fortran wrapper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release management
   
 
     
@@ -1064,61 +1082,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#compilation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compilation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#static-code-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Static code analysis
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coverage-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coverage testing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#automated-testing-and-code-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Automated testing and code analysis
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#code-formatting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1141,60 +1104,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#releases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Releases
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Releases">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#release-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release checklist
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cleaning-the-git-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cleaning the git repository
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#further-reading" class="md-nav__link">
     <span class="md-ellipsis">
       
         Further reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-developer-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related developer pages
       
     </span>
   </a>
@@ -1222,63 +1146,8 @@
 
 
 <h1 id="code-development">Code development</h1>
-<p>Please follow these guidelines when developing new code for MPTRAC.</p>
-<h2 id="compilation">Compilation</h2>
-<p>To remove old binaries, backup files, etc., and to clean up the source code directory:</p>
-<pre><code>    make clean
-</code></pre>
-<p>For faster compilation, you can use parallel compilation with <code>make</code>:</p>
-<pre><code>    make -j
-</code></pre>
-<p>To compile a specific binary (e.g., <code>trac</code>):</p>
-<pre><code>    make trac
-</code></pre>
-<p>You can change Makefile variables at the command line:</p>
-<pre><code>    make DEFINES=&quot;-DNP=100000&quot; GPU=1 STATIC=0
-</code></pre>
-<h2 id="testing">Testing</h2>
-<p>Always run the full test suite to verify your code changes:</p>
-<pre><code>    make check
-</code></pre>
-<p>Do not run tests in parallel (i.e., avoid using the <code>-j</code> option with
-<code>make check</code>), as this may cause test failures to be missed.</p>
-<p>You can run only selected tests, e.g.:</p>
-<pre><code>    make trac_test
-</code></pre>
-<p>If a test fails, please carefully compare the test results with the
-reference data. The Linux tool <code>xxdiff</code> can be used to compare test
-data and reference data number by number. The graphing utility
-<code>gnuplot</code> can be used to visualize any differences. The reference data
-of a test should only be updated if the new test results are
-considered correct.</p>
-<h2 id="static-code-analysis">Static code analysis</h2>
-<p>You can use static code analysis to automatically detect potential
-problems in the code:</p>
-<pre><code>    make cppcheck
-    make lizard
-</code></pre>
-<h2 id="coverage-testing">Coverage testing</h2>
-<p>You can perform a coverage analysis to determine which parts of the
-code are covered by tests:</p>
-<pre><code>    make COV=1
-    make coverage
-</code></pre>
-<p>If you find that parts of the code are not covered by the coverage
-analysis, please consider adding a new test.</p>
-<h2 id="automated-testing-and-code-analysis">Automated testing and code analysis</h2>
-<p>After committing revised code to the GitHub repository, please check
-the <a href="https://github.com/slcs-jsc/mptrac/actions">GitHub Actions page</a>
-to see if the automated tests were successfully passed.</p>
-<p>Please also check the
-<a href="https://app.codacy.com/gh/slcs-jsc/mptrac?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=slcs-jsc/mptrac&amp;utm_campaign=Badge_Grade_Settings">Codacy</a>
-and <a href="https://codecov.io/gh/slcs-jsc/mptrac">Codecov</a> websites for test
-results.</p>
-<p>Please check the
-<a href="https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds">nightly build website</a>
-to see if the tests passed on the Juelich supercomputers, especially for
-the GPU code.</p>
-<p>Users at the Jülich Supercomputing Centre can also check the test
-results at the <a href="https://esm-buildbot.fz-juelich.de">ESM Buildbot</a>.</p>
+<p>Please follow these guidelines when developing new code for MPTRAC.
+For issue reports and pull requests, see the <a href="https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md">contribution guidelines</a>.</p>
 <h2 id="code-formatting">Code formatting</h2>
 <p>On Linux, use the <code>indent</code> tool to apply a selected formatting style
 to the source code:</p>
@@ -1295,72 +1164,6 @@ formatting.</p>
 <p>To update the <a href="https://slcs-jsc.github.io/mptrac/doxygen">Doxygen manual</a>, use:</p>
 <pre><code>    make doxygen
 </code></pre>
-<h2 id="installation">Installation</h2>
-<p>To copy the executables from the source directory to the <code>DESTDIR</code>
-directory (default <code>../bin/</code>):</p>
-<pre><code>    make install
-</code></pre>
-<p>To remove the executables from the installation directory:</p>
-<pre><code>    make uninstall
-</code></pre>
-<p>To package the current repository state into a zip file, including the
-compiled binaries, run:</p>
-<pre><code>    make dist
-</code></pre>
-<h2 id="releases">Releases</h2>
-<p>MPTRAC and JURASSIC follow a coordinated, lightweight release process.
-Both projects aim for approximately two regular releases per year,
-preferably in January and July, when development activity is relatively low.
-Release dates are flexible; the projects may also publish additional
-releases after major development or validation milestones, such as a
-comprehensive code review. The two projects should normally be released
-around the same time, but a release of one project does not depend on the
-readiness of the other.</p>
-<p>Version numbers reflect the changes made, not the release date. Existing
-Git tags use the historical <code>vX.Y</code> convention. These two-component tags
-are retained for compatibility with previous releases; they are not full
-three-component Semantic Versioning (<code>MAJOR.MINOR.PATCH</code>) identifiers.
-For new versions, choose the appropriate change level based on compatibility
-and functionality, and document the versioning convention consistently.
-Do not rename historical tags.</p>
-<p>A release normally needs only a short maintenance window of approximately
-one or two days. Keep this focused on small fixes and cleanup rather than
-introducing substantial new features.</p>
-<h3 id="release-checklist">Release checklist</h3>
-<ol>
-<li>Review outstanding issues, resolve suitable small bugs, and record any
-   known limitations that remain open.</li>
-<li>Run the project's regression tests and check the GitHub Actions results.
-   Run additional scientific or HPC validation when the changes warrant it.</li>
-<li>Check documentation, citation metadata, and release-relevant version
-   references. Confirm that the intended commit is ready for publication.</li>
-<li>Select a version and create an annotated Git tag on the reviewed commit,
-   for example <code>git tag -a vX.Y -m "Release vX.Y"</code>. Push the specific tag
-   with <code>git push origin vX.Y</code>.</li>
-<li>Summarize changes since the previous tag with
-   <code>git log &lt;previous-tag&gt;..vX.Y --oneline</code>. Publish a GitHub Release
-   from that tag with concise release notes and known limitations.</li>
-<li>Check that Zenodo has archived the new release and provides a
-   version-specific DOI. Use the project's concept DOI for references to
-   the software across versions.</li>
-<li>Register the new release in the JuSER publication database if applicable.</li>
-</ol>
-<p>Release publication is a manual decision. A scheduled release window does
-not require publishing code that is not ready.</p>
-<h2 id="cleaning-the-git-repository">Cleaning the git repository</h2>
-<p>Always test the following procedures on a fresh copy of the
-repository!</p>
-<p>You can completely remove files from the Git repository using
-<code>git-filter-repo</code>: https://github.com/newren/git-filter-repo</p>
-<p>Analyze the current git repository:</p>
-<pre><code>    git filter-repo --analyze
-    cd .git/filter-repo/analysis/
-    ls
-</code></pre>
-<p>Remove all files except for those that currently exist:</p>
-<pre><code>    git ls-files &gt;../paths-i-want.txt
-    git filter-repo --paths-from-file ../paths-i-want.txt
-</code></pre>
 <h2 id="further-reading">Further reading</h2>
 <ul>
 <li>
@@ -1369,6 +1172,16 @@ repository!</p>
 <li>
 <p><a href="https://training.github.com/downloads/github-git-cheat-sheet.pdf">GitHub Git Cheat Sheet</a></p>
 </li>
+</ul>
+<h2 id="related-developer-pages">Related developer pages</h2>
+<ul>
+<li><a href="../code-structure/">Code structure</a>: architecture and major data structures.</li>
+<li><a href="../building/">Building from source</a>: compilation and installation.</li>
+<li><a href="../testing/">Testing and code quality</a>: regression tests, static analysis, coverage, and automated checks.</li>
+<li><a href="../parallelization/">Parallelization</a>: MPI, OpenMP, and OpenACC.</li>
+<li><a href="../profiling/">Profiling and benchmarking</a>: timers and CPU/GPU profiling.</li>
+<li><a href="../releases/">Release management</a>: release policy and checklist shared with JURASSIC.</li>
+<li><a href="../high-level-interface/">High-level interface</a> and <a href="../fortran-wrapper/">Fortran wrapper</a>: integration APIs.</li>
 </ul>
 
 
