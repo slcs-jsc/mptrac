@@ -310,6 +310,9 @@ Before getting started, please take a moment to read the
 They include helpful information on setting up your development environment
 and best practices for submitting contributions.
 
+For architecture, builds, testing, and release procedures, see the
+[Developer manual](https://slcs-jsc.github.io/mptrac/code-development/).
+
 If you have any questions or need assistance during the process, don't
 hesitate to reach out. We are happy to help and collaborate!
 
