@@ -1,6 +1,7 @@
 # Code development
 
 Please follow these guidelines when developing new code for MPTRAC.
+For issue reports and pull requests, see the [contribution guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md).
 
 ## Code formatting
 
@@ -30,29 +31,6 @@ To update the [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
 
 ```
     make doxygen
-```
-
-## Cleaning the git repository
-
-Always test the following procedures on a fresh copy of the
-repository!
-
-You can completely remove files from the Git repository using
-`git-filter-repo`: https://github.com/newren/git-filter-repo
-
-Analyze the current git repository:
-
-```
-    git filter-repo --analyze
-    cd .git/filter-repo/analysis/
-    ls
-```
-
-Remove all files except for those that currently exist:
-
-```
-    git ls-files >../paths-i-want.txt
-    git filter-repo --paths-from-file ../paths-i-want.txt
 ```
 
 ## Further reading
