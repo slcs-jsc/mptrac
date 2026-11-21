@@ -758,6 +758,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1143,6 +1160,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1274,24 +1308,45 @@ compiled binaries, run:</p>
 <pre><code>    make dist
 </code></pre>
 <h2 id="releases">Releases</h2>
-<p>A new release of MPTRAC is usually created every six months.</p>
-<p>To create a new release, first define a version tag ("vX.Y") in the
-local repository:</p>
-<pre><code>    gitk
-</code></pre>
-<p>Next, push the local tags to the remote repository on GitHub:</p>
-<pre><code>    git push --tags
-</code></pre>
-<p>Get a list of short log messages from the previous to the current
-version of the code:</p>
-<pre><code>    git log v1.1..v1.2 --oneline
-</code></pre>
-<p>Using the log messages, <a href="https://github.com/slcs-jsc/mptrac/releases/new">draft a new release</a>
-on GitHub using the newly created tag.</p>
-<p>Check the <a href="https://doi.org/10.5281/zenodo.4400597">Zenodo website</a>
-to publish the new release and to get a DOI.</p>
-<p>Use the DOI to submit an entry to the
-<a href="https://juser.fz-juelich.de/">JuSER publication database</a>.</p>
+<p>MPTRAC and JURASSIC follow a coordinated, lightweight release process.
+Both projects aim for approximately two regular releases per year,
+preferably in January and July, when development activity is relatively low.
+Release dates are flexible; the projects may also publish additional
+releases after major development or validation milestones, such as a
+comprehensive code review. The two projects should normally be released
+around the same time, but a release of one project does not depend on the
+readiness of the other.</p>
+<p>Version numbers reflect the changes made, not the release date. Existing
+Git tags use the historical <code>vX.Y</code> convention. These two-component tags
+are retained for compatibility with previous releases; they are not full
+three-component Semantic Versioning (<code>MAJOR.MINOR.PATCH</code>) identifiers.
+For new versions, choose the appropriate change level based on compatibility
+and functionality, and document the versioning convention consistently.
+Do not rename historical tags.</p>
+<p>A release normally needs only a short maintenance window of approximately
+one or two days. Keep this focused on small fixes and cleanup rather than
+introducing substantial new features.</p>
+<h3 id="release-checklist">Release checklist</h3>
+<ol>
+<li>Review outstanding issues, resolve suitable small bugs, and record any
+   known limitations that remain open.</li>
+<li>Run the project's regression tests and check the GitHub Actions results.
+   Run additional scientific or HPC validation when the changes warrant it.</li>
+<li>Check documentation, citation metadata, and release-relevant version
+   references. Confirm that the intended commit is ready for publication.</li>
+<li>Select a version and create an annotated Git tag on the reviewed commit,
+   for example <code>git tag -a vX.Y -m "Release vX.Y"</code>. Push the specific tag
+   with <code>git push origin vX.Y</code>.</li>
+<li>Summarize changes since the previous tag with
+   <code>git log &lt;previous-tag&gt;..vX.Y --oneline</code>. Publish a GitHub Release
+   from that tag with concise release notes and known limitations.</li>
+<li>Check that Zenodo has archived the new release and provides a
+   version-specific DOI. Use the project's concept DOI for references to
+   the software across versions.</li>
+<li>Register the new release in the JuSER publication database if applicable.</li>
+</ol>
+<p>Release publication is a manual decision. A scheduled release window does
+not require publishing code that is not ready.</p>
 <h2 id="cleaning-the-git-repository">Cleaning the git repository</h2>
 <p>Always test the following procedures on a fresh copy of the
 repository!</p>
