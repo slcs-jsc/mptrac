@@ -1,5 +1,7 @@
 # Building from source
 
+These commands are run from the MPTRAC `src/` directory. For prerequisites and setup, see [Installation](installation.md). For MPI, OpenMP, and OpenACC execution modes, see [Parallelization](parallelization.md). For validation after a build, see [Testing and code quality](testing.md).
+
 ## Compilation
 
 To remove old binaries, backup files, etc., and to clean up the source code directory:
