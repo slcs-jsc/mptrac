@@ -1,14 +1,10 @@
 # Release management
 
-
-MPTRAC and JURASSIC follow a coordinated, lightweight release process.
-Both projects aim for approximately two regular releases per year,
-preferably in January and July, when development activity is relatively low.
-Release dates are flexible; the projects may also publish additional
-releases after major development or validation milestones, such as a
-comprehensive code review. The two projects should normally be released
-around the same time, but a release of one project does not depend on the
-readiness of the other.
+MPTRAC follows a lightweight release process, aiming for approximately two
+regular releases per year, preferably in January and July, when development
+activity is relatively low. Release dates are flexible; additional releases
+may follow major development or validation milestones, such as a comprehensive
+code review. Publication depends on the readiness of this project.
 
 Version numbers reflect the changes made, not the release date. Existing
 Git tags use the historical `vX.Y` convention. These two-component tags
