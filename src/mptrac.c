@@ -15983,7 +15983,7 @@ void write_prof(
   static double *mass, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
     dz, dlon, dlat, *lon, *lat, *z, *press, temp, vmr, h2o, o3;
 
-  static int nobs, *obscount, ip, okay;
+  static int nobs, *obscount, ip;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_PROF", "OUTPUT");
@@ -16134,18 +16134,6 @@ void write_prof(
     for (int iy = 0; iy < ctl->prof_ny; iy++) {
       int idx2 = ARRAY_2D(ix, iy, ctl->prof_ny);
       if (obscount[idx2] > 0) {
-
-	/* Check profile... */
-	okay = 0;
-	for (int iz = 0; iz < ctl->prof_nz; iz++) {
-	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
-	  if (mass[idx3] > 0) {
-	    okay = 1;
-	    break;
-	  }
-	}
-	if (!okay)
-	  continue;
 
 	/* Write output... */
 	fprintf(out, "\n");
