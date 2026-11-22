@@ -1,22 +1,25 @@
 
 /*! Set variable species concentration. */
-#define SET_VAR(ind_spec, qnt_Cspec, M) 			\
+#define SET_VAR(ind_spec, qnt_Cspec, M) 			do { \
   if (ctl->qnt_Cspec >= 0)					\
-    var[ind_spec] = atm->q[ctl->qnt_Cspec][ip] * M;
+    var[ind_spec] = atm->q[ctl->qnt_Cspec][ip] * M; \
+  } while (0)
 
 #define SET_RCONST(ind_react, rconst_value) 			\
   rconst[ind_react] = rconst_value;
 
 /*! Get variable species concentration. */
-#define GET_VAR(ind_spec, qnt_index)			\
+#define GET_VAR(ind_spec, qnt_index)			do { \
   if (qnt_index >= 0)					\
-    atm->q[qnt_index][ip] = var[ind_spec] / M;
+    atm->q[qnt_index][ip] = var[ind_spec] / M; \
+  } while (0)
 
 /*! Initialize concentration quantity. */
-#define INIT_CQNT(qnt_index, clim_zm_t)					\
+#define INIT_CQNT(qnt_index, clim_zm_t)					do { \
   if (qnt_index >= 0)							\
     atm->q[qnt_index][ip] =						\
-      clim_zm(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
+      clim_zm(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]); \
+  } while (0)
 
 /*! Initialize KPP chemistry. */
 #ifdef _OPENACC

@@ -1049,11 +1049,11 @@
  *
  * @author Nils Nobre Wittwer
  */
-#define ECC(cmd) {							\
+#define ECC(cmd) do {							\
     int ecc_result=(cmd);						\
     if(ecc_result!=0)							\
       ERRMSG("ECCODES error: %s", codes_get_error_message(ecc_result));	\
-  }
+  } while (0)
 
 /**
  * @brief Writes 2-D data from a grib message into the meteo struct.
@@ -1068,7 +1068,7 @@
  *
  * @author Nils Nobre Wittwer
  */
-#define ECC_READ_2D(variable, target, scaling_factor, found_flag) {	\
+#define ECC_READ_2D(variable, target, scaling_factor, found_flag) do {	\
     if(strcmp(short_name, variable) == 0) {				\
       if ((found_flag) == 0)						\
 	LOG(2, "Read 2-D variable: %s (GRIB)", variable);		\
@@ -1077,7 +1077,7 @@
 	  target[ix][iy] = (float)(values[iy * met->nx + ix] * scaling_factor); \
       found_flag = 1;							\
     }									\
-  }
+  } while (0)
 
 /**
  * @brief Writes 3D data from a grib message into the meteo struct.
@@ -1093,7 +1093,7 @@
  *
  * @author Nils Nobre Wittwer
  */
-#define ECC_READ_3D(variable, level, target, scaling_factor, found_flag) { \
+#define ECC_READ_3D(variable, level, target, scaling_factor, found_flag) do { \
     if(strcmp(short_name, variable) == 0) {				\
       if ((found_flag) == 0)						\
 	LOG(2, "Read 3-D variable: %s (GRIB)", variable);		\
@@ -1102,7 +1102,7 @@
 	  target[ix][iy][level] = (float) (values[iy * met->nx + ix] * scaling_factor); \
       found_flag += 1;							\
     }									\
-  }
+  } while (0)
 
 /**
  * @brief Calculate the floating-point remainder of dividing x by y.
@@ -1145,10 +1145,10 @@
  *
  * @author Lars Hoffmann
  */
-#define FREAD(ptr, type, size, in) {					\
+#define FREAD(ptr, type, size, in) do {					\
     if(fread(ptr, sizeof(type), size, in)!=size)			\
       ERRMSG("Error while reading!");					\
-  }
+  } while (0)
 
 /**
  * @brief Write data from memory to a file stream.
@@ -1165,10 +1165,10 @@
  *
  * @author Lars Hoffmann
  */
-#define FWRITE(ptr, type, size, out) {					\
+#define FWRITE(ptr, type, size, out) do {					\
     if(fwrite(ptr, sizeof(type), size, out)!=size)			\
       ERRMSG("Error while writing!");					\
-  }
+  } while (0)
 
 /**
  * @brief Initialize arrays for interpolation.
@@ -1194,10 +1194,11 @@
  *
  * @author Lars Hoffmann
  */
-#define INTPOL_2D(var, init)						\
+#define INTPOL_2D(var, init)						do { \
   intpol_met_time_2d(met0, met0->var, met1, met1->var,			\
 		     atm->time[ip], atm->lon[ip], atm->lat[ip],		\
-		     &var, ci, cw, init);
+		     &var, ci, cw, init); \
+  } while (0)
 
 /**
  * @brief Perform 3D interpolation for a meteorological variable.
@@ -1211,11 +1212,12 @@
  *
  * @author Lars Hoffmann
  */
-#define INTPOL_3D(var, init)						\
+#define INTPOL_3D(var, init)						do { \
   intpol_met_time_3d(met0, met0->var, met1, met1->var,			\
 		     atm->time[ip], atm->p[ip],				\
 		     atm->lon[ip], atm->lat[ip],			\
-		     &var, ci, cw, init);
+		     &var, ci, cw, init); \
+  } while (0)
 
 /**
  * @brief Interpolate multiple meteorological variables in space.
@@ -1230,7 +1232,7 @@
  *
  * @author Lars Hofmann
  */
-#define INTPOL_SPACE_ALL(p, lon, lat) {					\
+#define INTPOL_SPACE_ALL(p, lon, lat) do {					\
     intpol_met_space_3d(met, met->z, p, lon, lat, &z, ci, cw, 1);	\
     intpol_met_space_3d(met, met->t, p, lon, lat, &t, ci, cw, 0);	\
     intpol_met_space_3d(met, met->u, p, lon, lat, &u, ci, cw, 0);	\
@@ -1268,7 +1270,7 @@
     intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
     intpol_met_space_2d(met, met->cin, lon, lat, &cin, ci, cw, 0);	\
     intpol_met_space_2d(met, met->o3c, lon, lat, &o3c, ci, cw, 0);	\
-  }
+  } while (0)
 
 /**
  * @brief Interpolate multiple meteorological variables in time.
@@ -1284,7 +1286,7 @@
  *
  * @author Lars Hoffmann
  */
-#define INTPOL_TIME_ALL(time, p, lon, lat) {				\
+#define INTPOL_TIME_ALL(time, p, lon, lat) do {				\
     intpol_met_time_3d(met0, met0->z, met1, met1->z, time, p, lon, lat, &z, ci, cw, 1); \
     intpol_met_time_3d(met0, met0->t, met1, met1->t, time, p, lon, lat, &t, ci, cw, 0); \
     intpol_met_time_3d(met0, met0->u, met1, met1->u, time, p, lon, lat, &u, ci, cw, 0); \
@@ -1322,7 +1324,7 @@
     intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->o3c, met1, met1->o3c, time, lon, lat, &o3c, ci, cw, 0); \
-  }
+  } while (0)
 
 /**
  * @brief Calculate lapse rate.
@@ -1398,7 +1400,7 @@
  *
  * @author Lars Hoffmann
  */
-#define MET_HEADER							\
+#define MET_HEADER							do { \
   fprintf(out,								\
 	  "# $1 = time [s]\n"						\
 	  "# $2 = altitude [km]\n"					\
@@ -1459,7 +1461,8 @@
 	  "# $52 = total column ozone [DU]\n"				\
 	  "# $53 = number of data points\n"				\
 	  "# $54 = number of tropopause data points\n"			\
-	  "# $55 = number of CAPE data points\n");
+	  "# $55 = number of CAPE data points\n"); \
+  } while (0)
 
 /**
  * @brief Macro to determine the minimum of two values.
@@ -1513,11 +1516,11 @@
  *
  * @author Lars Hoffmann
  */
-#define NC(cmd) {				     \
+#define NC(cmd) do {				     \
     int nc_result=(cmd);			     \
     if(nc_result!=NC_NOERR)			     \
       ERRMSG("%s", nc_strerror(nc_result));	     \
-  }
+  } while (0)
 
 /**
  * @brief Define a NetCDF variable with attributes.
@@ -1542,7 +1545,7 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units, level, quant) { \
+#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units, level, quant) do { \
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
     NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
     NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
@@ -1552,7 +1555,7 @@
       /* unsigned int ulevel = (unsigned int)level; */			\
       /* NC(nc_def_var_filter(ncid, varid, 32015, 1, (unsigned int[]){ulevel})); */ \
     }									\
-  }
+  } while (0)
 
 #ifdef NC_QUANTIZE_GRANULARBR
 #define NC_DEF_VAR_QUANTIZE(quant) do { \
@@ -1583,7 +1586,7 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_GET_DOUBLE(varname, ptr, force) {			\
+#define NC_GET_DOUBLE(varname, ptr, force) do {			\
     if(force) {							\
       NC(nc_inq_varid(ncid, varname, &varid));			\
       NC(nc_get_var_double(ncid, varid, ptr));			\
@@ -1593,7 +1596,7 @@
       } else							\
 	WARN("netCDF variable %s is missing!", varname);	\
     }								\
-  }
+  } while (0)
 
 /**
  * @brief Inquire the length of a dimension in a NetCDF file.
@@ -1613,7 +1616,7 @@
  * @author Lars Hoffmann
  * @author Jan Clemens
  */
-#define NC_INQ_DIM(dimname, ptr, min, max, check) {       \
+#define NC_INQ_DIM(dimname, ptr, min, max, check) do {       \
     int dimid; size_t naux;				  \
     NC(nc_inq_dimid(ncid, dimname, &dimid));		  \
     NC(nc_inq_dimlen(ncid, dimid, &naux));		  \
@@ -1621,7 +1624,7 @@
     if (check)		                                  \
       if ((*ptr) < (min) || (*ptr) > (max))		  \
         ERRMSG("Dimension %s is out of range!", dimname); \
-  }
+  } while (0)
 
 /**
  * @brief Write double precision data to a NetCDF variable.
@@ -1637,14 +1640,14 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_PUT_DOUBLE(varname, ptr, hyperslab) {		\
+#define NC_PUT_DOUBLE(varname, ptr, hyperslab) do {		\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
       NC(nc_put_vara_double(ncid, varid, start, count, ptr));	\
     } else {							\
       NC(nc_put_var_double(ncid, varid, ptr));			\
     }								\
-  }
+  } while (0)
 
 /**
  * @brief Write a float array to a NetCDF file.
@@ -1661,14 +1664,14 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\
+#define NC_PUT_FLOAT(varname, ptr, hyperslab) do {			\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
       NC(nc_put_vara_float(ncid, varid, start, count, ptr));	\
     } else {							\
       NC(nc_put_var_float(ncid, varid, ptr));			\
     }								\
-  }
+  } while (0)
 
 /**
  * @brief Write integer data to a NetCDF variable.
@@ -1684,14 +1687,14 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_PUT_INT(varname, ptr, hyperslab) {			\
+#define NC_PUT_INT(varname, ptr, hyperslab) do {			\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
       NC(nc_put_vara_int(ncid, varid, start, count, ptr));	\
     } else {							\
       NC(nc_put_var_int(ncid, varid, ptr));			\
     }								\
-  }
+  } while (0)
 
 /**
  * @brief Add a text attribute to a NetCDF variable.
@@ -1706,10 +1709,10 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_PUT_ATT(varname, attname, text) {				\
+#define NC_PUT_ATT(varname, attname, text) do {				\
     NC(nc_inq_varid(ncid, varname, &varid));				\
     NC(nc_put_att_text(ncid, varid, attname, strnlen(text, LEN), text)); \
-  }
+  } while (0)
 
 /**
  * @brief Add a global text attribute to a NetCDF file.
@@ -1723,8 +1726,9 @@
  *
  * @author Lars Hoffmann
  */
-#define NC_PUT_ATT_GLOBAL(attname, text)				\
-  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strnlen(text, LEN), text));
+#define NC_PUT_ATT_GLOBAL(attname, text)				do { \
+  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strnlen(text, LEN), text)); \
+  } while (0)
 
 /**
  * @brief Perform nearest-neighbor interpolation.
@@ -1996,9 +2000,10 @@
  *
  * @author Lars Hoffmann
  */
-#define SET_ATM(qnt, val)			\
+#define SET_ATM(qnt, val)			do { \
   if (ctl->qnt >= 0)				\
-    atm->q[ctl->qnt][ip] = val;
+    atm->q[ctl->qnt][ip] = val; \
+  } while (0)
 
 /**
  * @brief Set atmospheric quantity index.
@@ -2068,7 +2073,7 @@
  * @author Lars Hoffmann
  */
 #define SWAP(x, y, type)			\
-  do {type tmp = x; x = y; y = tmp;} while(0);
+  do {type tmp = x; x = y; y = tmp;} while(0)
 
 /**
  * @brief Calculate dew point temperature.
@@ -2352,14 +2357,14 @@
  * 
  * @author Lars Hoffmann
  */
-#define LOG(level, ...) {						\
+#define LOG(level, ...) do {						\
     if(level >= 2)							\
       printf("  ");							\
     if(level <= LOGLEV) {						\
       printf(__VA_ARGS__);						\
       printf("\n");							\
     }									\
-  }
+  } while (0)
 
 /*!
  * \brief Print a warning message with contextual information.
@@ -2389,10 +2394,10 @@
  * 
  * @author Lars Hoffmann
  */
-#define WARN(...) {							\
+#define WARN(...) do {							\
     printf("\nWarning (%s, %s, l%d): ", __FILE__, __func__, __LINE__);	\
     LOG(0, __VA_ARGS__);						\
-  }
+  } while (0)
 
 /*!
  * \brief Print an error message with contextual information and terminate the program.
@@ -2422,11 +2427,11 @@
  * 
  * @author Lars Hoffmann
  */
-#define ERRMSG(...) {							\
+#define ERRMSG(...) do {							\
     printf("\nError (%s, %s, l%d): ", __FILE__, __func__, __LINE__);	\
     LOG(0, __VA_ARGS__);						\
     exit(EXIT_FAILURE);							\
-  }
+  } while (0)
 
 /*!
  * \brief Print the value of a variable with contextual information.
@@ -2457,9 +2462,10 @@
  * 
  * @author Lars Hoffmann
  */
-#define PRINT(format, var)						\
+#define PRINT(format, var)						do { \
   printf("Print (%s, %s, l%d): %s= "format"\n",				\
-	 __FILE__, __func__, __LINE__, #var, var);
+	 __FILE__, __func__, __LINE__, #var, var); \
+  } while (0)
 
 /* ------------------------------------------------------------
    Timers...
@@ -2481,8 +2487,9 @@
  * 
  * @author Lars Hoffmann
  */
-#define PRINT_TIMERS				\
-  timer("END", "END", 1);
+#define PRINT_TIMERS				do { \
+  timer("END", "END", 1); \
+  } while (0)
 
 /*!
  * \brief Select and start a timer with specific attributes.
@@ -2496,8 +2503,9 @@
  * 
  * @author Lars Hoffmann
  */
-#define SELECT_TIMER(id, group)			\
-  timer(id, group, 0);
+#define SELECT_TIMER(id, group)			do { \
+  timer(id, group, 0); \
+  } while (0)
 
 /* ------------------------------------------------------------
    Structs...

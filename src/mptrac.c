@@ -6366,7 +6366,7 @@ void module_sedi(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SEDI", "PHYSICS")
+  SELECT_TIMER("MODULE_SEDI", "PHYSICS");
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
@@ -10596,7 +10596,7 @@ void read_met_nc_grid(
     NC(nc_inq_dim
        (ncid, dimids[ctl->met_convention == 0 ? 0 : 2], levname, &dimlen));
   } else
-    ERRMSG("Cannot determine vertical dimension!")
+    ERRMSG("Cannot determine vertical dimension!");
       met->np = (int) dimlen;
 
   LOG(2, "Number of levels: %d", met->np);
