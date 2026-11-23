@@ -9125,15 +9125,20 @@ void mptrac_write_output(
 
   /* Write atmospheric data... */
   if (output_atm) {
-    if (ctl->atm_type_out == 0)
-      sprintf(ext, "tab");
-    else if (ctl->atm_type_out == 1)
-      sprintf(ext, "bin");
-    else if (ctl->atm_type_out >= 2)
-      sprintf(ext, "nc");
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->atm_basename, year, mon, day, hour, min, sec, ext);
-    mptrac_write_atm(filename, ctl, atm, t);
+    if (ctl->atm_type_out == 3) {
+      /* CLaMS trajectory output creates its own files in the task directory. */
+      mptrac_write_atm(dirname, ctl, atm, t);
+    } else {
+      if (ctl->atm_type_out == 0)
+	sprintf(ext, "tab");
+      else if (ctl->atm_type_out == 1)
+	sprintf(ext, "bin");
+      else if (ctl->atm_type_out >= 2)
+	sprintf(ext, "nc");
+      sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
+	      dirname, ctl->atm_basename, year, mon, day, hour, min, sec, ext);
+      mptrac_write_atm(filename, ctl, atm, t);
+    }
   }
 
   /* Write gridded data... */
@@ -14114,6 +14119,8 @@ void write_atm_clams(
 
   if (ctl->met_coord_type != 0)
     ERRMSG("CLaMS atmospheric files support only lat/lon grids");
+  if (ctl->qnt_zeta_d < 0 || ctl->qnt_zeta_d >= ctl->nq)
+    ERRMSG("CLaMS position output requires quantity zeta_d!");
 
   int tid, pid, ncid, varid;
   size_t start[2], count[2];
@@ -14171,9 +14178,16 @@ void write_atm_clams_traj(
 
   if (ctl->met_coord_type != 0)
     ERRMSG("CLaMS atmospheric files support only lat/lon grids");
+  if (ctl->qnt_zeta_d < 0 || ctl->qnt_zeta_d >= ctl->nq)
+    ERRMSG("CLaMS trajectory output requires quantity zeta_d!");
+  if (ctl->advect_vert_coord == 1
+      && (ctl->qnt_zeta < 0 || ctl->qnt_zeta >= ctl->nq))
+    ERRMSG("CLaMS diabatic trajectory output requires quantity zeta!");
 
   /* Global Counter... */
   static size_t out_cnt = 0;
+  if (t == ctl->t_start)
+    out_cnt = 0;
 
   double r, r_start, r_stop;
   int year, mon, day, hour, min, sec;
@@ -14431,9 +14445,11 @@ void write_budget(
       continue;
     int e = 0;
     if (ensemble) {
-      e = (int) atm->q[ctl->qnt_ens][ip];
-      if (e < 0 || e >= ctl->nens)
+      const double ens_id = atm->q[ctl->qnt_ens][ip];
+      if (!isfinite(ens_id) || ens_id < 0 || ens_id >= ctl->nens
+	  || ens_id != floor(ens_id))
 	ERRMSG("Ensemble ID out of range!");
+      e = (int) ens_id;
     }
     np[e]++;
     np[NENS]++;
@@ -14502,6 +14518,10 @@ void write_csi(
 
   /* Init... */
   if (t == ctl->t_start) {
+
+    /* Start each directory-list task with its own observations and kernel. */
+    nobs = 0;
+    nk = 0;
 
     /* Allocate.. */
     ALLOC(area, double,
@@ -14613,9 +14633,14 @@ void write_csi(
       continue;
 
     /* Get ensemble ID... */
-    int ens_id = ensemble ? (int) atm->q[ctl->qnt_ens][ip] : 0;
-    if (ens_id < 0 || ens_id >= (ensemble ? ctl->nens : 1))
-      ERRMSG("Ensemble ID out of range!");
+    int ens_id = 0;
+    if (ensemble) {
+      const double value = atm->q[ctl->qnt_ens][ip];
+      if (!isfinite(value) || value < 0 || value >= ctl->nens
+	  || value != floor(value))
+	ERRMSG("Ensemble ID out of range!");
+      ens_id = (int) value;
+    }
 
     /* Check grid boundaries and get indices... */
     const double zpart = Z(atm->p[ip]);
@@ -14776,6 +14801,8 @@ void write_ens(
   /* Check quantities... */
   if (ctl->qnt_ens < 0)
     ERRMSG("Missing ensemble IDs!");
+  if (ctl->nens > NENS)
+    ERRMSG("Too many ensembles!");
 
   /* Set time interval... */
   const double t0 = t - 0.5 * ctl->dt_mod;
@@ -14797,11 +14824,14 @@ void write_ens(
       continue;
 
     /* Check ensemble ID... */
-    if (atm->q[ctl->qnt_ens][ip] < 0 || atm->q[ctl->qnt_ens][ip] >= NENS)
+    const double ens_value = atm->q[ctl->qnt_ens][ip];
+    const int ens_limit = ctl->nens > 0 ? ctl->nens : NENS;
+    if (!isfinite(ens_value) || ens_value < 0 || ens_value >= ens_limit
+	|| ens_value != floor(ens_value))
       ERRMSG("Ensemble ID is out of range!");
 
     /* Accumulate ensemble sums and squared sums... */
-    const int ens = (int) atm->q[ctl->qnt_ens][ip];
+    const int ens = (int) ens_value;
     geo2cart(0, atm->lon[ip], atm->lat[ip], x);
     for (int iq = 0; iq < ctl->nq; iq++) {
       qm[iq][ens] += atm->q[iq][ip];
@@ -15991,6 +16021,8 @@ void write_prof(
   /* Init... */
   if (t == ctl->t_start) {
 
+    nobs = 0;
+
     /* Check quantity index for mass... */
     if (ctl->qnt_m < 0)
       ERRMSG("Need quantity mass!");
@@ -16213,6 +16245,9 @@ void write_sample(
 
   /* Init... */
   if (t == ctl->t_start) {
+
+    nobs = 0;
+    nk = 0;
 
     /* Allocate... */
     ALLOC(rt, double,

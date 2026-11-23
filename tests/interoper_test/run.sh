@@ -16,8 +16,22 @@ rm -rf data && mkdir -p data
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 
 # Run the application...
-$trac/atm_conv - ./data.ref/atm_input.tab 0 ./data/atm_output.nc 4
+cat > ./data/conv.ctl <<EOF
+NQ = 5
+QNT_NAME[0] = theta
+QNT_NAME[1] = pv
+QNT_NAME[2] = m
+QNT_NAME[3] = zeta
+QNT_NAME[4] = zeta_d
+EOF
+$trac/atm_conv ./data/conv.ctl ./data.ref/atm_input.tab 0 ./data/atm_output.nc 4
 $trac/atm_conv - ./data/atm_output.nc 4 ./data/atm_output.tab 0
+if $trac/atm_conv - ./data.ref/atm_input.tab 0 ./data/invalid_clams.nc 4 \
+    > ./data/invalid_clams.log 2>&1; then
+  echo 'Accepted CLaMS position output without zeta_d' >&2
+  exit 1
+fi
+grep -q 'requires quantity zeta_d' ./data/invalid_clams.log
 
 # ------------------------------------------------------------
 # (2) Test diabatic transport calculations...
@@ -69,4 +83,165 @@ error=0
 diff -q -s ./data.ref/atm_output.tab ./data/atm_output.tab || error=1
 diff -q -s ./data.ref/atm_2016_07_01_00_00_00.tab ./data/atm_2016_07_01_00_00_00.tab || error=1
 diff -q -s ./data.ref/atm_2016_07_01_06_00_00.tab ./data/atm_2016_07_01_06_00_00.tab || error=1
+
+# ------------------------------------------------------------
+# (3) Check output isolation across independent directory-list tasks...
+# ------------------------------------------------------------
+
+set -euo pipefail
+
+trac=../../src
+base=data/output_safety
+mkdir -p "$base"
+export OMP_NUM_THREADS=1
+
+# Two short synthetic tasks share one executable but have distinct observations.
+"$trac/wind" - "$base/met" WIND_T0 0 WIND_NX 3 WIND_NY 3 WIND_NZ 3 > /dev/null
+"$trac/wind" - "$base/met" WIND_T0 3600 WIND_NX 3 WIND_NY 3 WIND_NZ 3 > /dev/null
+printf '0 1 0 0 2 0 300 300\n0 1 0 0 3 1 300 300\n' > "$base/atm.tab"
+printf '0 1 0 0 1\n' > "$base/obs_a.tab"
+printf '0 1 0 0 1\n0 1 0 0 2\n' > "$base/obs_b.tab"
+printf '0 1\n2 0\n' > "$base/kernel.tab"
+
+for name in a_alone b_alone a_seq b_seq a_rev b_rev; do
+  mkdir -p "$base/$name"
+  case "$name" in a_*) task=a;; *) task=b;; esac
+  if [[ $task == a ]]; then
+    kernel="$base/kernel.tab"
+  else
+    kernel=-
+  fi
+  cat > "$base/$name/trac.ctl" <<EOF
+NQ = 4
+QNT_NAME[0] = m
+QNT_NAME[1] = ens
+QNT_NAME[2] = zeta_d
+QNT_NAME[3] = zeta
+NENS = 2
+MOLMASS = 64
+METBASE = $base/met
+DT_MET = 3600
+DT_MOD = 180
+T_STOP = 180
+MET_PBL = 0
+MET_TROPO = 0
+CONV_CAPE = -1
+ADVECT = 1
+DIFFUSION = 0
+ATM_TYPE = 0
+ATM_TYPE_OUT = 3
+ATM_BASENAME = atm
+ATM_DT_OUT = 180
+GRID_BASENAME = grid
+GRID_DT_OUT = 180
+GRID_KERNEL = $kernel
+GRID_LON0 = -1
+GRID_LON1 = 1
+GRID_LAT0 = -1
+GRID_LAT1 = 1
+GRID_NX = 1
+GRID_NY = 1
+GRID_Z0 = 0
+GRID_Z1 = 2
+GRID_NZ = 1
+ENS_BASENAME = ens
+ENS_DT_OUT = 180
+BUDGET_BASENAME = budget
+BUDGET_DT_OUT = 180
+CSI_BASENAME = csi
+CSI_DT_OUT = 180
+CSI_OBSFILE = $base/obs_$task.tab
+CSI_KERNEL = $kernel
+CSI_LON0 = -1
+CSI_LON1 = 1
+CSI_LAT0 = -1
+CSI_LAT1 = 1
+CSI_NX = 1
+CSI_NY = 1
+CSI_Z0 = 0
+CSI_Z1 = 2
+CSI_NZ = 1
+PROF_BASENAME = prof
+PROF_OBSFILE = $base/obs_$task.tab
+PROF_LON0 = -1
+PROF_LON1 = 1
+PROF_LAT0 = -1
+PROF_LAT1 = 1
+PROF_NX = 1
+PROF_NY = 1
+PROF_Z0 = 0
+PROF_Z1 = 2
+PROF_NZ = 1
+SAMPLE_BASENAME = sample
+SAMPLE_OBSFILE = $base/obs_$task.tab
+SAMPLE_KERNEL = $kernel
+SAMPLE_DX = 50
+SAMPLE_DZ = 2
+EOF
+  cp "$base/atm.tab" "$base/$name/atm.tab"
+done
+
+run_list() {
+  local list=$1
+  shift
+  printf '%s\n' "$@" > "$base/$list"
+  "$trac/trac" "$base/$list" trac.ctl atm.tab > "$base/$list.log" 2>&1
+}
+run_list alone_a "$base/a_alone"
+run_list alone_b "$base/b_alone"
+run_list sequence "$base/a_seq" "$base/b_seq"
+run_list reverse "$base/b_rev" "$base/a_rev"
+
+for task in a b; do
+  for variant in seq rev; do
+    for file in ens_2000_01_01_00_00_00.tab budget.tab csi.tab prof.tab sample.tab \
+      grid_2000_01_01_00_00_00.tab grid_2000_01_01_00_03_00.tab \
+      traj_fix_3d_00010100_00010100.nc init_fix_00010100.nc; do
+      cmp "$base/${task}_alone/$file" "$base/${task}_$variant/$file"
+    done
+  done
+done
+
+# The two-particle task above already covers the first and last ensemble IDs.
+for value in 0.5 -1 2 nan inf; do
+  printf '0 1 0 0 2 %s 300 300\n' "$value" > "$base/b_alone/atm.tab"
+  printf '%s\n' "$base/b_alone" > "$base/invalid_id"
+  if "$trac/trac" "$base/invalid_id" trac.ctl atm.tab \
+      ATM_BASENAME - BUDGET_BASENAME - CSI_BASENAME - \
+      PROF_BASENAME - SAMPLE_BASENAME - > "$base/invalid_id.log" 2>&1; then
+    echo "Accepted invalid ensemble ID: $value" >&2
+    exit 1
+  fi
+  grep -q 'Ensemble ID' "$base/invalid_id.log"
+done
+
+# Budget and CSI must also reject fractional IDs before integer conversion.
+printf '0 1 0 0 2 0.5 300 300\n' > "$base/b_alone/atm.tab"
+for output in budget csi; do
+  budget=-
+  csi=-
+  if [[ $output == budget ]]; then budget=budget; else csi=csi; fi
+  if "$trac/trac" "$base/invalid_id" trac.ctl atm.tab \
+      ATM_BASENAME - GRID_BASENAME - ENS_BASENAME - \
+      BUDGET_BASENAME "$budget" CSI_BASENAME "$csi" \
+      PROF_BASENAME - SAMPLE_BASENAME - > "$base/invalid_$output.log" 2>&1; then
+    echo "Accepted fractional ensemble ID in $output" >&2
+    exit 1
+  fi
+  grep -q 'Ensemble ID' "$base/invalid_$output.log"
+done
+
+# A missing CLaMS coordinate must fail before dereferencing a quantity index.
+printf '0 1 0 0 2 0 300 300\n' > "$base/b_alone/atm.tab"
+sed -i 's/^QNT_NAME\[2\] = zeta_d$/QNT_NAME[2] = theta/' \
+  "$base/b_alone/trac.ctl"
+if "$trac/trac" "$base/invalid_id" trac.ctl atm.tab \
+    ENS_BASENAME - BUDGET_BASENAME - CSI_BASENAME - \
+    PROF_BASENAME - SAMPLE_BASENAME - > "$base/missing_zeta.log" 2>&1; then
+  echo 'Accepted missing CLaMS zeta_d' >&2
+  exit 1
+fi
+grep -q 'requires quantity zeta_d' "$base/missing_zeta.log"
+
+echo 'Output task isolation and validation passed.'
 exit $error
