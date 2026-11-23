@@ -64,4 +64,42 @@ error=0
 for f in $(ls data.ref/*.tab) ; do
     diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
+
+# Enabled periodic outputs require a finite, positive interval. Disabled
+# basenames may retain unused interval values.
+for pair in \
+  ATM_BASENAME:ATM_DT_OUT BUDGET_BASENAME:BUDGET_DT_OUT \
+  DEPO_BASENAME:DEPO_DT_OUT CSI_BASENAME:CSI_DT_OUT \
+  ENS_BASENAME:ENS_DT_OUT GRID_BASENAME:GRID_DT_OUT \
+  VTK_BASENAME:VTK_DT_OUT; do
+    basename=${pair%:*}
+    interval=${pair#*:}
+    for invalid in 0 inf; do
+      if $trac/atm_init data/trac.ctl data/interval.tab \
+          "$basename" probe "$interval" "$invalid" \
+          > data/interval.log 2>&1; then
+        echo "Accepted $interval=$invalid with $basename enabled" >&2
+        error=1
+      fi
+      grep -q "$interval must be finite and positive" data/interval.log || error=1
+    done
+done
+for invalid in -1 nan; do
+    if $trac/atm_init data/trac.ctl data/interval.tab \
+        ATM_BASENAME probe ATM_DT_OUT "$invalid" \
+        > data/interval.log 2>&1; then
+      echo "Accepted ATM_DT_OUT=$invalid" >&2
+      error=1
+    fi
+    grep -q 'ATM_DT_OUT must be finite and positive' data/interval.log || error=1
+done
+$trac/atm_init data/trac.ctl data/interval.tab \
+    ATM_BASENAME - ATM_DT_OUT 0 CSI_BASENAME - CSI_DT_OUT 0 \
+    MET_DT_OUT 0 > data/interval.log 2>&1 || error=1
+if $trac/atm_init data/trac.ctl data/interval.tab \
+    MET_DT_OUT nan > data/interval.log 2>&1; then
+    echo 'Accepted nonfinite MET_DT_OUT with meteo quantities' >&2
+    error=1
+fi
+grep -q 'MET_DT_OUT must be finite' data/interval.log || error=1
 exit $error

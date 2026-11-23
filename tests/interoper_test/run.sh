@@ -244,4 +244,92 @@ fi
 grep -q 'requires quantity zeta_d' "$base/missing_zeta.log"
 
 echo 'Output task isolation and validation passed.'
+
+# Check sample VMR against a uniform 1 ppb tracer in an interior layer and
+# a layer clipped by the synthetic meteorology's flat surface.
+sample_dir="$base/sample_vmr"
+mkdir -p "$sample_dir"
+cp "$base/a_seq/trac.ctl" "$sample_dir/trac.ctl"
+sample_mass() {
+  awk -v z="$1" 'BEGIN {
+    pi = atan2(0, -1)
+    lower = z - 0.5
+    if (lower < 0) lower = 0
+    p_lower = 1013.25 * exp(-lower / 7)
+    p_upper = 1013.25 * exp(-(z + 0.5) / 7)
+    air_column = 100 * (p_lower - p_upper) / 9.80665
+    printf "%.17g", 1e-9 * (64 / 28.9644) * air_column * pi * 50 * 50 * 1e6
+  }'
+}
+mass_interior=$(sample_mass 10)
+mass_surface=$(sample_mass 0.25)
+printf '0 10 0 0 %s 0 300 300\n0 0.25 10 0 %s 1 300 300\n' \
+  "$mass_interior" "$mass_surface" > "$sample_dir/atm.tab"
+printf '0 10 0 0 1\n0 0.25 10 0 1\n' > "$sample_dir/obs.tab"
+printf '%s\n' "$sample_dir" > "$base/sample_list"
+"$trac/trac" "$base/sample_list" trac.ctl atm.tab \
+  ATM_BASENAME - GRID_BASENAME - ENS_BASENAME - BUDGET_BASENAME - \
+  CSI_BASENAME - PROF_BASENAME - SAMPLE_OBSFILE "$sample_dir/obs.tab" \
+  SAMPLE_KERNEL - SAMPLE_DZ 0.5 > "$sample_dir/run.log" 2>&1
+awk -v m1="$mass_interior" -v m2="$mass_surface" '
+  NF == 10 && $1 !~ /^#/ {
+    n++
+    mass = (n == 1 ? m1 : m2)
+    cd = mass / (atan2(0, -1) * 50 * 50 * 1e6)
+    if ($7 != 1 || ($8 - cd) / cd > 1e-5 || (cd - $8) / cd > 1e-5 ||
+        ($9 - 1e-9) / 1e-9 > 1e-5 || (1e-9 - $9) / 1e-9 > 1e-5) exit 1
+  }
+  END { if (n != 2) exit 1 }
+' "$sample_dir/sample.tab"
+
+# A staggered, unreleased first particle must not define snapshot time.
+clock_dir="$base/clams_clock"
+mkdir -p "$clock_dir"
+cp "$base/a_seq/trac.ctl" "$clock_dir/trac.ctl"
+printf '360 1 0 0 2 0 300 300\n0 1 0 0 3 1 300 300\n' > "$clock_dir/atm.tab"
+printf '%s\n' "$clock_dir" > "$base/clock_list"
+"$trac/trac" "$base/clock_list" trac.ctl atm.tab \
+  GRID_BASENAME - ENS_BASENAME - BUDGET_BASENAME - CSI_BASENAME - \
+  PROF_BASENAME - SAMPLE_BASENAME - > "$clock_dir/run.log" 2>&1
+if command -v ncdump > /dev/null; then
+  ncdump -v time "$clock_dir/traj_fix_3d_00010100_00010100.nc" |
+    awk '/^ time =/ { gsub(/[,;]/, ""); if ($3 != 0 || $4 != 180) exit 1; found = 1 }
+         END { if (!found) exit 1 }'
+  ncdump -v time "$clock_dir/init_fix_00010100.nc" |
+    awk '/^ time =/ { gsub(/[,;]/, ""); if ($3 != 180) exit 1; found = 1 }
+         END { if (!found) exit 1 }'
+fi
+
+# The shortened final step must assign each observation once, in either
+# trajectory direction, and CSI must flush the last partial interval.
+check_windows() {
+  local name=$1 start=$2 stop=$3 first=$4 second=$5 direction=$6
+  local dir="$base/window_$name"
+  mkdir -p "$dir"
+  cp "$base/a_seq/trac.ctl" "$dir/trac.ctl"
+  printf '%s 1 0 0 5 0 300 300\n' "$start" > "$dir/atm.tab"
+  printf '%s 1 0 0 1\n%s 1 0 0 1\n' "$first" "$second" > "$dir/obs.tab"
+  printf '%s\n' "$dir" > "$base/window_list"
+  "$trac/trac" "$base/window_list" trac.ctl atm.tab \
+    T_STOP "$stop" DT_MOD 60 DIRECTION "$direction" NENS 0 \
+    ATM_BASENAME - GRID_BASENAME - ENS_BASENAME - BUDGET_BASENAME - \
+    CSI_BASENAME csi CSI_DT_OUT 60 CSI_OBSFILE "$dir/obs.tab" \
+    PROF_BASENAME prof PROF_OBSFILE "$dir/obs.tab" \
+    SAMPLE_OBSFILE "$dir/obs.tab" CSI_KERNEL - SAMPLE_KERNEL - \
+    > "$dir/run.log" 2>&1
+  awk -v a="$first" -v b="$second" '
+    NF == 10 && $1 !~ /^#/ { n++; if ($1 == a) na++; if ($1 == b) nb++ }
+    END { if (n != 2 || na != 1 || nb != 1) exit 1 }
+  ' "$dir/sample.tab"
+  awk -v stop="$stop" '
+    NF == 20 && $1 !~ /^#/ { n++; if ($1 == stop) final++ }
+    END { if (n != 2 || final != 1) exit 1 }
+  ' "$dir/csi.tab"
+  awk '$1 !~ /^#/ && NF == 11 { n += $11 } END { if (n != 2) exit 1 }' \
+    "$dir/prof.tab"
+}
+check_windows forward 0 100 75 85 1
+check_windows backward 120 20 35 45 -1
+
+echo 'Output units, snapshot time, and partial-step windows passed.'
 exit $error

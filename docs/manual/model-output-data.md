@@ -72,6 +72,9 @@ CLaMS position and trajectory output require the configured `zeta_d` quantity
 for the diagnosed ZETA coordinate, including the final initialization file.
 Diabatic trajectory output additionally requires `zeta`. MPTRAC reports an
 error if a required quantity is absent.
+The one-dimensional `time` coordinate in a CLaMS trajectory file and its
+final initialization file gives the common output snapshot time. Particle
+release times are not represented by that coordinate.
 
 ## Gridded data
 
@@ -182,6 +185,13 @@ correlation coefficients, the bias, the root mean square (RMS)
 difference, and the mean absolute error. A more detailed discussion of
 the skill scores is provided by Wilks (2011). The CSI output is
 configured using the `CSI_*` control parameters.
+CSI statistics are written at `CSI_DT_OUT` intervals and at `T_STOP` if a
+partial final interval contains data. CSI, profile, and sample observations
+are matched in half-open windows centered on model times. When the final
+model step is shorter than `DT_MOD`, its window and the preceding window
+meet at their time midpoint, so an observation belongs to only one step.
+Station matching uses the same time windows; its `stat` particle flag also
+prevents repeat station records.
 
 ## Ensemble data
 
@@ -230,6 +240,18 @@ study of Cai et al. (2021) to sample MPTRAC data directly on
 TROPOspheric Monitoring Instrument (TROPOMI) satellite
 observations. The sample output is configured using the `SAMPLE_*`
 control parameters.
+
+For positive `SAMPLE_DZ`, this parameter is the **vertical half-width** in
+kilometres around the observation's log-pressure altitude. The output file's
+sixth column retains this half-width. Particle mass within the resulting
+layer and the `SAMPLE_DX` horizontal radius gives column density in kg m⁻².
+The VMR divides that column density by the atmospheric air-column mass between
+the layer's pressure boundaries, clipped to local surface pressure and the
+meteorological model top, and multiplies by the air-to-tracer molar-mass
+ratio. This also handles layers intersecting the surface or model top.
+`SAMPLE_KERNEL` weights tracer mass but does not change the air-column
+normalization. For `SAMPLE_DZ <= 0`, vertical filtering is disabled and the
+sample VMR is undefined (`NaN`).
 
 ## Station data
 

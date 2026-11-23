@@ -7778,6 +7778,8 @@ void mptrac_read_ctl(
 	  || ctl->qnt_lapse >= 0 || ctl->qnt_pv >= 0
 	  || ctl->qnt_tdew >= 0 || ctl->qnt_tice >= 0
 	  || ctl->qnt_tnat >= 0 || ctl->qnt_tsts >= 0);
+  if (meteo_sampled && !isfinite(ctl->met_dt_out))
+    ERRMSG("MET_DT_OUT must be finite when meteorological sampling is enabled!");
   if (meteo_sampled && ctl->met_dt_out >= ctl->dt_mod
       && !DT_ALIGNED(ctl->met_dt_out, ctl->dt_mod))
     WARN("MET_DT_OUT is not an integer multiple of DT_MOD; meteorological sampling may be skipped!");
@@ -8259,6 +8261,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "ATM_GPFILE", -1, "-", ctl->atm_gpfile);
   ctl->atm_dt_out =
     scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
+  if (ctl->atm_basename[0] != '-'
+      && (!isfinite(ctl->atm_dt_out) || ctl->atm_dt_out <= 0))
+    ERRMSG("ATM_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->atm_basename[0] != '-' && ctl->atm_dt_out > 0
       && !DT_ALIGNED(ctl->atm_dt_out, ctl->dt_mod))
     WARN("ATM_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
@@ -8285,17 +8290,21 @@ void mptrac_read_ctl(
 	   ctl->budget_basename);
   ctl->budget_dt_out =
     scan_ctl(filename, argc, argv, "BUDGET_DT_OUT", -1, "86400", NULL);
+  if (ctl->budget_basename[0] != '-'
+      && (!isfinite(ctl->budget_dt_out) || ctl->budget_dt_out <= 0))
+    ERRMSG("BUDGET_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->budget_basename[0] != '-' && ctl->budget_dt_out > 0
       && !DT_ALIGNED(ctl->budget_dt_out, ctl->dt_mod))
     WARN("BUDGET_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
-  if (ctl->budget_basename[0] != '-' && ctl->budget_dt_out <= 0)
-    ERRMSG("Invalid mass budget output settings!");
 
   /* Output of radioactive deposition data... */
   scan_ctl(filename, argc, argv, "DEPO_BASENAME", -1, "-",
 	   ctl->depo_basename);
   ctl->depo_dt_out =
     scan_ctl(filename, argc, argv, "DEPO_DT_OUT", -1, "86400", NULL);
+  if (ctl->depo_basename[0] != '-'
+      && (!isfinite(ctl->depo_dt_out) || ctl->depo_dt_out <= 0))
+    ERRMSG("DEPO_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->depo_basename[0] != '-' && ctl->depo_dt_out > 0
       && !DT_ALIGNED(ctl->depo_dt_out, ctl->dt_mod))
     WARN("DEPO_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
@@ -8307,6 +8316,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
     scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
+  if (ctl->csi_basename[0] != '-'
+      && (!isfinite(ctl->csi_dt_out) || ctl->csi_dt_out <= 0))
+    ERRMSG("CSI_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->csi_basename[0] != '-' && ctl->csi_dt_out > 0
       && !DT_ALIGNED(ctl->csi_dt_out, ctl->dt_mod))
     WARN("CSI_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
@@ -8342,6 +8354,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "ENS_BASENAME", -1, "-", ctl->ens_basename);
   ctl->ens_dt_out =
     scan_ctl(filename, argc, argv, "ENS_DT_OUT", -1, "86400", NULL);
+  if (ctl->ens_basename[0] != '-'
+      && (!isfinite(ctl->ens_dt_out) || ctl->ens_dt_out <= 0))
+    ERRMSG("ENS_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->ens_basename[0] != '-' && ctl->ens_dt_out > 0
       && !DT_ALIGNED(ctl->ens_dt_out, ctl->dt_mod))
     WARN("ENS_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
@@ -8353,6 +8368,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "GRID_GPFILE", -1, "-", ctl->grid_gpfile);
   ctl->grid_dt_out =
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
+  if (ctl->grid_basename[0] != '-'
+      && (!isfinite(ctl->grid_dt_out) || ctl->grid_dt_out <= 0))
+    ERRMSG("GRID_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->grid_basename[0] != '-' && ctl->grid_dt_out > 0
       && !DT_ALIGNED(ctl->grid_dt_out, ctl->dt_mod))
     WARN("GRID_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
@@ -8391,7 +8409,7 @@ void mptrac_read_ctl(
       || ctl->grid_lat0 < -90 || ctl->grid_lat1 > 90)
     ERRMSG("Invalid output grid boundaries!");
   if (ctl->depo_basename[0] != '-'
-      && (ctl->depo_dt_out <= 0 || ctl->depo_type < 0 || ctl->depo_type > 1))
+      && (ctl->depo_type < 0 || ctl->depo_type > 1))
     ERRMSG("Invalid radioactive deposition output settings!");
 
   /* Output of profile data... */
@@ -8446,6 +8464,9 @@ void mptrac_read_ctl(
   scan_ctl(filename, argc, argv, "VTK_BASENAME", -1, "-", ctl->vtk_basename);
   ctl->vtk_dt_out =
     scan_ctl(filename, argc, argv, "VTK_DT_OUT", -1, "86400", NULL);
+  if (ctl->vtk_basename[0] != '-'
+      && (!isfinite(ctl->vtk_dt_out) || ctl->vtk_dt_out <= 0))
+    ERRMSG("VTK_DT_OUT must be finite and positive when output is enabled!");
   if (ctl->vtk_basename[0] != '-' && ctl->vtk_dt_out > 0
       && !DT_ALIGNED(ctl->vtk_dt_out, ctl->dt_mod))
     WARN("VTK_DT_OUT is not an integer multiple of DT_MOD; output may be skipped!");
@@ -14266,7 +14287,7 @@ void write_atm_clams_traj(
   NC(nc_open(filename_out, NC_WRITE, &ncid));
 
   /* Write data... */
-  NC_PUT_DOUBLE("time", atm->time, 1);
+  NC_PUT_DOUBLE("time", &t, 1);
   NC_PUT_DOUBLE("LAT", atm->lat, 1);
   NC_PUT_DOUBLE("LON", atm->lon, 1);
   NC_PUT_DOUBLE("PRESS", atm->p, 1);
@@ -14323,7 +14344,7 @@ void write_atm_clams_traj(
     NC(nc_enddef(ncid));
 
     /* Write data... */
-    NC_PUT_DOUBLE("time", atm->time, 0);
+    NC_PUT_DOUBLE("time", &t, 0);
     NC_PUT_DOUBLE("LAT", atm->lat, 0);
     NC_PUT_DOUBLE("LON", atm->lon, 0);
     NC_PUT_DOUBLE("PRESS", atm->p, 0);
@@ -14584,8 +14605,8 @@ void write_csi(
   }
 
   /* Set time interval... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
+  double t0, t1;
+  OBS_TIME_WINDOW(ctl, t, t0, t1);
 
   /* Allocate... */
   int grid_size = ctl->csi_nx * ctl->csi_ny * ctl->csi_nz;
@@ -14629,7 +14650,7 @@ void write_csi(
   for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
-    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+    if (atm->time[ip] < t0 || atm->time[ip] >= t1)
       continue;
 
     /* Get ensemble ID... */
@@ -14708,7 +14729,7 @@ void write_csi(
 	  }
 	}
     /* Write output... */
-    if (fmod(t, ctl->csi_dt_out) == 0) {
+    if (fmod(t, ctl->csi_dt_out) == 0 || t == ctl->t_stop) {
 
       if (n[e] == 0)
 	continue;
@@ -16096,8 +16117,8 @@ void write_prof(
   }
 
   /* Set time interval... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
+  double t0, t1;
+  OBS_TIME_WINDOW(ctl, t, t0, t1);
 
   /* Allocate... */
   ALLOC(mass, double,
@@ -16139,7 +16160,7 @@ void write_prof(
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
-    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+    if (atm->time[ip] < t0 || atm->time[ip] >= t1)
       continue;
 
     /* Check grid boundaries and get indices... */
@@ -16280,7 +16301,7 @@ void write_sample(
 	    "# $3 = longitude [deg]\n"
 	    "# $4 = latitude [deg]\n"
 	    "# $5 = surface area [km^2]\n"
-	    "# $6 = layer depth [km]\n"
+	    "# $6 = vertical half-width [km]\n"
 	    "# $7 = number of particles [1]\n"
 	    "# $8 = column density [kg/m^2]\n"
 	    "# $9 = volume mixing ratio [ppv]\n"
@@ -16293,8 +16314,8 @@ void write_sample(
   }
 
   /* Set time interval for output... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
+  double t0, t1;
+  OBS_TIME_WINDOW(ctl, t, t0, t1);
 
   /* Loop over observations... */
   for (int i = 0; i < nobs; i++) {
@@ -16310,7 +16331,6 @@ void write_sample(
     geo2cart(0, rlon[i], rlat[i], x0);
 
     /* Set pressure range... */
-    const double rp = P(rz[i]);
     const double ptop = P(rz[i] + ctl->sample_dz);
     const double pbot = P(rz[i] - ctl->sample_dz);
 
@@ -16323,7 +16343,7 @@ void write_sample(
     for (int ip = 0; ip < atm->np; ip++) {
 
       /* Check time... */
-      if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      if (atm->time[ip] < t0 || atm->time[ip] >= t1)
 	continue;
 
       /* Check latitude... */
@@ -16351,19 +16371,23 @@ void write_sample(
     /* Calculate column density... */
     const double cd = mass / (1e6 * area);
 
-    /* Calculate volume mixing ratio... */
+    /* Normalize by the sampled atmospheric pressure column. */
     double vmr = 0;
     if (ctl->molmass > 0 && ctl->sample_dz > 0) {
       if (mass > 0) {
 
-	/* Get temperature... */
-	double temp;
+	/* Clip the nominal layer to the surface and meteorological model top. */
+	double ps;
 	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt[i], rp,
-			   rlon[i], rlat[i], &temp, ci, cw, 1);
+	intpol_met_time_2d(met0, met0->ps, met1, met1->ps, rt[i],
+			   rlon[i], rlat[i], &ps, ci, cw, 0);
 
-	/* Calculate volume mixing ratio... */
-	vmr = MA / ctl->molmass * cd / (RHO(rp, temp) * ctl->sample_dz * 1e3);
+	const double p_lower = MIN(pbot, ps);
+	const double p_upper =
+	  MAX(ptop, MAX(met0->p[met0->np - 1], met1->p[met1->np - 1]));
+	vmr = isfinite(ps) && ps > 0 && p_lower > p_upper
+	  ? MA / ctl->molmass * cd * G0 / (100. * (p_lower - p_upper))
+	  : NAN;
       }
     } else
       vmr = NAN;
@@ -16432,8 +16456,8 @@ void write_station(
   }
 
   /* Set time interval for output... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
+  double t0, t1;
+  OBS_TIME_WINDOW(ctl, t, t0, t1);
 
   /* Count number of newly set station flags... */
   int nflag = 0;
@@ -16442,7 +16466,7 @@ void write_station(
   for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
-    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+    if (atm->time[ip] < t0 || atm->time[ip] >= t1)
       continue;
 
     /* Check time range for station output... */

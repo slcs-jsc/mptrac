@@ -1131,6 +1131,42 @@
    fmin(8 * DBL_EPSILON * ((dt) / (dt_mod)), 1e-8))
 
 /**
+ * @brief Set the half-open observation window for a model output time.
+ *
+ * The window is centered on the output time with width DT_MOD. If the final
+ * model step is shorter, adjacent windows meet at the midpoint of that step
+ * so an observation cannot belong to both output times. The output bounds
+ * are in seconds since 2000-01-01 UTC and select times in [t0, t1).
+ * Arguments must be side-effect-free because the macro evaluates them more
+ * than once; t0 and t1 must be writable variables.
+ *
+ * @param ctl Pointer to the model control settings.
+ * @param t Current model output time in seconds since 2000-01-01 UTC.
+ * @param t0 Variable receiving the lower observation-time bound.
+ * @param t1 Variable receiving the upper observation-time bound.
+ *
+ * @author OpenAI Codex
+ */
+#define OBS_TIME_WINDOW(ctl, t, t0, t1) do {                         \
+    (t0) = (t) - 0.5 * (ctl)->dt_mod;                               \
+    (t1) = (t) + 0.5 * (ctl)->dt_mod;                               \
+    const double remaining = (ctl)->direction * ((ctl)->t_stop - (t)); \
+    if (remaining > 0 && remaining < (ctl)->dt_mod) {              \
+      const double boundary = 0.5 * ((t) + (ctl)->t_stop);         \
+      if ((ctl)->direction > 0) (t1) = boundary;                   \
+      else (t0) = boundary;                                       \
+    } else if ((t) == (ctl)->t_stop) {                             \
+      const double remainder = fmod(fabs((ctl)->t_stop - (ctl)->t_start), \
+                                    (ctl)->dt_mod);                \
+      if (remainder > 0 && remainder < (ctl)->dt_mod) {            \
+        const double boundary = (t) - 0.5 * (ctl)->direction * remainder; \
+        if ((ctl)->direction > 0) (t0) = boundary;                 \
+        else (t1) = boundary;                                     \
+      }                                                           \
+    }                                                             \
+  } while (0)
+
+/**
  * @brief Read data from a file stream and store it in memory.
  *
  * This macro reads data of a specified type from the given input file

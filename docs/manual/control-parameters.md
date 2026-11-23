@@ -56,6 +56,22 @@ Control parameters can also be specified via command line arguments:
 Command line arguments take precedence over values provided in the
 control parameter file.
 
+For enabled periodic particle and diagnostic output, `ATM_DT_OUT`,
+`BUDGET_DT_OUT`, `DEPO_DT_OUT`, `CSI_DT_OUT`, `ENS_DT_OUT`, `GRID_DT_OUT`,
+and `VTK_DT_OUT` must be finite and positive, in seconds. A basename of `-`
+disables the corresponding output without requiring its interval. Positive
+intervals should align with `DT_MOD`; enabled snapshot outputs also write at
+`T_STOP`. `CSI_DT_OUT` controls periodic verification summaries, with a final
+summary at `T_STOP` for any remaining data. `MET_DT_OUT <= 0` instead disables
+sampling of meteorological particle quantities; a nonfinite value is rejected
+when such quantities are configured.
+
+`SAMPLE_DZ > 0` specifies a vertical **half-width** in kilometres around each
+sample observation, using log-pressure altitude. The sample VMR uses the air
+column within that layer, clipped to surface pressure and the meteorological
+model top. `SAMPLE_DZ <= 0` disables vertical filtering and leaves sample VMR
+undefined.
+
 This mechanism is also useful for short sensitivity studies. For example, a release layer can be defined in relative PBL coordinates without editing the control file permanently:
 
 ```
