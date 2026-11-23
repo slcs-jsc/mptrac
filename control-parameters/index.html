@@ -1300,6 +1300,20 @@ indicate that no control parameter file is being used.</p>
 </code></pre>
 <p>Command line arguments take precedence over values provided in the
 control parameter file.</p>
+<p>For enabled periodic particle and diagnostic output, <code>ATM_DT_OUT</code>,
+<code>BUDGET_DT_OUT</code>, <code>DEPO_DT_OUT</code>, <code>CSI_DT_OUT</code>, <code>ENS_DT_OUT</code>, <code>GRID_DT_OUT</code>,
+and <code>VTK_DT_OUT</code> must be finite and positive, in seconds. A basename of <code>-</code>
+disables the corresponding output without requiring its interval. Positive
+intervals should align with <code>DT_MOD</code>; enabled snapshot outputs also write at
+<code>T_STOP</code>. <code>CSI_DT_OUT</code> controls periodic verification summaries, with a final
+summary at <code>T_STOP</code> for any remaining data. <code>MET_DT_OUT &lt;= 0</code> instead disables
+sampling of meteorological particle quantities; a nonfinite value is rejected
+when such quantities are configured.</p>
+<p><code>SAMPLE_DZ &gt; 0</code> specifies a vertical <strong>half-width</strong> in kilometres around each
+sample observation, using log-pressure altitude. The sample VMR uses the air
+column within that layer, clipped to surface pressure and the meteorological
+model top. <code>SAMPLE_DZ &lt;= 0</code> disables vertical filtering and leaves sample VMR
+undefined.</p>
 <p>This mechanism is also useful for short sensitivity studies. For example, a release layer can be defined in relative PBL coordinates without editing the control file permanently:</p>
 <pre><code>./atm_init trac.ctl data/atm_init.tab \
                INIT_T0 360547200 INIT_T1 360547200 \

@@ -1,85 +1,92 @@
 <map id="mptrac_write_output" name="mptrac_write_output">
-<area shape="rect" id="Node000001" title="Writes various types of output data to files in a specified directory." alt="" coords="5,556,145,582"/>
-<area shape="rect" id="Node000002" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="607,211,684,237"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="74,555,79,487,96,382,111,322,131,261,157,202,190,148,231,98,271,65,318,43,379,23,420,10,455,3,488,6,527,23,550,39,570,59,603,106,626,154,640,195,634,197,621,156,598,109,566,63,547,43,524,27,487,12,455,9,422,15,381,28,320,48,274,70,235,102,195,151,162,204,136,263,116,323,101,383,85,488,79,556"/>
-<area shape="rect" id="Node000003" href="$mptrac_8c.html#a98dff5c679aa16aa2506b2f9aaea1f66" title="Updates host memory for specified data structures." alt="" coords="193,679,332,705"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="91,580,134,622,163,645,194,665,202,670,200,675,191,670,160,649,131,626,87,584"/>
-<area shape="rect" id="Node000004" href="$mptrac_8c.html#a07d1a762eeeef6c54d4dd68ac2477f9d" title="Writes air parcel data to a file in various formats." alt="" coords="200,162,325,187"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="80,555,246,200,251,203,85,557"/>
-<area shape="rect" id="Node000010" href="$mptrac_8c.html#acb19d726de139fe1b8fd7a7699b236a8" title="Writes a time series of the atmospheric tracer mass budget." alt="" coords="215,728,310,754"/>
-<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="85,581,126,645,157,682,194,715,202,720,199,724,191,719,154,686,122,648,81,584"/>
-<area shape="rect" id="Node000011" href="$mptrac_8c.html#afe2f86cb96a4de47d262cf7776164d46" title="Writes Critical Success Index (CSI) data to a file." alt="" coords="226,432,299,458"/>
-<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="87,554,131,512,160,488,191,467,210,458,212,463,194,471,163,492,134,516,91,558"/>
-<area shape="rect" id="Node000018" href="$mptrac_8c.html#a076aafdc84ad82f4b05925c5d8801150" title="Convert cumulative ground inventories to Bq m^&#45;2 and write them." alt="" coords="220,778,304,803"/>
-<area shape="poly" id="edge19_Node000001_Node000018" title=" " alt="" coords="83,581,97,617,119,667,152,719,172,743,194,764,207,773,204,777,191,769,168,747,148,722,115,669,92,620,78,583"/>
-<area shape="rect" id="Node000021" href="$mptrac_8c.html#a4036654b5bb8eaf257500214c2f0407d" title="Writes ensemble data to a file." alt="" coords="224,630,301,655"/>
-<area shape="poly" id="edge22_Node000001_Node000021" title=" " alt="" coords="107,580,194,616,210,622,208,627,192,621,105,585"/>
-<area shape="rect" id="Node000024" href="$mptrac_8c.html#af185d3a188bc2279135c58c8d5f24795" title="Writes grid data to a file in ASCII or netCDF format." alt="" coords="224,383,301,409"/>
-<area shape="poly" id="edge25_Node000001_Node000024" title=" " alt="" coords="81,554,122,490,153,451,191,418,208,408,211,413,194,422,157,455,126,493,85,557"/>
-<area shape="rect" id="Node000032" href="$mptrac_8c.html#a8d5476c104eaa958ba0564597bee9c3b" title="Writes profile data to a specified file." alt="" coords="223,531,302,557"/>
-<area shape="poly" id="edge37_Node000001_Node000032" title=" " alt="" coords="145,557,207,548,208,554,145,562"/>
-<area shape="rect" id="Node000033" href="$mptrac_8c.html#af0cd0b75f7269ad20dc88ce4114ab5f1" title="Writes sample data to a specified file." alt="" coords="213,482,312,507"/>
-<area shape="poly" id="edge40_Node000001_Node000033" title=" " alt="" coords="104,553,192,516,206,511,208,516,194,521,106,558"/>
-<area shape="rect" id="Node000034" href="$mptrac_8c.html#aaf952d2078d652006af74cc8ac4cd913" title="Writes station data to a specified file." alt="" coords="215,580,310,606"/>
-<area shape="poly" id="edge46_Node000001_Node000034" title=" " alt="" coords="145,575,200,582,199,588,145,581"/>
-<area shape="rect" id="Node000035" href="$mptrac_8c.html#ad9cf70f782a54ee8eb8fa87c80f936d2" title="Writes VTK (Visualization Toolkit) data to a specified file." alt="" coords="225,827,300,853"/>
-<area shape="poly" id="edge48_Node000001_Node000035" title=" " alt="" coords="81,582,92,626,113,688,147,755,169,786,194,814,212,825,210,830,191,818,165,790,142,758,109,690,87,628,76,583"/>
-<area shape="rect" id="Node000005" href="$mptrac_8c.html#a70603265840ed0c76957a2df53dabc5a" title="Writes air parcel data to an ASCII file or gnuplot." alt="" coords="400,186,506,211"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="326,180,384,187,384,192,325,185"/>
-<area shape="rect" id="Node000006" href="$mptrac_8c.html#af40f268fa1f23a997abbebc49d4c88d2" title="Writes air parcel data to a binary file." alt="" coords="402,38,504,63"/>
-<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="274,159,317,117,347,93,379,72,388,67,390,72,381,77,350,97,321,121,278,163"/>
-<area shape="rect" id="Node000007" href="$mptrac_8c.html#acdc1746c0cf47f3116b471f66f6a3e0c" title="Writes air parcel data to a NetCDF file in the CLaMS format." alt="" coords="392,87,513,113"/>
-<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="291,159,379,121,394,116,396,121,381,126,294,163"/>
-<area shape="rect" id="Node000008" href="$mptrac_8c.html#a094daf77749905feec48a3e69fb779e1" title="Writes CLaMS trajectory data to a NetCDF file." alt="" coords="380,235,525,261"/>
-<area shape="poly" id="edge8_Node000004_Node000008" title=" " alt="" coords="295,185,381,221,396,227,394,232,379,226,293,190"/>
-<area shape="rect" id="Node000009" href="$mptrac_8c.html#aff66d76a0f9415997955f47edeff5b99" title="Writes air parcel data to a NetCDF file." alt="" coords="403,136,502,162"/>
-<area shape="poly" id="edge10_Node000004_Node000009" title=" " alt="" coords="325,163,387,155,388,160,326,169"/>
-<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="507,203,592,214,591,219,506,208"/>
-<area shape="poly" id="edge9_Node000008_Node000002" title=" " alt="" coords="526,236,591,228,592,233,526,241"/>
-<area shape="rect" id="Node000012" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="402,383,503,409"/>
-<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="299,433,386,410,387,415,300,438"/>
-<area shape="rect" id="Node000014" href="$mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="408,432,497,458"/>
-<area shape="poly" id="edge15_Node000011_Node000014" title=" " alt="" coords="299,442,393,442,393,448,299,448"/>
-<area shape="rect" id="Node000015" href="$mptrac_8c.html#a1365b8fd93db0fc3fe4c467107710d03" title="Reads observation data from a file and stores it in arrays." alt="" coords="416,531,490,557"/>
-<area shape="poly" id="edge16_Node000011_Node000015" title=" " alt="" coords="301,452,333,467,349,480,358,493,367,505,381,518,402,528,400,533,379,522,363,509,354,496,345,484,331,471,298,457"/>
-<area shape="rect" id="Node000013" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="806,383,880,409"/>
-<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="504,393,790,393,790,398,504,398"/>
-<area shape="rect" id="Node000016" href="$mptrac_8c.html#a29da9a205ad3577ba3890f3e1e4350c3" title="Reads observation data from an ASCII file." alt="" coords="594,580,697,606"/>
-<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="491,551,580,574,578,579,490,556"/>
-<area shape="rect" id="Node000017" href="$mptrac_8c.html#a4536a82b3dc62081d26114c1250b1427" title="Reads observation data from a NetCDF file." alt="" coords="598,531,693,557"/>
-<area shape="poly" id="edge18_Node000015_Node000017" title=" " alt="" coords="490,541,582,541,582,546,490,546"/>
-<area shape="rect" id="Node000019" href="$mptrac_8c.html#a2a023c3af1433054ddd85578ab0803d4" title="Write radioactive deposition densities as a gnuplot&#45;compatible table." alt="" coords="396,752,509,778"/>
-<area shape="poly" id="edge20_Node000018_Node000019" title=" " alt="" coords="304,782,380,772,381,777,305,788"/>
-<area shape="rect" id="Node000020" href="$mptrac_8c.html#ad5658bf46d3988dd7ecab254fd60ddee" title="Write radioactive deposition densities as a CF&#45;style netCDF file." alt="" coords="400,802,505,827"/>
-<area shape="poly" id="edge21_Node000018_Node000020" title=" " alt="" coords="305,793,385,803,384,808,305,798"/>
-<area shape="rect" id="Node000022" href="$mptrac_8c.html#aaf98f7230de0893b8dc4833d3c83c7a4" title="Converts Cartesian coordinates to geographic coordinates." alt="" coords="417,630,488,655"/>
-<area shape="poly" id="edge23_Node000021_Node000022" title=" " alt="" coords="302,640,402,640,402,645,302,645"/>
-<area shape="rect" id="Node000023" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="417,580,488,606"/>
-<area shape="poly" id="edge24_Node000021_Node000023" title=" " alt="" coords="301,630,401,603,403,609,302,635"/>
-<area shape="poly" id="edge32_Node000024_Node000012" title=" " alt="" coords="302,393,386,393,386,398,302,398"/>
-<area shape="poly" id="edge33_Node000024_Node000014" title=" " alt="" coords="302,403,394,427,393,432,301,408"/>
-<area shape="rect" id="Node000025" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="386,482,520,507"/>
-<area shape="poly" id="edge26_Node000024_Node000025" title=" " alt="" coords="302,403,333,418,349,431,358,444,367,456,382,468,389,473,386,477,378,473,363,460,354,447,345,434,331,422,300,408"/>
-<area shape="rect" id="Node000030" href="$mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="400,284,505,310"/>
-<area shape="poly" id="edge34_Node000024_Node000030" title=" " alt="" coords="280,380,324,350,379,319,390,314,393,318,381,323,327,355,283,385"/>
-<area shape="rect" id="Node000031" href="$mptrac_8c.html#ae0a8f7561c1902f48e3ba8e9731eba9f" title="Writes grid data to a NetCDF file." alt="" coords="404,334,502,359"/>
-<area shape="poly" id="edge36_Node000024_Node000031" title=" " alt="" coords="301,383,388,360,389,366,302,388"/>
-<area shape="rect" id="Node000026" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="573,482,718,507"/>
-<area shape="poly" id="edge27_Node000025_Node000026" title=" " alt="" coords="520,492,558,492,558,497,520,497"/>
-<area shape="poly" id="edge30_Node000026_Node000013" title=" " alt="" coords="663,479,708,449,765,417,790,407,792,412,767,422,711,453,666,483"/>
-<area shape="rect" id="Node000027" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="766,432,920,458"/>
-<area shape="poly" id="edge28_Node000026_Node000027" title=" " alt="" coords="699,478,773,460,774,465,701,484"/>
-<area shape="rect" id="Node000028" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="773,482,912,507"/>
-<area shape="poly" id="edge29_Node000026_Node000028" title=" " alt="" coords="718,492,758,492,758,497,718,497"/>
-<area shape="rect" id="Node000029" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="802,531,884,557"/>
-<area shape="poly" id="edge31_Node000026_Node000029" title=" " alt="" coords="701,505,788,527,786,533,699,510"/>
-<area shape="poly" id="edge35_Node000030_Node000002" title=" " alt="" coords="495,281,524,271,599,241,601,245,526,276,497,286"/>
-<area shape="poly" id="edge39_Node000032_Node000015" title=" " alt="" coords="302,541,400,541,400,546,302,546"/>
-<area shape="poly" id="edge38_Node000032_Node000025" title=" " alt="" coords="301,531,385,509,386,514,303,536"/>
-<area shape="poly" id="edge43_Node000033_Node000012" title=" " alt="" coords="310,479,331,468,345,456,354,443,363,431,378,418,386,413,389,418,382,422,367,434,358,447,349,460,333,473,313,483"/>
-<area shape="poly" id="edge44_Node000033_Node000014" title=" " alt="" coords="311,479,393,458,394,463,313,484"/>
-<area shape="poly" id="edge45_Node000033_Node000015" title=" " alt="" coords="313,505,401,528,400,533,311,510"/>
-<area shape="poly" id="edge41_Node000033_Node000023" title=" " alt="" coords="313,505,333,516,349,529,358,542,367,555,381,567,404,578,401,583,379,571,363,558,354,545,345,533,331,521,310,510"/>
-<area shape="poly" id="edge42_Node000033_Node000025" title=" " alt="" coords="312,492,370,492,370,497,312,497"/>
-<area shape="poly" id="edge47_Node000034_Node000023" title=" " alt="" coords="311,590,402,590,402,596,311,596"/>
+<area shape="rect" id="Node000001" title="Writes various types of output data to files in a specified directory." alt="" coords="5,562,145,587"/>
+<area shape="rect" id="Node000002" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="607,142,684,167"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="74,561,79,493,96,387,111,328,131,267,157,208,190,153,226,108,262,71,299,41,338,19,380,6,425,3,474,10,526,28,560,48,589,74,631,127,626,130,585,77,557,52,524,33,473,16,425,9,381,12,340,24,302,45,265,75,230,112,195,156,162,210,136,269,116,329,101,388,85,494,79,561"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#a98dff5c679aa16aa2506b2f9aaea1f66" title="Updates host memory for specified data structures." alt="" coords="193,684,332,710"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="91,586,134,627,163,651,194,671,202,675,200,680,191,676,160,655,131,631,87,590"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a07d1a762eeeef6c54d4dd68ac2477f9d" title="Writes air parcel data to a file in various formats." alt="" coords="200,167,325,193"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="80,560,246,206,251,208,85,563"/>
+<area shape="rect" id="Node000010" href="$mptrac_8c.html#acb19d726de139fe1b8fd7a7699b236a8" title="Writes a time series of the atmospheric tracer mass budget." alt="" coords="215,734,310,759"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="85,586,126,650,157,688,194,721,202,725,199,730,191,725,154,691,122,653,81,589"/>
+<area shape="rect" id="Node000011" href="$mptrac_8c.html#afe2f86cb96a4de47d262cf7776164d46" title="Writes Critical Success Index (CSI) data to a file." alt="" coords="226,487,299,513"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="104,559,192,522,210,515,212,520,194,526,106,564"/>
+<area shape="rect" id="Node000018" href="$mptrac_8c.html#a076aafdc84ad82f4b05925c5d8801150" title="Convert cumulative ground inventories to Bq m^&#45;2 and write them." alt="" coords="220,783,304,809"/>
+<area shape="poly" id="edge19_Node000001_Node000018" title=" " alt="" coords="83,587,97,623,119,672,152,725,172,749,194,770,207,778,204,783,191,774,168,752,148,728,115,675,92,625,78,589"/>
+<area shape="rect" id="Node000021" href="$mptrac_8c.html#a4036654b5bb8eaf257500214c2f0407d" title="Writes ensemble data to a file." alt="" coords="224,635,301,661"/>
+<area shape="poly" id="edge22_Node000001_Node000021" title=" " alt="" coords="107,586,194,622,210,628,208,633,192,626,105,590"/>
+<area shape="rect" id="Node000024" href="$mptrac_8c.html#af185d3a188bc2279135c58c8d5f24795" title="Writes grid data to a file in ASCII or netCDF format." alt="" coords="224,388,301,414"/>
+<area shape="poly" id="edge25_Node000001_Node000024" title=" " alt="" coords="81,560,122,495,153,457,191,423,208,413,211,418,194,427,157,460,126,498,85,563"/>
+<area shape="rect" id="Node000032" href="$mptrac_8c.html#a8d5476c104eaa958ba0564597bee9c3b" title="Writes profile data to a specified file." alt="" coords="223,438,302,463"/>
+<area shape="poly" id="edge37_Node000001_Node000032" title=" " alt="" coords="87,559,131,517,160,493,191,472,208,464,210,469,194,477,163,498,134,521,91,563"/>
+<area shape="rect" id="Node000033" href="$mptrac_8c.html#af0cd0b75f7269ad20dc88ce4114ab5f1" title="Writes sample data to a specified file." alt="" coords="213,536,312,562"/>
+<area shape="poly" id="edge40_Node000001_Node000033" title=" " alt="" coords="145,563,197,555,198,561,145,568"/>
+<area shape="rect" id="Node000036" href="$mptrac_8c.html#aaf952d2078d652006af74cc8ac4cd913" title="Writes station data to a specified file." alt="" coords="215,586,310,611"/>
+<area shape="poly" id="edge51_Node000001_Node000036" title=" " alt="" coords="145,581,200,588,199,593,145,586"/>
+<area shape="rect" id="Node000037" href="$mptrac_8c.html#ad9cf70f782a54ee8eb8fa87c80f936d2" title="Writes VTK (Visualization Toolkit) data to a specified file." alt="" coords="225,832,300,858"/>
+<area shape="poly" id="edge53_Node000001_Node000037" title=" " alt="" coords="81,587,92,632,113,694,147,761,169,792,194,819,212,831,210,835,191,823,165,795,142,764,109,696,87,633,76,589"/>
+<area shape="rect" id="Node000005" href="$mptrac_8c.html#a70603265840ed0c76957a2df53dabc5a" title="Writes air parcel data to an ASCII file or gnuplot." alt="" coords="400,240,506,266"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="295,191,381,227,396,232,394,237,379,232,293,196"/>
+<area shape="rect" id="Node000006" href="$mptrac_8c.html#af40f268fa1f23a997abbebc49d4c88d2" title="Writes air parcel data to a binary file." alt="" coords="402,92,504,118"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="291,164,379,127,394,121,396,126,381,132,294,169"/>
+<area shape="rect" id="Node000007" href="$mptrac_8c.html#acdc1746c0cf47f3116b471f66f6a3e0c" title="Writes air parcel data to a NetCDF file in the CLaMS format." alt="" coords="392,142,513,167"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="325,169,377,162,378,167,326,174"/>
+<area shape="rect" id="Node000008" href="$mptrac_8c.html#a094daf77749905feec48a3e69fb779e1" title="Writes CLaMS trajectory data to a NetCDF file." alt="" coords="380,43,525,69"/>
+<area shape="poly" id="edge8_Node000004_Node000008" title=" " alt="" coords="274,165,317,123,347,99,379,78,388,73,390,78,381,82,350,103,321,127,278,169"/>
+<area shape="rect" id="Node000009" href="$mptrac_8c.html#aff66d76a0f9415997955f47edeff5b99" title="Writes air parcel data to a NetCDF file." alt="" coords="403,191,502,217"/>
+<area shape="poly" id="edge10_Node000004_Node000009" title=" " alt="" coords="326,185,388,193,387,198,325,191"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="498,237,524,227,571,201,612,175,615,179,574,206,526,232,500,242"/>
+<area shape="poly" id="edge9_Node000008_Node000002" title=" " alt="" coords="500,67,526,78,574,104,615,130,612,135,571,108,524,82,498,72"/>
+<area shape="rect" id="Node000012" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="402,438,503,463"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="299,488,386,465,387,470,300,493"/>
+<area shape="rect" id="Node000014" href="$mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="408,487,497,513"/>
+<area shape="poly" id="edge15_Node000011_Node000014" title=" " alt="" coords="299,497,393,497,393,503,299,503"/>
+<area shape="rect" id="Node000015" href="$mptrac_8c.html#a1365b8fd93db0fc3fe4c467107710d03" title="Reads observation data from a file and stores it in arrays." alt="" coords="416,536,490,562"/>
+<area shape="poly" id="edge16_Node000011_Node000015" title=" " alt="" coords="300,507,401,533,400,539,299,512"/>
+<area shape="rect" id="Node000013" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="806,438,880,463"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="503,435,573,423,645,418,718,423,791,435,790,441,717,428,645,423,574,428,504,440"/>
+<area shape="rect" id="Node000016" href="$mptrac_8c.html#a29da9a205ad3577ba3890f3e1e4350c3" title="Reads observation data from an ASCII file." alt="" coords="594,487,697,513"/>
+<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="490,537,578,514,580,519,491,543"/>
+<area shape="rect" id="Node000017" href="$mptrac_8c.html#a4536a82b3dc62081d26114c1250b1427" title="Reads observation data from a NetCDF file." alt="" coords="598,536,693,562"/>
+<area shape="poly" id="edge18_Node000015_Node000017" title=" " alt="" coords="490,547,582,547,582,552,490,552"/>
+<area shape="rect" id="Node000019" href="$mptrac_8c.html#a2a023c3af1433054ddd85578ab0803d4" title="Write radioactive deposition densities as a gnuplot&#45;compatible table." alt="" coords="396,758,509,783"/>
+<area shape="poly" id="edge20_Node000018_Node000019" title=" " alt="" coords="304,788,380,778,381,783,305,793"/>
+<area shape="rect" id="Node000020" href="$mptrac_8c.html#ad5658bf46d3988dd7ecab254fd60ddee" title="Write radioactive deposition densities as a CF&#45;style netCDF file." alt="" coords="400,807,505,833"/>
+<area shape="poly" id="edge21_Node000018_Node000020" title=" " alt="" coords="305,799,385,809,384,814,305,804"/>
+<area shape="rect" id="Node000022" href="$mptrac_8c.html#aaf98f7230de0893b8dc4833d3c83c7a4" title="Converts Cartesian coordinates to geographic coordinates." alt="" coords="417,684,488,710"/>
+<area shape="poly" id="edge23_Node000021_Node000022" title=" " alt="" coords="302,655,403,682,401,687,301,661"/>
+<area shape="rect" id="Node000023" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="417,635,488,661"/>
+<area shape="poly" id="edge24_Node000021_Node000023" title=" " alt="" coords="302,645,402,645,402,651,302,651"/>
+<area shape="poly" id="edge32_Node000024_Node000012" title=" " alt="" coords="302,409,388,431,387,436,301,414"/>
+<area shape="poly" id="edge33_Node000024_Node000014" title=" " alt="" coords="302,409,333,423,349,436,358,449,367,462,382,474,395,481,393,486,378,478,363,465,354,452,345,440,331,428,300,413"/>
+<area shape="rect" id="Node000025" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="386,388,520,414"/>
+<area shape="poly" id="edge26_Node000024_Node000025" title=" " alt="" coords="302,399,370,399,370,404,302,404"/>
+<area shape="rect" id="Node000030" href="$mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="400,290,505,315"/>
+<area shape="poly" id="edge34_Node000024_Node000030" title=" " alt="" coords="280,386,324,356,379,324,390,319,393,324,381,329,327,360,283,390"/>
+<area shape="rect" id="Node000031" href="$mptrac_8c.html#ae0a8f7561c1902f48e3ba8e9731eba9f" title="Writes grid data to a NetCDF file." alt="" coords="404,339,502,365"/>
+<area shape="poly" id="edge36_Node000024_Node000031" title=" " alt="" coords="301,389,388,366,389,371,302,394"/>
+<area shape="rect" id="Node000026" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="573,438,718,463"/>
+<area shape="poly" id="edge27_Node000025_Node000026" title=" " alt="" coords="507,412,578,431,577,436,505,417"/>
+<area shape="poly" id="edge30_Node000026_Node000013" title=" " alt="" coords="718,448,790,448,790,453,718,453"/>
+<area shape="rect" id="Node000027" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="766,586,920,611"/>
+<area shape="poly" id="edge28_Node000026_Node000027" title=" " alt="" coords="703,462,719,473,731,485,738,499,744,524,750,549,757,561,767,573,771,576,768,580,764,577,752,564,745,551,739,525,733,500,727,489,716,477,700,466"/>
+<area shape="rect" id="Node000028" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="773,487,912,513"/>
+<area shape="poly" id="edge29_Node000026_Node000028" title=" " alt="" coords="701,462,774,480,773,485,699,467"/>
+<area shape="rect" id="Node000029" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="802,536,884,562"/>
+<area shape="poly" id="edge31_Node000026_Node000029" title=" " alt="" coords="698,462,719,472,734,486,744,499,753,511,767,523,788,533,786,538,764,528,749,515,739,502,731,489,716,477,695,466"/>
+<area shape="poly" id="edge35_Node000030_Node000002" title=" " alt="" coords="503,287,524,276,554,254,581,228,624,178,628,182,585,232,557,258,527,281,505,292"/>
+<area shape="poly" id="edge39_Node000032_Node000015" title=" " alt="" coords="303,458,333,472,349,486,358,499,367,511,381,523,402,533,400,538,379,528,363,515,354,502,345,489,331,477,301,463"/>
+<area shape="poly" id="edge38_Node000032_Node000025" title=" " alt="" coords="301,438,385,416,386,421,303,443"/>
+<area shape="poly" id="edge48_Node000033_Node000012" title=" " alt="" coords="310,534,331,523,345,511,354,498,363,485,378,472,386,468,389,472,382,477,367,489,358,501,349,514,333,528,313,538"/>
+<area shape="poly" id="edge49_Node000033_Node000014" title=" " alt="" coords="311,534,393,513,394,518,313,539"/>
+<area shape="poly" id="edge50_Node000033_Node000015" title=" " alt="" coords="312,547,400,547,400,552,312,552"/>
+<area shape="poly" id="edge41_Node000033_Node000023" title=" " alt="" coords="313,560,333,571,349,584,358,597,367,610,381,622,404,633,401,638,379,626,363,613,354,600,345,588,331,576,310,565"/>
+<area shape="rect" id="Node000034" href="$mptrac_8c.html#ab88b081ba4352a0566066ec4156b94c6" title="Interpolates meteorological data in 2D space and time." alt="" coords="386,586,520,611"/>
+<area shape="poly" id="edge42_Node000033_Node000034" title=" " alt="" coords="313,559,387,579,385,584,311,565"/>
+<area shape="rect" id="Node000035" href="$mptrac_8c.html#a1d832e4cf4224c4166d2f083a7a02514" title="Interpolates meteorological variables in 2D space." alt="" coords="573,586,718,611"/>
+<area shape="poly" id="edge43_Node000034_Node000035" title=" " alt="" coords="520,596,558,596,558,601,520,601"/>
+<area shape="poly" id="edge46_Node000035_Node000013" title=" " alt="" coords="700,583,716,573,727,561,733,549,739,524,745,498,752,485,764,473,790,458,792,463,767,477,757,488,750,500,744,525,738,551,731,564,719,577,703,587"/>
+<area shape="poly" id="edge44_Node000035_Node000027" title=" " alt="" coords="718,596,750,596,750,601,718,601"/>
+<area shape="poly" id="edge45_Node000035_Node000028" title=" " alt="" coords="695,583,716,572,731,560,739,548,749,535,764,522,772,517,775,522,767,526,753,538,744,551,734,564,719,577,698,588"/>
+<area shape="poly" id="edge47_Node000035_Node000029" title=" " alt="" coords="699,583,786,561,788,566,701,588"/>
+<area shape="poly" id="edge52_Node000036_Node000023" title=" " alt="" coords="311,608,403,633,402,638,310,614"/>
 </map>

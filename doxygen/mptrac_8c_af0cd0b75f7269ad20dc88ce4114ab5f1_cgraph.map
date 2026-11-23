@@ -2,7 +2,7 @@
 <area shape="rect" id="Node000001" title="Writes sample data to a specified file." alt="" coords="5,153,104,179"/>
 <area shape="rect" id="Node000002" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="183,53,254,79"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="68,151,104,120,150,88,167,80,170,84,153,92,107,124,71,155"/>
-<area shape="rect" id="Node000003" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="152,103,286,128"/>
+<area shape="rect" id="Node000003" href="$mptrac_8c.html#ab88b081ba4352a0566066ec4156b94c6" title="Interpolates meteorological data in 2D space and time." alt="" coords="152,103,286,128"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="98,150,160,131,161,136,100,155"/>
 <area shape="rect" id="Node000009" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="356,153,457,179"/>
 <area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="104,164,340,164,340,169,104,169"/>
@@ -10,7 +10,7 @@
 <area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="100,177,161,196,160,202,98,182"/>
 <area shape="rect" id="Node000011" href="$mptrac_8c.html#a1365b8fd93db0fc3fe4c467107710d03" title="Reads observation data from a file and stores it in arrays." alt="" coords="182,253,256,279"/>
 <area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="71,178,107,208,153,240,168,247,166,252,150,244,104,213,68,182"/>
-<area shape="rect" id="Node000004" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="334,103,478,128"/>
+<area shape="rect" id="Node000004" href="$mptrac_8c.html#a1d832e4cf4224c4166d2f083a7a02514" title="Interpolates meteorological variables in 2D space." alt="" coords="334,103,478,128"/>
 <area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="286,113,318,113,318,118,286,118"/>
 <area shape="rect" id="Node000005" href="$mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="526,5,681,31"/>
 <area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="425,100,469,70,525,40,538,34,540,39,527,45,472,75,428,104"/>

@@ -1361,7 +1361,10 @@ and netCDF particle files store pressure directly.</p>
 <p>CLaMS position and trajectory output require the configured <code>zeta_d</code> quantity
 for the diagnosed ZETA coordinate, including the final initialization file.
 Diabatic trajectory output additionally requires <code>zeta</code>. MPTRAC reports an
-error if a required quantity is absent.</p>
+error if a required quantity is absent.
+The one-dimensional <code>time</code> coordinate in a CLaMS trajectory file and its
+final initialization file gives the common output snapshot time. Particle
+release times are not represented by that coordinate.</p>
 <h2 id="gridded-data">Gridded data</h2>
 <p>To manage the potentially large size of particle output — especially
 when simulating many air parcels — MPTRAC supports gridded output as
@@ -1524,7 +1527,14 @@ include the equitable threat score (ETS), the linear and rank-order
 correlation coefficients, the bias, the root mean square (RMS)
 difference, and the mean absolute error. A more detailed discussion of
 the skill scores is provided by Wilks (2011). The CSI output is
-configured using the <code>CSI_*</code> control parameters.</p>
+configured using the <code>CSI_*</code> control parameters.
+CSI statistics are written at <code>CSI_DT_OUT</code> intervals and at <code>T_STOP</code> if a
+partial final interval contains data. CSI, profile, and sample observations
+are matched in half-open windows centered on model times. When the final
+model step is shorter than <code>DT_MOD</code>, its window and the preceding window
+meet at their time midpoint, so an observation belongs to only one step.
+Station matching uses the same time windows; its <code>stat</code> particle flag also
+prevents repeat station records.</p>
 <h2 id="ensemble-data">Ensemble data</h2>
 <p>Another option to condense comprehensive particle data is provided by
 means of the ensemble output. This type of output requires a
@@ -1567,6 +1577,17 @@ study of Cai et al. (2021) to sample MPTRAC data directly on
 TROPOspheric Monitoring Instrument (TROPOMI) satellite
 observations. The sample output is configured using the <code>SAMPLE_*</code>
 control parameters.</p>
+<p>For positive <code>SAMPLE_DZ</code>, this parameter is the <strong>vertical half-width</strong> in
+kilometres around the observation's log-pressure altitude. The output file's
+sixth column retains this half-width. Particle mass within the resulting
+layer and the <code>SAMPLE_DX</code> horizontal radius gives column density in kg m⁻².
+The VMR divides that column density by the atmospheric air-column mass between
+the layer's pressure boundaries, clipped to local surface pressure and the
+meteorological model top, and multiplies by the air-to-tracer molar-mass
+ratio. This also handles layers intersecting the surface or model top.
+<code>SAMPLE_KERNEL</code> weights tracer mass but does not change the air-column
+normalization. For <code>SAMPLE_DZ &lt;= 0</code>, vertical filtering is disabled and the
+sample VMR is undefined (<code>NaN</code>).</p>
 <h2 id="station-data">Station data</h2>
 <p>Finally, the station output is collecting the data of air parcels that
 are located within a search radius around a given location (latitude,
