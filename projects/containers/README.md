@@ -41,7 +41,7 @@ non-root user and starts Gunicorn on container port 80.
 
 To use this local image with Docker Compose, adjust the `image:`
 reference in the chosen Compose file accordingly. The default Compose
-configurations instead pull Amirs published image.
+configurations instead pull Amir's published image.
 
 ## Deployment
 
