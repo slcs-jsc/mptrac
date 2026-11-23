@@ -74,7 +74,11 @@ program other altitudes can be chosen by changing the parameter
 `level`. However, in order to plot other altitudes, new map files must
 be created.
 
-<p align="center"><img src="plots.ref/ERA5_temp.png" width="28%"/> &emsp; <img src="plots.ref/ERA5_H2O.png" width="28%"/> ; &emsp <img src="plots.ref/ERA5_O3.png" width="28%"/></p>
+<p align="center"><img src="plots.ref/ERA5_temp.png" width="70%"/></p>
+
+<p align="center"><img src="plots.ref/ERA5_H2O.png" width="70%"/></p>
+
+<p align="center"><img src="plots.ref/ERA5_O3.png" width="70%"/></p>
 
 ## Plot script
 
