@@ -1358,6 +1358,10 @@ and netCDF particle files store pressure directly.</p>
 </tr>
 </tbody>
 </table>
+<p>CLaMS position and trajectory output require the configured <code>zeta_d</code> quantity
+for the diagnosed ZETA coordinate, including the final initialization file.
+Diabatic trajectory output additionally requires <code>zeta</code>. MPTRAC reports an
+error if a required quantity is absent.</p>
 <h2 id="gridded-data">Gridded data</h2>
 <p>To manage the potentially large size of particle output — especially
 when simulating many air parcels — MPTRAC supports gridded output as
