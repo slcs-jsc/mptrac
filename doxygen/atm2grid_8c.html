@@ -233,10 +233,10 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   90</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
 <div class="line"><span class="lineno">   91</span>}</div>
 <div class="ttc" id="amptrac_8c_html_a96e5b8b7db1bad827222e732ac6d1633"><div class="ttname"><a href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a></div><div class="ttdeci">int mptrac_read_atm(const char *filename, const ctl_t *ctl, atm_t *atm)</div><div class="ttdoc">Reads air parcel data from a specified file into the given atmospheric structure.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l07117">mptrac.c:7117</a></div></div>
-<div class="ttc" id="amptrac_8c_html_aaffa77ce2887c652b401f992f4886276"><div class="ttname"><a href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276">time_from_filename</a></div><div class="ttdeci">double time_from_filename(const char *filename, const int offset, const int with_seconds)</div><div class="ttdoc">Extracts and converts a timestamp from a filename to Julian seconds.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l13920">mptrac.c:13920</a></div></div>
+<div class="ttc" id="amptrac_8c_html_aaffa77ce2887c652b401f992f4886276"><div class="ttname"><a href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276">time_from_filename</a></div><div class="ttdeci">double time_from_filename(const char *filename, const int offset, const int with_seconds)</div><div class="ttdoc">Extracts and converts a timestamp from a filename to Julian seconds.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l13943">mptrac.c:13943</a></div></div>
 <div class="ttc" id="amptrac_8c_html_acc0c1829ca7770d2dd6342f2cdf10bb9"><div class="ttname"><a href="mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9">jsec2time</a></div><div class="ttdeci">void jsec2time(const double jsec, int *year, int *mon, int *day, int *hour, int *min, int *sec, double *remain)</div><div class="ttdoc">Converts Julian seconds to calendar date and time components.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l03574">mptrac.c:3574</a></div></div>
 <div class="ttc" id="amptrac_8c_html_adb6e87e9f904fe4ad238e5a99ec9fbc6"><div class="ttname"><a href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6">mptrac_read_ctl</a></div><div class="ttdeci">void mptrac_read_ctl(const char *filename, int argc, char *argv[], ctl_t *ctl)</div><div class="ttdoc">Reads control parameters from a configuration file and populates the given structure.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l07266">mptrac.c:7266</a></div></div>
-<div class="ttc" id="amptrac_8c_html_af185d3a188bc2279135c58c8d5f24795"><div class="ttname"><a href="mptrac_8c.html#af185d3a188bc2279135c58c8d5f24795">write_grid</a></div><div class="ttdeci">void write_grid(const char *filename, const ctl_t *ctl, met_t *met0, met_t *met1, const atm_t *atm, const double t)</div><div class="ttdoc">Writes grid data to a file in ASCII or netCDF format.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l15086">mptrac.c:15086</a></div></div>
+<div class="ttc" id="amptrac_8c_html_af185d3a188bc2279135c58c8d5f24795"><div class="ttname"><a href="mptrac_8c.html#af185d3a188bc2279135c58c8d5f24795">write_grid</a></div><div class="ttdeci">void write_grid(const char *filename, const ctl_t *ctl, met_t *met0, met_t *met1, const atm_t *atm, const double t)</div><div class="ttdoc">Writes grid data to a file in ASCII or netCDF format.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l15107">mptrac.c:15107</a></div></div>
 <div class="ttc" id="amptrac_8h_html_a05b49c662c073f89e86804f7856622a0"><div class="ttname"><a href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a></div><div class="ttdeci">#define LEN</div><div class="ttdoc">Maximum length of ASCII data lines.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8h_source.html#l00559">mptrac.h:559</a></div></div>
 <div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8h_source.html#l02466">mptrac.h:2466</a></div></div>
 <div class="ttc" id="amptrac_8h_html_a56fe9bff0a1be75aae2da3e593053e2c"><div class="ttname"><a href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a></div><div class="ttdeci">#define USAGE</div><div class="ttdoc">Print usage information on -h or --help.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8h_source.html#l02273">mptrac.h:2273</a></div></div>
@@ -252,53 +252,55 @@ Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="atm2grid_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph.png" border="0" usemap="#aatm2grid_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph" alt=""/></div>
 <map name="aatm2grid_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph" id="aatm2grid_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph">
-<area shape="rect" title=" " alt="" coords="5,258,55,284"/>
-<area shape="rect" href="mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="501,207,578,233"/>
-<area shape="poly" title=" " alt="" coords="32,257,54,193,74,155,101,120,144,79,183,53,227,36,284,20,322,10,354,4,385,6,421,20,444,37,464,57,497,103,519,151,533,191,528,193,514,153,492,106,460,60,440,41,418,25,384,11,355,9,324,15,286,25,229,41,185,58,147,83,105,123,79,158,59,195,37,258"/>
-<area shape="rect" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633" title="Reads air parcel data from a specified file into the given atmospheric structure." alt="" coords="109,134,231,160"/>
-<area shape="poly" title=" " alt="" coords="44,256,141,168,145,172,48,259"/>
-<area shape="rect" href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="113,258,227,284"/>
-<area shape="poly" title=" " alt="" coords="55,268,97,268,97,273,55,273"/>
-<area shape="rect" href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276" title="Extracts and converts a timestamp from a filename to Julian seconds." alt="" coords="103,331,237,357"/>
-<area shape="poly" title=" " alt="" coords="56,281,131,321,129,326,54,286"/>
-<area shape="rect" href="mptrac_8c.html#af185d3a188bc2279135c58c8d5f24795" title="Writes grid data to a file in ASCII or netCDF format." alt="" coords="131,454,208,480"/>
-<area shape="poly" title=" " alt="" coords="43,283,153,440,149,443,39,286"/>
-<area shape="rect" href="mptrac_8c.html#af0092541e8eb2c51fc9a3fcd98043f3f" title="Reads air parcel data from an ASCII file and populates the given atmospheric structure." alt="" coords="300,85,404,110"/>
-<area shape="poly" title=" " alt="" coords="220,131,286,112,288,118,221,136"/>
-<area shape="rect" href="mptrac_8c.html#ac51355e97453a01a70446623d0c382e5" title="Reads air parcel data from a binary file and populates the given atmospheric structure." alt="" coords="302,134,402,160"/>
-<area shape="poly" title=" " alt="" coords="231,144,287,144,287,149,231,149"/>
-<area shape="rect" href="mptrac_8c.html#ad55d18eefcfa90b7c40d4a37dbb8fbf0" title="Reads atmospheric data from a CLAMS NetCDF file." alt="" coords="294,183,411,209"/>
-<area shape="poly" title=" " alt="" coords="221,158,288,176,286,181,220,163"/>
-<area shape="rect" href="mptrac_8c.html#a2569c3ce3d8d46ce8aa186d42685494c" title="Reads air parcel data from a generic netCDF file and populates the given atmospheric structure." alt="" coords="304,35,400,61"/>
-<area shape="poly" title=" " alt="" coords="187,131,230,101,284,70,294,65,297,70,286,74,233,106,190,136"/>
-<area shape="rect" href="mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="296,282,409,308"/>
-<area shape="poly" title=" " alt="" coords="228,276,281,283,280,288,227,281"/>
-<area shape="rect" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a" title="Scans a control file or command&#45;line arguments for a specified variable." alt="" coords="317,233,387,258"/>
-<area shape="poly" title=" " alt="" coords="227,260,301,250,302,255,228,265"/>
-<area shape="rect" href="mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Converts time components to seconds since January 1, 2000, 12:00:00 UTC." alt="" coords="314,331,391,357"/>
-<area shape="poly" title=" " alt="" coords="238,341,298,341,298,347,238,347"/>
-<area shape="rect" href="mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="285,529,419,554"/>
-<area shape="poly" title=" " alt="" coords="201,478,286,515,299,520,297,525,284,520,199,483"/>
-<area shape="rect" href="mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="489,579,590,605"/>
-<area shape="poly" title=" " alt="" coords="183,478,225,522,254,546,286,564,333,580,382,589,473,594,473,599,381,594,332,585,284,569,251,550,221,526,179,482"/>
-<area shape="rect" href="mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="308,381,396,406"/>
-<area shape="poly" title=" " alt="" coords="200,451,284,415,297,410,299,415,286,420,202,456"/>
-<area shape="rect" href="mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="300,430,405,456"/>
-<area shape="poly" title=" " alt="" coords="208,459,284,449,284,454,209,464"/>
-<area shape="rect" href="mptrac_8c.html#ae0a8f7561c1902f48e3ba8e9731eba9f" title="Writes grid data to a NetCDF file." alt="" coords="303,479,401,505"/>
-<area shape="poly" title=" " alt="" coords="209,469,288,481,288,486,208,475"/>
-<area shape="rect" href="mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="467,529,612,554"/>
-<area shape="poly" title=" " alt="" coords="420,539,452,539,452,544,420,544"/>
-<area shape="rect" href="mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="660,481,814,506"/>
-<area shape="poly" title=" " alt="" coords="595,525,665,508,667,513,596,531"/>
-<area shape="rect" href="mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="667,530,806,556"/>
-<area shape="poly" title=" " alt="" coords="612,539,652,540,652,545,612,545"/>
-<area shape="rect" href="mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="700,579,774,605"/>
-<area shape="poly" title=" " alt="" coords="593,552,685,576,684,581,592,557"/>
-<area shape="rect" href="mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="696,431,778,457"/>
-<area shape="poly" title=" " alt="" coords="558,526,603,496,659,466,681,457,683,462,661,471,605,501,561,530"/>
-<area shape="poly" title=" " alt="" coords="590,589,684,589,684,595,590,595"/>
-<area shape="poly" title=" " alt="" coords="401,427,418,417,456,376,487,330,510,284,526,247,531,249,515,287,492,333,460,380,421,421,404,432"/>
+<area shape="rect" title=" " alt="" coords="5,259,55,284"/>
+<area shape="rect" href="mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="512,184,589,210"/>
+<area shape="poly" title=" " alt="" coords="32,257,54,194,74,155,101,120,144,80,183,54,227,36,284,21,325,10,360,4,393,6,432,21,453,35,472,52,503,91,527,133,542,168,537,170,522,135,499,94,468,55,450,39,429,26,392,11,360,9,327,15,286,26,229,42,185,59,147,84,105,124,79,158,59,196,37,259"/>
+<area shape="rect" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633" title="Reads air parcel data from a specified file into the given atmospheric structure." alt="" coords="109,135,231,160"/>
+<area shape="poly" title=" " alt="" coords="44,256,141,169,145,173,48,260"/>
+<area shape="rect" href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="113,259,227,284"/>
+<area shape="poly" title=" " alt="" coords="55,269,97,269,97,274,55,274"/>
+<area shape="rect" href="mptrac_8c.html#aaffa77ce2887c652b401f992f4886276" title="Extracts and converts a timestamp from a filename to Julian seconds." alt="" coords="103,332,237,358"/>
+<area shape="poly" title=" " alt="" coords="56,282,131,322,129,327,54,287"/>
+<area shape="rect" href="mptrac_8c.html#af185d3a188bc2279135c58c8d5f24795" title="Writes grid data to a file in ASCII or netCDF format." alt="" coords="131,480,208,506"/>
+<area shape="poly" title=" " alt="" coords="42,283,154,465,150,468,37,286"/>
+<area shape="rect" href="mptrac_8c.html#af0092541e8eb2c51fc9a3fcd98043f3f" title="Reads air parcel data from an ASCII file and populates the given atmospheric structure." alt="" coords="306,135,409,160"/>
+<area shape="poly" title=" " alt="" coords="231,145,291,145,291,150,231,150"/>
+<area shape="rect" href="mptrac_8c.html#ac51355e97453a01a70446623d0c382e5" title="Reads air parcel data from a binary file and populates the given atmospheric structure." alt="" coords="308,184,407,210"/>
+<area shape="poly" title=" " alt="" coords="222,158,294,177,292,182,221,164"/>
+<area shape="rect" href="mptrac_8c.html#ad55d18eefcfa90b7c40d4a37dbb8fbf0" title="Reads atmospheric data from a CLAMS NetCDF file." alt="" coords="299,36,416,62"/>
+<area shape="poly" title=" " alt="" coords="187,132,230,102,284,70,295,65,298,70,286,75,233,106,190,136"/>
+<area shape="rect" href="mptrac_8c.html#a2569c3ce3d8d46ce8aa186d42685494c" title="Reads air parcel data from a generic netCDF file and populates the given atmospheric structure." alt="" coords="310,85,406,111"/>
+<area shape="poly" title=" " alt="" coords="221,131,294,112,295,117,222,137"/>
+<area shape="rect" href="mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="301,233,414,259"/>
+<area shape="poly" title=" " alt="" coords="227,261,285,253,286,258,228,266"/>
+<area shape="rect" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a" title="Scans a control file or command&#45;line arguments for a specified variable." alt="" coords="322,283,393,308"/>
+<area shape="poly" title=" " alt="" coords="228,276,307,286,307,292,227,281"/>
+<area shape="rect" href="mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Converts time components to seconds since January 1, 2000, 12:00:00 UTC." alt="" coords="319,332,396,358"/>
+<area shape="poly" title=" " alt="" coords="237,342,303,342,303,347,237,347"/>
+<area shape="rect" href="mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="290,480,425,506"/>
+<area shape="poly" title=" " alt="" coords="209,490,275,490,275,495,209,495"/>
+<area shape="rect" href="mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="500,531,601,556"/>
+<area shape="poly" title=" " alt="" coords="209,500,285,515,390,529,484,537,484,542,389,534,285,521,208,505"/>
+<area shape="rect" href="mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="314,581,402,607"/>
+<area shape="poly" title=" " alt="" coords="193,504,286,560,311,572,309,577,284,564,190,508"/>
+<area shape="rect" href="mptrac_8c.html#a3f60bae0381356431e5b8435d36e526b" title="Update a weighted mean and second central moment with one value." alt="" coords="285,631,430,656"/>
+<area shape="poly" title=" " alt="" coords="182,504,223,559,252,590,287,617,294,622,291,626,283,622,249,594,219,562,177,508"/>
+<area shape="rect" href="mptrac_8c.html#a543c818eac1224703400c9554104d643" title="Writes grid data to an ASCII file." alt="" coords="305,381,410,407"/>
+<area shape="poly" title=" " alt="" coords="187,477,230,447,284,416,295,411,298,415,286,421,233,452,190,482"/>
+<area shape="rect" href="mptrac_8c.html#ae0a8f7561c1902f48e3ba8e9731eba9f" title="Writes grid data to a NetCDF file." alt="" coords="308,431,407,456"/>
+<area shape="poly" title=" " alt="" coords="208,480,293,458,294,463,210,485"/>
+<area shape="rect" href="mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="478,480,623,506"/>
+<area shape="poly" title=" " alt="" coords="425,490,463,490,463,495,425,495"/>
+<area shape="rect" href="mptrac_8c.html#a38e8eccda34d65d560604383c6e29672" title="Clamps UTM coordinates to the valid bounds." alt="" coords="671,432,825,458"/>
+<area shape="poly" title=" " alt="" coords="606,477,676,459,678,465,607,482"/>
+<area shape="rect" href="mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="678,481,818,507"/>
+<area shape="poly" title=" " alt="" coords="623,491,663,491,663,496,623,496"/>
+<area shape="rect" href="mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="711,531,785,556"/>
+<area shape="poly" title=" " alt="" coords="604,504,696,528,695,533,603,509"/>
+<area shape="rect" href="mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="707,383,788,408"/>
+<area shape="poly" title=" " alt="" coords="569,477,614,448,670,417,692,408,694,413,672,422,616,452,572,482"/>
+<area shape="poly" title=" " alt="" coords="601,541,695,541,695,546,601,546"/>
+<area shape="poly" title=" " alt="" coords="410,379,429,368,464,334,494,295,535,223,540,225,499,298,468,338,432,372,412,383"/>
 </map>
 </div>
 
@@ -307,7 +309,7 @@ Here is the call graph for this function:</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 24 2026 09:49:39 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+Generated on Tue Nov 24 2026 10:11:24 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
 </small></address>
 </div><!-- doc-content -->
 </body>

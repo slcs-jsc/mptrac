@@ -38,10 +38,11 @@ var searchData=
   ['stat_5fr_35',['stat_r',['../structctl__t.html#a149be614c5eafb380c3c9f3ad6599971',1,'ctl_t']]],
   ['stat_5ft0_36',['stat_t0',['../structctl__t.html#a5721f8afc611b607db92678bb063f42d',1,'ctl_t']]],
   ['stat_5ft1_37',['stat_t1',['../structctl__t.html#a370c0a527e721ea64cd67685abd7bc42',1,'ctl_t']]],
-  ['stddev_38',['stddev',['../mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f',1,'stddev(const float *data, const int n):&#160;mptrac.c'],['../mptrac_8h.html#a87088b5ccf95f03d986f1bdd570b5b2f',1,'stddev(const float *data, const int n):&#160;mptrac.c']]],
-  ['subdomain_5fcount_39',['subdomain_count',['../structdd__t.html#ad58b7aeca9bd6081bf8b4d3513b5b2d9',1,'dd_t']]],
-  ['subdomain_5fstart_40',['subdomain_start',['../structdd__t.html#adab6ce7b4a33bd7ca538c518d09dbdbd',1,'dd_t']]],
-  ['swap_41',['SWAP',['../mptrac_8h.html#addce2bf4f1107168ab1a7564756aa155',1,'mptrac.h']]],
-  ['swc_42',['swc',['../structmet__t.html#afc1b6ec607dcb27df304f6ecb48b7fea',1,'met_t']]],
-  ['sza_43',['sza',['../structclim__photo__t.html#a0954705edbe1ca70559f1adeb231a685',1,'clim_photo_t']]]
+  ['stats_5fwelford_5fupdate_38',['stats_welford_update',['../mptrac_8c.html#a3f60bae0381356431e5b8435d36e526b',1,'stats_welford_update(const double x, const double w, const double weight_old, double *mean, double *m2):&#160;mptrac.c'],['../mptrac_8h.html#a3f60bae0381356431e5b8435d36e526b',1,'stats_welford_update(const double x, const double w, const double weight_old, double *mean, double *m2):&#160;mptrac.c']]],
+  ['stddev_39',['stddev',['../mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f',1,'stddev(const float *data, const int n):&#160;mptrac.c'],['../mptrac_8h.html#a87088b5ccf95f03d986f1bdd570b5b2f',1,'stddev(const float *data, const int n):&#160;mptrac.c']]],
+  ['subdomain_5fcount_40',['subdomain_count',['../structdd__t.html#ad58b7aeca9bd6081bf8b4d3513b5b2d9',1,'dd_t']]],
+  ['subdomain_5fstart_41',['subdomain_start',['../structdd__t.html#adab6ce7b4a33bd7ca538c518d09dbdbd',1,'dd_t']]],
+  ['swap_42',['SWAP',['../mptrac_8h.html#addce2bf4f1107168ab1a7564756aa155',1,'mptrac.h']]],
+  ['swc_43',['swc',['../structmet__t.html#afc1b6ec607dcb27df304f6ecb48b7fea',1,'met_t']]],
+  ['sza_44',['sza',['../structclim__photo__t.html#a0954705edbe1ca70559f1adeb231a685',1,'clim_photo_t']]]
 ];
