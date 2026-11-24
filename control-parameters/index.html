@@ -1305,9 +1305,10 @@ control parameter file.</p>
 and <code>VTK_DT_OUT</code> must be finite and positive, in seconds. A basename of <code>-</code>
 disables the corresponding output without requiring its interval. Positive
 intervals should align with <code>DT_MOD</code>; enabled snapshot outputs also write at
-<code>T_STOP</code>. <code>CSI_DT_OUT</code> controls periodic verification summaries, with a final
-summary at <code>T_STOP</code> for any remaining data. <code>MET_DT_OUT &lt;= 0</code> instead disables
-sampling of meteorological particle quantities; a nonfinite value is rejected
+<code>T_STOP</code>. <code>CSI_DT_OUT</code> selects CSI verification snapshot times, with a final
+evaluation of the <code>T_STOP</code> observation window when points are available.
+<code>MET_DT_OUT &lt;= 0</code> instead disables sampling of meteorological particle
+quantities; a nonfinite value is rejected
 when such quantities are configured.</p>
 <p><code>SAMPLE_DZ &gt; 0</code> specifies a vertical <strong>half-width</strong> in kilometres around each
 sample observation, using log-pressure altitude. The sample VMR uses the air

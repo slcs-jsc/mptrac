@@ -819,6 +819,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#output-from-domain-decomposed-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output from domain-decomposed runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#openmp-and-openacc-within-each-rank" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1166,6 +1177,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#output-from-domain-decomposed-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output from domain-decomposed runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#openmp-and-openacc-within-each-rank" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1302,6 +1324,19 @@ to the cache after each exchange. Particle files remain unchanged; <code>uvwp</c
 is an internal state variable.</p>
 <p>The Fortran wrapper supports both DD exchange modes when built with
 <code>MPI=1 DD=1</code> and a matching MPI Fortran compiler (<code>MPIFC</code>).</p>
+<h3 id="output-from-domain-decomposed-runs">Output from domain-decomposed runs</h3>
+<p>Each rank writes diagnostics for its local particles. Particle and VTK files
+are local particle subsets, not global snapshots. Budget masses and counts
+are generally additive across ranks; grid particle counts and mass-derived
+column densities can be combined on matching grids. Implicit VMR is not
+additive. Kernel-weighted grid means and population variances cannot generally
+be reconstructed exactly from output files without the corresponding weight
+sums. Ensemble means require member-count weighting, and global population
+variances require the rank-local means, variances, and counts; averaging rank-local
+standard deviations is incorrect. CSI scores cannot generally be combined
+by averaging rank-local scores. Profile and Sample files may repeat observation
+context across ranks, so their rows must not simply be summed. Radionuclide
+deposition with DD is currently unsupported.</p>
 <h3 id="openmp-and-openacc-within-each-rank">OpenMP and OpenACC within each rank</h3>
 <p>OpenMP is enabled in MPTRAC builds and parallelizes particle
 calculations within an MPI rank. Its threads share that rank's
