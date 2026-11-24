@@ -61,9 +61,10 @@ For enabled periodic particle and diagnostic output, `ATM_DT_OUT`,
 and `VTK_DT_OUT` must be finite and positive, in seconds. A basename of `-`
 disables the corresponding output without requiring its interval. Positive
 intervals should align with `DT_MOD`; enabled snapshot outputs also write at
-`T_STOP`. `CSI_DT_OUT` controls periodic verification summaries, with a final
-summary at `T_STOP` for any remaining data. `MET_DT_OUT <= 0` instead disables
-sampling of meteorological particle quantities; a nonfinite value is rejected
+`T_STOP`. `CSI_DT_OUT` selects CSI verification snapshot times, with a final
+evaluation of the `T_STOP` observation window when points are available.
+`MET_DT_OUT <= 0` instead disables sampling of meteorological particle
+quantities; a nonfinite value is rejected
 when such quantities are configured.
 
 `SAMPLE_DZ > 0` specifies a vertical **half-width** in kilometres around each

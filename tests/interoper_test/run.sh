@@ -432,4 +432,78 @@ awk '!/^#/ && NF { if ($11 != 2 || $7 != 1e9 || $10 != 0) exit 1;
     found = 1 } END { if (!found) exit 1 }' \
   "$stats_dir/ens_2000_01_01_00_00_00.tab"
 echo 'Large-offset, weighted, and observation statistics passed.'
+
+# Check that a two-level NetCDF grid stores scalar dz on its length-one axis.
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  CSI_BASENAME - GRID_KERNEL - GRID_TYPE 1 GRID_NZ 2 GRID_Z0 0 GRID_Z1 4 \
+  > "$stats_dir/run.log" 2>&1
+grid_nc="$stats_dir/grid_2000_01_01_00_00_00.nc"
+if command -v ncdump > /dev/null; then
+  ncdump -h "$grid_nc" > "$stats_dir/grid_header.txt"
+  grep -q 'z = 2' "$stats_dir/grid_header.txt"
+  grep -q 'dz = 1' "$stats_dir/grid_header.txt"
+  grep -q 'double dz(dz)' "$stats_dir/grid_header.txt"
+  grep -q 'float cd(time, z, lat, lon)' "$stats_dir/grid_header.txt"
+  ncdump -v dz "$grid_nc" | grep -q 'dz = 2'
+  echo 'NetCDF dz dimensions and value passed.'
+fi
+
+# Check canonical output longitudes and preserve non-output DD grid settings.
+printf '0 1 -179.999 0 2 0 1e9\n0 1 179.999 0 2 0 1e9\n' \
+  > "$stats_dir/atm.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  CSI_BASENAME - GRID_KERNEL - GRID_LON0 -180 GRID_LON1 180 GRID_NX 2 \
+  > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF { n++; total += $9 } END { if (n != 2 || total != 2) exit 1 }' \
+  "$stats_dir/grid_2000_01_01_00_00_00.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  CSI_BASENAME - GRID_KERNEL - GRID_LON0 -2 GRID_LON1 2 \
+  > "$stats_dir/run.log" 2>&1
+for bounds in '0 360' '-181 180' '-180 181'; do
+  read -r lon0 lon1 <<< "$bounds"
+  if "$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+      CSI_BASENAME - GRID_LON0 "$lon0" GRID_LON1 "$lon1" \
+      > "$stats_dir/invalid.log" 2>&1; then
+    echo "Accepted unsupported grid longitude bounds: $bounds" >&2
+    exit 1
+  fi
+  grep -q 'GRID_LON0/1 must be within' "$stats_dir/invalid.log"
+done
+for domain in CSI PROF; do
+  if "$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+      GRID_BASENAME - "${domain}_BASENAME" test \
+      "${domain}_LON0" 0 "${domain}_LON1" 360 \
+      > "$stats_dir/invalid.log" 2>&1; then
+    echo "Accepted unsupported $domain longitude bounds" >&2
+    exit 1
+  fi
+  grep -q "${domain}_LON0/1 must be within" "$stats_dir/invalid.log"
+done
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  GRID_BASENAME - CSI_BASENAME - GRID_LON0 0 GRID_LON1 360 \
+  > "$stats_dir/run.log" 2>&1
+
+# A missed forecast uses its own observation spread; the 360-second snapshot
+# must exclude the earlier point processed at a non-output step.
+printf '0 1 -0.75 0 2 0 1e9\n' > "$stats_dir/atm.tab"
+printf '180 1 -0.75 0 0\n180 1 -0.75 0 4\n' \
+  > "$stats_dir/obs_window.tab"
+printf '360 1 0.75 0 19\n360 1 0.75 0 21\n' \
+  >> "$stats_dir/obs_window.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  GRID_BASENAME - ENS_BASENAME - CSI_BASENAME csi \
+  CSI_OBSFILE "$stats_dir/obs_window.tab" CSI_DT_OUT 180 \
+  CSI_LON0 -1 CSI_LON1 1 CSI_NX 2 CSI_MODMIN 1e-12 \
+  T_STOP 360 > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF && $1 == 180 { if ($3 != 1 || $19 != -0.5) exit 1;
+    found = 1 } END { if (!found) exit 1 }' "$stats_dir/csi.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  GRID_BASENAME - ENS_BASENAME - CSI_BASENAME csi \
+  CSI_OBSFILE "$stats_dir/obs_window.tab" CSI_DT_OUT 360 \
+  CSI_LON0 -1 CSI_LON1 1 CSI_NX 2 CSI_MODMIN 1e-12 \
+  T_STOP 360 > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF { if ($1 != 360 || $20 != 1 ||
+    ($19 + 200)^2 > 0.0001) exit 1; found = 1 }
+    END { if (!found) exit 1 }' "$stats_dir/csi.tab"
+echo 'Output longitude and CSI spread checks passed.'
 exit $error

@@ -8344,6 +8344,10 @@ void mptrac_read_ctl(
       || ctl->csi_lat0 >= ctl->csi_lat1 || ctl->csi_z0 >= ctl->csi_z1
       || ctl->csi_lat0 < -90 || ctl->csi_lat1 > 90)
     ERRMSG("Invalid CSI grid!");
+  if (ctl->csi_basename[0] != '-' && ctl->met_coord_type == 0
+      && (!isfinite(ctl->csi_lon0) || !isfinite(ctl->csi_lon1)
+          || ctl->csi_lon0 < -180 || ctl->csi_lon1 > 180))
+    ERRMSG("CSI_LON0/1 must be within [-180, 180] for geographic output!");
 
   /* Output of ensemble data... */
   ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
@@ -8408,6 +8412,11 @@ void mptrac_read_ctl(
       || ctl->grid_lat0 >= ctl->grid_lat1 || ctl->grid_z0 >= ctl->grid_z1
       || ctl->grid_lat0 < -90 || ctl->grid_lat1 > 90)
     ERRMSG("Invalid output grid boundaries!");
+  if ((ctl->grid_basename[0] != '-' || ctl->depo_basename[0] != '-')
+      && ctl->met_coord_type == 0
+      && (!isfinite(ctl->grid_lon0) || !isfinite(ctl->grid_lon1)
+          || ctl->grid_lon0 < -180 || ctl->grid_lon1 > 180))
+    ERRMSG("GRID_LON0/1 must be within [-180, 180] for geographic output!");
   if (ctl->depo_basename[0] != '-'
       && (ctl->depo_type < 0 || ctl->depo_type > 1))
     ERRMSG("Invalid radioactive deposition output settings!");
@@ -8437,6 +8446,10 @@ void mptrac_read_ctl(
       || ctl->prof_lat0 >= ctl->prof_lat1 || ctl->prof_z0 >= ctl->prof_z1
       || ctl->prof_lat0 < -90 || ctl->prof_lat1 > 90)
     ERRMSG("Invalid profile grid!");
+  if (ctl->prof_basename[0] != '-' && ctl->met_coord_type == 0
+      && (!isfinite(ctl->prof_lon0) || !isfinite(ctl->prof_lon1)
+          || ctl->prof_lon0 < -180 || ctl->prof_lon1 > 180))
+    ERRMSG("PROF_LON0/1 must be within [-180, 180] for geographic output!");
 
   /* Output of sample data... */
   scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
@@ -14743,8 +14756,7 @@ void write_csi(
 		|| modmean[midx] >= ctl->csi_modmin) {
 	      x[n[e]] = modmean[midx];
 	      y[n[e]] = obsmean[idx];
-	      if (modmean[midx] >= ctl->csi_modmin)
-		obsstdn[n[e]] = obsstd[idx];
+	      obsstdn[n[e]] = obsstd[idx];
 	      if ((++n[e]) >= NCSI)
 		ERRMSG("Too many points for statistics!");
 	    }
@@ -15462,7 +15474,7 @@ void write_grid_nc(
 	     0);
   NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[3], "longitude", "degrees_east", 0,
 	     0);
-  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km", 0, 0);
+  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[4], "layer depth", "km", 0, 0);
   NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2", 0, 0);
 
   NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2",

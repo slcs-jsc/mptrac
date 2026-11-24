@@ -90,6 +90,21 @@ is an internal state variable.
 The Fortran wrapper supports both DD exchange modes when built with
 `MPI=1 DD=1` and a matching MPI Fortran compiler (`MPIFC`).
 
+### Output from domain-decomposed runs
+
+Each rank writes diagnostics for its local particles. Particle and VTK files
+are local particle subsets, not global snapshots. Budget masses and counts
+are generally additive across ranks; grid particle counts and mass-derived
+column densities can be combined on matching grids. Implicit VMR is not
+additive. Kernel-weighted grid means and population variances cannot generally
+be reconstructed exactly from output files without the corresponding weight
+sums. Ensemble means require member-count weighting, and global population
+variances require the rank-local means, variances, and counts; averaging rank-local
+standard deviations is incorrect. CSI scores cannot generally be combined
+by averaging rank-local scores. Profile and Sample files may repeat observation
+context across ranks, so their rows must not simply be summed. Radionuclide
+deposition with DD is currently unsupported.
+
 ### OpenMP and OpenACC within each rank
 
 OpenMP is enabled in MPTRAC builds and parallelizes particle

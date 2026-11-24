@@ -41,6 +41,14 @@ The default MPTRAC output filename pattern for time-resolved particle
 output is `<ATM_BASENAME>_YYYY_MM_DD_HH_MM_SS.<ext>`, i.e. output file
 names include seconds explicitly.
 
+Particle files contain times, positions, and configured quantities, including
+ensemble and particle IDs when configured. They are particle-state output,
+not complete numerical checkpoints: persistent turbulent velocities, random
+generator state, internal timestep and output scheduling state, ground
+deposition inventories, and other diagnostic history are not all stored.
+Continuing from a particle file therefore need not reproduce an uninterrupted
+simulation exactly, especially with stochastic or history-dependent processes.
+
 If configured, `aoa` is a reference-contact timestamp in the same time
 coordinate as the particle time (seconds since 2000-01-01 00:00 UTC).
 Its output unit is seconds; elapsed age is particle observation time minus
@@ -98,10 +106,33 @@ either ASCII or netCDF format, depending on the setting of the
 `GRID_TYPE` parameter. Time-resolved grid output files follow the
 pattern `<GRID_BASENAME>_YYYY_MM_DD_HH_MM_SS.<ext>`.
 
+Geographic rectangular output grids (`GRID_*`, `CSI_*`, and `PROF_*`) use
+longitudes from -180° to 180°; a global grid may span the full range.
+Regional grids crossing the dateline are not supported by these bounds.
+This restriction does not change the longitude convention of meteorological
+input grids or domain decomposition.
+
 With `GRID_KERNEL`, reported quantity means and standard deviations use
 kernel weights normalized by their sum in each cell. The particle count
 remains unweighted, while column density uses the weighted mass sum.
 Cells with no positive total kernel weight have undefined quantity statistics.
+Kernels describe relative vertical sensitivity: input weights are scaled to
+`max(K)=1`, linearly interpolated between tabulated heights, and held at the
+nearest endpoint value outside that range. Uniform positive rescaling of the
+input kernel cancels in the normalization. Rescaling the *internal* weights
+would leave weighted means and population standard deviations unchanged, but
+would scale weighted mass sums, column densities, and implicit VMR. Their
+values therefore depend on the normalized kernel shape and amplitude, not
+the absolute scale of the supplied weights. Such column densities do not by
+themselves represent an absolutely calibrated instrument response. The same normalized
+amplitude affects kernel-weighted Sample VMR and CSI forecasts.
+
+`GRID_SPARSE=1` writes only ASCII cells with positive implicit mass-derived
+VMR; it does not mean all cells containing particles. A populated cell with
+zero mass, or with other quantities but no positive implicit VMR, is omitted.
+Without meteorological data, implicit VMR may be unavailable, so standalone
+`atm2grid` can omit populated cells in sparse ASCII output. NetCDF grid output
+does not apply this sparse filter.
 
 | GRID_TYPE | output format   |
 |-----------|-----------------|
@@ -185,11 +216,17 @@ correlation coefficients, the bias, the root mean square (RMS)
 difference, and the mean absolute error. A more detailed discussion of
 the skill scores is provided by Wilks (2011). The CSI output is
 configured using the `CSI_*` control parameters.
-CSI statistics are written at `CSI_DT_OUT` intervals and at `T_STOP` if a
-partial final interval contains data. CSI, profile, and sample observations
-are matched in half-open windows centered on model times. When the final
-model step is shorter than `DT_MOD`, its window and the preceding window
-meet at their time midpoint, so an observation belongs to only one step.
+`CSI_DT_OUT` selects independent verification snapshots. Each row compares
+observations in the half-open window centered on that output time with the
+particle state at that model time. CSI statistics do not accumulate between
+outputs: observations assigned to non-output steps do not contribute to later
+rows. The sampled observations therefore depend on both `DT_MOD` and
+`CSI_DT_OUT`. The evaluation at `T_STOP` uses only its own window, not all
+observations since the previous output; a window without retained verification
+points produces no row. CSI, profile, and sample observations use the same
+half-open window convention. When the final model step is shorter than
+`DT_MOD`, its window and the preceding window meet at their time midpoint,
+so an observation belongs to only one step.
 Station matching uses the same time windows; its `stat` particle flag also
 prevents repeat station records.
 
