@@ -9418,6 +9418,33 @@ void spline(
   const int method);
 
 /**
+ * @brief Update a weighted mean and second central moment with one value.
+ *
+ * Uses Welford's online recurrence. The caller maintains the weight sum;
+ * `weight_old` is its value before adding `w`. `m2` accumulates the weighted
+ * squared deviations, so the population variance is `m2 / weight_sum` and
+ * the population standard deviation is `sqrt(m2 / weight_sum)` for a
+ * positive final weight sum. Zero weight leaves the statistics unchanged.
+ * Negative or nonfinite weights and invalid accumulated weights cause an
+ * error. Nonfinite data values propagate to the statistics rather than being
+ * silently omitted.
+ *
+ * @param x New data value.
+ * @param w Nonnegative statistical weight of the new value.
+ * @param weight_old Accumulated weight before the new value.
+ * @param mean Running weighted mean, updated in place.
+ * @param m2 Running weighted second central moment, updated in place.
+ *
+ * @author OpenAI Codex
+ */
+void stats_welford_update(
+  const double x,
+  const double w,
+  const double weight_old,
+  double *mean,
+  double *m2);
+
+/**
  * @brief Calculates the standard deviation of a set of data.
  *
  * This function calculates the standard deviation of a set of

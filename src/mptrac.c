@@ -13797,6 +13797,29 @@ void spline(
 
 /*****************************************************************************/
 
+void stats_welford_update(
+  const double x,
+  const double w,
+  const double weight_old,
+  double *mean,
+  double *m2) {
+
+  if (!isfinite(w) || w < 0 || !isfinite(weight_old) || weight_old < 0)
+    ERRMSG("Invalid statistical weight!");
+  if (w == 0)
+    return;
+
+  const double weight_new = weight_old + w;
+  if (!isfinite(weight_new) || weight_new <= 0)
+    ERRMSG("Invalid accumulated statistical weight!");
+
+  const double delta = x - *mean;
+  *mean += (w / weight_new) * delta;
+  *m2 += w * delta * (x - *mean);
+}
+
+/*****************************************************************************/
+
 float stddev(
   const float *data,
   const int n) {
@@ -14641,8 +14664,8 @@ void write_csi(
 
     /* Get mean observation index... */
     const int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-    obsmean[idx] += robs[i];
-    obsstd[idx] += SQR(robs[i]);
+    stats_welford_update(robs[i], 1., (double) obscount[idx],
+			 &obsmean[idx], &obsstd[idx]);
     obscount[idx]++;
   }
 
@@ -14693,9 +14716,8 @@ void write_csi(
 	  const int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
 	  if (e == 0)
 	    if (obscount[idx]) {
-	      obsmean[idx] /= obscount[idx];
 	      obsstd[idx] =
-		sqrt(obsstd[idx] / obscount[idx] - SQR(obsmean[idx]));
+		(obsstd[idx] < 0 ? 0 : sqrt(obsstd[idx] / obscount[idx]));
 	    }
 
 	  /* Calculate model mean per ensemble... */
@@ -14851,13 +14873,12 @@ void write_ens(
 	|| ens_value != floor(ens_value))
       ERRMSG("Ensemble ID is out of range!");
 
-    /* Accumulate ensemble sums and squared sums... */
+    /* Accumulate ensemble means and central moments... */
     const int ens = (int) ens_value;
     geo2cart(0, atm->lon[ip], atm->lat[ip], x);
-    for (int iq = 0; iq < ctl->nq; iq++) {
-      qm[iq][ens] += atm->q[iq][ip];
-      qs[iq][ens] += SQR(atm->q[iq][ip]);
-    }
+    for (int iq = 0; iq < ctl->nq; iq++)
+      stats_welford_update(atm->q[iq][ip], 1., (double) n[ens],
+			   &qm[iq][ens], &qs[iq][ens]);
     xm[ens][0] += x[0];
     xm[ens][1] += x[1];
     xm[ens][2] += x[2];
@@ -14890,12 +14911,12 @@ void write_ens(
       fprintf(out, "%.2f %g %g %g", t, zm[i] / n[i], lon, lat);
       for (int iq = 0; iq < ctl->nq; iq++) {
 	fprintf(out, " ");
-	fprintf(out, ctl->qnt_format[iq], qm[iq][i] / n[i]);
+	fprintf(out, ctl->qnt_format[iq], qm[iq][i]);
       }
       for (int iq = 0; iq < ctl->nq; iq++) {
 	fprintf(out, " ");
-	double var = qs[iq][i] / n[i] - SQR(qm[iq][i] / n[i]);
-	fprintf(out, ctl->qnt_format[iq], (var > 0 ? sqrt(var) : 0));
+	fprintf(out, ctl->qnt_format[iq],
+		(qs[iq][i] < 0 ? 0 : sqrt(qs[iq][i] / n[i])));
       }
       fprintf(out, " %d\n", n[i]);
     }
@@ -15193,18 +15214,20 @@ void write_grid(
       izs[ip] = -1;
   }
 
-  /* Count particles and accumulate kernel-weighted quantity moments... */
+  /* Count particles and accumulate kernel-weighted central moments... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
       const int idx =
 	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
       const double kernel = kernel_weight(kz, kw, nk, atm->p[ip]);
+      const double weight_old = weight[idx];
       np[idx]++;
+      if (ctl->qnt_m >= 0)
+	cd[idx] += kernel * atm->q[ctl->qnt_m][ip];
+      for (int iq = 0; iq < ctl->nq; iq++)
+	stats_welford_update(atm->q[iq][ip], kernel, weight_old,
+			     &mean[iq][idx], &sigma[iq][idx]);
       weight[idx] += kernel;
-      for (int iq = 0; iq < ctl->nq; iq++) {
-	mean[iq][idx] += kernel * atm->q[iq][ip];
-	sigma[iq][idx] += kernel * SQR(atm->q[iq][ip]);
-      }
     }
 
   /* Calculate column density and volume mixing ratio... */
@@ -15217,16 +15240,17 @@ void write_grid(
 	const int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 
 	/* Calculate column density... */
-	cd[idx] = NAN;
 	if (ctl->qnt_m >= 0)
-	  cd[idx] = mean[ctl->qnt_m][idx] / (1e6 * area[iy]);
+	  cd[idx] /= (1e6 * area[iy]);
+	else
+	  cd[idx] = NAN;
 
 	/* Calculate volume mixing ratio (implicit)... */
 	vmr_impl[idx] = NAN;
 	if (ctl->qnt_m >= 0 && ctl->molmass > 0 && met0 != NULL
 	    && met1 != NULL) {
 	  vmr_impl[idx] = 0;
-	  if (mean[ctl->qnt_m][idx] > 0) {
+	  if (cd[idx] > 0) {
 
 	    /* Get temperature... */
 	    double temp;
@@ -15243,9 +15267,8 @@ void write_grid(
 	/* Normalize weighted means and variances by total kernel weight... */
 	if (weight[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
-	    mean[iq][idx] /= weight[idx];
-	    const double var = sigma[iq][idx] / weight[idx] - SQR(mean[iq][idx]);
-	    sigma[iq][idx] = (var > 0 ? sqrt(var) : 0);
+	    sigma[iq][idx] =
+	      (sigma[iq][idx] < 0 ? 0 : sqrt(sigma[iq][idx] / weight[idx]));
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] = NAN;

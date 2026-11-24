@@ -332,4 +332,104 @@ check_windows forward 0 100 75 85 1
 check_windows backward 120 20 35 45 -1
 
 echo 'Output units, snapshot time, and partial-step windows passed.'
+
+# Check central moments using large-offset values and unequal kernel weights.
+stats_dir="$base/welford"
+mkdir -p "$stats_dir"
+cat > "$stats_dir/trac.ctl" <<EOF
+NQ = 3
+QNT_NAME[0] = m
+QNT_NAME[1] = ens
+QNT_NAME[2] = marker
+QNT_UNIT[2] = s
+QNT_FORMAT[2] = %.12g
+NENS = 1
+MOLMASS = 64
+METBASE = $base/met
+DT_MET = 3600
+DT_MOD = 180
+T_START = 0
+T_STOP = 180
+MET_PBL = 0
+MET_TROPO = 0
+CONV_CAPE = -1
+ADVECT = 1
+DIFFUSION = 0
+ATM_TYPE = 0
+ATM_BASENAME = -
+GRID_BASENAME = grid
+GRID_DT_OUT = 180
+GRID_STDDEV = 1
+GRID_LON0 = -1
+GRID_LON1 = 1
+GRID_LAT0 = -1
+GRID_LAT1 = 1
+GRID_NX = 1
+GRID_NY = 1
+GRID_Z0 = 0
+GRID_Z1 = 2
+GRID_NZ = 1
+ENS_BASENAME = ens
+ENS_DT_OUT = 180
+EOF
+printf '%s\n' "$stats_dir" > "$base/stats_list"
+printf '0 1 0 0 2 0 999999998\n0 1 0 0 2 0 999999999\n0 1 0 0 2 0 1000000000\n0 1 0 0 2 0 1000000001\n0 1 0 0 2 0 1000000002\n' > "$stats_dir/atm.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF { if ($9 != 5 || $12 != 1e9 ||
+    ($15 - sqrt(2))^2 > 1e-18) exit 1; found = 1 }
+    END { if (!found) exit 1 }' "$stats_dir/grid_2000_01_01_00_00_00.tab"
+awk '!/^#/ && NF { if ($11 != 5 || $7 != 1e9 ||
+    ($10 - sqrt(2))^2 > 1e-18) exit 1; found = 1 }
+    END { if (!found) exit 1 }' "$stats_dir/ens_2000_01_01_00_00_00.tab"
+
+printf '0.5 1\n1.5 2\n' > "$stats_dir/kernel.tab"
+printf 'GRID_KERNEL = %s\n' "$stats_dir/kernel.tab" >> "$stats_dir/trac.ctl"
+printf '0 0.5 0 0 2 0 999999999\n0 1.5 0 0 4 0 1000000002\n' > "$stats_dir/atm.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF { cd = 5 / (1e6 * $5);
+    if ($9 != 2 || $12 != 1000000001 ||
+        ($15 - sqrt(2))^2 > 1e-18 ||
+        ($7 - cd)^2 / (cd * cd) > 1e-10) exit 1; found = 1 }
+    END { if (!found) exit 1 }' "$stats_dir/grid_2000_01_01_00_00_00.tab"
+awk '!/^#/ && NF { if ($11 != 2 || $7 != 1000000000.5 ||
+    ($10 - 1.5)^2 > 1e-18) exit 1; found = 1 }
+    END { if (!found) exit 1 }' "$stats_dir/ens_2000_01_01_00_00_00.tab"
+
+# Two observations with a 1 kg/m2 spread have unit population deviation.
+cat >> "$stats_dir/trac.ctl" <<EOF
+CSI_BASENAME = csi
+CSI_DT_OUT = 180
+CSI_OBSFILE = $stats_dir/obs.tab
+CSI_KERNEL = -
+CSI_LON0 = -1
+CSI_LON1 = 1
+CSI_LAT0 = -1
+CSI_LAT1 = 1
+CSI_NX = 1
+CSI_NY = 1
+CSI_Z0 = 0
+CSI_Z1 = 2
+CSI_NZ = 1
+EOF
+printf '0 1 0 0 999999999\n0 1 0 0 1000000001\n' > "$stats_dir/obs.tab"
+printf '0 1 0 0 0 0 1000000000\n' > "$stats_dir/atm.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF { if ($19 != -5e17 || $20 != 1) exit 1; found = 1 }
+    END { if (!found) exit 1 }' "$stats_dir/csi.tab"
+
+# A zero-weight particle still counts, but cannot change weighted moments.
+printf '0.5 0\n1.5 1\n' > "$stats_dir/zero_kernel.tab"
+printf '0 0.5 0 0 2 0 1000000000\n0 1.5 0 0 4 0 1000000000\n' \
+  > "$stats_dir/atm.tab"
+"$trac/trac" "$base/stats_list" trac.ctl atm.tab \
+  CSI_BASENAME - GRID_NX 2 GRID_KERNEL "$stats_dir/zero_kernel.tab" \
+  > "$stats_dir/run.log" 2>&1
+awk '!/^#/ && NF { n++; if (n == 1) {
+      if ($9 != 0 || $12 != "nan") exit 1
+    } else if ($9 != 2 || $12 != 1e9 || $15 != 0) exit 1 }
+    END { if (n != 2) exit 1 }' "$stats_dir/grid_2000_01_01_00_00_00.tab"
+awk '!/^#/ && NF { if ($11 != 2 || $7 != 1e9 || $10 != 0) exit 1;
+    found = 1 } END { if (!found) exit 1 }' \
+  "$stats_dir/ens_2000_01_01_00_00_00.tab"
+echo 'Large-offset, weighted, and observation statistics passed.'
 exit $error
