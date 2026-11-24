@@ -9305,6 +9305,9 @@ int read_atm_asc(
   char line[LEN];
   while (fgets(line, LEN, in)) {
 
+    if (atm->np >= NP)
+      ERRMSG("Too many data points!");
+
     /* Read data... */
     char *tok;
     TOK(line, tok, "%lg", atm->time[atm->np]);
@@ -9318,8 +9321,7 @@ int read_atm_asc(
     atm->p[atm->np] = P(atm->p[atm->np]);
 
     /* Increment data point counter... */
-    if ((++atm->np) > NP)
-      ERRMSG("Too many data points!");
+    ++atm->np;
   }
 
   /* Close file... */
@@ -9353,6 +9355,8 @@ int read_atm_bin(
   FREAD(&atm->np, int,
 	1,
 	in);
+  if (atm->np < 1 || atm->np > NP)
+    ERRMSG("Number of particles in binary data is out of range!");
   FREAD(atm->time, double,
 	  (size_t) atm->np,
 	in);

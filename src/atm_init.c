@@ -136,6 +136,13 @@ int main(
     ERRMSG("INIT_REP must be positive!");
   if (init_np < 0 || init_np > NP)
     ERRMSG("INIT_NP must be between 0 and NP!");
+  if (!isfinite(dt) || dt <= 0 || !isfinite(dlon) || dlon <= 0
+      || !isfinite(dlat) || dlat <= 0)
+    ERRMSG("INIT_DT, INIT_DLON, and INIT_DLAT must be positive and finite!");
+  if (t1 < t0 || lon1 < lon0 || lat1 < lat0
+      || (use_relz ? relz1 < relz0 : z1 < z0))
+    ERRMSG
+      ("INIT time, vertical, longitude, and latitude ranges must be ascending!");
   if (well_mixed && ctl->met_coord_type != 0)
     ERRMSG("INIT_WELL_MIXED is only supported for lat/lon grids!");
   if (well_mixed && !even)
@@ -183,8 +190,8 @@ int main(
   }
 
   /* Create grid... */
-  int ntry = 0;
-  const int ntrymax = init_np > 0 ? 1000000 * init_np : 0;
+  long long ntry = 0;
+  const long long ntrymax = init_np > 0 ? 1000000LL * init_np : 0;
   do {
     const double vert0 = use_relz ? relz0 : z0;
     const double vert1 = use_relz ? (random_relz ? relz0 : relz1) : z1;
@@ -201,6 +208,9 @@ int main(
 	       lat += dlat)
 	    for (int irep = 0;
 		 irep < rep && !(init_np > 0 && atm->np >= init_np); irep++) {
+
+	      if (atm->np >= NP)
+		ERRMSG("Too many particles!");
 
 	      /* Check number of attempts... */
 	      if (init_np > 0 && ++ntry > ntrymax)
@@ -302,8 +312,7 @@ int main(
 	      }
 
 	      /* Set particle counter... */
-	      if ((++atm->np) > NP)
-		ERRMSG("Too many particles!");
+	      ++atm->np;
 	    }
 
   } while (init_np > 0 && atm->np < init_np);

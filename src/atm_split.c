@@ -65,7 +65,12 @@ int main(
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
-  const int n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
+  const double n_input =
+    scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
+  if (!isfinite(n_input) || n_input < 1 || n_input > NP
+      || floor(n_input) != n_input)
+    ERRMSG("SPLIT_N must be an integer between 1 and NP!");
+  const int n = (int) n_input;
   const double m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
   const double um = scan_ctl(argv[1], argc, argv, "SPLIT_UM", -1, "0", NULL);
   const double dt = scan_ctl(argv[1], argc, argv, "SPLIT_DT", -1, "0", NULL);
@@ -111,6 +116,9 @@ int main(
 
   /* Loop over air parcels... */
   for (int i = 0; i < n; i++) {
+
+    if (atm2->np >= NP)
+      ERRMSG("Too many air parcels!");
 
     /* Select air parcel... */
     if (ctl.qnt_m >= 0)
@@ -175,8 +183,7 @@ int main(
       atm2->q[ctl.qnt_idx][atm2->np] = atm2->np;
 
     /* Increment particle counter... */
-    if ((++atm2->np) > NP)
-      ERRMSG("Too many air parcels!");
+    ++atm2->np;
   }
 
   /* Save data and close file... */

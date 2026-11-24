@@ -92,4 +92,24 @@ error=0
 for f in $(ls data.ref/*.tab) ; do
     diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
+
+# Reject initialization steps and particle counts that cannot form a valid file.
+if $trac/atm_init - data/invalid.tab INIT_DT 0 > data/invalid.log 2>&1; then
+    error=1
+fi
+grep -q 'INIT_DT, INIT_DLON, and INIT_DLAT must be positive and finite' data/invalid.log || error=1
+if $trac/atm_init - data/invalid.tab INIT_LON0 1 INIT_LON1 0 > data/invalid.log 2>&1; then
+    error=1
+fi
+grep -q 'INIT time, vertical, longitude, and latitude ranges must be ascending' data/invalid.log || error=1
+if $trac/atm_split - data/atm_2000_01_01_00_00_00.tab data/invalid.tab SPLIT_N 0 $qnt > data/invalid.log 2>&1; then
+    error=1
+fi
+grep -q 'SPLIT_N must be an integer between 1 and NP' data/invalid.log || error=1
+cp data/atm.bin data/invalid_count.bin
+dd if=/dev/zero of=data/invalid_count.bin bs=1 seek=4 count=4 conv=notrunc status=none
+if $trac/atm_conv - data/invalid_count.bin 1 data/invalid.tab 0 $qnt > data/invalid.log 2>&1; then
+    error=1
+fi
+grep -q 'Number of particles in binary data is out of range' data/invalid.log || error=1
 exit $error
