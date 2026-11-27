@@ -1327,7 +1327,12 @@ units depend on <code>ISOSURF</code>: hPa for pressure (<code>1</code>), hPa/K f
 pressure-to-temperature ratio (<code>2</code>), and K for potential temperature (<code>3</code>).
 Existing particle files without this quantity need a configuration that
 provides a free quantity slot; <code>NQ</code> and other quantity indices are not
-changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require it.</p>
+changed automatically. <code>ISOSURF=0</code> and <code>4</code> do not require it.
+For <code>ISOSURF=4</code>, <code>BALLOON</code> names a text file with two columns: particle time
+in seconds since 2000-01-01 00:00 UTC and pressure in hPa. Times must be
+finite and strictly increasing; pressures must be finite and positive.
+Pressure is linearly interpolated between records and held at the nearest
+endpoint outside the tabulated time range.</p>
 <h2 id="pbl-turbulence">PBL turbulence</h2>
 <p>With <code>DIFFUSION=1</code> and <code>TURB_PBL_SCHEME=1</code>, the Hanna-PBL closure uses
 along-wind and cross-wind velocity fluctuations and cannot run with
