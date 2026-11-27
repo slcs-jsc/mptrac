@@ -38,7 +38,7 @@ metres for UTM grids.
 The following optional parameters can be used for controlling the release of air parcels:
 
 * INIT_REP: This parameter controls the number of air parcels in each release position. The default value is 1.
-* INIT_MASS: Total release mass [kg]. The default value is 0.
+* INIT_MASS: Total release mass [kg] when `INIT_BELLRAD <= 0`. The default value is 0.
 * INIT_VMR: Volume mixing ratio of each air parcel [ppv]. The default value is 0.
 * INIT_ST/INIT_SZ/INIT_SLON/INIT_SLAT: If this parameter is set to non-zero value, the air parcels are released with a Gaussian distribution in time/altitude/longitude/latitude. The parameter value represents the full width at half maximum. 
 * INIT_UT/INIT_UZ/INIT_ULON/INIT_ULAT: If this parameter is set to non-zero value, the air parcels are released with a uniform distribution in time/altitude/longitude/latitude. The parameter value represents release range.
@@ -46,6 +46,8 @@ The following optional parameters can be used for controlling the release of air
 * INIT_COL_MASS: If this parameter is set to 1, air parcels are sampled uniformly in surface pressure, proportional to the column mass above the model top. The surface pressure is taken from the meteo data. Requires meteo data and a fixed release time (INIT_T0 == INIT_T1, INIT_ST = INIT_UT = 0). Default is 0.
 * INIT_WELL_MIXED: If this parameter is set to 1, air parcels are distributed uniformly in pressure between the model top and the surface pressure at their location, resulting in a well-mixed tracer distribution. Requires INIT_EVENLY=1, INIT_COL_MASS=1, and a fixed release time. Default is 0.
 * INIT_NP: Target number of air parcels when using INIT_WELL_MIXED sampling. The simulation will retry the grid sampling until this number is reached. Must be between 0 and NP. Requires INIT_WELL_MIXED=1. Default is 0 (grid-based sampling, no retry loop).
+  The release grid is traversed in a fixed order and sampling stops at the target count. If the target is small compared with the number of candidate positions, earlier positions may be overrepresented.
+* INIT_BELLRAD: Radius `R` [km] of a cosine-bell profile. Within this radius, the particle mass and, if configured, VMR are set directly to `w(r) = [1 + cos(pi * r / R)] / 2`, where `r` is the distance from the center of the release domain. Their numerical maxima are 1 kg per particle and 1 ppv, respectively. `INIT_MASS` does not normalize the bell; total mass depends on the number and spatial distribution of particles. The default is 0 (no bell).
 * INIT_IDX_OFFSET: Offset value added to air parcel indices. This parameter allows customization of the starting index for air parcels, which can be useful for domain decomposition or when combining multiple initialization runs. The default value is 0. 
 
 Relative-PBL releases use the local surface pressure and local PBL pressure from the meteorological data to convert `z/zi` to pressure. Therefore `INIT_RELZ0` and `INIT_RELZ1` require meteorological input and a fixed release time (`INIT_T0 == INIT_T1`, `INIT_ST = INIT_UT = 0`). They cannot be combined with `INIT_Z0` and `INIT_Z1`.

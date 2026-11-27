@@ -108,9 +108,13 @@ int main(
   /* Get total and maximum mass... */
   if (ctl.qnt_m >= 0)
     for (ip = 0; ip < atm->np; ip++) {
+      if (!isfinite(atm->q[ctl.qnt_m][ip]) || atm->q[ctl.qnt_m][ip] < 0)
+	ERRMSG("Parent particle masses must be finite and nonnegative!");
       mtot += atm->q[ctl.qnt_m][ip];
       mmax = MAX(mmax, atm->q[ctl.qnt_m][ip]);
     }
+  if (ctl.qnt_m >= 0 && mmax <= 0)
+    ERRMSG("At least one parent particle must have positive mass!");
   if (m >= 0)
     mtot = m;
 

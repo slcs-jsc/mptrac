@@ -21,7 +21,8 @@ The following atm_split specific configuration parameters can be used:
 | parameter | purpose | default | 
 |:-----------|:---------|---------:|
 | SPLIT_N | total number of data points to generate |
-| SPLIT_M | total SO2 mass of all data points [] | -999 |
+| SPLIT_M | total mass assigned to the new particles [kg]; negative values use the input total | -999 |
+| SPLIT_UM | absolute width of a uniform child-mass perturbation [kg] | 0 |
 | SPLIT_DT | delta time [s] | 0 |
 | SPLIT_T0 | time window start [s] | 0 |
 | SPLIT_T1 | time window end [s] | 0 |
@@ -36,5 +37,7 @@ The following atm_split specific configuration parameters can be used:
 | SPLIT_KERNEL | kernel file name | – |
 
 If a range is provided the data points are distributed uniformly. If a distance is provided (DT, DZ, DX), the data points are distributed with a Gaussian random variate where e.g. ‘distance’/2.3548 = FWHM.
+
+With `N = SPLIT_N`, each child receives `m_child = [M + U * (V - 0.5)] / N`, where `M` is the input total mass or `SPLIT_M`, `U = SPLIT_UM`, and each `V` is drawn independently and uniformly from [0, 1]. `SPLIT_UM` is an absolute uniform perturbation, not a relative or Gaussian uncertainty. At `SPLIT_UM = 0`, the selected total mass is preserved up to rounding; for positive `SPLIT_UM`, it is preserved only in expectation, and sufficiently large perturbations can produce negative child masses. Other configured quantities are copied from each selected parent except where explicitly reassigned; sums of other extensive quantities, such as accumulated mass-loss diagnostics, need not be preserved.
 
 **Note:** Instead of using the control file the configuration parameters can also be appended to the function call. 
