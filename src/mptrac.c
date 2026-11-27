@@ -2032,6 +2032,7 @@ void dd_atm2particles(
       particles[ip - atm->np].lat = atm->lat[ip];
       particles[ip - atm->np].p = atm->p[ip];
       particles[ip - atm->np].dt = cache->dt[ip];
+      particles[ip - atm->np].iso_init = cache->iso_init[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
       for (int i = 0; i < 3; i++)
@@ -2081,6 +2082,7 @@ void dd_pack_compact(
       particles[i].lon = atm->lon[ip];
       particles[i].lat = atm->lat[ip];
       particles[i].dt = cache->dt[ip];
+      particles[i].iso_init = cache->iso_init[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[i].q[iq] = atm->q[iq][ip];
       for (int j = 0; j < 3; j++)
@@ -2131,6 +2133,7 @@ void dd_pack_compact(
       particles[nsend].lon = atm->lon[ip];
       particles[nsend].lat = atm->lat[ip];
       particles[nsend].dt = cache->dt[ip];
+      particles[nsend].iso_init = cache->iso_init[ip];
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[nsend].q[iq] = atm->q[iq][ip];
       for (int i = 0; i < 3; i++)
@@ -2147,6 +2150,7 @@ void dd_pack_compact(
       for (int iq = 0; iq < ctl->nq; iq++)
 	atm->q[iq][nkeep_cpu] = atm->q[iq][ip];
       cache->dt[nkeep_cpu] = cache->dt[ip];
+      cache->iso_init[nkeep_cpu] = cache->iso_init[ip];
       for (int i = 0; i < 3; i++)
 	cache->uvwp[nkeep_cpu][i] = cache->uvwp[ip][i];
     }
@@ -2355,18 +2359,18 @@ void dd_init(
     ERRMSG("Number of tasks and subdomains is not identical!");
 
   /* Register the MPI_Particle data type... */
-  const MPI_Datatype types[7] =
+  const MPI_Datatype types[8] =
     { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
-    MPI_FLOAT };
-  const int blocklengths[7] = { 1, 1, 1, 1, 1, NQ, 3 };
-  const MPI_Aint displacements[7] =
+    MPI_FLOAT, MPI_UNSIGNED_CHAR };
+  const int blocklengths[8] = { 1, 1, 1, 1, 1, NQ, 3, 1 };
+  const MPI_Aint displacements[8] =
     { offsetof(particle_t, time), offsetof(particle_t, p),
     offsetof(particle_t, lon), offsetof(particle_t, lat),
       offsetof(particle_t, dt), offsetof(particle_t, q),
-      offsetof(particle_t, uvwp)
+      offsetof(particle_t, uvwp), offsetof(particle_t, iso_init)
   };
   MPI_Datatype fields;
-  MPI_Type_create_struct(7, blocklengths, displacements, types, &fields);
+  MPI_Type_create_struct(8, blocklengths, displacements, types, &fields);
   /* The trailing float array can leave padding in particle_t. Alltoallv
      counts and displacements must advance by the full C structure size. */
   MPI_Type_create_resized(fields, 0, (MPI_Aint) sizeof(particle_t),
@@ -2479,6 +2483,7 @@ void dd_particles2atm(
     atm->lat[ip] = particles[ip - atm->np].lat;
     atm->p[ip] = particles[ip - atm->np].p;
     cache->dt[ip] = particles[ip - atm->np].dt;
+    cache->iso_init[ip] = particles[ip - atm->np].iso_init;
     for (int iq = 0; iq < ctl->nq; iq++)
       atm->q[iq][ip] = particles[ip - atm->np].q[iq];
     for (int i = 0; i < 3; i++)
@@ -2572,6 +2577,22 @@ void sort_uvwp(
     for (int ip = 0; ip < np; ip++)
       cache->uvwp[ip][j] = (float) tmp[ip];
   }
+
+  /* Reorder the particle-specific isosurface initialization state. */
+#ifdef _OPENACC
+#pragma acc parallel loop
+#else
+#pragma omp parallel for
+#endif
+  for (int ip = 0; ip < np; ip++)
+    tmp[ip] = cache->iso_init[perm[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop
+#else
+#pragma omp parallel for
+#endif
+  for (int ip = 0; ip < np; ip++)
+    cache->iso_init[ip] = (uint8_t) tmp[ip];
   }
 }
 
@@ -2635,6 +2656,7 @@ void dd_push(
       atm->q[ctl->qnt_current_subdomain][ip] = -1;
       /* Reset cache->dt for the shifted particle... */
       cache->dt[global_index] = cache->dt[ip];
+      cache->iso_init[global_index] = cache->iso_init[ip];
       cache->dt[ip] = 0;
       for (int i = 0; i < 3; i++)
 	cache->uvwp[global_index][i] = cache->uvwp[ip][i];
@@ -5299,9 +5321,9 @@ void module_isosurf_init(
   cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
-
-  double t;
+  atm_t *atm,
+  const int initial,
+  const double model_t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF_INIT", "PHYSICS");
@@ -5313,22 +5335,53 @@ void module_isosurf_init(
     }
   }
 
-  /* Save density... */
-  else if (ctl->isosurf == 2) {
-    PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm)") {
+  /* Save each density or potential-temperature reference at release time. */
+  else if (ctl->isosurf == 2 || ctl->isosurf == 3) {
+    int outside = 0;
+    double next_t = model_t + ctl->direction * ctl->dt_mod;
+    if (ctl->direction * (next_t - ctl->t_stop) > 0)
+      next_t = ctl->t_stop;
+    const int crossing =
+      ctl->direction > 0 ? next_t > met1->time : next_t < met0->time;
+#ifdef _OPENACC
+#pragma acc parallel loop present(ctl,cache,met0,met1,atm) reduction(+:outside)
+#else
+#pragma omp parallel for reduction(+:outside)
+#endif
+    for (int ip = 0; ip < atm->np; ip++) {
+      if (cache->iso_init[ip] == 1)
+	continue;
+      if (cache->iso_init[ip] == 2) {
+	if (!initial && cache->dt[ip] != 0)
+	  cache->iso_init[ip] = 1;
+	continue;
+      }
+      if (initial) {
+	if (ctl->direction * (atm->time[ip] - ctl->t_start) > 0)
+	  continue;
+      } else if (cache->dt[ip] == 0) {
+	/* Keep the release-time reference before a met-file boundary passes. */
+	if (!crossing || ctl->direction * (atm->time[ip] - model_t) < 0
+	    || ctl->direction * (atm->time[ip] - next_t) >= 0
+	    || atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+	  continue;
+      }
+      if (!initial &&
+	  (atm->time[ip] < met0->time || atm->time[ip] > met1->time)) {
+	outside++;
+	continue;
+      }
+      double t;
       INTPOL_INIT;
       INTPOL_3D(t, 1);
-      atm->q[ctl->qnt_iso_var][ip] = atm->p[ip] / t;
+      if (ctl->isosurf == 2)
+	atm->q[ctl->qnt_iso_var][ip] = atm->p[ip] / t;
+      else
+	atm->q[ctl->qnt_iso_var][ip] = THETA(atm->p[ip], t);
+      cache->iso_init[ip] = (!initial && cache->dt[ip] == 0) ? 2 : 1;
     }
-  }
-
-  /* Save potential temperature... */
-  else if (ctl->isosurf == 3) {
-    PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm)") {
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
-      atm->q[ctl->qnt_iso_var][ip] = THETA(atm->p[ip], t);
-    }
+    if (outside)
+      ERRMSG("Particle release time is outside the loaded meteorological interval for ISOSURF!");
   }
 
   /* Read balloon pressure data... */
@@ -5344,11 +5397,21 @@ void module_isosurf_init(
 
     /* Read pressure time series... */
     char line[LEN];
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg", &(cache->iso_ts[cache->iso_n]),
-		 &(cache->iso_ps[cache->iso_n])) == 2)
-	if ((++cache->iso_n) > NP)
-	  ERRMSG("Too many data points!");
+    cache->iso_n = 0;
+    while (fgets(line, LEN, in)) {
+      double ts, ps;
+      if (sscanf(line, "%lg %lg", &ts, &ps) != 2)
+	continue;
+      if (cache->iso_n >= NP)
+	ERRMSG("Too many balloon pressure data points!");
+      if (!isfinite(ts) || !isfinite(ps) || ps <= 0)
+	ERRMSG("Balloon times must be finite and pressures must be finite and positive!");
+      if (cache->iso_n > 0 && ts <= cache->iso_ts[cache->iso_n - 1])
+	ERRMSG("Balloon times must be strictly increasing!");
+      cache->iso_ts[cache->iso_n] = ts;
+      cache->iso_ps[cache->iso_n] = ps;
+      cache->iso_n++;
+    }
 
     /* Check number of points... */
     if (cache->iso_n < 1)
@@ -5376,6 +5439,10 @@ void module_isosurf(
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,met1,atm)") {
+
+    if ((ctl->isosurf == 2 || ctl->isosurf == 3)
+	&& cache->iso_init[ip] != 1)
+      continue;
 
     /* Init... */
     double t;
@@ -7100,6 +7167,10 @@ void mptrac_init(
   /* Initialize timesteps... */
   module_timesteps_init(ctl, atm);
 
+  /* Reset per-particle isosurface initialization between tasks. */
+  if (ctl->isosurf == 2 || ctl->isosurf == 3)
+    memset(cache->iso_init, 0, (size_t) atm->np * sizeof(cache->iso_init[0]));
+
   /* Initialize random number generator... */
   module_rng_init(ntask);
 
@@ -7792,8 +7863,12 @@ void mptrac_read_ctl(
   ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
 
   /* Isosurface parameters... */
-  ctl->isosurf =
-    (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
+  const double isosurf =
+    scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
+  if (!isfinite(isosurf) || isosurf < 0 || isosurf > 4
+      || floor(isosurf) != isosurf)
+    ERRMSG("Set ISOSURF to an integer between 0 and 4!");
+  ctl->isosurf = (int) isosurf;
   if (ctl->isosurf >= 1 && ctl->isosurf <= 3 && ctl->qnt_iso_var < 0)
     ERRMSG("Add quantity iso_var for ISOSURF=1, 2, or 3!");
   scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
@@ -8754,7 +8829,7 @@ void mptrac_run_timestep(
 
     /* Initialize isosurface data... */
     if (ctl->isosurf >= 1 && ctl->isosurf <= 4)
-      module_isosurf_init(ctl, cache, *met0, *met1, atm);
+      module_isosurf_init(ctl, cache, *met0, *met1, atm, 1, t);
 
     /* Initialize advection... */
     module_advect_init(ctl, cache, *met0, *met1, atm);
@@ -8765,6 +8840,10 @@ void mptrac_run_timestep(
 
   /* Set time steps of air parcels... */
   module_timesteps(ctl, cache, *met0, atm, t);
+
+  /* Initialize delayed isosurface references before particle movement. */
+  if (ctl->isosurf == 2 || ctl->isosurf == 3)
+    module_isosurf_init(ctl, cache, *met0, *met1, atm, 0, t);
 
   /* Sort particles... */
   if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)

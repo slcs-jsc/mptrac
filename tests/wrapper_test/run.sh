@@ -1,4 +1,5 @@
 #! /bin/bash
+set -euo pipefail
 
 if [[ ${DD:-0} == 1 ]]; then
     exec ./run_dd.sh
@@ -6,7 +7,7 @@ fi
 
 # Set environment...
 ulimit -s unlimited
-export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=../../libs/build/lib:${LD_LIBRARY_PATH:-}
 export OMP_NUM_THREADS=4
 export LANG=C
 export LC_ALL=C
@@ -21,7 +22,6 @@ mkdir -p data/fortran
 
 # Test order and missing variables between C and Fortran structure...
 ./find-vars.sh
-[ $? == 99 ] && exit 1
 
 # Set timestep and timerange of simulation...
 t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
@@ -81,6 +81,7 @@ GRID_NY = 90
 SAMPLE_DZ = 100
 STAT_LON = -22
 STAT_LAT = -40
+INIT_MASS = 1e9
 EOF
 
 # Create observation file...
@@ -160,12 +161,17 @@ mv data/*00.tab data/*.vtk data/fortran/
 
 # Compare files...
 echo -e "\nCompare results..."
-error=0
-for f in $(ls data/c/*.tab data/c/*.vtk) ; do
-    diff -q -s data/fortran/"$(basename "$f")" "$f" || error=1
+shopt -s nullglob
+c_outputs=(data/c/*.tab data/c/*.vtk)
+fortran_outputs=(data/fortran/*.tab data/fortran/*.vtk)
+if (( ${#c_outputs[@]} == 0 || ${#c_outputs[@]} != ${#fortran_outputs[@]} )); then
+    echo "Missing or unequal numbers of C and Fortran outputs" >&2
+    exit 1
+fi
+for f in "${c_outputs[@]}" ; do
+    diff -q -s data/fortran/"$(basename "$f")" "$f"
     #    xxdiff data/fortran/"$(basename "$f")" "$f" || error=1
 done
-exit $error
 
 ## Compare files...
 #echo -e "\nCompare results..."

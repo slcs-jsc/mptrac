@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ########## Compare Structures
 
@@ -304,3 +305,81 @@ check_dimension CSZA csza
 check_dimension CT ct
 check_dimension CTS cts
 check_dimension DD_NNMAX dd_nnmax
+
+# Compare the binary layout of cache_t, including field sizes and array shape.
+# The name/order checks above remain in place for the other mirrored structures.
+cat > data/cache_layout.c <<'EOF'
+#include "mptrac.h"
+#include <stddef.h>
+#include <stdio.h>
+
+size_t cache_offset(const void *base, const void *field) {
+  return (size_t) ((const char *) field - (const char *) base);
+}
+
+#ifdef CACHE_LAYOUT_MAIN
+#define FIELD(name, n1, n2) \
+  printf("%zu %zu %zu %zu\n", offsetof(cache_t, name), \
+         sizeof(((cache_t *) 0)->name), (size_t) (n1), (size_t) (n2))
+int main(void) {
+  printf("%zu\n", sizeof(cache_t));
+  FIELD(iso_ps, NP, 0);
+  FIELD(iso_ts, NP, 0);
+  FIELD(iso_n, 0, 0);
+  FIELD(iso_init, NP, 0);
+  FIELD(uvwp, 3, NP);
+  FIELD(rs, 3 * NP + 1, 0);
+  FIELD(dt, NP, 0);
+  return 0;
+}
+#endif
+EOF
+
+cat > data/cache_layout.f90 <<'EOF'
+program cache_layout
+  use iso_c_binding
+  use mptrac_struct, only: cache_t
+  implicit none
+  type(cache_t), target, save :: cache
+  interface
+    function cache_offset(base, field) bind(c) result(offset)
+      import :: c_ptr, c_size_t
+      type(c_ptr), value :: base, field
+      integer(c_size_t) :: offset
+    end function
+  end interface
+  type(c_ptr) :: base
+
+  base = c_loc(cache)
+  print '(i0)', c_sizeof(cache)
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%iso_ps(1))), &
+       c_sizeof(cache%iso_ps), size(cache%iso_ps), 0
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%iso_ts(1))), &
+       c_sizeof(cache%iso_ts), size(cache%iso_ts), 0
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%iso_n)), &
+       c_sizeof(cache%iso_n), 0, 0
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%iso_init(1))), &
+       c_sizeof(cache%iso_init), size(cache%iso_init), 0
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%uvwp(1,1))), &
+       c_sizeof(cache%uvwp), size(cache%uvwp,1), size(cache%uvwp,2)
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%rs(1))), &
+       c_sizeof(cache%rs), size(cache%rs), 0
+  print '(4(i0,1x))', cache_offset(base,c_loc(cache%dt(1))), &
+       c_sizeof(cache%dt), size(cache%dt), 0
+end program
+EOF
+
+${CC:-gcc} ${DEFINES} -I ../../src -DCACHE_LAYOUT_MAIN \
+    data/cache_layout.c -o data/cache_layout_c
+${CC:-gcc} ${DEFINES} -I ../../src -c \
+    data/cache_layout.c -o data/cache_layout.o
+(cd data && ${FC:-gfortran} -c mptrac_fortran.pp.f90 -o cache_layout_module.o)
+(cd data && ${FC:-gfortran} cache_layout.f90 cache_layout.o \
+    cache_layout_module.o -o cache_layout_f)
+data/cache_layout_c > data/cache_layout_c.asc
+data/cache_layout_f > data/cache_layout_f.asc
+if ! diff -w -u data/cache_layout_c.asc data/cache_layout_f.asc; then
+    echo "C/Fortran cache_t layout differs" >&2
+    exit 1
+fi
+echo "C/Fortran cache_t sizes, offsets, and array shapes are equal"

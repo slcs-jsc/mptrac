@@ -134,6 +134,7 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(npp) :: iso_ps
      REAL(c_double), DIMENSION(npp) :: iso_ts
      INTEGER(c_int) :: iso_n
+     INTEGER(c_int8_t), DIMENSION(npp) :: iso_init
      REAL(c_float), DIMENSION(3,npp) :: uvwp
      REAL(c_double), DIMENSION(3 * npp + 1) :: rs
      REAL(c_double), DIMENSION(npp) :: dt

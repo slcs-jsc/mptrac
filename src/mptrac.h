@@ -3712,6 +3712,9 @@ typedef struct {
   /*! Correlated velocity perturbations: horizontal [m/s], mesoscale vertical [hPa/s]. */
   float uvwp[3];
 
+  /*! Isosurface reference state: 0 unset, 1 active, 2 saved before a met-file boundary. */
+  uint8_t iso_init;
+
 } particle_t;
 
 
@@ -3730,6 +3733,9 @@ typedef struct {
 
   /*! Isosurface balloon number of data points. */
   int iso_n;
+
+  /*! Per-particle reference state for ISOSURF=2 or 3 (0 unset, 1 active, 2 saved). */
+  uint8_t iso_init[NP];
 
   /*! Wind perturbations: horizontal [m/s], mesoscale vertical [hPa/s]. */
   float uvwp[NP][3];
@@ -6798,9 +6804,10 @@ void module_h2o2_chem(
  * @brief Initialize the isosurface module based on atmospheric data.
  *
  * This function initializes the isosurface module based on the
- * atmospheric data provided. It calculates the necessary variables
- * required for generating the isosurface, such as pressure, density,
- * or potential temperature. Additionally, it can read balloon
+ * atmospheric data provided. It calculates the reference pressure, density,
+ * or potential temperature at particle release. A reference may be saved
+ * before first activation when the loaded meteorological pair brackets the
+ * release time. Additionally, it can read balloon
  * pressure data from a file if specified in the control
  * structure. For modes 1-3 the reference is stored in the `iso_var`
  * particle quantity; mode 4 stores a shared pressure series in the cache.
@@ -6810,6 +6817,8 @@ void module_h2o2_chem(
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param cache Pointer to the cache structure for the shared balloon series.
+ * @param initial Whether this is the initial model step (before timesteps are set).
+ * @param model_t Current model time [s].
  *
  * @author Lars Hoffmann
  */
@@ -6818,7 +6827,9 @@ void module_isosurf_init(
   cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  const int initial,
+  const double model_t);
 
 /**
  * @brief Apply the isosurface module to adjust atmospheric properties.
@@ -7233,8 +7244,9 @@ void sort_array(
  *
  * Applies the same source-index mapping as ::sort_array() to all three
  * components of @c cache->uvwp. Each float component is staged in the
- * caller-provided double buffer before being written back. Other cache
- * fields, including shared isosurface data, are not modified.
+ * caller-provided double buffer before being written back. The particle's
+ * isosurface initialization state is reordered as well; shared balloon data
+ * are not modified.
  *
  * @param[in,out] cache  Cache containing the wind perturbations to reorder.
  * @param[in]     perm   Source index for each of the @p np destination particles.
@@ -7260,7 +7272,7 @@ void sort_uvwp(
  * and pressure level. It allocates temporary arrays to store indices
  * and auxiliary data for sorting, then performs the sorting
  * operation. After sorting, it updates the order of particles and their
- * persistent particle-specific cache values (`dt` and `uvwp`).
+ * persistent particle-specific cache values (`dt`, `uvwp`, and `iso_init`).
  * Random values in `rs` are regenerated before use; shared cache data
  * remain unchanged.
  *
