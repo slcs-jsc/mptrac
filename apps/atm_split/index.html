@@ -1023,8 +1023,13 @@ $ ./atm_split  &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_out&gt;
 </tr>
 <tr>
 <td style="text-align: left;">SPLIT_M</td>
-<td style="text-align: left;">total SO2 mass of all data points []</td>
+<td style="text-align: left;">total mass assigned to the new particles [kg]; negative values use the input total</td>
 <td style="text-align: right;">-999</td>
+</tr>
+<tr>
+<td style="text-align: left;">SPLIT_UM</td>
+<td style="text-align: left;">absolute width of a uniform child-mass perturbation [kg]</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr>
 <td style="text-align: left;">SPLIT_DT</td>
@@ -1089,6 +1094,7 @@ $ ./atm_split  &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_out&gt;
 </tbody>
 </table>
 <p>If a range is provided the data points are distributed uniformly. If a distance is provided (DT, DZ, DX), the data points are distributed with a Gaussian random variate where e.g. ‘distance’/2.3548 = FWHM.</p>
+<p>With <code>N = SPLIT_N</code>, each child receives <code>m_child = [M + U * (V - 0.5)] / N</code>, where <code>M</code> is the input total mass or <code>SPLIT_M</code>, <code>U = SPLIT_UM</code>, and each <code>V</code> is drawn independently and uniformly from [0, 1]. <code>SPLIT_UM</code> is an absolute uniform perturbation, not a relative or Gaussian uncertainty. At <code>SPLIT_UM = 0</code>, the selected total mass is preserved up to rounding; for positive <code>SPLIT_UM</code>, it is preserved only in expectation, and sufficiently large perturbations can produce negative child masses. Other configured quantities are copied from each selected parent except where explicitly reassigned; sums of other extensive quantities, such as accumulated mass-loss diagnostics, need not be preserved.</p>
 <p><strong>Note:</strong> Instead of using the control file the configuration parameters can also be appended to the function call. </p>
 
 
