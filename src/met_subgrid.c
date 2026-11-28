@@ -88,6 +88,11 @@ int main(
       for (int iy = 0; iy < met0->ny - 1; iy++)
 	for (int iz = 0; iz < met0->np - 1; iz++) {
 
+	  /* Skip cells below the surface without changing earlier statistics... */
+	  if (met0->p[iz] > met0->ps[ix][iy]
+	      || met1->p[iz] > met1->ps[ix][iy])
+	    continue;
+
 	  /* Collect local wind data... */
 	  u[0] = met0->u[ix][iy][iz];
 	  u[1] = met0->u[ix + 1][iy][iz];
@@ -165,15 +170,6 @@ int main(
 	  vsig[iz][iy] += stddev(v, 16);
 	  wsig[iz][iy] += stddev(w, 16);
 	  n[iz][iy]++;
-
-	  /* Check surface pressure... */
-	  if (met0->p[iz] > met0->ps[ix][iy]
-	      || met1->p[iz] > met1->ps[ix][iy]) {
-	    usig[iz][iy] = NAN;
-	    vsig[iz][iy] = NAN;
-	    wsig[iz][iy] = NAN;
-	    n[iz][iy] = 0;
-	  }
 	}
   }
 
@@ -201,8 +197,9 @@ int main(
 	      0.5 * (met0->time + met1->time),
 	      0.5 * (Z(met0->p[iz]) + Z(met1->p[iz + 1])),
 	      0.0, 0.5 * (met0->lat[iy] + met1->lat[iy + 1]),
-	      usig[iz][iy] / n[iz][iy], vsig[iz][iy] / n[iz][iy],
-	      wsig[iz][iy] / n[iz][iy], n[iz][iy]);
+	      n[iz][iy] > 0 ? usig[iz][iy] / n[iz][iy] : NAN,
+	      n[iz][iy] > 0 ? vsig[iz][iy] / n[iz][iy] : NAN,
+	      n[iz][iy] > 0 ? wsig[iz][iy] / n[iz][iy] : NAN, n[iz][iy]);
   }
 
   /* Close file... */
