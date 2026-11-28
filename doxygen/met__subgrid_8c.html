@@ -138,24 +138,24 @@ Functions</h2></td></tr>
 
 <p>Print command-line help. </p>
 
-<p class="definition">Definition at line <a class="el" href="met__subgrid_8c_source.html#l00220">220</a> of file <a class="el" href="met__subgrid_8c_source.html">met_subgrid.c</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  221</span>        {</div>
-<div class="line"><span class="lineno">  222</span> </div>
-<div class="line"><span class="lineno">  223</span>  printf(<span class="stringliteral">&quot;\nMPTRAC met_subgrid tool.\n\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  224</span>  printf</div>
-<div class="line"><span class="lineno">  225</span>    (<span class="stringliteral">&quot;Calculate subgrid-scale wind and vertical velocity standard deviations.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  226</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  227</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  228</span>  printf</div>
-<div class="line"><span class="lineno">  229</span>    (<span class="stringliteral">&quot;  met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...]\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  230</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  231</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  232</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;          Control file.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  233</span>  printf(<span class="stringliteral">&quot;  &lt;subgrid.tab&gt;  Output table.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  234</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;         Meteorological input file pairs.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  235</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  236</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  237</span>}</div>
+<p class="definition">Definition at line <a class="el" href="met__subgrid_8c_source.html#l00217">217</a> of file <a class="el" href="met__subgrid_8c_source.html">met_subgrid.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  218</span>        {</div>
+<div class="line"><span class="lineno">  219</span> </div>
+<div class="line"><span class="lineno">  220</span>  printf(<span class="stringliteral">&quot;\nMPTRAC met_subgrid tool.\n\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  221</span>  printf</div>
+<div class="line"><span class="lineno">  222</span>    (<span class="stringliteral">&quot;Calculate subgrid-scale wind and vertical velocity standard deviations.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  223</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  224</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  225</span>  printf</div>
+<div class="line"><span class="lineno">  226</span>    (<span class="stringliteral">&quot;  met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  227</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  228</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  229</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;          Control file.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  230</span>  printf(<span class="stringliteral">&quot;  &lt;subgrid.tab&gt;  Output table.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  231</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;         Meteorological input file pairs.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  232</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  233</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  234</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -229,131 +229,128 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   88</span>      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iy = 0; iy &lt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a3a066580dfee9253cfe22b1e4ebf73b9">ny</a> - 1; iy++)</div>
 <div class="line"><span class="lineno">   89</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1; iz++) {</div>
 <div class="line"><span class="lineno">   90</span> </div>
-<div class="line"><span class="lineno">   91</span>          <span class="comment">/* Collect local wind data... */</span></div>
-<div class="line"><span class="lineno">   92</span>          u[0] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz];</div>
-<div class="line"><span class="lineno">   93</span>          u[1] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz];</div>
-<div class="line"><span class="lineno">   94</span>          u[2] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz];</div>
-<div class="line"><span class="lineno">   95</span>          u[3] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz];</div>
-<div class="line"><span class="lineno">   96</span>          u[4] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz + 1];</div>
-<div class="line"><span class="lineno">   97</span>          u[5] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz + 1];</div>
-<div class="line"><span class="lineno">   98</span>          u[6] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">   99</span>          u[7] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  100</span> </div>
-<div class="line"><span class="lineno">  101</span>          v[0] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz];</div>
-<div class="line"><span class="lineno">  102</span>          v[1] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz];</div>
-<div class="line"><span class="lineno">  103</span>          v[2] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz];</div>
-<div class="line"><span class="lineno">  104</span>          v[3] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz];</div>
-<div class="line"><span class="lineno">  105</span>          v[4] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz + 1];</div>
-<div class="line"><span class="lineno">  106</span>          v[5] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz + 1];</div>
-<div class="line"><span class="lineno">  107</span>          v[6] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  108</span>          v[7] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  109</span> </div>
-<div class="line"><span class="lineno">  110</span>          w[0] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  111</span>          w[1] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  112</span>          w[2] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  113</span>          w[3] =</div>
-<div class="line"><span class="lineno">  114</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  115</span>          w[4] =</div>
-<div class="line"><span class="lineno">  116</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  117</span>          w[5] =</div>
-<div class="line"><span class="lineno">  118</span>            (float) (1e3 *</div>
-<div class="line"><span class="lineno">  119</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  120</span>          w[6] =</div>
-<div class="line"><span class="lineno">  121</span>            (float) (1e3 *</div>
-<div class="line"><span class="lineno">  122</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  123</span>          w[7] =</div>
-<div class="line"><span class="lineno">  124</span>            (float) (1e3 *</div>
-<div class="line"><span class="lineno">  125</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  126</span> </div>
-<div class="line"><span class="lineno">  127</span>          <span class="comment">/* Collect local wind data... */</span></div>
-<div class="line"><span class="lineno">  128</span>          u[8] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz];</div>
-<div class="line"><span class="lineno">  129</span>          u[9] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz];</div>
-<div class="line"><span class="lineno">  130</span>          u[10] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz];</div>
-<div class="line"><span class="lineno">  131</span>          u[11] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz];</div>
-<div class="line"><span class="lineno">  132</span>          u[12] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz + 1];</div>
-<div class="line"><span class="lineno">  133</span>          u[13] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz + 1];</div>
-<div class="line"><span class="lineno">  134</span>          u[14] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  135</span>          u[15] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  136</span> </div>
-<div class="line"><span class="lineno">  137</span>          v[8] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz];</div>
-<div class="line"><span class="lineno">  138</span>          v[9] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz];</div>
-<div class="line"><span class="lineno">  139</span>          v[10] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz];</div>
-<div class="line"><span class="lineno">  140</span>          v[11] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz];</div>
-<div class="line"><span class="lineno">  141</span>          v[12] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz + 1];</div>
-<div class="line"><span class="lineno">  142</span>          v[13] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz + 1];</div>
-<div class="line"><span class="lineno">  143</span>          v[14] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  144</span>          v[15] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz + 1];</div>
-<div class="line"><span class="lineno">  145</span> </div>
-<div class="line"><span class="lineno">  146</span>          w[8] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  147</span>          w[9] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  148</span>          w[10] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  149</span>          w[11] =</div>
-<div class="line"><span class="lineno">  150</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
-<div class="line"><span class="lineno">  151</span>          w[12] =</div>
-<div class="line"><span class="lineno">  152</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  153</span>          w[13] =</div>
-<div class="line"><span class="lineno">  154</span>            (float) (1e3 *</div>
-<div class="line"><span class="lineno">  155</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  156</span>          w[14] =</div>
-<div class="line"><span class="lineno">  157</span>            (float) (1e3 *</div>
-<div class="line"><span class="lineno">  158</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  159</span>          w[15] =</div>
-<div class="line"><span class="lineno">  160</span>            (float) (1e3 *</div>
-<div class="line"><span class="lineno">  161</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
-<div class="line"><span class="lineno">  162</span> </div>
-<div class="line"><span class="lineno">  163</span>          <span class="comment">/* Get standard deviations of local wind data... */</span></div>
-<div class="line"><span class="lineno">  164</span>          usig[iz][iy] += <a class="code hl_function" href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a>(u, 16);</div>
-<div class="line"><span class="lineno">  165</span>          vsig[iz][iy] += <a class="code hl_function" href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a>(v, 16);</div>
-<div class="line"><span class="lineno">  166</span>          wsig[iz][iy] += <a class="code hl_function" href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a>(w, 16);</div>
-<div class="line"><span class="lineno">  167</span>          n[iz][iy]++;</div>
-<div class="line"><span class="lineno">  168</span> </div>
-<div class="line"><span class="lineno">  169</span>          <span class="comment">/* Check surface pressure... */</span></div>
-<div class="line"><span class="lineno">  170</span>          <span class="keywordflow">if</span> (met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz] &gt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a3ea571f00b50e6ba8191ec620bc1d15e">ps</a>[ix][iy]</div>
-<div class="line"><span class="lineno">  171</span>              || met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz] &gt; met1-&gt;<a class="code hl_variable" href="structmet__t.html#a3ea571f00b50e6ba8191ec620bc1d15e">ps</a>[ix][iy]) {</div>
-<div class="line"><span class="lineno">  172</span>            usig[iz][iy] = NAN;</div>
-<div class="line"><span class="lineno">  173</span>            vsig[iz][iy] = NAN;</div>
-<div class="line"><span class="lineno">  174</span>            wsig[iz][iy] = NAN;</div>
-<div class="line"><span class="lineno">  175</span>            n[iz][iy] = 0;</div>
-<div class="line"><span class="lineno">  176</span>          }</div>
-<div class="line"><span class="lineno">  177</span>        }</div>
-<div class="line"><span class="lineno">  178</span>  }</div>
-<div class="line"><span class="lineno">  179</span> </div>
-<div class="line"><span class="lineno">  180</span>  <span class="comment">/* Create output file... */</span></div>
-<div class="line"><span class="lineno">  181</span>  <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;Write subgrid data file: %s&quot;</span>, argv[2]);</div>
-<div class="line"><span class="lineno">  182</span>  <span class="keywordflow">if</span> (!(out = fopen(argv[2], <span class="stringliteral">&quot;w&quot;</span>)))</div>
-<div class="line"><span class="lineno">  183</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
-<div class="line"><span class="lineno">  184</span> </div>
-<div class="line"><span class="lineno">  185</span>  <span class="comment">/* Write header... */</span></div>
-<div class="line"><span class="lineno">  186</span>  fprintf(out,</div>
-<div class="line"><span class="lineno">  187</span>          <span class="stringliteral">&quot;# $1 = time [s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  188</span>          <span class="stringliteral">&quot;# $2 = altitude [km]\n&quot;</span></div>
-<div class="line"><span class="lineno">  189</span>          <span class="stringliteral">&quot;# $3 = longitude [deg]\n&quot;</span></div>
-<div class="line"><span class="lineno">  190</span>          <span class="stringliteral">&quot;# $4 = latitude [deg]\n&quot;</span></div>
-<div class="line"><span class="lineno">  191</span>          <span class="stringliteral">&quot;# $5 = zonal wind standard deviation [m/s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  192</span>          <span class="stringliteral">&quot;# $6 = meridional wind standard deviation [m/s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  193</span>          <span class="stringliteral">&quot;# $7 = vertical velocity standard deviation [m/s]\n&quot;</span></div>
-<div class="line"><span class="lineno">  194</span>          <span class="stringliteral">&quot;# $8 = number of data points\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  195</span> </div>
-<div class="line"><span class="lineno">  196</span>  <span class="comment">/* Write output... */</span></div>
-<div class="line"><span class="lineno">  197</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iy = 0; iy &lt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a3a066580dfee9253cfe22b1e4ebf73b9">ny</a> - 1; iy++) {</div>
-<div class="line"><span class="lineno">  198</span>    fprintf(out, <span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  199</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1; iz++)</div>
-<div class="line"><span class="lineno">  200</span>      fprintf(out, <span class="stringliteral">&quot;%.2f %g %g %g %g %g %g %d\n&quot;</span>,</div>
-<div class="line"><span class="lineno">  201</span>              0.5 * (met0-&gt;<a class="code hl_variable" href="structmet__t.html#acf9d509f67dbc7ad8119d40a2757285f">time</a> + met1-&gt;<a class="code hl_variable" href="structmet__t.html#acf9d509f67dbc7ad8119d40a2757285f">time</a>),</div>
-<div class="line"><span class="lineno">  202</span>              0.5 * (<a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]) + <a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1])),</div>
-<div class="line"><span class="lineno">  203</span>              0.0, 0.5 * (met0-&gt;<a class="code hl_variable" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy] + met1-&gt;<a class="code hl_variable" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy + 1]),</div>
-<div class="line"><span class="lineno">  204</span>              usig[iz][iy] / n[iz][iy], vsig[iz][iy] / n[iz][iy],</div>
-<div class="line"><span class="lineno">  205</span>              wsig[iz][iy] / n[iz][iy], n[iz][iy]);</div>
-<div class="line"><span class="lineno">  206</span>  }</div>
+<div class="line"><span class="lineno">   91</span>          <span class="comment">/* Skip cells below the surface without changing earlier statistics... */</span></div>
+<div class="line"><span class="lineno">   92</span>          <span class="keywordflow">if</span> (met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz] &gt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a3ea571f00b50e6ba8191ec620bc1d15e">ps</a>[ix][iy]</div>
+<div class="line"><span class="lineno">   93</span>              || met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz] &gt; met1-&gt;<a class="code hl_variable" href="structmet__t.html#a3ea571f00b50e6ba8191ec620bc1d15e">ps</a>[ix][iy])</div>
+<div class="line"><span class="lineno">   94</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">   95</span> </div>
+<div class="line"><span class="lineno">   96</span>          <span class="comment">/* Collect local wind data... */</span></div>
+<div class="line"><span class="lineno">   97</span>          u[0] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz];</div>
+<div class="line"><span class="lineno">   98</span>          u[1] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz];</div>
+<div class="line"><span class="lineno">   99</span>          u[2] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  100</span>          u[3] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  101</span>          u[4] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  102</span>          u[5] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  103</span>          u[6] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  104</span>          u[7] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  105</span> </div>
+<div class="line"><span class="lineno">  106</span>          v[0] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz];</div>
+<div class="line"><span class="lineno">  107</span>          v[1] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz];</div>
+<div class="line"><span class="lineno">  108</span>          v[2] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  109</span>          v[3] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  110</span>          v[4] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  111</span>          v[5] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  112</span>          v[6] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  113</span>          v[7] = met0-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  114</span> </div>
+<div class="line"><span class="lineno">  115</span>          w[0] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  116</span>          w[1] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  117</span>          w[2] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  118</span>          w[3] =</div>
+<div class="line"><span class="lineno">  119</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  120</span>          w[4] =</div>
+<div class="line"><span class="lineno">  121</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  122</span>          w[5] =</div>
+<div class="line"><span class="lineno">  123</span>            (float) (1e3 *</div>
+<div class="line"><span class="lineno">  124</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  125</span>          w[6] =</div>
+<div class="line"><span class="lineno">  126</span>            (float) (1e3 *</div>
+<div class="line"><span class="lineno">  127</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  128</span>          w[7] =</div>
+<div class="line"><span class="lineno">  129</span>            (float) (1e3 *</div>
+<div class="line"><span class="lineno">  130</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz + 1], met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  131</span> </div>
+<div class="line"><span class="lineno">  132</span>          <span class="comment">/* Collect local wind data... */</span></div>
+<div class="line"><span class="lineno">  133</span>          u[8] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz];</div>
+<div class="line"><span class="lineno">  134</span>          u[9] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz];</div>
+<div class="line"><span class="lineno">  135</span>          u[10] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  136</span>          u[11] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  137</span>          u[12] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  138</span>          u[13] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  139</span>          u[14] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  140</span>          u[15] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#a68b715eb9e5fa3a9c8f400e0c5667cc9">u</a>[ix + 1][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  141</span> </div>
+<div class="line"><span class="lineno">  142</span>          v[8] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz];</div>
+<div class="line"><span class="lineno">  143</span>          v[9] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz];</div>
+<div class="line"><span class="lineno">  144</span>          v[10] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  145</span>          v[11] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz];</div>
+<div class="line"><span class="lineno">  146</span>          v[12] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  147</span>          v[13] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy][iz + 1];</div>
+<div class="line"><span class="lineno">  148</span>          v[14] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  149</span>          v[15] = met1-&gt;<a class="code hl_variable" href="structmet__t.html#abc29d5fbea8f527b849837efacd76eaa">v</a>[ix + 1][iy + 1][iz + 1];</div>
+<div class="line"><span class="lineno">  150</span> </div>
+<div class="line"><span class="lineno">  151</span>          w[8] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  152</span>          w[9] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  153</span>          w[10] = (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  154</span>          w[11] =</div>
+<div class="line"><span class="lineno">  155</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]));</div>
+<div class="line"><span class="lineno">  156</span>          w[12] =</div>
+<div class="line"><span class="lineno">  157</span>            (float) (1e3 * <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  158</span>          w[13] =</div>
+<div class="line"><span class="lineno">  159</span>            (float) (1e3 *</div>
+<div class="line"><span class="lineno">  160</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  161</span>          w[14] =</div>
+<div class="line"><span class="lineno">  162</span>            (float) (1e3 *</div>
+<div class="line"><span class="lineno">  163</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix][iy + 1][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  164</span>          w[15] =</div>
+<div class="line"><span class="lineno">  165</span>            (float) (1e3 *</div>
+<div class="line"><span class="lineno">  166</span>                     <a class="code hl_define" href="mptrac_8h.html#a5d2bccab2674c0b9fee6d3107952fc8a">DP2DZ</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#a210cc808698557c4824a4a8d7908fe73">w</a>[ix + 1][iy + 1][iz + 1], met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1]));</div>
+<div class="line"><span class="lineno">  167</span> </div>
+<div class="line"><span class="lineno">  168</span>          <span class="comment">/* Get standard deviations of local wind data... */</span></div>
+<div class="line"><span class="lineno">  169</span>          usig[iz][iy] += <a class="code hl_function" href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a>(u, 16);</div>
+<div class="line"><span class="lineno">  170</span>          vsig[iz][iy] += <a class="code hl_function" href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a>(v, 16);</div>
+<div class="line"><span class="lineno">  171</span>          wsig[iz][iy] += <a class="code hl_function" href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a>(w, 16);</div>
+<div class="line"><span class="lineno">  172</span>          n[iz][iy]++;</div>
+<div class="line"><span class="lineno">  173</span>        }</div>
+<div class="line"><span class="lineno">  174</span>  }</div>
+<div class="line"><span class="lineno">  175</span> </div>
+<div class="line"><span class="lineno">  176</span>  <span class="comment">/* Create output file... */</span></div>
+<div class="line"><span class="lineno">  177</span>  <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;Write subgrid data file: %s&quot;</span>, argv[2]);</div>
+<div class="line"><span class="lineno">  178</span>  <span class="keywordflow">if</span> (!(out = fopen(argv[2], <span class="stringliteral">&quot;w&quot;</span>)))</div>
+<div class="line"><span class="lineno">  179</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
+<div class="line"><span class="lineno">  180</span> </div>
+<div class="line"><span class="lineno">  181</span>  <span class="comment">/* Write header... */</span></div>
+<div class="line"><span class="lineno">  182</span>  fprintf(out,</div>
+<div class="line"><span class="lineno">  183</span>          <span class="stringliteral">&quot;# $1 = time [s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  184</span>          <span class="stringliteral">&quot;# $2 = altitude [km]\n&quot;</span></div>
+<div class="line"><span class="lineno">  185</span>          <span class="stringliteral">&quot;# $3 = longitude [deg]\n&quot;</span></div>
+<div class="line"><span class="lineno">  186</span>          <span class="stringliteral">&quot;# $4 = latitude [deg]\n&quot;</span></div>
+<div class="line"><span class="lineno">  187</span>          <span class="stringliteral">&quot;# $5 = zonal wind standard deviation [m/s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  188</span>          <span class="stringliteral">&quot;# $6 = meridional wind standard deviation [m/s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  189</span>          <span class="stringliteral">&quot;# $7 = vertical velocity standard deviation [m/s]\n&quot;</span></div>
+<div class="line"><span class="lineno">  190</span>          <span class="stringliteral">&quot;# $8 = number of data points\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  191</span> </div>
+<div class="line"><span class="lineno">  192</span>  <span class="comment">/* Write output... */</span></div>
+<div class="line"><span class="lineno">  193</span>  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iy = 0; iy &lt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a3a066580dfee9253cfe22b1e4ebf73b9">ny</a> - 1; iy++) {</div>
+<div class="line"><span class="lineno">  194</span>    fprintf(out, <span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  195</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt; met0-&gt;<a class="code hl_variable" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1; iz++)</div>
+<div class="line"><span class="lineno">  196</span>      fprintf(out, <span class="stringliteral">&quot;%.2f %g %g %g %g %g %g %d\n&quot;</span>,</div>
+<div class="line"><span class="lineno">  197</span>              0.5 * (met0-&gt;<a class="code hl_variable" href="structmet__t.html#acf9d509f67dbc7ad8119d40a2757285f">time</a> + met1-&gt;<a class="code hl_variable" href="structmet__t.html#acf9d509f67dbc7ad8119d40a2757285f">time</a>),</div>
+<div class="line"><span class="lineno">  198</span>              0.5 * (<a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(met0-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz]) + <a class="code hl_define" href="mptrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(met1-&gt;<a class="code hl_variable" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[iz + 1])),</div>
+<div class="line"><span class="lineno">  199</span>              0.0, 0.5 * (met0-&gt;<a class="code hl_variable" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy] + met1-&gt;<a class="code hl_variable" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy + 1]),</div>
+<div class="line"><span class="lineno">  200</span>              n[iz][iy] &gt; 0 ? usig[iz][iy] / n[iz][iy] : NAN,</div>
+<div class="line"><span class="lineno">  201</span>              n[iz][iy] &gt; 0 ? vsig[iz][iy] / n[iz][iy] : NAN,</div>
+<div class="line"><span class="lineno">  202</span>              n[iz][iy] &gt; 0 ? wsig[iz][iy] / n[iz][iy] : NAN, n[iz][iy]);</div>
+<div class="line"><span class="lineno">  203</span>  }</div>
+<div class="line"><span class="lineno">  204</span> </div>
+<div class="line"><span class="lineno">  205</span>  <span class="comment">/* Close file... */</span></div>
+<div class="line"><span class="lineno">  206</span>  fclose(out);</div>
 <div class="line"><span class="lineno">  207</span> </div>
-<div class="line"><span class="lineno">  208</span>  <span class="comment">/* Close file... */</span></div>
-<div class="line"><span class="lineno">  209</span>  fclose(out);</div>
+<div class="line"><span class="lineno">  208</span>  <span class="comment">/* Free... */</span></div>
+<div class="line"><span class="lineno">  209</span>  <a class="code hl_function" href="mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef">mptrac_free</a>(NULL, NULL, clim, met0, met1, NULL, NULL, dd);</div>
 <div class="line"><span class="lineno">  210</span> </div>
-<div class="line"><span class="lineno">  211</span>  <span class="comment">/* Free... */</span></div>
-<div class="line"><span class="lineno">  212</span>  <a class="code hl_function" href="mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef">mptrac_free</a>(NULL, NULL, clim, met0, met1, NULL, NULL, dd);</div>
-<div class="line"><span class="lineno">  213</span> </div>
-<div class="line"><span class="lineno">  214</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
-<div class="line"><span class="lineno">  215</span>}</div>
+<div class="line"><span class="lineno">  211</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
+<div class="line"><span class="lineno">  212</span>}</div>
 <div class="ttc" id="amptrac_8c_html_a51a28bb68cb5d0575d982cc87b19d3ef"><div class="ttname"><a href="mptrac_8c.html#a51a28bb68cb5d0575d982cc87b19d3ef">mptrac_free</a></div><div class="ttdeci">void mptrac_free(ctl_t *ctl, cache_t *cache, clim_t *clim, met_t *met0, met_t *met1, atm_t *atm, depo_t *depo, dd_t *dd)</div><div class="ttdoc">Frees memory resources allocated for MPTRAC.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l06942">mptrac.c:6942</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a87088b5ccf95f03d986f1bdd570b5b2f"><div class="ttname"><a href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a></div><div class="ttdeci">float stddev(const float *data, const int n)</div><div class="ttdoc">Calculates the standard deviation of a set of data.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l13919">mptrac.c:13919</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a8fc9ec02bd18b27c2e225161d833c766"><div class="ttname"><a href="mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766">mptrac_read_clim</a></div><div class="ttdeci">void mptrac_read_clim(const ctl_t *ctl, clim_t *clim)</div><div class="ttdoc">Reads various climatological data and populates the given climatology structure.</div><div class="ttdef"><b>Definition</b> <a href="mptrac_8c_source.html#l07263">mptrac.c:7263</a></div></div>
@@ -499,7 +496,7 @@ Here is the call graph for this function:</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Nov 27 2026 19:34:29 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+Generated on Sat Nov 28 2026 14:51:27 for MPTRAC by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
 </small></address>
 </div><!-- doc-content -->
 </body>
