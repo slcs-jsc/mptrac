@@ -119,6 +119,24 @@ independent simulations or four subdomains of one DD simulation. The
 choice of ranks, OpenMP threads, and GPUs depends on the problem size
 and the target system.
 
+### Random-number streams and reproducibility
+
+`RNG_TYPE` selects GSL (`0`), Squares (`1`, the default), or cuRAND (`2`,
+with a GPU build). `module_rng_init(ntask)` uses the task identifier to
+separate GSL and cuRAND seeds or Squares counter ranges. The standard
+`trac` driver assigns a distinct identifier to each directory-list task.
+Other callers using `module_rng()` must initialize it with appropriate
+task identifiers, for example through `mptrac_init()` or
+`module_rng_init()`, to avoid unintended stream reuse. Distinct streams
+are not a formal guarantee of statistical independence.
+
+Random numbers are assigned by current particle array position rather
+than persistent particle identity. Sorting, domain-decomposition
+migration, and changes in parallel execution can therefore change the
+draws received by an individual particle and its trajectory. Bitwise
+reproducibility across different parallel configurations or RNG
+backends is not guaranteed.
+
 ## Supercomputers in Jülich
 
 The JUWELS Cluster module has 2271 standard compute nodes, each with
