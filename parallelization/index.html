@@ -840,6 +840,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#random-number-streams-and-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Random-number streams and reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1198,6 +1209,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#random-number-streams-and-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Random-number streams and reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1348,6 +1370,21 @@ OpenACC. For example, four ranks on a four-GPU node can run four
 independent simulations or four subdomains of one DD simulation. The
 choice of ranks, OpenMP threads, and GPUs depends on the problem size
 and the target system.</p>
+<h3 id="random-number-streams-and-reproducibility">Random-number streams and reproducibility</h3>
+<p><code>RNG_TYPE</code> selects GSL (<code>0</code>), Squares (<code>1</code>, the default), or cuRAND (<code>2</code>,
+with a GPU build). <code>module_rng_init(ntask)</code> uses the task identifier to
+separate GSL and cuRAND seeds or Squares counter ranges. The standard
+<code>trac</code> driver assigns a distinct identifier to each directory-list task.
+Other callers using <code>module_rng()</code> must initialize it with appropriate
+task identifiers, for example through <code>mptrac_init()</code> or
+<code>module_rng_init()</code>, to avoid unintended stream reuse. Distinct streams
+are not a formal guarantee of statistical independence.</p>
+<p>Random numbers are assigned by current particle array position rather
+than persistent particle identity. Sorting, domain-decomposition
+migration, and changes in parallel execution can therefore change the
+draws received by an individual particle and its trajectory. Bitwise
+reproducibility across different parallel configurations or RNG
+backends is not guaranteed.</p>
 <h2 id="supercomputers-in-julich">Supercomputers in Jülich</h2>
 <p>The JUWELS Cluster module has 2271 standard compute nodes, each with
 48 CPU cores and 96 GiB of memory. Simultaneous multithreading provides
