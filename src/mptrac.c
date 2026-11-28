@@ -3530,23 +3530,36 @@ void intpol_tropo_3d(
   const int ix = locate_reg(lons, (int) nlon, lon2);
   const int iy = locate_irr(lats, (int) nlat, lat2);
 
-  /* Calculate standard deviation... */
-  *sigma = 0;
+  /* Calculate mean of finite neighboring values... */
   for (int dx = 0; dx < 2; dx++)
     for (int dy = 0; dy < 2; dy++) {
       if (isfinite(array0[ix + dx][iy + dy])) {
 	mean += array0[ix + dx][iy + dy];
-	*sigma += SQR(array0[ix + dx][iy + dy]);
 	n++;
       }
       if (isfinite(array1[ix + dx][iy + dy])) {
 	mean += array1[ix + dx][iy + dy];
-	*sigma += SQR(array1[ix + dx][iy + dy]);
 	n++;
       }
     }
-  if (n > 0)
-    *sigma = sqrt(MAX(*sigma / n - SQR(mean / n), 0.0));
+
+  /* Calculate population standard deviation in double precision... */
+  *sigma = 0;
+  if (n > 0) {
+    mean /= n;
+    for (int dx = 0; dx < 2; dx++)
+      for (int dy = 0; dy < 2; dy++) {
+	if (isfinite(array0[ix + dx][iy + dy])) {
+	  const double diff = (double) array0[ix + dx][iy + dy] - mean;
+	  *sigma += diff * diff;
+	}
+	if (isfinite(array1[ix + dx][iy + dy])) {
+	  const double diff = (double) array1[ix + dx][iy + dy] - mean;
+	  *sigma += diff * diff;
+	}
+      }
+    *sigma = sqrt(*sigma / n);
+  }
 
   /* Linear interpolation... */
   if (method == 1 && isfinite(array0[ix][iy])
